@@ -1,6 +1,6 @@
 name: httprunner
 base: core22
-version: git
+version: 0.1.0
 summary: Execute HTTP requests from .http files with colored output
 description: |
   HTTP File Runner is a command-line tool written in Zig for parsing and 
@@ -30,11 +30,7 @@ parts:
       - curl
       - xz-utils
     override-build: |
-      ZIG_VERSION="0.14.1"
-      curl -L "https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz" -o zig.tar.xz
-      tar -xf zig.tar.xz
-      mkdir -p $SNAPCRAFT_PART_INSTALL/zig
-      cp -r zig-x86_64-linux-${ZIG_VERSION}/* $SNAPCRAFT_PART_INSTALL/zig/
+      snap install zig --classic --beta
 
   httprunner:
     after: [zig]
