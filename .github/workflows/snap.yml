@@ -1,0 +1,28 @@
+name: Build and Publish Snap
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Snapcraft
+        run: |
+          sudo snap install snapcraft --classic
+
+      - name: Build snap
+        run: |
+          snapcraft
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: snap-package
+          path: "*.snap"
