@@ -1,0 +1,36 @@
+# Comprehensive HTTP Runner Test
+# This file demonstrates all the features of the HTTP runner
+
+# Successful requests (should show in green)
+GET https://httpbin.org/status/200
+GET https://httpbin.org/status/201
+
+# Client error (should show in red)
+GET https://httpbin.org/status/404
+GET https://httpbin.org/status/401
+
+# Server error (should show in red)
+GET https://httpbin.org/status/500
+
+# Real-world APIs
+GET https://api.github.com/zen
+GET https://jsonplaceholder.typicode.com/posts/1
+
+# Request with headers (headers are parsed but not sent yet)
+GET https://httpbin.org/headers
+User-Agent: HTTPRunner/1.0
+Accept: application/json
+X-Test-Header: test-value
+
+# POST request with body (parsed but body not sent yet)
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "message": "Hello from HTTP Runner!",
+  "timestamp": "2025-06-13",
+  "success": true
+}
+
+# This should fail (non-existent domain)
+GET https://this-domain-definitely-does-not-exist-12345.com
