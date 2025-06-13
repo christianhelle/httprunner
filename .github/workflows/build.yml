@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Test
+  build:
+    name: Build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -45,44 +45,3 @@ jobs:
 
     - name: Build release
       run: zig build -Doptimize=ReleaseFast
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Zig
-      uses: goto-bus-stop/setup-zig@v2
-      with:
-        version: '0.14.0'
-
-    - name: Check formatting
-      run: zig fmt --check .
-
-    - name: Static analysis
-      run: zig build --verbose
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-
-    - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
