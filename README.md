@@ -132,6 +132,7 @@ Summary: 3/4 requests succeeded
 ### Status Code Examples
 
 From `examples/status-codes.http`:
+
 - **2xx Success**: Status 200, 201, 202 - shown in green ✅
 - **3xx Redirects**: Status 301, 302 - automatically followed, shown as 200 ✅
 - **4xx Client Errors**: Status 400, 401, 403, 404, 429 - shown in red ❌
@@ -165,13 +166,13 @@ The tool handles various error conditions gracefully:
 
 The codebase is organized into multiple modules for better maintainability:
 
-```
+```text
 src/
 ├── main.zig       # Main application logic and CLI interface
 ├── types.zig      # Data structures (HttpRequest, HttpResult, etc.)
 ├── colors.zig     # ANSI color constants for terminal output
 ├── parser.zig     # HTTP file parsing functionality
-└── executor.zig   # HTTP request execution logic
+└── runner.zig     # HTTP request execution logic
 ```
 
 ### Module Overview
@@ -179,7 +180,7 @@ src/
 - **`types.zig`**: Defines the core data structures including `HttpRequest` and `HttpResult`
 - **`colors.zig`**: Contains ANSI color codes for colored terminal output
 - **`parser.zig`**: Handles parsing of `.http` files into structured requests
-- **`executor.zig`**: Manages HTTP request execution and response handling
+- **`runner.zig`**: Manages HTTP request execution and response handling
 - **`main.zig`**: Orchestrates the application flow and provides the CLI interface
 
 This modular structure makes the code easier to understand, test, and extend.
@@ -219,6 +220,7 @@ This project uses GitHub Actions for continuous integration and deployment:
 ### Development Workflow
 
 The project follows standard GitHub flow:
+
 1. Fork the repository
 2. Create a feature branch
 3. Make changes and ensure tests pass
