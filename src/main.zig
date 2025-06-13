@@ -6,7 +6,7 @@ const Allocator = std.mem.Allocator;
 const colors = @import("colors.zig");
 const types = @import("types.zig");
 const parser = @import("parser.zig");
-const executor = @import("executor.zig");
+const runner = @import("runner.zig");
 
 // Type aliases for convenience
 const HttpRequest = types.HttpRequest;
@@ -58,7 +58,7 @@ pub fn main() !void {
 
     for (requests.items) |request| {
         total_count += 1;
-        const result = executor.executeHttpRequest(allocator, request) catch |err| {
+        const result = runner.executeHttpRequest(allocator, request) catch |err| {
             print("{s}❌ {s} {s} - Error: {}{s}\n", .{ colors.RED, request.method, request.url, err, colors.RESET });
             continue;
         };
