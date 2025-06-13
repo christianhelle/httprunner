@@ -1,5 +1,5 @@
-# Comprehensive HTTP Runner Test
-# This file demonstrates all the features of the HTTP runner
+# Comprehensive HTTP File Runner Test
+# This file demonstrates all the features of the HTTP File Runner
 
 # Successful requests (should show in green)
 GET https://httpbin.org/status/200
@@ -27,7 +27,7 @@ POST https://httpbin.org/post
 Content-Type: application/json
 
 {
-  "message": "Hello from HTTP Runner!",
+  "message": "Hello from HTTP File Runner!",
   "timestamp": "2025-06-13",
   "success": true
 }

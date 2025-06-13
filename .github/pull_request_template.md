@@ -4,7 +4,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for contributing to HTTP Runner! Please fill out this template to help us review your changes.
+        Thank you for contributing to HTTP File Runner! Please fill out this template to help us review your changes.
 
   - type: dropdown
     id: change-type
