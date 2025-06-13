@@ -1,0 +1,14 @@
+# Simple test file with just a few requests
+# Perfect for quick testing
+
+# Test a successful request
+GET https://httpbin.org/status/200
+
+# Test a not found error
+GET https://httpbin.org/status/404
+
+# Test GitHub API
+GET https://api.github.com/zen
+
+# Test a basic JSON API
+GET https://jsonplaceholder.typicode.com/users/1

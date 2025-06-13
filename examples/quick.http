@@ -1,0 +1,3 @@
+# Quick test file
+GET https://httpbin.org/status/200
+GET https://httpbin.org/status/404

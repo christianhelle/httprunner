@@ -1,0 +1,27 @@
+# HTTP Status Code Testing
+# This file tests various HTTP status codes using httpbin.org
+
+# Successful responses
+GET https://httpbin.org/status/200
+GET https://httpbin.org/status/201
+GET https://httpbin.org/status/202
+
+# Redirection responses  
+GET https://httpbin.org/status/301
+GET https://httpbin.org/status/302
+
+# Client error responses
+GET https://httpbin.org/status/400
+GET https://httpbin.org/status/401
+GET https://httpbin.org/status/403
+GET https://httpbin.org/status/404
+GET https://httpbin.org/status/429
+
+# Server error responses
+GET https://httpbin.org/status/500
+GET https://httpbin.org/status/502
+GET https://httpbin.org/status/503
+
+# Delayed responses (might timeout)
+GET https://httpbin.org/delay/1
+GET https://httpbin.org/delay/5

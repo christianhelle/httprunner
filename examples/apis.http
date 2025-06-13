@@ -1,0 +1,23 @@
+# API Testing Examples
+# This file contains requests to various public APIs
+
+# Test REST Countries API
+GET https://restcountries.com/v3.1/name/norway
+
+# Test Cat Facts API
+GET https://catfact.ninja/fact
+
+# Test Chuck Norris Jokes API
+GET https://api.chucknorris.io/jokes/random
+
+# Test Public APIs listing
+GET https://api.publicapis.org/random?auth=null
+
+# Test IP address info
+GET https://ipapi.co/json/
+
+# Test weather data (OpenWeatherMap requires API key in real usage)
+GET https://samples.openweathermap.org/data/2.5/weather?q=London&appid=b6907d289e10d714a6e88b30761fae22
+
+# Test cryptocurrency data
+GET https://api.coindesk.com/v1/bpi/currentprice.json

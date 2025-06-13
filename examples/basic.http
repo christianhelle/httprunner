@@ -1,0 +1,26 @@
+# Example HTTP requests to test various websites
+# This file demonstrates different types of GET requests
+
+# Test GitHub API
+GET https://api.github.com/users/octocat
+
+# Test JSONPlaceholder API  
+GET https://jsonplaceholder.typicode.com/posts/1
+
+# Test httpbin.org for various responses
+GET https://httpbin.org/status/200
+GET https://httpbin.org/status/404
+GET https://httpbin.org/status/500
+
+# Test with custom headers
+GET https://httpbin.org/headers
+User-Agent: HttpRunner/1.0
+Accept: application/json
+
+# Test HTTPS websites
+GET https://www.google.com
+GET https://www.microsoft.com
+GET https://www.stackoverflow.com
+
+# Test a request that might fail
+GET https://this-domain-does-not-exist-12345.com
