@@ -1,4 +1,5 @@
 const std = @import("std");
+const http = std.http;
 const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 
@@ -80,6 +81,29 @@ pub fn main() !void {
     }
 
     print("Found {} HTTP request(s)\n\n", .{requests.items.len});
+
+    var success_count: u32 = 0;
+    var total_count: u32 = 0;
+
+    for (requests.items) |request| {
+        total_count += 1;
+        const result = executeHttpRequest(allocator, request) catch |err| {
+            print("{s}❌ {s} {s} - Error: {}{s}\n", .{ RED, request.method, request.url, err, RESET });
+            continue;
+        };
+
+        if (result.success) {
+            success_count += 1;
+            print("{s}✅ {s} {s} - Status: {}{s}\n", .{ GREEN, request.method, request.url, result.status_code, RESET });
+        } else {
+            if (result.error_message) |msg| {
+                print("{s}❌ {s} {s} - Status: {} - Error: {s}{s}\n", .{ RED, request.method, request.url, result.status_code, msg, RESET });
+            } else {
+                print("{s}❌ {s} {s} - Status: {}{s}\n", .{ RED, request.method, request.url, result.status_code, RESET });
+            }
+        }
+    }    print("\n{s}\n", .{"=" ** 50});
+    print("Summary: {s}{}{s}/{} requests succeeded\n", .{ if (success_count == total_count) GREEN else if (success_count > 0) YELLOW else RED, success_count, RESET, total_count });
 }
 
 fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList(HttpRequest) {
