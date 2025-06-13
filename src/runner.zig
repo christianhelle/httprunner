@@ -8,7 +8,6 @@ const HttpResult = types.HttpResult;
 pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResult {
     const start_time = std.time.nanoTimestamp();
 
-    // Parse URL to extract scheme, host, port, and path
     const uri = std.Uri.parse(request.url) catch {
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
@@ -23,7 +22,6 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResul
     var client = http.Client{ .allocator = allocator };
     defer client.deinit();
 
-    // Convert method string to enum
     const method = std.meta.stringToEnum(http.Method, request.method) orelse {
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
@@ -34,7 +32,6 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResul
             .duration_ms = duration_ms,
         };
     };
-    // Prepare headers
     var header_buffer: [8192]u8 = undefined;
     var req = client.open(method, uri, .{
         .server_header_buffer = &header_buffer,
@@ -55,12 +52,8 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResul
     };
     defer req.deinit();
 
-    // TODO: Add custom headers support for Zig 0.14
-    // For now, we'll skip custom headers to get the basic functionality working
-
     try req.send();
 
-    // Send body if present
     if (request.body) |body| {
         try req.writeAll(body);
     }
