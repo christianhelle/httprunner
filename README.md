@@ -28,13 +28,15 @@ zig build
 
 For proper emoji display in PowerShell, you can either:
 
-**Option 1: Use the provided PowerShell script**
-```powershell
+Option 1: Use the provided PowerShell script
+
+```pwsh
 .\run.ps1 <http-file>
 ```
 
-**Option 2: Set UTF-8 encoding manually**
-```powershell
+Option 2: Set UTF-8 encoding manually
+
+```pwsh
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 .\zig-out\bin\httprunner.exe <http-file>
 ```
