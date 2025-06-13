@@ -66,3 +66,4 @@ bld/
 [Oo]bj/
 [Ll]og/
 .zig-cache
+httprunner_1.0.0_amd64.snap
