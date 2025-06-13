@@ -1,8 +1,8 @@
-# CI/CD Pipeline Setup for HTTP Runner
+# CI/CD Pipeline Setup for HTTP File Runner
 
 ## Overview
 
-This document describes the complete CI/CD pipeline setup for the HTTP Runner project using GitHub Actions. The pipeline provides automated building, testing, security scanning, and deployment across multiple platforms.
+This document describes the complete CI/CD pipeline setup for the HTTP File Runner project using GitHub Actions. The pipeline provides automated building, testing, security scanning, and deployment across multiple platforms.
 
 ## Pipeline Components
 
@@ -243,4 +243,4 @@ The README includes status badges for:
 - Review CI logs for detailed error information
 - Use development setup script for local testing
 
-This CI/CD pipeline provides a robust foundation for developing, testing, and releasing the HTTP Runner project while maintaining high code quality and security standards.
+This CI/CD pipeline provides a robust foundation for developing, testing, and releasing the HTTP File Runner project while maintaining high code quality and security standards.

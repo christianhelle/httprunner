@@ -1,4 +1,4 @@
-# Development Setup Script for HTTP Runner
+# Development Setup Script for HTTP File Runner
 # This script helps set up the development environment
 
 param(
@@ -11,7 +11,7 @@ param(
 )
 
 function Show-Help {
-    Write-Host "HTTP Runner Development Setup" -ForegroundColor Cyan
+    Write-Host "HTTP File Runner Development Setup" -ForegroundColor Cyan
     Write-Host "================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Usage: .\dev-setup.ps1 [options]"

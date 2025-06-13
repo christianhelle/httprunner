@@ -1,4 +1,4 @@
-# HTTP Runner
+# HTTP File Runner
 
 [![Build](https://github.com/christianhelle/httprunner/actions/workflows/build.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build.yml)
 
@@ -65,7 +65,7 @@ Option 2: Set UTF-8 encoding manually
 
 ## .http File Format
 
-The HTTP runner supports a simple format for defining HTTP requests:
+The HTTP File Runner supports a simple format for defining HTTP requests:
 
 ```http
 # Comments start with #
@@ -116,7 +116,7 @@ The tool provides colored output with emojis:
 ### Example Output
 
 ```text
-🚀 HTTP Runner - Processing file: examples/simple.http
+🚀 HTTP File Runner - Processing file: examples/simple.http
 ==================================================
 Found 4 HTTP request(s)
 

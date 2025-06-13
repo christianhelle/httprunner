@@ -1,4 +1,4 @@
-# PowerShell script to run HTTP Runner with proper UTF-8 encoding for emoji support
+# PowerShell script to run HTTP File Runner with proper UTF-8 encoding for emoji support
 param(
     [Parameter(Mandatory=$true)]
     [string]$HttpFile
@@ -8,5 +8,5 @@ param(
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 
-# Run the HTTP Runner
+# Run the HTTP File Runner
 & ".\zig-out\bin\httprunner.exe" $HttpFile

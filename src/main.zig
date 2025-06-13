@@ -23,7 +23,7 @@ pub fn main() !void {
     }
 
     const http_file = args[1];
-    print("{s}🚀 HTTP Runner - Processing file: {s}{s}\n", .{ colors.BLUE, http_file, colors.RESET });
+    print("{s}🚀 HTTP File Runner - Processing file: {s}{s}\n", .{ colors.BLUE, http_file, colors.RESET });
     print("{s}\n", .{"=" ** 50});
 
     const requests = parser.parseHttpFile(allocator, http_file) catch |err| {
