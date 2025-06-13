@@ -10,7 +10,7 @@ pub const CliOptions = struct {
 
     pub fn parse(_: Allocator, args: []const []const u8) !CliOptions {
         if (args.len < 2) {
-            showUsage(args[0]);
+            showUsage();
             return error.InvalidArguments;
         }
 
@@ -28,10 +28,10 @@ pub const CliOptions = struct {
     }
 };
 
-pub fn showUsage(program_name: []const u8) void {
+pub fn showUsage() void {
     print("{s}Usage:{s}\n", .{ colors.BLUE, colors.RESET });
-    print("  {s} <http-file> [http-file2] [...]\n", .{program_name});
-    print("  {s} --discover\n", .{program_name});
+    print("  httprunner <http-file> [http-file2] [...]\n", .{});
+    print("  httprunner --discover\n", .{});
     print("\n{s}Arguments:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  <http-file>    One or more .http files to process\n", .{});
     print("  --discover     Recursively discover and process all .http files from current directory\n", .{});
