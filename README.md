@@ -157,6 +157,29 @@ The tool handles various error conditions gracefully:
 - [ ] JSON response formatting
 - [ ] Export results to different formats
 
+## Code Structure
+
+The codebase is organized into multiple modules for better maintainability:
+
+```
+src/
+├── main.zig       # Main application logic and CLI interface
+├── types.zig      # Data structures (HttpRequest, HttpResult, etc.)
+├── colors.zig     # ANSI color constants for terminal output
+├── parser.zig     # HTTP file parsing functionality
+└── executor.zig   # HTTP request execution logic
+```
+
+### Module Overview
+
+- **`types.zig`**: Defines the core data structures including `HttpRequest` and `HttpResult`
+- **`colors.zig`**: Contains ANSI color codes for colored terminal output
+- **`parser.zig`**: Handles parsing of `.http` files into structured requests
+- **`executor.zig`**: Manages HTTP request execution and response handling
+- **`main.zig`**: Orchestrates the application flow and provides the CLI interface
+
+This modular structure makes the code easier to understand, test, and extend.
+
 ## License
 
 This project is open source and available under the MIT License.
