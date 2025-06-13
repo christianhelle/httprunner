@@ -48,24 +48,22 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
-    if (args.len < 2) {
-        print("{s}[ERROR] Usage: {s} <http-file>{s}\n", .{ RED, args[0], RESET });
+    defer std.process.argsFree(allocator, args);    if (args.len < 2) {
+        print("{s}❌ Usage: {s} <http-file>{s}\n", .{ RED, args[0], RESET });
         return;
     }
 
     const http_file = args[1];
-    print("{s}[INFO] HTTP Runner - Processing file: {s}{s}\n", .{ BLUE, http_file, RESET });
+    print("{s}🚀 HTTP Runner - Processing file: {s}{s}\n", .{ BLUE, http_file, RESET });
     print("{s}\n", .{"=" ** 50});
 
-    const requests = parseHttpFile(allocator, http_file) catch |err| {
-        switch (err) {
+    const requests = parseHttpFile(allocator, http_file) catch |err| {        switch (err) {
             error.FileNotFound => {
-                print("{s}[ERROR] Error: File '{s}' not found{s}\n", .{ RED, http_file, RESET });
+                print("{s}❌ Error: File '{s}' not found{s}\n", .{ RED, http_file, RESET });
                 return;
             },
             else => {
-                print("{s}[ERROR] Error parsing file: {}{s}\n", .{ RED, err, RESET });
+                print("{s}❌ Error parsing file: {}{s}\n", .{ RED, err, RESET });
                 return;
             },
         }
@@ -75,9 +73,8 @@ pub fn main() !void {
             req.deinit(allocator);
         }
         requests.deinit();
-    }
-    if (requests.items.len == 0) {
-        print("{s}[WARNING] No HTTP requests found in file{s}\n", .{ YELLOW, RESET });
+    }    if (requests.items.len == 0) {
+        print("{s}⚠️  No HTTP requests found in file{s}\n", .{ YELLOW, RESET });
         return;
     }
 
@@ -86,21 +83,20 @@ pub fn main() !void {
     var success_count: u32 = 0;
     var total_count: u32 = 0;
 
-    for (requests.items) |request| {
-        total_count += 1;
+    for (requests.items) |request| {        total_count += 1;
         const result = executeHttpRequest(allocator, request) catch |err| {
-            print("{s}[FAIL] {s} {s} - Error: {}{s}\n", .{ RED, request.method, request.url, err, RESET });
+            print("{s}❌ {s} {s} - Error: {}{s}\n", .{ RED, request.method, request.url, err, RESET });
             continue;
         };
 
         if (result.success) {
             success_count += 1;
-            print("{s}[PASS] {s} {s} - Status: {}{s}\n", .{ GREEN, request.method, request.url, result.status_code, RESET });
+            print("{s}✅ {s} {s} - Status: {}{s}\n", .{ GREEN, request.method, request.url, result.status_code, RESET });
         } else {
             if (result.error_message) |msg| {
-                print("{s}[FAIL] {s} {s} - Status: {} - Error: {s}{s}\n", .{ RED, request.method, request.url, result.status_code, msg, RESET });
+                print("{s}❌ {s} {s} - Status: {} - Error: {s}{s}\n", .{ RED, request.method, request.url, result.status_code, msg, RESET });
             } else {
-                print("{s}[FAIL] {s} {s} - Status: {}{s}\n", .{ RED, request.method, request.url, result.status_code, RESET });
+                print("{s}❌ {s} {s} - Status: {}{s}\n", .{ RED, request.method, request.url, result.status_code, RESET });
             }
         }
     }
