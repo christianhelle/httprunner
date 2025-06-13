@@ -1,0 +1,49 @@
+# Ignore build artifacts when building Docker image
+zig-cache/
+zig-out/
+
+# Ignore git directory
+.git/
+.gitignore
+
+# Ignore CI/CD files
+.github/
+
+# Ignore documentation that's not needed in container
+*.md
+CHANGELOG.md
+CONTRIBUTING.md
+SECURITY.md
+
+# Ignore development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS specific files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.log
+
+# Ignore local environment files
+.env*
+
+# Ignore test files (unless needed)
+test-*/
+examples/
+
+# Ignore scripts
+*.ps1
+*.sh
+
+# Keep only what's needed for the container
+!src/
+!build.zig
+!build.zig.zon
+!LICENSE
