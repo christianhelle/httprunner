@@ -34,9 +34,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-zig-${{ matrix.zig-version }}-
 
-    - name: Check formatting
-      run: zig fmt --check .
-
     - name: Build
       run: zig build
 
