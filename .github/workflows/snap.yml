@@ -1,9 +1,14 @@
-name: Build and Publish Snap
+name: Snapcraft
 
 on:
   push:
-    tags:
-      - 'v*'
+    paths:      
+      - '**/.zig'
+      - 'build.zig'
+      - 'snapcraft.yaml'
+      - '.github/workflows/snap.yml'
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
