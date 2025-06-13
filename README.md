@@ -14,7 +14,15 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
 
-## Building
+## Installation
+
+### Option 1: Install from Snap Store (Recommended)
+
+```bash
+sudo snap install httprunner
+```
+
+### Option 2: Build from Source
 
 Make sure you have Zig installed (version 0.14 or later).
 
@@ -24,7 +32,15 @@ zig build
 
 ## Usage
 
-### Windows PowerShell Users
+### If installed via Snap
+
+```bash
+httprunner <http-file>
+```
+
+### If built from source
+
+#### Windows PowerShell Users
 
 For proper emoji display in PowerShell, you can either:
 
