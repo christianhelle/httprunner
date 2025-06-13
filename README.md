@@ -7,8 +7,10 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 ## Features
 
 - 🚀 Parse and execute HTTP requests from `.http` files
+- 📁 Support for multiple `.http` files in a single run
+- 🔍 `--discover` mode to recursively find and run all `.http` files
 - ✅ Color-coded output (green for success, red for failure)
-- 📊 Summary statistics showing success/failure counts
+- 📊 Summary statistics showing success/failure counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
 - 📝 Custom headers support (parsing implemented, execution pending)
 - 🎯 Detailed error reporting with status codes
@@ -35,7 +37,14 @@ zig build
 ### If installed via Snap
 
 ```bash
+# Run a single .http file
 httprunner <http-file>
+
+# Run multiple .http files
+httprunner <http-file1> <http-file2> [...]
+
+# Discover and run all .http files recursively
+httprunner --discover
 ```
 
 ### If built from source
@@ -55,12 +64,25 @@ Option 2: Set UTF-8 encoding manually
 ```pwsh
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 .\zig-out\bin\httprunner.exe <http-file>
+
+# Run multiple files
+.\zig-out\bin\httprunner.exe examples\simple.http examples\basic.http
+
+# Discover all .http files
+.\zig-out\bin\httprunner.exe --discover
 ```
 
 ### Command Line
 
 ```bash
+# Run a single .http file
 ./zig-out/bin/httprunner <http-file>
+
+# Run multiple .http files
+./zig-out/bin/httprunner <http-file1> <http-file2> [...]
+
+# Discover and run all .http files recursively from current directory
+./zig-out/bin/httprunner --discover
 ```
 
 ### Examples
@@ -77,6 +99,15 @@ Option 2: Set UTF-8 encoding manually
 
 # Test basic GET requests
 ./zig-out/bin/httprunner examples/basic.http
+
+# Run multiple files at once
+./zig-out/bin/httprunner examples/simple.http examples/quick.http
+
+# Discover and run all .http files in the project
+./zig-out/bin/httprunner --discover
+
+# Run all files in a specific directory (using shell globbing)
+./zig-out/bin/httprunner examples/*.http
 ```
 
 ## .http File Format
@@ -143,6 +174,45 @@ Found 4 HTTP request(s)
 
 ==================================================
 Summary: 3/4 requests succeeded
+```
+
+### Multiple Files Output
+
+When running multiple files or using `--discover`, you'll see a summary for each file plus an overall summary:
+
+```text
+🔍 Discovering .http files recursively...
+Found 7 .http file(s):
+  📄 .\examples\apis.http
+  📄 .\examples\basic.http
+  📄 .\examples\simple.http
+  📄 .\examples\quick.http
+
+🚀 HTTP File Runner - Processing file: .\examples\simple.http
+==================================================
+Found 4 HTTP request(s)
+
+✅ GET https://httpbin.org/status/200 - Status: 200
+❌ GET https://httpbin.org/status/404 - Status: 404
+✅ GET https://api.github.com/zen - Status: 200
+✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
+
+==================================================
+File Summary: 3/4 requests succeeded
+
+🚀 HTTP File Runner - Processing file: .\examples\quick.http
+==================================================
+Found 2 HTTP request(s)
+
+✅ GET https://httpbin.org/status/200 - Status: 200
+❌ GET https://httpbin.org/status/404 - Status: 404
+
+==================================================
+File Summary: 1/2 requests succeeded
+
+🎯 Overall Summary:
+Files processed: 2
+Total requests: 4/6
 ```
 
 ### Status Code Examples
