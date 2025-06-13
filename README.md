@@ -184,6 +184,48 @@ src/
 
 This modular structure makes the code easier to understand, test, and extend.
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+### Workflows
+
+- **CI Pipeline** (`build.yml`): Runs on every push and pull request
+  - Multi-platform builds (Linux, Windows, macOS)
+  - Code formatting checks
+  - Unit tests
+  - Security scanning with Trivy
+
+- **Release Pipeline** (`release.yml`): Triggered on version tags
+  - Cross-platform binary builds
+  - Automated GitHub releases
+  - Container image publishing to GitHub Container Registry
+
+- **Security Scanning** (`codeql.yml`): Weekly security analysis
+  - CodeQL static analysis
+  - Dependency vulnerability scanning
+
+- **Dependency Updates** (`dependency-update.yml`): Automated dependency updates
+  - Weekly Zig version checks
+  - Automated pull requests for updates
+
+### Release Process
+
+1. Update version in relevant files
+2. Create and push a git tag: `git tag v1.0.0 && git push origin v1.0.0`
+3. GitHub Actions automatically creates a release with binaries
+4. Container images are published to `ghcr.io/christianhelle/httprunner`
+
+### Development Workflow
+
+The project follows standard GitHub flow:
+1. Fork the repository
+2. Create a feature branch
+3. Make changes and ensure tests pass
+4. Submit a pull request
+5. CI checks run automatically
+6. Merge after review and approval
+
 ## License
 
 This project is open source and available under the MIT License.
