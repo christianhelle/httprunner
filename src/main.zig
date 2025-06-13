@@ -2,13 +2,11 @@ const std = @import("std");
 const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 
-// Import our modules
 const colors = @import("colors.zig");
 const types = @import("types.zig");
 const parser = @import("parser.zig");
 const runner = @import("runner.zig");
 
-// Type aliases for convenience
 const HttpRequest = types.HttpRequest;
 const HttpResult = types.HttpResult;
 
@@ -79,7 +77,7 @@ pub fn main() !void {
 
 test "simple test" {
     var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
+    defer list.deinit();
     try list.append(42);
     try std.testing.expectEqual(@as(i32, 42), list.pop());
 }
