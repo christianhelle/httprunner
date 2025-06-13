@@ -1,8 +1,6 @@
 # HTTP Runner
 
 [![Build](https://github.com/christianhelle/httprunner/actions/workflows/build.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build.yml)
-[![Release](https://github.com/christianhelle/httprunner/actions/workflows/release.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/release.yml)
-[![Security](https://github.com/christianhelle/httprunner/actions/workflows/codeql.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/codeql.yml)
 
 A simple command-line tool written in Zig that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
