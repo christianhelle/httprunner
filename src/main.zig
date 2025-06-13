@@ -40,6 +40,7 @@ const HttpResult = struct {
     status_code: u16,
     success: bool,
     error_message: ?[]const u8,
+    duration_ms: u64,
 };
 
 pub fn main() !void {
@@ -48,7 +49,8 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);    if (args.len < 2) {
+    defer std.process.argsFree(allocator, args);
+    if (args.len < 2) {
         print("{s}❌ Usage: {s} <http-file>{s}\n", .{ RED, args[0], RESET });
         return;
     }
@@ -57,7 +59,8 @@ pub fn main() !void {
     print("{s}🚀 HTTP Runner - Processing file: {s}{s}\n", .{ BLUE, http_file, RESET });
     print("{s}\n", .{"=" ** 50});
 
-    const requests = parseHttpFile(allocator, http_file) catch |err| {        switch (err) {
+    const requests = parseHttpFile(allocator, http_file) catch |err| {
+        switch (err) {
             error.FileNotFound => {
                 print("{s}❌ Error: File '{s}' not found{s}\n", .{ RED, http_file, RESET });
                 return;
@@ -73,7 +76,8 @@ pub fn main() !void {
             req.deinit(allocator);
         }
         requests.deinit();
-    }    if (requests.items.len == 0) {
+    }
+    if (requests.items.len == 0) {
         print("{s}⚠️  No HTTP requests found in file{s}\n", .{ YELLOW, RESET });
         return;
     }
@@ -83,20 +87,20 @@ pub fn main() !void {
     var success_count: u32 = 0;
     var total_count: u32 = 0;
 
-    for (requests.items) |request| {        total_count += 1;
+    for (requests.items) |request| {
+        total_count += 1;
         const result = executeHttpRequest(allocator, request) catch |err| {
             print("{s}❌ {s} {s} - Error: {}{s}\n", .{ RED, request.method, request.url, err, RESET });
             continue;
         };
-
         if (result.success) {
             success_count += 1;
-            print("{s}✅ {s} {s} - Status: {}{s}\n", .{ GREEN, request.method, request.url, result.status_code, RESET });
+            print("{s}✅ {s} {s} - Status: {} - {}ms{s}\n", .{ GREEN, request.method, request.url, result.status_code, result.duration_ms, RESET });
         } else {
             if (result.error_message) |msg| {
-                print("{s}❌ {s} {s} - Status: {} - Error: {s}{s}\n", .{ RED, request.method, request.url, result.status_code, msg, RESET });
+                print("{s}❌ {s} {s} - Status: {} - {}ms - Error: {s}{s}\n", .{ RED, request.method, request.url, result.status_code, result.duration_ms, msg, RESET });
             } else {
-                print("{s}❌ {s} {s} - Status: {}{s}\n", .{ RED, request.method, request.url, result.status_code, RESET });
+                print("{s}❌ {s} {s} - Status: {} - {}ms{s}\n", .{ RED, request.method, request.url, result.status_code, result.duration_ms, RESET });
             }
         }
     }
@@ -191,12 +195,17 @@ fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList(Htt
 }
 
 fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResult {
+    const start_time = std.time.nanoTimestamp();
+
     // Parse URL to extract scheme, host, port, and path
     const uri = std.Uri.parse(request.url) catch {
+        const end_time = std.time.nanoTimestamp();
+        const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
             .status_code = 0,
             .success = false,
             .error_message = "Invalid URL",
+            .duration_ms = duration_ms,
         };
     };
 
@@ -205,16 +214,22 @@ fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResult {
 
     // Convert method string to enum
     const method = std.meta.stringToEnum(http.Method, request.method) orelse {
+        const end_time = std.time.nanoTimestamp();
+        const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
             .status_code = 0,
             .success = false,
             .error_message = "Invalid HTTP method",
+            .duration_ms = duration_ms,
         };
-    }; // Prepare headers
+    };
+    // Prepare headers
     var header_buffer: [8192]u8 = undefined;
     var req = client.open(method, uri, .{
         .server_header_buffer = &header_buffer,
     }) catch |err| {
+        const end_time = std.time.nanoTimestamp();
+        const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
             .status_code = 0,
             .success = false,
@@ -224,6 +239,7 @@ fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResult {
                 error.NetworkUnreachable => "Network unreachable",
                 else => "Connection error",
             },
+            .duration_ms = duration_ms,
         };
     };
     defer req.deinit();
@@ -237,9 +253,11 @@ fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResult {
     if (request.body) |body| {
         try req.writeAll(body);
     }
-
     try req.finish();
     try req.wait();
+
+    const end_time = std.time.nanoTimestamp();
+    const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
 
     const status_code = @intFromEnum(req.response.status);
     const success = status_code >= 200 and status_code < 300;
@@ -248,6 +266,7 @@ fn executeHttpRequest(allocator: Allocator, request: HttpRequest) !HttpResult {
         .status_code = status_code,
         .success = success,
         .error_message = null,
+        .duration_ms = duration_ms,
     };
 }
 
