@@ -561,13 +561,11 @@ The tool handles various error conditions gracefully:
 ## Current Limitations
 
 - Custom headers are parsed but not yet applied to HTTP requests (planned for future version)
-- Request bodies are parsed but not yet sent with requests
 - Only basic authentication methods supported
 
 ## Future Enhancements
 
 - [ ] Full custom headers support
-- [ ] Request body transmission
 - [ ] Authentication (Basic, Bearer tokens)
 - [ ] Request timeouts configuration
 - [ ] JSON response formatting
