@@ -12,6 +12,7 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 📁 Support for multiple `.http` files in a single run
 - 🔍 `--discover` mode to recursively find and run all `.http` files
 - 📝 `--verbose` mode for detailed request and response information
+- 📋 `--log` mode to save all output to a file for analysis and reporting
 - ✅ Color-coded output (green for success, red for failure)
 - 📊 Summary statistics showing success/failure counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
@@ -53,16 +54,31 @@ docker pull christianhelle/httprunner
 httprunner <http-file>
 
 # Run a single .http file with verbose output
-httprunner --verbose <http-file>
+httprunner <http-file> --verbose
+
+# Run a single .http file and save output to a log file
+httprunner <http-file> --log
+
+# Run a single .http file with verbose output and save to a custom log file
+httprunner <http-file> --verbose --log results.txt
 
 # Run multiple .http files
 httprunner <http-file1> <http-file2> [...]
+
+# Run multiple .http files and log output
+httprunner <http-file1> <http-file2> [...] --log execution.log
 
 # Discover and run all .http files recursively
 httprunner --discover
 
 # Discover and run all .http files with verbose output
-httprunner --verbose --discover
+httprunner --discover --verbose
+
+# Discover and run all .http files and save output to log
+httprunner --discover --log discovery.log
+
+# Discover and run all .http files with verbose output and logging
+httprunner --discover --verbose --log detailed_results.txt
 ```
 
 ### If built from source
@@ -84,16 +100,31 @@ Option 2: Set UTF-8 encoding manually
 .\zig-out\bin\httprunner.exe <http-file>
 
 # Run with verbose output
-.\zig-out\bin\httprunner.exe --verbose <http-file>
+.\zig-out\bin\httprunner.exe <http-file> --verbose
+
+# Run and save output to a log file
+.\zig-out\bin\httprunner.exe <http-file> --log
+
+# Run with verbose output and save to a custom log file
+.\zig-out\bin\httprunner.exe <http-file> --verbose --log results.txt
 
 # Run multiple files
 .\zig-out\bin\httprunner.exe examples\simple.http examples\basic.http
+
+# Run multiple files and log output
+.\zig-out\bin\httprunner.exe examples\simple.http examples\basic.http --log execution.log
 
 # Discover all .http files
 .\zig-out\bin\httprunner.exe --discover
 
 # Discover all .http files with verbose output
-.\zig-out\bin\httprunner.exe --verbose --discover
+.\zig-out\bin\httprunner.exe --discover --verbose
+
+# Discover all .http files and save output to log
+.\zig-out\bin\httprunner.exe --discover --log discovery.log
+
+# Discover all .http files with verbose output and logging
+.\zig-out\bin\httprunner.exe --discover --verbose --log detailed_results.txt
 ```
 
 ### Command Line
@@ -103,16 +134,31 @@ Option 2: Set UTF-8 encoding manually
 ./zig-out/bin/httprunner <http-file>
 
 # Run a single .http file with verbose output
-./zig-out/bin/httprunner --verbose <http-file>
+./zig-out/bin/httprunner <http-file> --verbose
+
+# Run a single .http file and save output to a log file
+./zig-out/bin/httprunner <http-file> --log
+
+# Run a single .http file with verbose output and save to a custom log file
+./zig-out/bin/httprunner <http-file> --verbose --log results.txt
 
 # Run multiple .http files
 ./zig-out/bin/httprunner <http-file1> <http-file2> [...]
+
+# Run multiple .http files and log output
+./zig-out/bin/httprunner <http-file1> <http-file2> [...] --log execution.log
 
 # Discover and run all .http files recursively from current directory
 ./zig-out/bin/httprunner --discover
 
 # Discover and run all .http files with verbose output
-./zig-out/bin/httprunner --verbose --discover
+./zig-out/bin/httprunner --discover --verbose
+
+# Discover and run all .http files and save output to log
+./zig-out/bin/httprunner --discover --log discovery.log
+
+# Discover and run all .http files with verbose output and logging
+./zig-out/bin/httprunner --discover --verbose --log detailed_results.txt
 ```
 
 ### Examples
@@ -122,13 +168,25 @@ Option 2: Set UTF-8 encoding manually
 ./zig-out/bin/httprunner examples/simple.http
 
 # Test basic functionality with verbose output
-./zig-out/bin/httprunner --verbose examples/simple.http
+./zig-out/bin/httprunner examples/simple.http --verbose
+
+# Test basic functionality and save output to log
+./zig-out/bin/httprunner examples/simple.http --log
+
+# Test basic functionality with verbose output and custom log file
+./zig-out/bin/httprunner examples/simple.http --verbose --log simple_test.log
 
 # Test various APIs
 ./zig-out/bin/httprunner examples/apis.http
 
+# Test various APIs and log results
+./zig-out/bin/httprunner examples/apis.http --log api_test.log
+
 # Test different HTTP status codes
 ./zig-out/bin/httprunner examples/status-codes.http
+
+# Test different HTTP status codes with verbose logging
+./zig-out/bin/httprunner examples/status-codes.http --verbose --log status_test.log
 
 # Test basic GET requests
 ./zig-out/bin/httprunner examples/basic.http
@@ -137,16 +195,31 @@ Option 2: Set UTF-8 encoding manually
 ./zig-out/bin/httprunner examples/simple.http examples/quick.http
 
 # Run multiple files with verbose output
-./zig-out/bin/httprunner --verbose examples/simple.http examples/quick.http
+./zig-out/bin/httprunner examples/simple.http examples/quick.http --verbose
+
+# Run multiple files and log output
+./zig-out/bin/httprunner examples/simple.http examples/quick.http --log multi_test.log
+
+# Run multiple files with verbose output and logging
+./zig-out/bin/httprunner examples/simple.http examples/quick.http --verbose --log detailed_multi_test.log
 
 # Discover and run all .http files in the project
 ./zig-out/bin/httprunner --discover
 
 # Discover and run all .http files with verbose output
-./zig-out/bin/httprunner --verbose --discover
+./zig-out/bin/httprunner --discover --verbose
+
+# Discover and run all .http files and save output to log
+./zig-out/bin/httprunner --discover --log discovery.log
+
+# Discover and run all .http files with verbose output and logging
+./zig-out/bin/httprunner --discover --verbose --log full_discovery.log
 
 # Run all files in a specific directory (using shell globbing)
 ./zig-out/bin/httprunner examples/*.http
+
+# Run all files in a specific directory and log output
+./zig-out/bin/httprunner examples/*.http --log examples_test.log
 ```
 
 ### If using Docker
@@ -156,21 +229,38 @@ Option 2: Set UTF-8 encoding manually
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file>
 
 # Run with a single .http file with verbose output
-docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --verbose <http-file>
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose
+
+# Run with a single .http file and save output to log
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --log
+
+# Run with a single .http file with verbose output and custom log file
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose --log results.txt
 
 # Run multiple .http files
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file1> <http-file2>
+
+# Run multiple .http files and log output
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file1> <http-file2> --log execution.log
 
 # Discover and run all .http files in current directory
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --discover
 
 # Discover and run all .http files with verbose output
-docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --verbose --discover
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --discover --verbose
+
+# Discover and run all .http files and save output to log
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --discover --log discovery.log
+
+# Discover and run all .http files with verbose output and logging
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --discover --verbose --log full_discovery.log
 
 # Alternative: Create an alias for easier usage
 alias httprunner='docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner'
 httprunner --discover
-httprunner --verbose examples/simple.http
+httprunner examples/simple.http --verbose
+httprunner examples/simple.http --log test.log
+httprunner examples/simple.http --verbose --log detailed_test.log
 httprunner examples/simple.http
 ```
 
@@ -247,9 +337,116 @@ Summary: 3/4 requests succeeded
 The `--verbose` flag provides detailed information about HTTP requests and responses, including headers and response bodies. This is useful for debugging and detailed analysis of API interactions.
 
 **What verbose mode shows:**
+
 - 📤 **Request Details**: Method, URL, headers, and request body
 - 📥 **Response Details**: Status code, duration, response headers, and response body
 - ⏱️ **Timing Information**: Response times in milliseconds
+
+### Logging Mode
+
+The `--log` flag enables output logging to a file, which is essential for:
+
+- **Automation & CI/CD**: Save test results for build reports and analysis
+- **Debugging**: Preserve detailed output for later review
+- **Documentation**: Generate test reports and API documentation
+- **Monitoring**: Track API performance and reliability over time
+- **Auditing**: Keep records of API testing activities
+
+**How to use logging:**
+
+- `--log` without filename: Saves to a file named 'log' in the current directory
+- `--log filename.txt`: Saves to the specified filename
+- Works with all other flags: `--verbose --log`, `--discover --log`, etc.
+- Combines with verbose mode for detailed logged output
+
+**Log file contents include:**
+
+- All terminal output (colored text is preserved)
+- HTTP request and response details (when using --verbose)
+- Success/failure indicators with emojis
+- Summary statistics
+- Error messages and diagnostics
+- Timestamps and execution duration
+
+### Command Line Help
+
+When running httprunner without any arguments, the following help text is displayed:
+
+```text
+Usage:
+  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] 
+  httprunner [--verbose] [--log [filename]] --discover
+
+Arguments:
+  <http-file>    One or more .http files to process
+  --discover     Recursively discover and process all .http files from current directory
+  --verbose      Show detailed HTTP request and response information
+  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
+```
+
+### Practical Logging Examples
+
+Here are common scenarios for using the `--log` functionality:
+
+**Basic Logging:**
+
+```bash
+# Save output to default 'log' file
+./zig-out/bin/httprunner examples/simple.http --log
+
+# Save output to custom file
+./zig-out/bin/httprunner examples/apis.http --log api_test_results.txt
+```
+
+**Verbose Logging for Debugging:**
+
+```bash
+# Detailed logging for debugging API issues
+./zig-out/bin/httprunner examples/status-codes.http --verbose --log debug_session.log
+
+# Log discovery results with full details
+./zig-out/bin/httprunner --discover --verbose --log full_discovery.log
+```
+
+**CI/CD Integration:**
+
+```bash
+# Generate test reports for build systems
+./zig-out/bin/httprunner --discover --log test_report_$(date +%Y%m%d_%H%M%S).log
+
+# Daily API health checks
+./zig-out/bin/httprunner examples/apis.http --verbose --log daily_health_check.log
+```
+
+**Performance Monitoring:**
+
+```bash
+# Track API performance over time
+./zig-out/bin/httprunner examples/comprehensive.http --verbose --log performance_$(date +%Y%m%d).log
+
+# Load testing documentation
+./zig-out/bin/httprunner examples/*.http --log load_test_results.log
+```
+
+**Example Log File Output:**
+
+When using `--log`, the log file will contain the exact same output as displayed in the terminal:
+
+```text
+🚀 HTTP File Runner - Processing file: examples/simple.http
+==================================================
+Found 4 HTTP request(s)
+
+✅ GET https://httpbin.org/status/200 - Status: 200
+❌ GET https://httpbin.org/status/404 - Status: 404
+✅ GET https://api.github.com/zen - Status: 200
+✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
+
+==================================================
+Summary: 3/4 requests succeeded
+```
+
+When combined with `--verbose`, the log file includes full request and response details, making it invaluable for debugging and documentation purposes.
 
 ### Verbose Mode Output
 
