@@ -72,6 +72,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     };
 
     if (request.body) |body| {
+        req.transfer_encoding = .chunked;
         req.writeAll(body) catch {
             const end_time = std.time.nanoTimestamp();
             const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
