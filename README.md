@@ -11,6 +11,7 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🚀 Parse and execute HTTP requests from `.http` files
 - 📁 Support for multiple `.http` files in a single run
 - 🔍 `--discover` mode to recursively find and run all `.http` files
+- 📝 `--verbose` mode for detailed request and response information
 - ✅ Color-coded output (green for success, red for failure)
 - 📊 Summary statistics showing success/failure counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
@@ -51,11 +52,17 @@ docker pull christianhelle/httprunner
 # Run a single .http file
 httprunner <http-file>
 
+# Run a single .http file with verbose output
+httprunner --verbose <http-file>
+
 # Run multiple .http files
 httprunner <http-file1> <http-file2> [...]
 
 # Discover and run all .http files recursively
 httprunner --discover
+
+# Discover and run all .http files with verbose output
+httprunner --verbose --discover
 ```
 
 ### If built from source
@@ -76,11 +83,17 @@ Option 2: Set UTF-8 encoding manually
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 .\zig-out\bin\httprunner.exe <http-file>
 
+# Run with verbose output
+.\zig-out\bin\httprunner.exe --verbose <http-file>
+
 # Run multiple files
 .\zig-out\bin\httprunner.exe examples\simple.http examples\basic.http
 
 # Discover all .http files
 .\zig-out\bin\httprunner.exe --discover
+
+# Discover all .http files with verbose output
+.\zig-out\bin\httprunner.exe --verbose --discover
 ```
 
 ### Command Line
@@ -89,11 +102,17 @@ Option 2: Set UTF-8 encoding manually
 # Run a single .http file
 ./zig-out/bin/httprunner <http-file>
 
+# Run a single .http file with verbose output
+./zig-out/bin/httprunner --verbose <http-file>
+
 # Run multiple .http files
 ./zig-out/bin/httprunner <http-file1> <http-file2> [...]
 
 # Discover and run all .http files recursively from current directory
 ./zig-out/bin/httprunner --discover
+
+# Discover and run all .http files with verbose output
+./zig-out/bin/httprunner --verbose --discover
 ```
 
 ### Examples
@@ -101,6 +120,9 @@ Option 2: Set UTF-8 encoding manually
 ```bash
 # Test basic functionality
 ./zig-out/bin/httprunner examples/simple.http
+
+# Test basic functionality with verbose output
+./zig-out/bin/httprunner --verbose examples/simple.http
 
 # Test various APIs
 ./zig-out/bin/httprunner examples/apis.http
@@ -114,8 +136,14 @@ Option 2: Set UTF-8 encoding manually
 # Run multiple files at once
 ./zig-out/bin/httprunner examples/simple.http examples/quick.http
 
+# Run multiple files with verbose output
+./zig-out/bin/httprunner --verbose examples/simple.http examples/quick.http
+
 # Discover and run all .http files in the project
 ./zig-out/bin/httprunner --discover
+
+# Discover and run all .http files with verbose output
+./zig-out/bin/httprunner --verbose --discover
 
 # Run all files in a specific directory (using shell globbing)
 ./zig-out/bin/httprunner examples/*.http
@@ -127,15 +155,22 @@ Option 2: Set UTF-8 encoding manually
 # Run with a single .http file (mount current directory)
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file>
 
+# Run with a single .http file with verbose output
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --verbose <http-file>
+
 # Run multiple .http files
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file1> <http-file2>
 
 # Discover and run all .http files in current directory
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --discover
 
+# Discover and run all .http files with verbose output
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --verbose --discover
+
 # Alternative: Create an alias for easier usage
 alias httprunner='docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner'
 httprunner --discover
+httprunner --verbose examples/simple.http
 httprunner examples/simple.http
 ```
 
@@ -202,6 +237,68 @@ Found 4 HTTP request(s)
 ❌ GET https://httpbin.org/status/404 - Status: 404
 ✅ GET https://api.github.com/zen - Status: 200
 ✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
+
+==================================================
+Summary: 3/4 requests succeeded
+```
+
+### Verbose Mode
+
+The `--verbose` flag provides detailed information about HTTP requests and responses, including headers and response bodies. This is useful for debugging and detailed analysis of API interactions.
+
+**What verbose mode shows:**
+- 📤 **Request Details**: Method, URL, headers, and request body
+- 📥 **Response Details**: Status code, duration, response headers, and response body
+- ⏱️ **Timing Information**: Response times in milliseconds
+
+### Verbose Mode Output
+
+When using `--verbose`, you'll see detailed request and response information:
+
+```text
+🚀 HTTP File Runner - Processing file: examples/simple.http
+==================================================
+Found 4 HTTP request(s)
+
+📤 Request Details:
+Method: GET
+URL: https://httpbin.org/status/200
+------------------------------
+
+✅ GET https://httpbin.org/status/200 - Status: 200 - 145ms
+
+📥 Response Details:
+Status: 200
+Duration: 145ms
+Headers:
+  content-type: text/html; charset=utf-8
+  content-length: 0
+  server: gunicorn/19.9.0
+  access-control-allow-origin: *
+  access-control-allow-credentials: true
+Body:
+
+------------------------------
+
+📤 Request Details:
+Method: GET
+URL: https://httpbin.org/status/404
+------------------------------
+
+❌ GET https://httpbin.org/status/404 - Status: 404 - 203ms
+
+📥 Response Details:
+Status: 404
+Duration: 203ms
+Headers:
+  content-type: text/html; charset=utf-8
+  content-length: 0
+  server: gunicorn/19.9.0
+  access-control-allow-origin: *
+  access-control-allow-credentials: true
+Body:
+
+------------------------------
 
 ==================================================
 Summary: 3/4 requests succeeded
