@@ -33,4 +33,24 @@ pub const HttpResult = struct {
     success: bool,
     error_message: ?[]const u8,
     duration_ms: u64,
+    response_headers: ?[]Header,
+    response_body: ?[]const u8,
+
+    pub const Header = struct {
+        name: []const u8,
+        value: []const u8,
+    };
+
+    pub fn deinit(self: *HttpResult, allocator: Allocator) void {
+        if (self.response_headers) |headers| {
+            for (headers) |header| {
+                allocator.free(header.name);
+                allocator.free(header.value);
+            }
+            allocator.free(headers);
+        }
+        if (self.response_body) |body| {
+            allocator.free(body);
+        }
+    }
 };

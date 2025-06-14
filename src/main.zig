@@ -28,12 +28,11 @@ pub fn main() !void {
             }
             discovered_files.deinit();
         }
-
         const found_files = try discovery.runDiscoveryMode(allocator, &discovered_files);
         if (found_files) {
-            try processor.processHttpFiles(allocator, discovered_files.items);
+            try processor.processHttpFiles(allocator, discovered_files.items, options.verbose);
         }
     } else {
-        try processor.processHttpFiles(allocator, options.files);
+        try processor.processHttpFiles(allocator, options.files, options.verbose);
     }
 }

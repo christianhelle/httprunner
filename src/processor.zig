@@ -9,7 +9,7 @@ const runner = @import("runner.zig");
 
 const HttpRequest = types.HttpRequest;
 
-pub fn processHttpFiles(allocator: Allocator, files: []const []const u8) !void {
+pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool) !void {
     var total_success_count: u32 = 0;
     var total_request_count: u32 = 0;
     var files_processed: u32 = 0;
@@ -47,13 +47,36 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8) !void {
 
         var success_count: u32 = 0;
         var request_count: u32 = 0;
-
         for (requests.items) |request| {
             request_count += 1;
-            const result = runner.executeHttpRequest(allocator, request) catch |err| {
+
+            if (verbose) {
+                print("\n{s}📤 Request Details:{s}\n", .{ colors.BLUE, colors.RESET });
+                print("Method: {s}\n", .{request.method});
+                print("URL: {s}\n", .{request.url});
+
+                if (request.headers.items.len > 0) {
+                    print("Headers:\n", .{});
+                    for (request.headers.items) |header| {
+                        print("  {s}: {s}\n", .{ header.name, header.value });
+                    }
+                }
+
+                if (request.body) |body| {
+                    print("Body:\n{s}\n", .{body});
+                }
+                print("{s}\n", .{"-" ** 30});
+            }
+
+            const result = runner.executeHttpRequest(allocator, request, verbose) catch |err| {
                 print("{s}❌ {s} {s} - Error: {}{s}\n", .{ colors.RED, request.method, request.url, err, colors.RESET });
                 continue;
             };
+            defer {
+                var mut_result = result;
+                mut_result.deinit(allocator);
+            }
+
             if (result.success) {
                 success_count += 1;
                 print("{s}✅ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
@@ -63,6 +86,24 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8) !void {
                 } else {
                     print("{s}❌ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.RED, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
                 }
+            }
+
+            if (verbose) {
+                print("\n{s}📥 Response Details:{s}\n", .{ colors.BLUE, colors.RESET });
+                print("Status: {}\n", .{result.status_code});
+                print("Duration: {}ms\n", .{result.duration_ms});
+
+                if (result.response_headers) |headers| {
+                    print("Headers:\n", .{});
+                    for (headers) |header| {
+                        print("  {s}: {s}\n", .{ header.name, header.value });
+                    }
+                }
+
+                if (result.response_body) |body| {
+                    print("Body:\n{s}\n", .{body});
+                }
+                print("{s}\n", .{"-" ** 30});
             }
         }
 
