@@ -49,5 +49,5 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: Artifacts
-        path: zig-out/bin/httprunner
+        name: httprunner-${{ matrix.os }}
+        path: zig-out/bin/httprunner*
