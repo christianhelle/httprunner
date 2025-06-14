@@ -58,13 +58,57 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     };
     defer req.deinit();
 
-    try req.send();
+    req.send() catch {
+        const end_time = std.time.nanoTimestamp();
+        const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
+        return HttpResult{
+            .status_code = 0,
+            .success = false,
+            .error_message = "Failed to send request",
+            .duration_ms = duration_ms,
+            .response_headers = null,
+            .response_body = null,
+        };
+    };
 
     if (request.body) |body| {
-        try req.writeAll(body);
+        req.writeAll(body) catch {
+            const end_time = std.time.nanoTimestamp();
+            const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
+            return HttpResult{
+                .status_code = 0,
+                .success = false,
+                .error_message = "Failed to write request body",
+                .duration_ms = duration_ms,
+                .response_headers = null,
+                .response_body = null,
+            };
+        };
     }
-    try req.finish();
-    try req.wait();
+    req.finish() catch {
+        const end_time = std.time.nanoTimestamp();
+        const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
+        return HttpResult{
+            .status_code = 0,
+            .success = false,
+            .error_message = "Failed to finish request",
+            .duration_ms = duration_ms,
+            .response_headers = null,
+            .response_body = null,
+        };
+    };
+    req.wait() catch {
+        const end_time = std.time.nanoTimestamp();
+        const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
+        return HttpResult{
+            .status_code = 0,
+            .success = false,
+            .error_message = "Failed to wait for response",
+            .duration_ms = duration_ms,
+            .response_headers = null,
+            .response_body = null,
+        };
+    };
     const end_time = std.time.nanoTimestamp();
     const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
 

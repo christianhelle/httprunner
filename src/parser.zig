@@ -18,8 +18,8 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
 
     var current_request: ?HttpRequest = null;
     var in_body = false;
-    var body_lines = std.ArrayList([]const u8).init(allocator);
-    defer body_lines.deinit();
+    var body_content = std.ArrayList(u8).init(allocator);
+    defer body_content.deinit();
 
     while (lines.next()) |line| {
         const trimmed = std.mem.trim(u8, line, " \t\r\n");
@@ -36,12 +36,11 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
             std.mem.startsWith(u8, trimmed, "PATCH "))
         {
             if (current_request) |*req| {
-                if (body_lines.items.len > 0) {
-                    const body = try std.mem.join(allocator, "\n", body_lines.items);
-                    req.body = body;
+                if (body_content.items.len > 0) {
+                    req.body = try allocator.dupe(u8, body_content.items);
                 }
                 try requests.append(req.*);
-                body_lines.clearRetainingCapacity();
+                body_content.clearRetainingCapacity();
             }
             var parts = std.mem.splitSequence(u8, trimmed, " ");
             const method = parts.next() orelse return error.InvalidRequest;
@@ -67,14 +66,16 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
             }
         } else {
             in_body = true;
-            try body_lines.append(try allocator.dupe(u8, trimmed));
+            if (body_content.items.len > 0) {
+                try body_content.append('\n');
+            }
+            try body_content.appendSlice(trimmed);
         }
     }
 
     if (current_request) |*req| {
-        if (body_lines.items.len > 0) {
-            const body = try std.mem.join(allocator, "\n", body_lines.items);
-            req.body = body;
+        if (body_content.items.len > 0) {
+            req.body = try allocator.dupe(u8, body_content.items);
         }
         try requests.append(req.*);
     }
