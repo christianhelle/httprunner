@@ -24,34 +24,15 @@ fn customPrint(log_file: ?std.fs.File, comptime fmt: []const u8, args: anytype) 
 fn createLogFile(allocator: Allocator, base_filename: []const u8) !?std.fs.File {
     if (base_filename.len == 0) return null;
 
-    // Using a simpler approach - get the current local time
-    var buffer: [128]u8 = undefined;
+    // Create a simple timestamp using seconds since epoch
+    const timestamp = @as(u64, @intCast(std.time.timestamp()));
 
-    // We're using hardcoded date from context, no need for timestamp
-
-    // Format timestamp (YYYY-MM-DD_HH-MM-SS)
-    const formatted = blk: {
-        // Get a timer to create somewhat unique timestamps
-        var timer = std.time.Timer.start() catch break :blk "_timestamp";
-        break :blk std.fmt.bufPrint(
-            &buffer,
-            "{d:0>4}-{d:0>2}-{d:0>2}_{d:0>2}-{d:0>2}-{d:0>2}",
-            .{
-                // Just use hardcoded date for now - in a real app, you'd use proper time conversion
-                2025, 6, 14, // Current date from context
-                timer.read() % 24, // Just use a random hour
-                timer.read() % 60, // Random minute
-                timer.read() % 60, // Random second
-            },
-        ) catch "_timestamp";
-    };
-
-    // Create filename with timestamp
-    const filename = try std.fmt.allocPrint(allocator, "{s}_{s}.log", .{ base_filename, formatted });
-    defer allocator.free(filename);
+    // Format filename with timestamp
+    const log_filename = try std.fmt.allocPrint(allocator, "{s}_{d}.log", .{ base_filename, timestamp });
+    defer allocator.free(log_filename);
 
     // Create and return the file
-    return try std.fs.cwd().createFile(filename, .{});
+    return try std.fs.cwd().createFile(log_filename, .{});
 }
 
 pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8) !void {

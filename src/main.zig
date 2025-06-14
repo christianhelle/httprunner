@@ -13,12 +13,14 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    const options = cli.CliOptions.parse(allocator, args) catch |err| {
+    var options = cli.CliOptions.parse(allocator, args) catch |err| {
         switch (err) {
             error.InvalidArguments => return,
             else => return err,
         }
     };
+    // Ensure we free allocated memory for CLI options
+    defer options.deinit();
 
     if (options.discover_mode) {
         var discovered_files = std.ArrayList([]const u8).init(allocator);
