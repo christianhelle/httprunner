@@ -128,7 +128,7 @@ fn getLogFilename(args: []const []const u8) ?[]const u8 {
 
 pub fn showUsage() void {
     print("{s}Usage:{s}\n", .{ colors.BLUE, colors.RESET });
-    print("  httprunner [--verbose] [--log [filename]] <http-file> [http-file2] [...]\n", .{});
+    print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] \n", .{});
     print("  httprunner [--verbose] [--log [filename]] --discover\n", .{});
     print("\n{s}Arguments:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  <http-file>    One or more .http files to process\n", .{});
