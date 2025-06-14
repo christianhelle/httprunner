@@ -1,22 +1,18 @@
-name: Build
+name: Build Windows
 
 on:
   push:
     paths:      
-      - '**/.zig'
+      - '**/*.zig'
       - 'build.zig'
-      - '.github/workflows/build.yml'
+      - '.github/workflows/build-windows.yml'
   pull_request:
     branches: [ main ]
 
 jobs:
-  build:
-    name: Build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        zig-version: ['0.14.0']
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
     
     steps:
     - name: Checkout code
@@ -25,7 +21,7 @@ jobs:
     - name: Setup Zig
       uses: goto-bus-stop/setup-zig@v2
       with:
-        version: ${{ matrix.zig-version }}
+        version: '0.14.0'
 
     - name: Cache Zig
       uses: actions/cache@v4
@@ -33,9 +29,9 @@ jobs:
         path: |
           ~/.cache/zig
           zig-cache
-        key: ${{ runner.os }}-zig-${{ matrix.zig-version }}-${{ hashFiles('build.zig', 'build.zig.zon') }}
+        key: windows-latest-zig-0.14.0-${{ hashFiles('build.zig', 'build.zig.zon') }}
         restore-keys: |
-          ${{ runner.os }}-zig-${{ matrix.zig-version }}-
+          windows-latest-zig-0.14.0-
 
     - name: Build
       run: zig build
@@ -49,5 +45,5 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: httprunner-${{ matrix.os }}
-        path: zig-out/bin/httprunner*
+        name: httprunner-windows
+        path: zig-out/bin/httprunner.exe
