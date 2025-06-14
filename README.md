@@ -579,20 +579,26 @@ The codebase is organized into multiple modules for better maintainability:
 
 ```text
 src/
-├── main.zig       # Main application logic and CLI interface
+├── main.zig       # Main application entry point and orchestration
+├── cli.zig        # Command-line interface parsing and options handling
 ├── types.zig      # Data structures (HttpRequest, HttpResult, etc.)
 ├── colors.zig     # ANSI color constants for terminal output
 ├── parser.zig     # HTTP file parsing functionality
-└── runner.zig     # HTTP request execution logic
+├── runner.zig     # HTTP request execution logic
+├── processor.zig  # Request processing and output management
+└── discovery.zig  # Recursive .http file discovery functionality
 ```
 
 ### Module Overview
 
+- **`main.zig`**: Application entry point that orchestrates the overall workflow
+- **`cli.zig`**: Handles command-line argument parsing and CLI options management
 - **`types.zig`**: Defines the core data structures including `HttpRequest` and `HttpResult`
 - **`colors.zig`**: Contains ANSI color codes for colored terminal output
 - **`parser.zig`**: Handles parsing of `.http` files into structured requests
 - **`runner.zig`**: Manages HTTP request execution and response handling
-- **`main.zig`**: Orchestrates the application flow and provides the CLI interface
+- **`processor.zig`**: Processes requests, manages logging, and handles output formatting
+- **`discovery.zig`**: Implements recursive file system traversal to discover `.http` files
 
 This modular structure makes the code easier to understand, test, and extend.
 
