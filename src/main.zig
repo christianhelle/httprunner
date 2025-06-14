@@ -30,9 +30,9 @@ pub fn main() !void {
         }
         const found_files = try discovery.runDiscoveryMode(allocator, &discovered_files);
         if (found_files) {
-            try processor.processHttpFiles(allocator, discovered_files.items, options.verbose);
+            try processor.processHttpFiles(allocator, discovered_files.items, options.verbose, options.log_file);
         }
     } else {
-        try processor.processHttpFiles(allocator, options.files, options.verbose);
+        try processor.processHttpFiles(allocator, options.files, options.verbose, options.log_file);
     }
 }
