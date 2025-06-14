@@ -34,6 +34,15 @@ Make sure you have Zig installed (version 0.14 or later).
 zig build
 ```
 
+### Option 3: Use Docker
+
+The httprunner is available as a Docker image on Docker Hub at `christianhelle/httprunner`.
+
+```bash
+# Pull the latest image
+docker pull christianhelle/httprunner
+```
+
 ## Usage
 
 ### If installed via Snap
@@ -111,6 +120,26 @@ Option 2: Set UTF-8 encoding manually
 # Run all files in a specific directory (using shell globbing)
 ./zig-out/bin/httprunner examples/*.http
 ```
+
+### If using Docker
+
+```bash
+# Run with a single .http file (mount current directory)
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file>
+
+# Run multiple .http files
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file1> <http-file2>
+
+# Discover and run all .http files in current directory
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner --discover
+
+# Alternative: Create an alias for easier usage
+alias httprunner='docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner'
+httprunner --discover
+httprunner examples/simple.http
+```
+
+**Note**: The Docker container mounts your current directory as `/app` in read-only mode to access your `.http` files. Make sure your `.http` files are in the current directory or subdirectories.
 
 ## .http File Format
 
