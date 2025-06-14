@@ -24,20 +24,12 @@ apps:
       - home
 
 parts:
-  zig:
-    plugin: nil
-    build-packages:
-      - curl
-      - xz-utils
-    override-build: |
-      snap install zig --classic --beta
-
   httprunner:
-    after: [zig]
     plugin: nil
     source: .
+    build-packages:
+      - libc6-dev
     override-build: |
-      export PATH="$SNAPCRAFT_STAGE/zig:$PATH"
       zig build -Doptimize=ReleaseFast
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
       cp zig-out/bin/httprunner $SNAPCRAFT_PART_INSTALL/bin/
