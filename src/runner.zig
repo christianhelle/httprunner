@@ -74,9 +74,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
 
     var response_headers: ?[]types.HttpResult.Header = null;
     var response_body: ?[]const u8 = null;
-
     if (verbose) {
-        // Capture response headers
         var headers_list = std.ArrayList(types.HttpResult.Header).init(allocator);
         var header_iter = req.response.iterateHeaders();
         while (header_iter.next()) |header| {
@@ -86,8 +84,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         }
         response_headers = try headers_list.toOwnedSlice();
 
-        // Capture response body
-        const body = try req.reader().readAllAlloc(allocator, 1024 * 1024); // 1MB limit
+        const body = try req.reader().readAllAlloc(allocator, 1024 * 1024);
         response_body = body;
     }
 

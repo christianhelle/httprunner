@@ -9,12 +9,10 @@ pub const CliOptions = struct {
     verbose: bool,
     log_file: ?[]const u8,
     files: []const []const u8,
-    allocator: ?Allocator, // Store allocator for later deallocation
+    allocator: ?Allocator,
 
     pub fn deinit(self: *CliOptions) void {
-        // Only free memory if we have an allocator and own allocated files
         if (self.allocator != null and self.files.len > 0) {
-            // Free the array itself
             self.allocator.?.free(self.files);
         }
     }
@@ -29,11 +27,9 @@ pub const CliOptions = struct {
         var verbose = false;
         var log_file: ?[]const u8 = null;
 
-        // For discovery mode, don't need files
         if (containsFlag(args, "--discover")) {
             discover_mode = true;
 
-            // Check for other flags
             verbose = containsFlag(args, "--verbose");
             log_file = getLogFilename(args);
 
@@ -42,51 +38,38 @@ pub const CliOptions = struct {
                 .verbose = verbose,
                 .log_file = log_file,
                 .files = &[_][]const u8{},
-                .allocator = null, // Empty array is static, no need to free
+                .allocator = null,
             };
         }
 
-        // Not discovery mode, collect files and flags
         verbose = containsFlag(args, "--verbose");
         log_file = getLogFilename(args);
 
-        // Files are any arguments not starting with -- and not following --log
         var files_list = std.ArrayList([]const u8).init(allocator);
         defer files_list.deinit();
-        // Collect all arguments that aren't flags or flag parameters
         var i: usize = 1;
         while (i < args.len) : (i += 1) {
             const arg = args[i];
 
-            // Skip flags without parameters
             if (std.mem.eql(u8, arg, "--discover") or
                 std.mem.eql(u8, arg, "--verbose"))
             {
                 continue;
-            }
-            // Skip --log and its parameter (if it has one)
-            else if (std.mem.eql(u8, arg, "--log")) {
-                // Skip the next argument only if it's not a flag (starts with --)
-                // and we're not at the end of args
+            } else if (std.mem.eql(u8, arg, "--log")) {
                 if (i + 1 < args.len and !std.mem.startsWith(u8, args[i + 1], "--")) {
-                    i += 1; // Skip the filename parameter
+                    i += 1;
                 }
                 continue;
-            }
-            // Must be a file
-            else {
+            } else {
                 try files_list.append(arg);
             }
         }
 
-        // Check if we have files
         if (files_list.items.len == 0) {
-            // No files provided
             showUsage();
             return error.InvalidArguments;
         }
 
-        // Copy the files to a new slice owned by the caller
         var files_owned = try allocator.alloc([]const u8, files_list.items.len);
         for (files_list.items, 0..) |file, idx| {
             files_owned[idx] = file;
@@ -97,7 +80,7 @@ pub const CliOptions = struct {
             .verbose = verbose,
             .log_file = log_file,
             .files = files_owned,
-            .allocator = allocator, // Store allocator for later cleanup
+            .allocator = allocator,
         };
     }
 };
@@ -115,7 +98,6 @@ fn getLogFilename(args: []const []const u8) ?[]const u8 {
     var i: usize = 1;
     while (i < args.len) : (i += 1) {
         if (std.mem.eql(u8, args[i], "--log")) {
-            // Default to "log" as the filename
             if (i + 1 >= args.len or std.mem.startsWith(u8, args[i + 1], "--")) {
                 return "log";
             } else {
@@ -123,7 +105,7 @@ fn getLogFilename(args: []const []const u8) ?[]const u8 {
             }
         }
     }
-    return null; // No log flag found
+    return null;
 }
 
 pub fn showUsage() void {
