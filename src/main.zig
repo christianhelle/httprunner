@@ -19,7 +19,6 @@ pub fn main() !void {
             else => return err,
         }
     };
-    // Ensure we free allocated memory for CLI options
     defer options.deinit();
 
     if (options.discover_mode) {
