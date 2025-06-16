@@ -4,7 +4,7 @@
 [![Build macOS](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml)
 [![Build Windows](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml)
 
-A simple command-line tool written in Zig that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
+A simple command-line tool written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
 ## Features
 
@@ -30,10 +30,10 @@ sudo snap install httprunner
 
 ### Option 2: Build from Source
 
-Make sure you have Zig installed (version 0.14 or later).
+Make sure you have Rust installed (latest stable version).
 
 ```bash
-zig build
+cargo build --release
 ```
 
 ### Option 3: Use Docker
@@ -97,129 +97,129 @@ Option 2: Set UTF-8 encoding manually
 
 ```pwsh
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-.\zig-out\bin\httprunner.exe <http-file>
+.\target\release\httprunner.exe <http-file>
 
 # Run with verbose output
-.\zig-out\bin\httprunner.exe <http-file> --verbose
+.\target\release\httprunner.exe <http-file> --verbose
 
 # Run and save output to a log file
-.\zig-out\bin\httprunner.exe <http-file> --log
+.\target\release\httprunner.exe <http-file> --log
 
 # Run with verbose output and save to a custom log file
-.\zig-out\bin\httprunner.exe <http-file> --verbose --log results.txt
+.\target\release\httprunner.exe <http-file> --verbose --log results.txt
 
 # Run multiple files
-.\zig-out\bin\httprunner.exe examples\simple.http examples\basic.http
+.\target\release\httprunner.exe examples\simple.http examples\basic.http
 
 # Run multiple files and log output
-.\zig-out\bin\httprunner.exe examples\simple.http examples\basic.http --log execution.log
+.\target\release\httprunner.exe examples\simple.http examples\basic.http --log execution.log
 
 # Discover all .http files
-.\zig-out\bin\httprunner.exe --discover
+.\target\release\httprunner.exe --discover
 
 # Discover all .http files with verbose output
-.\zig-out\bin\httprunner.exe --discover --verbose
+.\target\release\httprunner.exe --discover --verbose
 
 # Discover all .http files and save output to log
-.\zig-out\bin\httprunner.exe --discover --log discovery.log
+.\target\release\httprunner.exe --discover --log discovery.log
 
 # Discover all .http files with verbose output and logging
-.\zig-out\bin\httprunner.exe --discover --verbose --log detailed_results.txt
+.\target\release\httprunner.exe --discover --verbose --log detailed_results.txt
 ```
 
 ### Command Line
 
 ```bash
 # Run a single .http file
-./zig-out/bin/httprunner <http-file>
+./target/release/httprunner <http-file>
 
 # Run a single .http file with verbose output
-./zig-out/bin/httprunner <http-file> --verbose
+./target/release/httprunner <http-file> --verbose
 
 # Run a single .http file and save output to a log file
-./zig-out/bin/httprunner <http-file> --log
+./target/release/httprunner <http-file> --log
 
 # Run a single .http file with verbose output and save to a custom log file
-./zig-out/bin/httprunner <http-file> --verbose --log results.txt
+./target/release/httprunner <http-file> --verbose --log results.txt
 
 # Run multiple .http files
-./zig-out/bin/httprunner <http-file1> <http-file2> [...]
+./target/release/httprunner <http-file1> <http-file2> [...]
 
 # Run multiple .http files and log output
-./zig-out/bin/httprunner <http-file1> <http-file2> [...] --log execution.log
+./target/release/httprunner <http-file1> <http-file2> [...] --log execution.log
 
 # Discover and run all .http files recursively from current directory
-./zig-out/bin/httprunner --discover
+./target/release/httprunner --discover
 
 # Discover and run all .http files with verbose output
-./zig-out/bin/httprunner --discover --verbose
+./target/release/httprunner --discover --verbose
 
 # Discover and run all .http files and save output to log
-./zig-out/bin/httprunner --discover --log discovery.log
+./target/release/httprunner --discover --log discovery.log
 
 # Discover and run all .http files with verbose output and logging
-./zig-out/bin/httprunner --discover --verbose --log detailed_results.txt
+./target/release/httprunner --discover --verbose --log detailed_results.txt
 ```
 
 ### Examples
 
 ```bash
 # Test basic functionality
-./zig-out/bin/httprunner examples/simple.http
+./target/release/httprunner examples/simple.http
 
 # Test basic functionality with verbose output
-./zig-out/bin/httprunner examples/simple.http --verbose
+./target/release/httprunner examples/simple.http --verbose
 
 # Test basic functionality and save output to log
-./zig-out/bin/httprunner examples/simple.http --log
+./target/release/httprunner examples/simple.http --log
 
 # Test basic functionality with verbose output and custom log file
-./zig-out/bin/httprunner examples/simple.http --verbose --log simple_test.log
+./target/release/httprunner examples/simple.http --verbose --log simple_test.log
 
 # Test various APIs
-./zig-out/bin/httprunner examples/apis.http
+./target/release/httprunner examples/apis.http
 
 # Test various APIs and log results
-./zig-out/bin/httprunner examples/apis.http --log api_test.log
+./target/release/httprunner examples/apis.http --log api_test.log
 
 # Test different HTTP status codes
-./zig-out/bin/httprunner examples/status-codes.http
+./target/release/httprunner examples/status-codes.http
 
 # Test different HTTP status codes with verbose logging
-./zig-out/bin/httprunner examples/status-codes.http --verbose --log status_test.log
+./target/release/httprunner examples/status-codes.http --verbose --log status_test.log
 
 # Test basic GET requests
-./zig-out/bin/httprunner examples/basic.http
+./target/release/httprunner examples/basic.http
 
 # Run multiple files at once
-./zig-out/bin/httprunner examples/simple.http examples/quick.http
+./target/release/httprunner examples/simple.http examples/quick.http
 
 # Run multiple files with verbose output
-./zig-out/bin/httprunner examples/simple.http examples/quick.http --verbose
+./target/release/httprunner examples/simple.http examples/quick.http --verbose
 
 # Run multiple files and log output
-./zig-out/bin/httprunner examples/simple.http examples/quick.http --log multi_test.log
+./target/release/httprunner examples/simple.http examples/quick.http --log multi_test.log
 
 # Run multiple files with verbose output and logging
-./zig-out/bin/httprunner examples/simple.http examples/quick.http --verbose --log detailed_multi_test.log
+./target/release/httprunner examples/simple.http examples/quick.http --verbose --log detailed_multi_test.log
 
 # Discover and run all .http files in the project
-./zig-out/bin/httprunner --discover
+./target/release/httprunner --discover
 
 # Discover and run all .http files with verbose output
-./zig-out/bin/httprunner --discover --verbose
+./target/release/httprunner --discover --verbose
 
 # Discover and run all .http files and save output to log
-./zig-out/bin/httprunner --discover --log discovery.log
+./target/release/httprunner --discover --log discovery.log
 
 # Discover and run all .http files with verbose output and logging
-./zig-out/bin/httprunner --discover --verbose --log full_discovery.log
+./target/release/httprunner --discover --verbose --log full_discovery.log
 
 # Run all files in a specific directory (using shell globbing)
-./zig-out/bin/httprunner examples/*.http
+./target/release/httprunner examples/*.http
 
 # Run all files in a specific directory and log output
-./zig-out/bin/httprunner examples/*.http --log examples_test.log
+./target/release/httprunner examples/*.http --log examples_test.log
 ```
 
 ### If using Docker
@@ -392,40 +392,40 @@ Here are common scenarios for using the `--log` functionality:
 
 ```bash
 # Save output to default 'log' file
-./zig-out/bin/httprunner examples/simple.http --log
+./target/release/httprunner examples/simple.http --log
 
 # Save output to custom file
-./zig-out/bin/httprunner examples/apis.http --log api_test_results.txt
+./target/release/httprunner examples/apis.http --log api_test_results.txt
 ```
 
 **Verbose Logging for Debugging:**
 
 ```bash
 # Detailed logging for debugging API issues
-./zig-out/bin/httprunner examples/status-codes.http --verbose --log debug_session.log
+./target/release/httprunner examples/status-codes.http --verbose --log debug_session.log
 
 # Log discovery results with full details
-./zig-out/bin/httprunner --discover --verbose --log full_discovery.log
+./target/release/httprunner --discover --verbose --log full_discovery.log
 ```
 
 **CI/CD Integration:**
 
 ```bash
 # Generate test reports for build systems
-./zig-out/bin/httprunner --discover --log test_report_$(date +%Y%m%d_%H%M%S).log
+./target/release/httprunner --discover --log test_report_$(date +%Y%m%d_%H%M%S).log
 
 # Daily API health checks
-./zig-out/bin/httprunner examples/apis.http --verbose --log daily_health_check.log
+./target/release/httprunner examples/apis.http --verbose --log daily_health_check.log
 ```
 
 **Performance Monitoring:**
 
 ```bash
 # Track API performance over time
-./zig-out/bin/httprunner examples/comprehensive.http --verbose --log performance_$(date +%Y%m%d).log
+./target/release/httprunner examples/comprehensive.http --verbose --log performance_$(date +%Y%m%d).log
 
 # Load testing documentation
-./zig-out/bin/httprunner examples/*.http --log load_test_results.log
+./target/release/httprunner examples/*.http --log load_test_results.log
 ```
 
 **Example Log File Output:**
@@ -577,26 +577,26 @@ The codebase is organized into multiple modules for better maintainability:
 
 ```text
 src/
-├── main.zig       # Main application entry point and orchestration
-├── cli.zig        # Command-line interface parsing and options handling
-├── types.zig      # Data structures (HttpRequest, HttpResult, etc.)
-├── colors.zig     # ANSI color constants for terminal output
-├── parser.zig     # HTTP file parsing functionality
-├── runner.zig     # HTTP request execution logic
-├── processor.zig  # Request processing and output management
-└── discovery.zig  # Recursive .http file discovery functionality
+├── main.rs        # Main application entry point and orchestration  
+├── cli.rs         # Command-line interface parsing and options handling
+├── types.rs       # Data structures (HttpRequest, HttpResult, etc.)
+├── parser.rs      # HTTP file parsing functionality
+├── runner.rs      # HTTP request execution logic
+├── processor.rs   # Request processing and output management
+├── discovery.rs   # Recursive .http file discovery functionality
+└── log.rs         # Logging functionality
 ```
 
 ### Module Overview
 
-- **`main.zig`**: Application entry point that orchestrates the overall workflow
-- **`cli.zig`**: Handles command-line argument parsing and CLI options management
-- **`types.zig`**: Defines the core data structures including `HttpRequest` and `HttpResult`
-- **`colors.zig`**: Contains ANSI color codes for colored terminal output
-- **`parser.zig`**: Handles parsing of `.http` files into structured requests
-- **`runner.zig`**: Manages HTTP request execution and response handling
-- **`processor.zig`**: Processes requests, manages logging, and handles output formatting
-- **`discovery.zig`**: Implements recursive file system traversal to discover `.http` files
+- **`main.rs`**: Application entry point that orchestrates the overall workflow
+- **`cli.rs`**: Handles command-line argument parsing and CLI options management using clap
+- **`types.rs`**: Defines the core data structures including `HttpRequest` and `HttpResult`
+- **`parser.rs`**: Handles parsing of `.http` files into structured requests
+- **`runner.rs`**: Manages HTTP request execution and response handling using reqwest
+- **`processor.rs`**: Processes requests, manages logging, and handles output formatting with colored output
+- **`discovery.rs`**: Implements recursive file system traversal to discover `.http` files using walkdir
+- **`log.rs`**: Provides logging functionality with timestamped file output
 
 This modular structure makes the code easier to understand, test, and extend.
 

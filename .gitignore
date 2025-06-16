@@ -1,6 +1,6 @@
-# Zig build artifacts
-zig-out/
-zig-cache/
+# Rust build artifacts
+target/
+Cargo.lock
 
 # OS generated files
 .DS_Store
@@ -65,5 +65,4 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
-.zig-cache
 *.snap
