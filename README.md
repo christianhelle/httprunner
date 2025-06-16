@@ -19,6 +19,7 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 📝 Custom headers support (parsing implemented, execution pending)
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
+- 🔍 **Response assertions** for status codes, body content, and headers
 
 ## Installation
 
@@ -290,6 +291,59 @@ Content-Type: application/json
   "value": 123
 }
 ```
+
+## Response Assertions
+
+The HTTP File Runner supports assertions to validate HTTP responses. You can assert on status codes, response body content, and response headers.
+
+### Assertion Syntax
+
+- **`EXPECTED_RESPONSE_STATUS`** - Assert on HTTP status code
+- **`EXPECTED_RESPONSE_BODY`** - Assert that response body contains specific text
+- **`EXPECTED_RESPONSE_HEADERS`** - Assert that response headers contain specific header-value pairs
+
+### Assertion Examples
+
+```http
+# Status code assertion
+GET https://httpbin.org/status/200
+
+EXPECTED_RESPONSE_STATUS 200
+
+# Status code and response body assertion
+GET https://httpbin.org/status/404
+
+EXPECTED_RESPONSE_STATUS 404
+EXPECTED_RESPONSE_BODY "Not Found"
+
+# Response header assertion
+GET https://httpbin.org/json
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
+
+# Multiple assertions on the same request
+GET https://httpbin.org/json
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "slideshow"
+EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
+```
+
+### Assertion Behavior
+
+- ✅ **Status Code**: Exact match with expected HTTP status code
+- ✅ **Response Body**: Checks if response body contains the expected text (substring match)
+- ✅ **Response Headers**: Checks if the specified header exists and contains the expected value (substring match)
+- 🔍 **Assertion Results**: Detailed output shows which assertions passed/failed
+- ⚠️ **Request Success**: A request is considered successful only if all assertions pass (in addition to 2xx status code)
+
+When assertions are present, the HTTP runner will:
+
+1. Always capture response headers and body (even in non-verbose mode)
+2. Evaluate all assertions against the response
+3. Display detailed assertion results
+4. Mark the request as failed if any assertion fails
 
 ### Supported Features
 
