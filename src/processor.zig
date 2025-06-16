@@ -87,7 +87,11 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
 
             if (result.success) {
                 success_count += 1;
-                log.write("{s}✅ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
+                if (request.assertions.items.len > 0) {
+                    log.write("{s}✅ {s} {s} - Status: {} - {}ms - All assertions passed{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
+                } else {
+                    log.write("{s}✅ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
+                }
             } else {
                 if (result.error_message) |msg| {
                     log.write("{s}❌ {s} {s} - Status: {} - {}ms - Error: {s}{s}\n", .{ colors.RED, request.method, request.url, result.status_code, result.duration_ms, msg, colors.RESET });
@@ -96,20 +100,25 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
                 }
             }
 
-            if (verbose) {
-                log.write("\n{s}📥 Response Details:{s}\n", .{ colors.BLUE, colors.RESET });
-                log.write("Status: {}\n", .{result.status_code});
-                log.write("Duration: {}ms\n", .{result.duration_ms});
+            // Display assertion results
+            if (request.assertions.items.len > 0) {
+                log.write("\n{s}🔍 Assertion Results:{s}\n", .{ colors.BLUE, colors.RESET });
+                for (result.assertion_results.items) |assertion_result| {
+                    const assertion_type_str = switch (assertion_result.assertion.type) {
+                        .response_status => "Status Code",
+                        .response_body => "Response Body",
+                        .response_headers => "Response Headers",
+                    };
 
-                if (result.response_headers) |headers| {
-                    log.write("Headers:\n", .{});
-                    for (headers) |header| {
-                        log.write("  {s}: {s}\n", .{ header.name, header.value });
+                    if (assertion_result.passed) {
+                        log.write("{s}  ✅ {s}: Expected '{s}'{s}\n", .{ colors.GREEN, assertion_type_str, assertion_result.assertion.expected_value, colors.RESET });
+                    } else {
+                        log.write("{s}  ❌ {s}: {s}{s}\n", .{ colors.RED, assertion_type_str, assertion_result.error_message orelse "Failed", colors.RESET });
+                        if (assertion_result.actual_value) |actual| {
+                            log.write("{s}     Expected: '{s}'{s}\n", .{ colors.YELLOW, assertion_result.assertion.expected_value, colors.RESET });
+                            log.write("{s}     Actual: '{s}'{s}\n", .{ colors.YELLOW, actual, colors.RESET });
+                        }
                     }
-                }
-
-                if (result.response_body) |body| {
-                    log.write("Body:\n{s}\n", .{body});
                 }
                 log.write("{s}\n", .{"-" ** 30});
             }
