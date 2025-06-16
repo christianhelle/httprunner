@@ -6,6 +6,7 @@ pub const HttpRequest = struct {
     url: []const u8,
     headers: std.ArrayList(Header),
     body: ?[]const u8,
+    assertions: std.ArrayList(Assertion),
 
     pub const Header = struct {
         name: []const u8,
@@ -25,6 +26,42 @@ pub const HttpRequest = struct {
         if (self.body) |body| {
             allocator.free(body);
         }
+
+        for (self.assertions.items) |assertion| {
+            assertion.deinit(allocator);
+        }
+        self.assertions.deinit();
+    }
+};
+
+pub const Assertion = struct {
+    type: AssertionType,
+    expected_value: []const u8,
+
+    pub const AssertionType = enum {
+        response_status,
+        response_body,
+        response_headers,
+    };
+
+    pub fn deinit(self: Assertion, allocator: Allocator) void {
+        allocator.free(self.expected_value);
+    }
+};
+
+pub const AssertionResult = struct {
+    assertion: Assertion,
+    passed: bool,
+    actual_value: ?[]const u8,
+    error_message: ?[]const u8,
+
+    pub fn deinit(self: *AssertionResult, allocator: Allocator) void {
+        if (self.actual_value) |value| {
+            allocator.free(value);
+        }
+        if (self.error_message) |msg| {
+            allocator.free(msg);
+        }
     }
 };
 
@@ -35,6 +72,7 @@ pub const HttpResult = struct {
     duration_ms: u64,
     response_headers: ?[]Header,
     response_body: ?[]const u8,
+    assertion_results: std.ArrayList(AssertionResult),
 
     pub const Header = struct {
         name: []const u8,
@@ -52,5 +90,10 @@ pub const HttpResult = struct {
         if (self.response_body) |body| {
             allocator.free(body);
         }
+
+        for (self.assertion_results.items) |*result| {
+            result.deinit(allocator);
+        }
+        self.assertion_results.deinit();
     }
 };
