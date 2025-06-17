@@ -18,7 +18,6 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
     _ = try file.readAll(content);
     var requests = std.ArrayList(HttpRequest).init(allocator);
 
-    // Load environment variables first
     var env_variables = environment.loadEnvironmentFile(allocator, file_path, environment_name) catch blk: {
         // If environment loading fails, continue without environment variables
         break :blk std.ArrayList(Variable).init(allocator);
@@ -38,7 +37,6 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
         variables.deinit();
     }
 
-    // Copy environment variables to the main variables list
     for (env_variables.items) |env_var| {
         try variables.append(.{
             .name = try allocator.dupe(u8, env_var.name),
@@ -65,11 +63,9 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
 
                 const substituted_value = try substituteVariables(allocator, var_value, variables.items);
 
-                // Check if variable already exists (from environment) and update it
                 var found = false;
                 for (variables.items) |*variable| {
                     if (std.mem.eql(u8, variable.name, var_name)) {
-                        // Free the old value and replace with new one
                         allocator.free(variable.value);
                         variable.value = substituted_value;
                         found = true;
@@ -77,7 +73,6 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                     }
                 }
 
-                // If not found, add as new variable
                 if (!found) {
                     try variables.append(.{
                         .name = try allocator.dupe(u8, var_name),
