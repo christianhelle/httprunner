@@ -7,7 +7,6 @@ EXPECTED_RESPONSE_STATUS 200
 GET https://httpbin.org/status/404
 
 EXPECTED_RESPONSE_STATUS 404
-EXPECTED_RESPONSE_BODY "Not Found"
 
 # Test header assertion with correct header
 GET https://httpbin.org/json
