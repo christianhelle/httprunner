@@ -29,7 +29,6 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
             continue;
         }
 
-        // Check for assertion directives
         if (std.mem.startsWith(u8, trimmed, "EXPECTED_RESPONSE_STATUS ")) {
             if (current_request) |*req| {
                 const status_str = std.mem.trim(u8, trimmed[25..], " \t");
@@ -42,7 +41,6 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
         } else if (std.mem.startsWith(u8, trimmed, "EXPECTED_RESPONSE_BODY ")) {
             if (current_request) |*req| {
                 var body_value = std.mem.trim(u8, trimmed[23..], " \t");
-                // Remove surrounding quotes if present
                 if (body_value.len >= 2 and body_value[0] == '"' and body_value[body_value.len - 1] == '"') {
                     body_value = body_value[1 .. body_value.len - 1];
                 }
@@ -55,7 +53,6 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
         } else if (std.mem.startsWith(u8, trimmed, "EXPECTED_RESPONSE_HEADERS ")) {
             if (current_request) |*req| {
                 var headers_value = std.mem.trim(u8, trimmed[26..], " \t");
-                // Remove surrounding quotes if present
                 if (headers_value.len >= 2 and headers_value[0] == '"' and headers_value[headers_value.len - 1] == '"') {
                     headers_value = headers_value[1 .. headers_value.len - 1];
                 }

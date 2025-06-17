@@ -80,7 +80,6 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     var response_headers: ?[]types.HttpResult.Header = null;
     var response_body: ?[]const u8 = null;
 
-    // Always capture headers and body if we have assertions or if verbose mode is enabled
     if (verbose or has_assertions) {
         var headers_list = std.ArrayList(types.HttpResult.Header).init(allocator);
         var header_iter = req.response.iterateHeaders();
@@ -95,7 +94,6 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         response_body = body;
     }
 
-    // Evaluate assertions
     var assertion_results = std.ArrayList(types.AssertionResult).init(allocator);
     if (has_assertions) {
         const temp_result = HttpResult{
@@ -110,7 +108,6 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
 
         assertion_results = try assertions.evaluateAssertions(allocator, request.assertions.items, &temp_result);
 
-        // Update success based on assertion results
         var all_assertions_passed = true;
         for (assertion_results.items) |result| {
             if (!result.passed) {
