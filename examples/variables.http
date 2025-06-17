@@ -1,0 +1,14 @@
+@host=httpbin.org
+@protocol=https
+@baseUrl={{protocol}}://{{host}}
+
+GET {{baseUrl}}/get
+User-Agent: HttpRunner/1.0
+
+POST {{baseUrl}}/post
+Content-Type: application/json
+
+{
+  "message": "Hello from {{host}}!",
+  "url": "{{baseUrl}}/test"
+}
