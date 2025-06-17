@@ -2,6 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 
 const cli = @import("cli.zig");
+const colors = @import("colors.zig");
 const discovery = @import("discovery.zig");
 const processor = @import("processor.zig");
 
@@ -34,9 +35,17 @@ pub fn main() !void {
         }
         const found_files = try discovery.runDiscoveryMode(allocator, &discovered_files);
         if (found_files) {
-            try processor.processHttpFiles(allocator, discovered_files.items, options.verbose, options.log_file, options.environment);
+            try processHttpFiles(allocator, discovered_files.items, options.verbose, options.log_file, options.environment);
         }
     } else {
-        try processor.processHttpFiles(allocator, options.files, options.verbose, options.log_file, options.environment);
+        try processHttpFiles(allocator, options.files, options.verbose, options.log_file, options.environment);
+    }
+}
+
+fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8) !void {
+    if (try processor.processHttpFiles(allocator, files, verbose, log_filename, environment)) {
+        std.debug.print("{s}✅ All discovered files processed successfully{s}\n", .{ colors.GREEN, colors.RESET });
+    } else {
+        std.debug.print("{s}❌ Some discovered files failed to process{s}\n", .{ colors.RED, colors.RESET });
     }
 }
