@@ -66,9 +66,11 @@ pub const CliOptions = struct {
                 }
                 continue;
             } else if (std.mem.eql(u8, arg, "--env")) {
-                if (i + 1 < args.len and !std.mem.startsWith(u8, args[i + 1], "--")) {
-                    i += 1;
+                if (i + 1 >= args.len or std.mem.startsWith(u8, args[i + 1], "--")) {
+                    showUsage();
+                    return error.InvalidArguments;
                 }
+                i += 1;
                 continue;
             } else {
                 try files_list.append(arg);
