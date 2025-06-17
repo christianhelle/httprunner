@@ -345,6 +345,65 @@ GET {{baseUrl}}/api/search/tool
 
 **Note:** Variables must be defined before they can be used. The order of definition matters.
 
+## Environment Files
+
+To give variables different values in different environments, create a file named `http-client.env.json`. This file should be located in the same directory as the `.http` file or in one of its parent directories.
+
+### Environment File Format
+
+The environment file is a JSON file that contains one or more named environments. Here's an example:
+
+```json
+{
+  "dev": {
+    "HostAddress": "https://localhost:44320",
+    "ApiKey": "dev-api-key-123",
+    "Environment": "development"
+  },
+  "staging": {
+    "HostAddress": "https://staging.contoso.com",
+    "ApiKey": "staging-api-key-456",
+    "Environment": "staging"
+  },
+  "prod": {
+    "HostAddress": "https://contoso.com",
+    "ApiKey": "prod-api-key-789", 
+    "Environment": "production"
+  }
+}
+```
+
+### Using Environment Variables
+
+Variables from an environment file are referenced the same way as other variables:
+
+```http
+# This will use the HostAddress from the specified environment
+GET {{HostAddress}}/api/search/tool
+Authorization: Bearer {{ApiKey}}
+X-Environment: {{Environment}}
+```
+
+### Specifying Environment
+
+Use the `--env` flag to specify which environment to use:
+
+```bash
+# Use development environment
+httprunner myfile.http --env dev
+
+# Use production environment  
+httprunner myfile.http --env prod
+```
+
+### Variable Override Behavior
+
+If a variable is defined in both the `.http` file and the environment file:
+
+- **Environment variables** are loaded first
+- **Variables in .http file** override environment variables with the same name
+- This allows you to have environment defaults while still being able to override them per request file
+
 ## Response Assertions
 
 The HTTP File Runner supports assertions to validate HTTP responses. You can assert on status codes, response body content, and response headers.
