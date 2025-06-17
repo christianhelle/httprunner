@@ -1,11 +1,12 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const types = @import("types.zig");
+const environment = @import("environment.zig");
 const HttpRequest = types.HttpRequest;
 const Assertion = types.Assertion;
 const Variable = types.Variable;
 
-pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList(HttpRequest) {
+pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_name: ?[]const u8) !std.ArrayList(HttpRequest) {
     const file = std.fs.cwd().openFile(file_path, .{}) catch |err| {
         return err;
     };
@@ -16,12 +17,33 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
     defer allocator.free(content);
     _ = try file.readAll(content);
     var requests = std.ArrayList(HttpRequest).init(allocator);
+
+    // Load environment variables first
+    var env_variables = environment.loadEnvironmentFile(allocator, file_path, environment_name) catch blk: {
+        // If environment loading fails, continue without environment variables
+        break :blk std.ArrayList(Variable).init(allocator);
+    };
+    defer {
+        for (env_variables.items) |variable| {
+            variable.deinit(allocator);
+        }
+        env_variables.deinit();
+    }
+
     var variables = std.ArrayList(Variable).init(allocator);
     defer {
         for (variables.items) |variable| {
             variable.deinit(allocator);
         }
         variables.deinit();
+    }
+
+    // Copy environment variables to the main variables list
+    for (env_variables.items) |env_var| {
+        try variables.append(.{
+            .name = try allocator.dupe(u8, env_var.name),
+            .value = try allocator.dupe(u8, env_var.value),
+        });
     }
     var lines = std.mem.splitSequence(u8, content, "\n");
 
@@ -43,10 +65,25 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8) !std.ArrayList
 
                 const substituted_value = try substituteVariables(allocator, var_value, variables.items);
 
-                try variables.append(.{
-                    .name = try allocator.dupe(u8, var_name),
-                    .value = substituted_value,
-                });
+                // Check if variable already exists (from environment) and update it
+                var found = false;
+                for (variables.items) |*variable| {
+                    if (std.mem.eql(u8, variable.name, var_name)) {
+                        // Free the old value and replace with new one
+                        allocator.free(variable.value);
+                        variable.value = substituted_value;
+                        found = true;
+                        break;
+                    }
+                }
+
+                // If not found, add as new variable
+                if (!found) {
+                    try variables.append(.{
+                        .name = try allocator.dupe(u8, var_name),
+                        .value = substituted_value,
+                    });
+                }
             }
             continue;
         }
