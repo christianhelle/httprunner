@@ -11,7 +11,7 @@ const Log = @import("log.zig").Log;
 
 const HttpRequest = types.HttpRequest;
 
-pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8) !void {
+pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8) !bool {
     var log = Log.init(allocator, log_filename) catch |err| {
         print("{s}❌ Error initializing log: {}{s}\n", .{ colors.RED, err, colors.RESET });
         return err;
@@ -131,4 +131,6 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
         log.write("Files processed: {}\n", .{files_processed});
         log.write("Total requests: {s}{}{s}/{}\n", .{ if (total_success_count == total_request_count) colors.GREEN else if (total_success_count > 0) colors.YELLOW else colors.RED, total_success_count, colors.RESET, total_request_count });
     }
+
+    return total_success_count == total_request_count;
 }
