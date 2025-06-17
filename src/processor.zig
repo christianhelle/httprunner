@@ -129,7 +129,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
     if (files_processed > 1) {
         log.write("{s}🎯 Overall Summary:{s}\n", .{ colors.BLUE, colors.RESET });
         log.write("Files processed: {}\n", .{files_processed});
-        log.write("Total requests: {s}{}{s}/{}\n", .{ if (total_success_count == total_request_count) colors.GREEN else if (total_success_count > 0) colors.YELLOW else colors.RED, total_success_count, colors.RESET, total_request_count });
+        log.write("Total requests: {s}{}{s}/{}\n\n", .{ if (total_success_count == total_request_count) colors.GREEN else if (total_success_count > 0) colors.YELLOW else colors.RED, total_success_count, colors.RESET, total_request_count });
     }
 
     return total_success_count == total_request_count;
