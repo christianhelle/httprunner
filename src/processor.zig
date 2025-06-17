@@ -11,7 +11,7 @@ const Log = @import("log.zig").Log;
 
 const HttpRequest = types.HttpRequest;
 
-pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8) !void {
+pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8) !void {
     var log = Log.init(allocator, log_filename) catch |err| {
         print("{s}❌ Error initializing log: {}{s}\n", .{ colors.RED, err, colors.RESET });
         return err;
@@ -26,7 +26,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
         log.write("{s}🚀 HTTP File Runner - Processing file: {s}{s}\n", .{ colors.BLUE, http_file, colors.RESET });
         log.write("{s}\n", .{"=" ** 50});
 
-        const requests = parser.parseHttpFile(allocator, http_file) catch |err| {
+        const requests = parser.parseHttpFile(allocator, http_file, environment) catch |err| {
             switch (err) {
                 error.FileNotFound => {
                     log.write("{s}❌ Error: File '{s}' not found{s}\n", .{ colors.RED, http_file, colors.RESET });
