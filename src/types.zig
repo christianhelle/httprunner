@@ -1,12 +1,23 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
+pub const Variable = struct {
+    name: []const u8,
+    value: []const u8,
+
+    pub fn deinit(self: Variable, allocator: Allocator) void {
+        allocator.free(self.name);
+        allocator.free(self.value);
+    }
+};
+
 pub const HttpRequest = struct {
     method: []const u8,
     url: []const u8,
     headers: std.ArrayList(Header),
     body: ?[]const u8,
     assertions: std.ArrayList(Assertion),
+    variables: std.ArrayList(Variable),
 
     pub const Header = struct {
         name: []const u8,
@@ -31,6 +42,11 @@ pub const HttpRequest = struct {
             assertion.deinit(allocator);
         }
         self.assertions.deinit();
+
+        for (self.variables.items) |variable| {
+            variable.deinit(allocator);
+        }
+        self.variables.deinit();
     }
 };
 
