@@ -20,6 +20,7 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
 - 🔍 **Response assertions** for status codes, body content, and headers
+- 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 
 ## Installation
 
@@ -291,6 +292,58 @@ Content-Type: application/json
   "value": 123
 }
 ```
+
+## Variables
+
+The HTTP File Runner supports variables to make your .http files more flexible and reusable. Variables are defined using the `@` syntax and can be referenced using double curly braces `{{variable_name}}`.
+
+### Variable Definition
+
+Variables are defined at the beginning of a line with the syntax `@VariableName=Value`:
+
+```http
+@hostname=localhost
+@port=8080
+@protocol=https
+```
+
+### Variable Usage
+
+Variables can be referenced in URLs, headers, and request bodies using double curly braces:
+
+```http
+@hostname=localhost
+@port=44320
+GET https://{{hostname}}:{{port}}/
+
+# Request with variable in headers
+GET https://{{hostname}}:{{port}}/api/users
+Authorization: Bearer {{token}}
+
+# Request with variables in body
+POST https://{{hostname}}:{{port}}/api/users
+Content-Type: application/json
+
+{
+  "host": "{{hostname}}",
+  "endpoint": "https://{{hostname}}:{{port}}/profile"
+}
+```
+
+### Variable Composition
+
+Variables can be defined using values of other variables that were defined earlier in the file:
+
+```http
+@hostname=localhost
+@port=44320
+@host={{hostname}}:{{port}}
+@baseUrl=https://{{host}}
+
+GET {{baseUrl}}/api/search/tool
+```
+
+**Note:** Variables must be defined before they can be used. The order of definition matters.
 
 ## Response Assertions
 
