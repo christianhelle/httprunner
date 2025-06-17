@@ -51,7 +51,6 @@ pub fn loadEnvironmentFile(allocator: Allocator, http_file_path: []const u8, env
         config.deinit(allocator);
     }
 
-    // Get variables for the specified environment
     if (env_config.environments.get(environment_name.?)) |env_vars| {
         var iterator = env_vars.iterator();
         while (iterator.next()) |entry| {
@@ -66,7 +65,6 @@ pub fn loadEnvironmentFile(allocator: Allocator, http_file_path: []const u8, env
 }
 
 fn findEnvironmentFile(allocator: Allocator, http_file_path: []const u8) !?[]const u8 {
-    // Start from the directory containing the .http file
     const dirname = std.fs.path.dirname(http_file_path) orelse ".";
 
     var current_dir = try allocator.dupe(u8, dirname);
@@ -76,14 +74,11 @@ fn findEnvironmentFile(allocator: Allocator, http_file_path: []const u8) !?[]con
         const env_file_path = try std.fs.path.join(allocator, &[_][]const u8{ current_dir, "http-client.env.json" });
         defer allocator.free(env_file_path);
 
-        // Check if the file exists
         if (std.fs.cwd().access(env_file_path, .{})) |_| {
             return try allocator.dupe(u8, env_file_path);
         } else |_| {
-            // File doesn't exist, try parent directory
             const parent_dir = std.fs.path.dirname(current_dir);
             if (parent_dir == null or std.mem.eql(u8, parent_dir.?, current_dir)) {
-                // Reached root directory
                 break;
             }
 
@@ -128,7 +123,7 @@ fn parseEnvironmentFile(allocator: Allocator, file_path: []const u8) !Environmen
                 const var_name = try allocator.dupe(u8, var_entry.key_ptr.*);
                 const var_value = switch (var_entry.value_ptr.*) {
                     .string => |s| try allocator.dupe(u8, s),
-                    else => try allocator.dupe(u8, ""), // Convert non-strings to empty string
+                    else => try allocator.dupe(u8, ""),
                 };
                 try env_vars.put(var_name, var_value);
             }
