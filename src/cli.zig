@@ -8,6 +8,7 @@ pub const CliOptions = struct {
     discover_mode: bool,
     verbose: bool,
     log_file: ?[]const u8,
+    environment: ?[]const u8,
     files: []const []const u8,
     allocator: ?Allocator,
 
@@ -26,17 +27,20 @@ pub const CliOptions = struct {
         var discover_mode = false;
         var verbose = false;
         var log_file: ?[]const u8 = null;
+        var environment: ?[]const u8 = null;
 
         if (containsFlag(args, "--discover")) {
             discover_mode = true;
 
             verbose = containsFlag(args, "--verbose");
             log_file = getLogFilename(args);
+            environment = getEnvironment(args);
 
             return CliOptions{
                 .discover_mode = true,
                 .verbose = verbose,
                 .log_file = log_file,
+                .environment = environment,
                 .files = &[_][]const u8{},
                 .allocator = null,
             };
@@ -44,6 +48,7 @@ pub const CliOptions = struct {
 
         verbose = containsFlag(args, "--verbose");
         log_file = getLogFilename(args);
+        environment = getEnvironment(args);
 
         var files_list = std.ArrayList([]const u8).init(allocator);
         defer files_list.deinit();
@@ -56,6 +61,11 @@ pub const CliOptions = struct {
             {
                 continue;
             } else if (std.mem.eql(u8, arg, "--log")) {
+                if (i + 1 < args.len and !std.mem.startsWith(u8, args[i + 1], "--")) {
+                    i += 1;
+                }
+                continue;
+            } else if (std.mem.eql(u8, arg, "--env")) {
                 if (i + 1 < args.len and !std.mem.startsWith(u8, args[i + 1], "--")) {
                     i += 1;
                 }
@@ -79,6 +89,7 @@ pub const CliOptions = struct {
             .discover_mode = discover_mode,
             .verbose = verbose,
             .log_file = log_file,
+            .environment = environment,
             .files = files_owned,
             .allocator = allocator,
         };
@@ -108,13 +119,28 @@ fn getLogFilename(args: []const []const u8) ?[]const u8 {
     return null;
 }
 
+fn getEnvironment(args: []const []const u8) ?[]const u8 {
+    var i: usize = 1;
+    while (i < args.len) : (i += 1) {
+        if (std.mem.eql(u8, args[i], "--env")) {
+            if (i + 1 >= args.len or std.mem.startsWith(u8, args[i + 1], "--")) {
+                return null;
+            } else {
+                return args[i + 1];
+            }
+        }
+    }
+    return null;
+}
+
 pub fn showUsage() void {
     print("{s}Usage:{s}\n", .{ colors.BLUE, colors.RESET });
-    print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] \n", .{});
-    print("  httprunner [--verbose] [--log [filename]] --discover\n", .{});
+    print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]\n", .{});
+    print("  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover\n", .{});
     print("\n{s}Arguments:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  <http-file>    One or more .http files to process\n", .{});
     print("  --discover     Recursively discover and process all .http files from current directory\n", .{});
     print("  --verbose      Show detailed HTTP request and response information\n", .{});
     print("  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)\n", .{});
+    print("  --env <env>    Specify environment name to load variables from http-client.env.json\n", .{});
 }
