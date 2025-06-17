@@ -7,6 +7,7 @@ const HttpResult = types.HttpResult;
 
 pub fn evaluateAssertions(allocator: Allocator, assertions: []const Assertion, result: *const HttpResult) !std.ArrayList(AssertionResult) {
     var assertion_results = std.ArrayList(AssertionResult).init(allocator);
+    errdefer assertion_results.deinit();
 
     for (assertions) |assertion| {
         const assertion_result = try evaluateAssertion(allocator, assertion, result);
