@@ -1,0 +1,24 @@
+# Environment Variables Example
+# This file demonstrates how to use environment variables
+
+@DefaultHost=httpbin.org
+
+# Simple requests using environment variables
+GET https://{{HostAddress}}/api/search/tool
+Accept: application/json
+X-Environment: {{Environment}}
+
+# Request using both environment and local variables
+GET https://{{HostAddress}}/status/200
+Authorization: Bearer {{ApiKey}}
+X-Host: {{DefaultHost}}
+
+# POST request with environment variables in body
+POST https://{{HostAddress}}/post
+Content-Type: application/json
+
+{
+  "environment": "{{Environment}}",
+  "host": "{{HostAddress}}",
+  "apiKey": "{{ApiKey}}"
+}
