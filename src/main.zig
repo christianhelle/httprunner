@@ -47,5 +47,6 @@ fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bo
         std.debug.print("{s}✅ All discovered files processed successfully{s}\n", .{ colors.GREEN, colors.RESET });
     } else {
         std.debug.print("{s}❌ Some discovered files failed to process{s}\n", .{ colors.RED, colors.RESET });
+        std.process.exit(1);
     }
 }
