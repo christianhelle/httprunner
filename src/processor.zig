@@ -87,11 +87,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
 
             if (result.success) {
                 success_count += 1;
-                if (request.assertions.items.len > 0) {
-                    log.write("{s}✅ {s} {s} - Status: {} - {}ms - All assertions passed{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
-                } else {
-                    log.write("{s}✅ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
-                }
+                log.write("{s}✅ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
             } else {
                 if (result.error_message) |msg| {
                     log.write("{s}❌ {s} {s} - Status: {} - {}ms - Error: {s}{s}\n", .{ colors.RED, request.method, request.url, result.status_code, result.duration_ms, msg, colors.RESET });
@@ -100,7 +96,6 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
                 }
             }
 
-            // Display assertion results
             if (request.assertions.items.len > 0) {
                 log.write("\n{s}🔍 Assertion Results:{s}\n", .{ colors.BLUE, colors.RESET });
                 for (result.assertion_results.items) |assertion_result| {
