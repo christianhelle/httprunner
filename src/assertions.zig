@@ -79,7 +79,7 @@ fn evaluateAssertion(allocator: Allocator, assertion: Assertion, result: *const 
 
                 var found = false;
                 for (headers) |header| {
-                    if (std.mem.eql(u8, header.name, expected_name)) {
+                    if (std.ascii.eqlIgnoreCase(header.name, expected_name)) {
                         if (std.mem.indexOf(u8, header.value, expected_value) != null) {
                             found = true;
                             break;
