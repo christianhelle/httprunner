@@ -64,7 +64,6 @@ fn evaluateAssertion(allocator: Allocator, assertion: Assertion, result: *const 
 
         .response_headers => {
             if (result.response_headers) |headers| {
-                // Parse expected header (format: "Header-Name: Header-Value")
                 const colon_pos = std.mem.indexOf(u8, assertion.expected_value, ":") orelse {
                     return AssertionResult{
                         .assertion = assertion,
