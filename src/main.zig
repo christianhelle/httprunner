@@ -15,7 +15,10 @@ pub fn main() !void {
 
     var options = cli.CliOptions.parse(allocator, args) catch |err| {
         switch (err) {
-            error.InvalidArguments => return,
+            error.InvalidArguments => {
+                cli.showUsage();
+                return;
+            },
             else => return err,
         }
     };
