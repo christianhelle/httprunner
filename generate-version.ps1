@@ -2,10 +2,6 @@
 $gitTag = "unknown"
 $gitCommit = "unknown"
 
-if ($Version -eq $null || $Version -eq '') {
-
-}
-
 try {
     $gitTag = git describe --tags --abbrev=0 2>$null
     if ($LASTEXITCODE -ne 0) { $gitTag = "unknown" }
@@ -64,14 +60,14 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "HTTP Runner"
+            VALUE "CompanyName", "Christian Helle"
             VALUE "FileDescription", "HTTP File Runner - Execute HTTP requests from .http files"
             VALUE "FileVersion", "$Version ($gitTag)"
             VALUE "InternalName", "httprunner"
             VALUE "OriginalFilename", "httprunner.exe"
             VALUE "ProductName", "HTTP Runner"
             VALUE "ProductVersion", "$Version"
-            VALUE "LegalCopyright", "Copyright (C) 2025"
+            VALUE "LegalCopyright", "Copyright (C) Christian Helle 2025"
         END
     END
     BLOCK "VarFileInfo"
