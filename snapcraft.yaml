@@ -31,6 +31,7 @@ parts:
       - xz-utils
     override-build: |
       snap install zig --classic --beta
+      snap install powershell --classic
 
   httprunner:
     after: [zig]
