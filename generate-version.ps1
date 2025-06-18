@@ -1,14 +1,13 @@
 # Generate version information for httprunner
-param(
-    [string]$Version = "1.0.0"
-)
-
-# Get git information
 $gitTag = "unknown"
 $gitCommit = "unknown"
 
+if ($Version -eq $null || $Version -eq '') {
+
+}
+
 try {
-    $gitTag = git describe --tags --always --no-dirty 2>$null
+    $gitTag = git describe --tags --abbrev=0 2>$null
     if ($LASTEXITCODE -ne 0) { $gitTag = "unknown" }
 } catch {
     $gitTag = "unknown"
@@ -21,6 +20,7 @@ try {
     $gitCommit = "unknown"
 }
 
+$Version = ($gitTag).Replace('v', '')
 $buildDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
 
 # Generate version_info.zig
