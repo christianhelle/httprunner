@@ -67,3 +67,4 @@ bld/
 [Ll]og/
 .zig-cache
 *.snap
+src/httprunner.rc
