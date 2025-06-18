@@ -8,7 +8,7 @@ $gitTag = "unknown"
 $gitCommit = "unknown"
 
 try {
-    $gitTag = git describe --tags --always --dirty 2>$null
+    $gitTag = git describe --tags --always --no-dirty 2>$null
     if ($LASTEXITCODE -ne 0) { $gitTag = "unknown" }
 } catch {
     $gitTag = "unknown"
