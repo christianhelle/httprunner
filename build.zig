@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const VERSION = "1.0.0";
+
 pub fn build(b: *std.Build) void {
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
@@ -10,12 +12,18 @@ pub fn build(b: *std.Build) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const optimize = b.standardOptimizeOption(.{});
 
+    // Generate version information at build time
+    const version_step = b.addSystemCommand(&[_][]const u8{ "pwsh", "-ExecutionPolicy", "Bypass", "-File", "generate-version.ps1", "-Version", VERSION });
+
     const exe = b.addExecutable(.{
         .name = "httprunner",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
+
+    // Generate version info before building
+    exe.step.dependOn(&version_step.step);
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
