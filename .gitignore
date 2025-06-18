@@ -68,3 +68,4 @@ bld/
 .zig-cache
 *.snap
 src/httprunner.rc
+src/version_info.zig
