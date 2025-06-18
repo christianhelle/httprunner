@@ -25,6 +25,14 @@ pub fn getVersionInfo(allocator: std.mem.Allocator) !struct {
             .build_date = "unknown",
         };
     };
+    if (result.term != .Exited or result.term.Exited != 0) {
+        return .{
+            .version = "unknown",
+            .git_tag = "unknown",
+            .git_commit = "unknown",
+            .build_date = "unknown",
+        };
+    }
     defer allocator.free(result.stdout);
     defer allocator.free(result.stderr);
 
