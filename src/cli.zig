@@ -3,10 +3,12 @@ const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const colors = @import("colors.zig");
+const version_info = @import("version_info.zig");
 
 pub const CliOptions = struct {
     discover_mode: bool,
     verbose: bool,
+    show_version: bool,
     log_file: ?[]const u8,
     environment: ?[]const u8,
     files: []const []const u8,
@@ -17,8 +19,20 @@ pub const CliOptions = struct {
             self.allocator.?.free(self.files);
         }
     }
-
     pub fn parse(allocator: Allocator, args: []const []const u8) !CliOptions {
+        // Check for version flag first
+        if (containsFlag(args, "--version") or containsFlag(args, "-v")) {
+            return CliOptions{
+                .discover_mode = false,
+                .verbose = false,
+                .show_version = true,
+                .log_file = null,
+                .environment = null,
+                .files = &[_][]const u8{},
+                .allocator = null,
+            };
+        }
+
         if (args.len < 2) {
             showUsage();
             return error.InvalidArguments;
@@ -35,10 +49,10 @@ pub const CliOptions = struct {
             verbose = containsFlag(args, "--verbose");
             log_file = getLogFilename(args);
             environment = getEnvironment(args);
-
             return CliOptions{
                 .discover_mode = true,
                 .verbose = verbose,
+                .show_version = false,
                 .log_file = log_file,
                 .environment = environment,
                 .files = &[_][]const u8{},
@@ -55,9 +69,10 @@ pub const CliOptions = struct {
         var i: usize = 1;
         while (i < args.len) : (i += 1) {
             const arg = args[i];
-
             if (std.mem.eql(u8, arg, "--discover") or
-                std.mem.eql(u8, arg, "--verbose"))
+                std.mem.eql(u8, arg, "--verbose") or
+                std.mem.eql(u8, arg, "--version") or
+                std.mem.eql(u8, arg, "-v"))
             {
                 continue;
             } else if (std.mem.eql(u8, arg, "--log")) {
@@ -85,10 +100,10 @@ pub const CliOptions = struct {
         for (files_list.items, 0..) |file, idx| {
             files_owned[idx] = file;
         }
-
         return CliOptions{
             .discover_mode = discover_mode,
             .verbose = verbose,
+            .show_version = false,
             .log_file = log_file,
             .environment = environment,
             .files = files_owned,
@@ -138,10 +153,19 @@ pub fn showUsage() void {
     print("{s}Usage:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]\n", .{});
     print("  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover\n", .{});
+    print("  httprunner --version | -v\n", .{});
     print("\n{s}Arguments:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  <http-file>    One or more .http files to process\n", .{});
     print("  --discover     Recursively discover and process all .http files from current directory\n", .{});
     print("  --verbose      Show detailed HTTP request and response information\n", .{});
     print("  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)\n", .{});
     print("  --env <env>    Specify environment name to load variables from http-client.env.json\n", .{});
+    print("  --version, -v  Show version information\n", .{});
+}
+
+pub fn showVersion() void {
+    print("{s}httprunner{s} version {s}{s}{s}\n", .{ colors.BLUE, colors.RESET, colors.GREEN, version_info.VERSION, colors.RESET });
+    print("Git tag: {s}{s}{s}\n", .{ colors.YELLOW, version_info.GIT_TAG, colors.RESET });
+    print("Git commit: {s}{s}{s}\n", .{ colors.YELLOW, version_info.GIT_COMMIT, colors.RESET });
+    print("Build date: {s}{s}{s}\n", .{ colors.YELLOW, version_info.BUILD_DATE, colors.RESET });
 }
