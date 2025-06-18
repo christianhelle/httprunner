@@ -5,6 +5,13 @@ pub fn getVersionInfo(allocator: std.mem.Allocator) !struct {
     git_tag: []const u8,
     git_commit: []const u8,
     build_date: []const u8,
+
+    pub fn deinit(self: @This(), alloc: std.mem.Allocator) void {
+        alloc.free(self.version);
+        alloc.free(self.git_tag);
+        alloc.free(self.git_commit);
+        alloc.free(self.build_date);
+    }
 } {
     const result = std.process.Child.run(.{
         .allocator = allocator,
