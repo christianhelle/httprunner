@@ -21,6 +21,26 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🛡️ Robust error handling for network issues
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
+- 📋 **Semantic versioning** with git tag and commit information
+- 🔍 **Build-time version generation** with automatic git integration
+
+## Version Information
+
+The application includes comprehensive version information accessible via:
+
+```bash
+httprunner --version
+# or
+httprunner -v
+```
+
+This displays:
+- Application version (semantic versioning)
+- Git tag information
+- Git commit hash
+- Build timestamp
+
+The version information is automatically generated at build time using git repository data.
 
 ## Installation
 
