@@ -13,7 +13,6 @@ pub fn main() !void {
 
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
-
     var options = cli.CliOptions.parse(allocator, args) catch |err| {
         switch (err) {
             error.InvalidArguments => {
@@ -24,6 +23,11 @@ pub fn main() !void {
         }
     };
     defer options.deinit();
+
+    if (options.show_version) {
+        cli.showVersion();
+        return;
+    }
 
     if (options.discover_mode) {
         var discovered_files = std.ArrayList([]const u8).init(allocator);
