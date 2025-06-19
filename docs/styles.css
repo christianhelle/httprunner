@@ -362,13 +362,13 @@ body {
 }
 
 .install-card.featured .install-code {
-    background: var(--bg-secondary);
+    background: #1e1e1e;
     border: 1px solid var(--border-color);
-    color: var(--text-color);
+    color: #d4d4d4;
 }
 
 .install-card.featured .install-code code {
-    color: var(--text-color);
+    color: #d4d4d4;
 }
 
 .install-card.featured .platform-section h4 {
@@ -410,7 +410,7 @@ body {
 }
 
 .install-code {
-    background: var(--bg-secondary);
+    background: #1e1e1e;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 1rem;
@@ -1290,7 +1290,7 @@ body {
 }
 
 .install-code code {
-    color: var(--text-color);
+    color: #d4d4d4;
     white-space: pre-line;
     word-break: break-word;
     display: block;
