@@ -56,16 +56,7 @@ detect_platform() {
             arch="x86_64"
             ;;
         aarch64|arm64)
-            if [ "$os" = "macos" ]; then
-                arch="aarch64"
-            else
-                log_error "Unsupported architecture: $arch for $os"
-                exit 1
-            fi
-            ;;
-        *)
-            log_error "Unsupported architecture: $arch"
-            exit 1
+            arch="aarch64"
             ;;
     esac
     
