@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP File Runner - Documentation</title>
+    <meta name="description" content="A powerful command-line tool for executing HTTP requests from .http files">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="emoji">🚀</span>
+                <span class="brand-text">HTTP File Runner</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#installation" class="nav-link">Installation</a></li>
+                <li><a href="#usage" class="nav-link">Usage</a></li>
+                <li><a href="guide.html" class="nav-link">Guide</a></li>
+                <li><a href="reference.html" class="nav-link">Reference</a></li>
+                <li><a href="https://github.com/christianhelle/httprunner" class="nav-link external">GitHub</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        <span class="emoji">🚀</span>
+                        HTTP File Runner
+                    </h1>
+                    <p class="hero-subtitle">
+                        A powerful command-line tool written in Zig that parses .http files and executes HTTP requests with beautiful colored output
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="#installation" class="btn btn-primary">Get Started</a>
+                        <a href="https://github.com/christianhelle/httprunner" class="btn btn-secondary">View on GitHub</a>
+                    </div>
+                    <div class="badges">
+                        <img src="https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml/badge.svg" alt="Build Linux">
+                        <img src="https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml/badge.svg" alt="Build macOS">
+                        <img src="https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml/badge.svg" alt="Build Windows">
+                    </div>
+                </div>
+                <div class="hero-demo">
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-buttons">
+                                <span class="btn-close"></span>
+                                <span class="btn-minimize"></span>
+                                <span class="btn-maximize"></span>
+                            </div>
+                            <div class="terminal-title">httprunner</div>
+                        </div>
+                        <div class="terminal-body">
+                            <div class="terminal-line">
+                                <span class="prompt">$</span> httprunner examples/simple.http
+                            </div>
+                            <div class="terminal-line output">
+                                🚀 HTTP File Runner - Processing file: examples/simple.http
+                            </div>
+                            <div class="terminal-line output">
+                                Found 4 HTTP request(s)
+                            </div>
+                            <div class="terminal-line output success">
+                                ✅ GET https://httpbin.org/status/200 - Status: 200
+                            </div>
+                            <div class="terminal-line output error">
+                                ❌ GET https://httpbin.org/status/404 - Status: 404
+                            </div>
+                            <div class="terminal-line output success">
+                                ✅ GET https://api.github.com/zen - Status: 200
+                            </div>
+                            <div class="terminal-line output success">
+                                ✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
+                            </div>
+                            <div class="terminal-line output">
+                                Summary: 3/4 requests succeeded
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-title">Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📁</div>
+                        <h3>Multiple Files</h3>
+                        <p>Process multiple .http files in a single run or discover all files recursively</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Auto Discovery</h3>
+                        <p>Find and execute all .http files in your project with --discover mode</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3>Verbose Output</h3>
+                        <p>Detailed request and response information for debugging and analysis</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3>Logging</h3>
+                        <p>Save all output to files for CI/CD integration and reporting</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Assertions</h3>
+                        <p>Validate status codes, response body content, and headers</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Variables</h3>
+                        <p>Use variables and environment files for flexible configuration</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="installation" class="installation">
+            <div class="container">
+                <h2 class="section-title">Installation</h2>
+                <div class="install-options">
+                    <div class="install-card">
+                        <div class="install-header">
+                            <h3>Snap Store</h3>
+                            <span class="badge recommended">Recommended</span>
+                        </div>
+                        <div class="install-code">
+                            <code>sudo snap install httprunner</code>
+                        </div>
+                        <p>The easiest way to install on Linux systems with snap support.</p>
+                    </div>
+                    
+                    <div class="install-card">
+                        <div class="install-header">
+                            <h3>Build from Source</h3>
+                        </div>
+                        <div class="install-code">
+                            <code>git clone https://github.com/christianhelle/httprunner.git<br>
+                            cd httprunner<br>
+                            zig build</code>
+                        </div>
+                        <p>Requires Zig 0.14 or later. Gives you the latest features and customization options.</p>
+                    </div>
+                    
+                    <div class="install-card">
+                        <div class="install-header">
+                            <h3>Docker</h3>
+                        </div>
+                        <div class="install-code">
+                            <code>docker pull christianhelle/httprunner</code>
+                        </div>
+                        <p>Run in a containerized environment without installing dependencies.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="usage" class="usage">
+            <div class="container">
+                <h2 class="section-title">Quick Start</h2>
+                <div class="usage-content">
+                    <div class="usage-example">
+                        <h3>Basic Usage</h3>
+                        <div class="code-block">
+                            <code># Run a single .http file
+httprunner requests.http
+
+# Run with verbose output
+httprunner requests.http --verbose
+
+# Discover and run all .http files
+httprunner --discover
+
+# Run with logging
+httprunner requests.http --log results.txt</code>
+                        </div>
+                    </div>
+                    
+                    <div class="usage-example">
+                        <h3>Sample .http File</h3>
+                        <div class="code-block">
+                            <code># Simple GET request
+GET https://api.github.com/users/octocat
+
+# POST with headers and body
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "name": "test",
+  "value": 123
+}</code>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cta">
+                    <p>Ready to dive deeper?</p>
+                    <a href="guide.html" class="btn btn-primary">Read the Complete Guide</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>HTTP File Runner</h4>
+                    <p>A powerful command-line tool for executing HTTP requests from .http files.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="reference.html">API Reference</a></li>
+                        <li><a href="cicd.html">CI/CD Setup</a></li>
+                        <li><a href="docker.html">Docker Setup</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/christianhelle/httprunner">GitHub</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/issues">Issues</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>License</h4>
+                    <p>MIT License</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Zig.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

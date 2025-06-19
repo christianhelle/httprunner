@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - HTTP File Runner</title>
+    <meta name="description" content="The requested page was not found in the HTTP File Runner documentation">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span class="emoji">🚀</span>
+                <span class="brand-text">HTTP File Runner</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="guide.html" class="nav-link">Guide</a></li>
+                <li><a href="reference.html" class="nav-link">Reference</a></li>                <li><a href="cicd.html" class="nav-link">CI/CD</a></li>
+                <li><a href="docker.html" class="nav-link">Docker</a></li>
+                <li><a href="https://github.com/christianhelle/httprunner" class="nav-link external">GitHub</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="error-page">
+        <div class="container">
+            <div class="error-content">
+                <div class="error-icon">❌</div>
+                <h1>404 - Page Not Found</h1>
+                <p>The page you're looking for doesn't exist or has been moved.</p>
+                
+                <div class="error-actions">
+                    <a href="index.html" class="btn btn-primary">Go Home</a>
+                    <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+                </div>
+                
+                <div class="helpful-links">
+                    <h3>You might be looking for:</h3>
+                    <ul>
+                        <li><a href="index.html">🏠 Homepage - Overview and quick start</a></li>
+                        <li><a href="guide.html">📖 User Guide - Complete usage instructions</a></li>
+                        <li><a href="reference.html">📋 API Reference - Command line and file format reference</a></li>                        <li><a href="cicd.html">⚙️ CI/CD Setup - GitHub Actions configuration</a></li>
+                        <li><a href="docker.html">🐳 Docker Setup - Container deployment guide</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner">💻 GitHub Repository - Source code and issues</a></li>
+                    </ul>
+                </div>
+                
+                <div class="search-suggestion">
+                    <h3>Still can't find what you're looking for?</h3>
+                    <p>Try searching in the <a href="https://github.com/christianhelle/httprunner" target="_blank">GitHub repository</a> or <a href="https://github.com/christianhelle/httprunner/issues" target="_blank">create an issue</a> for help.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>HTTP File Runner</h4>
+                    <p>A powerful command-line tool for executing HTTP requests from .http files.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="reference.html">API Reference</a></li>
+                        <li><a href="cicd.html">CI/CD Setup</a></li>
+                        <li><a href="docker.html">Docker Setup</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/christianhelle/httprunner">GitHub</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/issues">Issues</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>License</h4>
+                    <p>MIT License</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Zig.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    
+    <style>
+        .error-page {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            padding: 2rem 0;
+        }
+        
+        .error-content {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .error-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .error-content h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+        
+        .error-content > p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+        
+        .helpful-links {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .helpful-links h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .helpful-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .helpful-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .helpful-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .helpful-links a:hover {
+            color: var(--primary-hover);
+        }
+        
+        .search-suggestion {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+        }
+        
+        .search-suggestion h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+        
+        .search-suggestion p {
+            color: var(--text-muted);
+            margin: 0;
+        }
+        
+        .search-suggestion a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .search-suggestion a:hover {
+            color: var(--primary-hover);
+        }
+        
+        @media (max-width: 768px) {
+            .error-content h1 {
+                font-size: 2rem;
+            }
+            
+            .error-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .helpful-links,
+            .search-suggestion {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</body>
+</html>

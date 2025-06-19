@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Setup - HTTP File Runner</title>
+    <meta name="description" content="Docker container publishing setup for HTTP File Runner with GitHub Container Registry and DockerHub">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span class="emoji">🚀</span>
+                <span class="brand-text">HTTP File Runner</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="guide.html" class="nav-link">Guide</a></li>
+                <li><a href="reference.html" class="nav-link">Reference</a></li>
+                <li><a href="cicd.html" class="nav-link">CI/CD</a></li>
+                <li><a href="docker.html" class="nav-link active">Docker</a></li>
+                <li><a href="https://github.com/christianhelle/httprunner" class="nav-link external">GitHub</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="guide-content">
+        <div class="container">
+            <!-- TOC Toggle Button -->
+            <button class="toc-toggle" id="tocToggle" title="Toggle Table of Contents">
+                📋
+            </button>
+            
+            <!-- Floating TOC Sidebar -->
+            <div class="guide-sidebar" id="guideSidebar">
+                <nav class="toc">
+                    <h4>Table of Contents</h4>
+                    <ul>
+                        <li><a href="#overview">Overview</a></li>
+                        <li><a href="#registries">Container Registries</a></li>
+                        <li><a href="#secrets">Required Secrets</a></li>
+                        <li><a href="#tags">Container Tags</a></li>
+                        <li><a href="#usage">Usage</a></li>
+                        <li><a href="#workflow">Workflow Trigger</a></li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="guide-main">
+                <header class="guide-header">
+                    <h1>Docker Setup</h1>
+                    <p>Automated Docker container publishing to GitHub Container Registry and DockerHub.</p>
+                </header>
+
+                <section id="overview" class="guide-section">
+                    <h2>Overview</h2>
+                    <p>This project automatically publishes Docker containers to both GitHub Container Registry (GHCR) and DockerHub when a new release is created. The containers provide a portable way to run HTTP File Runner without installing dependencies.</p>
+
+                    <h3>Supported Platforms</h3>
+                    <ul>
+                        <li><strong>Linux AMD64:</strong> Standard x86_64 architecture</li>
+                        <li><strong>Linux ARM64:</strong> ARM-based systems (Apple M1/M2, AWS Graviton)</li>
+                        <li><strong>Multi-arch images:</strong> Automatic platform detection</li>
+                    </ul>
+                </section>
+
+                <section id="registries" class="guide-section">
+                    <h2>Container Registries</h2>
+                    <p>The project publishes to two major container registries for maximum accessibility.</p>
+
+                    <h3>GitHub Container Registry (GHCR)</h3>
+                    <div class="code-block">
+                        <code># Pull from GitHub Container Registry
+docker pull ghcr.io/christianhelle/httprunner:latest
+
+# Run with GitHub Container Registry image
+docker run --rm -v ${PWD}:/workspace ghcr.io/christianhelle/httprunner:latest *.http</code>
+                    </div>
+
+                    <h3>DockerHub</h3>
+                    <div class="code-block">
+                        <code># Pull from DockerHub
+docker pull christianhelle/httprunner:latest
+
+# Run with DockerHub image
+docker run --rm -v ${PWD}:/workspace christianhelle/httprunner:latest *.http</code>
+                    </div>
+
+                    <h3>Registry Features</h3>
+                    <ul>
+                        <li><strong>GHCR:</strong> Integrated with GitHub, supports private repos, excellent for CI/CD</li>
+                        <li><strong>DockerHub:</strong> Most popular registry, great for public distribution</li>
+                        <li><strong>Both:</strong> Support multi-architecture images and vulnerability scanning</li>
+                    </ul>
+                </section>
+
+                <section id="secrets" class="guide-section">
+                    <h2>Required Secrets</h2>
+                    <p>The following repository secrets must be configured for automated publishing.</p>
+
+                    <h3>GitHub Secrets Configuration</h3>
+                    <div class="param-table">
+                        <div class="param">
+                            <div class="param-name">GITHUB_TOKEN</div>
+                            <div class="param-type">Auto-provided</div>
+                            <div class="param-desc">Automatically provided by GitHub Actions for GHCR authentication</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">DOCKERHUB_USERNAME</div>
+                            <div class="param-type">string</div>
+                            <div class="param-desc">DockerHub username for authentication</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">DOCKERHUB_TOKEN</div>
+                            <div class="param-type">string</div>
+                            <div class="param-desc">DockerHub access token (not password) for secure authentication</div>
+                        </div>
+                    </div>
+
+                    <h3>Setting Up DockerHub Token</h3>
+                    <ol>
+                        <li>Log in to DockerHub</li>
+                        <li>Go to Account Settings → Security</li>
+                        <li>Create new access token with read/write permissions</li>
+                        <li>Add token to GitHub repository secrets</li>
+                    </ol>
+                </section>
+
+                <section id="tags" class="guide-section">
+                    <h2>Container Tags</h2>
+                    <p>Images are tagged automatically based on the release version and additional metadata.</p>
+
+                    <h3>Tagging Strategy</h3>
+                    <div class="method-table">
+                        <div class="method">
+                            <div class="method-name">latest</div>
+                            <div class="method-desc">Always points to the most recent stable release</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">v1.2.3</div>
+                            <div class="method-desc">Specific version tag for reproducible deployments</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">v1.2</div>
+                            <div class="method-desc">Minor version tag for compatible updates</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">v1</div>
+                            <div class="method-desc">Major version tag for stability</div>
+                        </div>
+                    </div>
+
+                    <h3>Image Metadata</h3>
+                    <p>All images include comprehensive metadata for better discoverability and maintenance:</p>
+                    <ul>
+                        <li>Source repository and commit SHA</li>
+                        <li>Build timestamp and version</li>
+                        <li>License and description</li>
+                        <li>Maintainer information</li>
+                    </ul>
+                </section>
+
+                <section id="usage" class="guide-section">
+                    <h2>Usage</h2>
+                    <p>Multiple ways to use HTTP File Runner containers for different scenarios.</p>
+
+                    <h3>Basic Usage</h3>
+                    <div class="code-block">
+                        <code># Run single HTTP file
+docker run --rm -v ${PWD}:/workspace httprunner:latest requests.http
+
+# Run with verbose output
+docker run --rm -v ${PWD}:/workspace httprunner:latest --verbose requests.http
+
+# Discover and run all HTTP files
+docker run --rm -v ${PWD}:/workspace httprunner:latest --discover</code>
+                    </div>
+
+                    <h3>Advanced Usage</h3>
+                    <div class="code-block">
+                        <code># Use specific environment
+docker run --rm -v ${PWD}:/workspace httprunner:latest --env production api-tests.http
+
+# Save logs to file
+docker run --rm -v ${PWD}:/workspace httprunner:latest --log test-results.log --discover
+
+# Custom working directory
+docker run --rm -v ${PWD}/tests:/workspace httprunner:latest *.http</code>
+                    </div>
+
+                    <h3>CI/CD Integration</h3>
+                    <div class="code-block">
+                        <code># GitHub Actions example
+- name: Run HTTP tests
+  run: |
+    docker run --rm -v ${{ github.workspace }}:/workspace \
+      ghcr.io/christianhelle/httprunner:latest \
+      --discover --log results.log
+
+# Docker Compose example
+version: '3.8'
+services:
+  api-tests:
+    image: christianhelle/httprunner:latest
+    volumes:
+      - ./tests:/workspace
+    command: ["--discover", "--verbose"]</code>
+                    </div>
+                </section>
+
+                <section id="workflow" class="guide-section">
+                    <h2>Workflow Trigger</h2>
+                    <p>Container publishing is automated through GitHub Actions workflows.</p>
+
+                    <h3>Trigger Conditions</h3>
+                    <ul>
+                        <li><strong>Release Creation:</strong> New GitHub release triggers container build</li>
+                        <li><strong>Tag Push:</strong> Version tags (v*.*.*) trigger publishing</li>
+                        <li><strong>Manual Trigger:</strong> Workflow can be run manually from Actions tab</li>
+                    </ul>
+
+                    <h3>Build Process</h3>
+                    <ol>
+                        <li>Checkout source code and setup build environment</li>
+                        <li>Build multi-architecture Docker images</li>
+                        <li>Run security scans on container images</li>
+                        <li>Login to both GHCR and DockerHub registries</li>
+                        <li>Push images with appropriate tags to both registries</li>
+                        <li>Update container registry metadata</li>
+                    </ol>
+
+                    <h3>Security Scanning</h3>
+                    <p>All container images undergo security scanning before publication:</p>
+                    <ul>
+                        <li><strong>Trivy scanning:</strong> Vulnerability detection in base images and dependencies</li>
+                        <li><strong>Best practices:</strong> Dockerfile security recommendations</li>
+                        <li><strong>Supply chain:</strong> Verification of build reproducibility</li>
+                    </ul>
+
+                    <div class="workflow-note">
+                        <p><strong>Note:</strong> Container images are only published for official releases to ensure stability and security.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>HTTP File Runner</h4>
+                    <p>A powerful command-line tool for executing HTTP requests from .http files.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="reference.html">API Reference</a></li>
+                        <li><a href="cicd.html">CI/CD Setup</a></li>
+                        <li><a href="docker.html">Docker Setup</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/christianhelle/httprunner">GitHub</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/issues">Issues</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>License</h4>
+                    <p>MIT License</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Zig.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

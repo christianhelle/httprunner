@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Guide - HTTP File Runner</title>
+    <meta name="description" content="Complete user guide for HTTP File Runner - learn how to use variables, assertions, environments, and more">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span class="emoji">🚀</span>
+                <span class="brand-text">HTTP File Runner</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="guide.html" class="nav-link active">Guide</a></li>
+                <li><a href="reference.html" class="nav-link">Reference</a></li>                <li><a href="cicd.html" class="nav-link">CI/CD</a></li>
+                <li><a href="docker.html" class="nav-link">Docker</a></li>
+                <li><a href="https://github.com/christianhelle/httprunner" class="nav-link external">GitHub</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>    <main class="guide-content">
+        <div class="container">
+            <!-- TOC Toggle Button -->
+            <button class="toc-toggle" id="tocToggle" title="Toggle Table of Contents">
+                📋
+            </button>
+            
+            <!-- Floating TOC Sidebar -->
+            <div class="guide-sidebar" id="guideSidebar">
+                <nav class="toc">
+                    <h4>Table of Contents</h4>
+                    <ul>
+                        <li><a href="#getting-started">Getting Started</a></li>
+                        <li><a href="#http-file-format">HTTP File Format</a></li>
+                        <li><a href="#variables">Variables</a></li>
+                        <li><a href="#environment-files">Environment Files</a></li>
+                        <li><a href="#assertions">Response Assertions</a></li>
+                        <li><a href="#command-line-options">Command Line Options</a></li>
+                        <li><a href="#examples">Examples</a></li>
+                        <li><a href="#best-practices">Best Practices</a></li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="guide-main">
+                <header class="guide-header">
+                    <h1>User Guide</h1>
+                    <p>Learn how to effectively use HTTP File Runner for testing APIs, automation, and more.</p>
+                </header>
+
+                <section id="getting-started" class="guide-section">
+                    <h2>Getting Started</h2>
+                    <p>HTTP File Runner is a command-line tool that executes HTTP requests defined in <code>.http</code> files. It's perfect for API testing, automation, and development workflows.</p>
+                    
+                    <h3>Basic Usage</h3>
+                    <div class="code-block">
+                        <code># Run a single .http file
+httprunner requests.http
+
+# Run multiple files
+httprunner file1.http file2.http
+
+# Discover and run all .http files recursively
+httprunner --discover</code>
+                    </div>
+
+                    <h3>Output Modes</h3>
+                    <ul>
+                        <li><strong>Default:</strong> Shows request results with colored status indicators</li>
+                        <li><strong>Verbose (<code>--verbose</code>):</strong> Shows detailed request/response information</li>
+                        <li><strong>Logging (<code>--log</code>):</strong> Saves output to a file for analysis</li>
+                    </ul>
+                </section>
+
+                <section id="http-file-format" class="guide-section">
+                    <h2>HTTP File Format</h2>
+                    <p>HTTP files use a simple, readable format that's compatible with many tools and editors.</p>
+
+                    <h3>Basic Structure</h3>
+                    <div class="code-block">
+                        <code># Comments start with #
+
+# Simple GET request
+GET https://api.example.com/users
+
+# Request with headers
+GET https://api.example.com/data
+Authorization: Bearer your-token
+Accept: application/json
+
+# POST request with body
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com"
+}</code>
+                    </div>
+
+                    <h3>Supported HTTP Methods</h3>
+                    <ul>
+                        <li>GET</li>
+                        <li>POST</li>
+                        <li>PUT</li>
+                        <li>DELETE</li>
+                        <li>PATCH</li>
+                    </ul>
+
+                    <h3>Headers and Body</h3>
+                    <p>Headers are specified as key-value pairs separated by colons. The request body comes after a blank line following the headers.</p>
+                </section>
+
+                <section id="variables" class="guide-section">
+                    <h2>Variables</h2>
+                    <p>Variables make your HTTP files flexible and reusable across different environments and scenarios.</p>
+
+                    <h3>Defining Variables</h3>
+                    <div class="code-block">
+                        <code># Define variables with @ syntax
+@hostname=localhost
+@port=8080
+@version=v1
+@baseUrl=https://{{hostname}}:{{port}}/api/{{version}}</code>
+                    </div>
+
+                    <h3>Using Variables</h3>
+                    <div class="code-block">
+                        <code># Use variables with double curly braces
+GET {{baseUrl}}/users
+
+# Variables in headers
+GET {{baseUrl}}/protected
+Authorization: Bearer {{token}}
+
+# Variables in request body
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "host": "{{hostname}}",
+  "environment": "{{env}}"
+}</code>
+                    </div>
+
+                    <h3>Variable Composition</h3>
+                    <p>Variables can reference other variables that were defined earlier:</p>
+                    <div class="code-block">
+                        <code>@hostname=api.example.com
+@protocol=https
+@baseUrl={{protocol}}://{{hostname}}
+
+GET {{baseUrl}}/status</code>
+                    </div>
+                </section>
+
+                <section id="environment-files" class="guide-section">
+                    <h2>Environment Files</h2>
+                    <p>Environment files allow you to define different variable values for different environments (dev, staging, production).</p>
+
+                    <h3>Creating Environment Files</h3>
+                    <p>Create a file named <code>http-client.env.json</code> in the same directory as your .http files:</p>
+                    <div class="code-block">
+                        <code>{
+  "dev": {
+    "HostAddress": "https://localhost:44320",
+    "ApiKey": "dev-api-key-123",
+    "Database": "development"
+  },
+  "staging": {
+    "HostAddress": "https://staging.example.com",
+    "ApiKey": "staging-api-key-456",
+    "Database": "staging"
+  },
+  "prod": {
+    "HostAddress": "https://api.example.com",
+    "ApiKey": "prod-api-key-789",
+    "Database": "production"
+  }
+}</code>
+                    </div>
+
+                    <h3>Using Environment Variables</h3>
+                    <div class="code-block">
+                        <code># Use environment variables in .http files
+GET {{HostAddress}}/api/users
+Authorization: Bearer {{ApiKey}}
+X-Database: {{Database}}</code>
+                    </div>
+
+                    <h3>Specifying Environment</h3>
+                    <div class="code-block">
+                        <code># Use specific environment
+httprunner requests.http --env dev
+httprunner requests.http --env prod</code>
+                    </div>
+
+                    <h3>Variable Override Priority</h3>
+                    <ol>
+                        <li>Environment variables (loaded first)</li>
+                        <li>Variables in .http file (override environment variables)</li>
+                    </ol>
+                </section>
+
+                <section id="assertions" class="guide-section">
+                    <h2>Response Assertions</h2>
+                    <p>Assertions allow you to validate HTTP responses automatically, making your tests more reliable.</p>
+
+                    <h3>Assertion Types</h3>
+                    <div class="code-block">
+                        <code># Status code assertion
+GET https://api.example.com/users
+EXPECTED_RESPONSE_STATUS 200
+
+# Response body content assertion
+GET https://api.example.com/users/1
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "John Doe"
+
+# Response header assertion
+GET https://api.example.com/data
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"</code>
+                    </div>
+
+                    <h3>Multiple Assertions</h3>
+                    <div class="code-block">
+                        <code>GET https://api.example.com/users
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "users"
+EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
+EXPECTED_RESPONSE_HEADERS "Cache-Control: no-cache"</code>
+                    </div>
+
+                    <h3>Assertion Behavior</h3>
+                    <ul>
+                        <li><strong>Status Code:</strong> Exact match required</li>
+                        <li><strong>Response Body:</strong> Substring match (response must contain the expected text)</li>
+                        <li><strong>Response Headers:</strong> Header must exist and contain the expected value</li>
+                        <li><strong>Request Success:</strong> All assertions must pass for the request to be considered successful</li>
+                    </ul>
+                </section>
+
+                <section id="command-line-options" class="guide-section">
+                    <h2>Command Line Options</h2>
+                    
+                    <h3>Basic Options</h3>
+                    <div class="options-table">
+                        <div class="option">
+                            <div class="option-name"><code>httprunner file.http</code></div>
+                            <div class="option-desc">Run a single .http file</div>
+                        </div>
+                        <div class="option">
+                            <div class="option-name"><code>httprunner file1.http file2.http</code></div>
+                            <div class="option-desc">Run multiple .http files</div>
+                        </div>
+                        <div class="option">
+                            <div class="option-name"><code>--discover</code></div>
+                            <div class="option-desc">Recursively find and run all .http files</div>
+                        </div>
+                    </div>
+
+                    <h3>Output Options</h3>
+                    <div class="options-table">
+                        <div class="option">
+                            <div class="option-name"><code>--verbose</code></div>
+                            <div class="option-desc">Show detailed request and response information</div>
+                        </div>
+                        <div class="option">
+                            <div class="option-name"><code>--log</code></div>
+                            <div class="option-desc">Save output to 'log' file</div>
+                        </div>
+                        <div class="option">
+                            <div class="option-name"><code>--log filename.txt</code></div>
+                            <div class="option-desc">Save output to specified file</div>
+                        </div>
+                    </div>
+
+                    <h3>Environment Options</h3>
+                    <div class="options-table">
+                        <div class="option">
+                            <div class="option-name"><code>--env dev</code></div>
+                            <div class="option-desc">Use 'dev' environment from http-client.env.json</div>
+                        </div>
+                        <div class="option">
+                            <div class="option-name"><code>--version</code>, <code>-v</code></div>
+                            <div class="option-desc">Show version information</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="examples" class="guide-section">
+                    <h2>Examples</h2>
+
+                    <h3>API Testing</h3>
+                    <div class="code-block">
+                        <code># Test user registration and login flow
+@baseUrl=https://api.example.com
+
+# Register new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "securepass123"
+}
+
+EXPECTED_RESPONSE_STATUS 201
+EXPECTED_RESPONSE_BODY "user created"
+
+# Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "securepass123"
+}
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "token"</code>
+                    </div>
+
+                    <h3>Health Checks</h3>
+                    <div class="code-block">
+                        <code># Monitor service health
+GET https://api.example.com/health
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "healthy"
+
+# Check database connectivity
+GET https://api.example.com/health/db
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_HEADERS "X-DB-Status: connected"</code>
+                    </div>
+
+                    <h3>CRUD Operations</h3>
+                    <div class="code-block">
+                        <code>@baseUrl=https://jsonplaceholder.typicode.com
+
+# Create
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "title": "Test Post",
+  "body": "This is a test post",
+  "userId": 1
+}
+
+EXPECTED_RESPONSE_STATUS 201
+
+# Read
+GET {{baseUrl}}/posts/1
+EXPECTED_RESPONSE_STATUS 200
+
+# Update
+PUT {{baseUrl}}/posts/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "Updated Post",
+  "body": "This post has been updated",
+  "userId": 1
+}
+
+EXPECTED_RESPONSE_STATUS 200
+
+# Delete
+DELETE {{baseUrl}}/posts/1
+EXPECTED_RESPONSE_STATUS 200</code>
+                    </div>
+                </section>
+
+                <section id="best-practices" class="guide-section">
+                    <h2>Best Practices</h2>
+
+                    <h3>File Organization</h3>
+                    <ul>
+                        <li>Group related requests in the same .http file</li>
+                        <li>Use descriptive file names (e.g., <code>user-auth.http</code>, <code>health-checks.http</code>)</li>
+                        <li>Keep environment-specific files separate</li>
+                        <li>Use comments to document complex requests</li>
+                    </ul>
+
+                    <h3>Variable Management</h3>
+                    <ul>
+                        <li>Define variables at the top of your .http files</li>
+                        <li>Use descriptive variable names</li>
+                        <li>Keep sensitive data in environment files, not in .http files</li>
+                        <li>Use variable composition for complex URLs</li>
+                    </ul>
+
+                    <h3>Testing Strategy</h3>
+                    <ul>
+                        <li>Always include assertions for critical responses</li>
+                        <li>Test both success and error scenarios</li>
+                        <li>Use the <code>--verbose</code> flag when debugging</li>
+                        <li>Save logs for CI/CD integration with <code>--log</code></li>
+                    </ul>
+
+                    <h3>CI/CD Integration</h3>
+                    <div class="code-block">
+                        <code># Example GitHub Actions step
+- name: Run API Tests
+  run: |
+    httprunner --discover --env staging --log test-results.log
+    # Process test results...</code>
+                    </div>
+
+                    <h3>Performance Considerations</h3>
+                    <ul>
+                        <li>Use <code>--discover</code> for comprehensive testing</li>
+                        <li>Consider request timing when testing rate limits</li>
+                        <li>Monitor response times with <code>--verbose</code> output</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>HTTP File Runner</h4>
+                    <p>A powerful command-line tool for executing HTTP requests from .http files.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="reference.html">API Reference</a></li>
+                        <li><a href="cicd.html">CI/CD Setup</a></li>
+                        <li><a href="docker.html">Docker Setup</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/christianhelle/httprunner">GitHub</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/issues">Issues</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>License</h4>
+                    <p>MIT License</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Zig.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>    <script>
+        // Guide-specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tocToggle = document.getElementById('tocToggle');
+            const guideSidebar = document.getElementById('guideSidebar');
+            let isVisible = false;
+            
+            // Toggle TOC visibility
+            tocToggle.addEventListener('click', function() {
+                isVisible = !isVisible;
+                if (isVisible) {
+                    guideSidebar.classList.add('visible');
+                    tocToggle.classList.add('active');
+                    tocToggle.innerHTML = '✕';
+                    tocToggle.title = 'Close Table of Contents';
+                } else {
+                    guideSidebar.classList.remove('visible');
+                    tocToggle.classList.remove('active');
+                    tocToggle.innerHTML = '📋';
+                    tocToggle.title = 'Toggle Table of Contents';
+                }
+            });
+            
+            // Close TOC when clicking outside
+            document.addEventListener('click', function(e) {
+                if (isVisible && !guideSidebar.contains(e.target) && !tocToggle.contains(e.target)) {
+                    isVisible = false;
+                    guideSidebar.classList.remove('visible');
+                    tocToggle.classList.remove('active');
+                    tocToggle.innerHTML = '📋';
+                    tocToggle.title = 'Toggle Table of Contents';
+                }
+            });
+            
+            // Smooth scrolling for TOC links
+            document.querySelectorAll('.toc a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        
+                        // Auto-close TOC on mobile after clicking
+                        if (window.innerWidth <= 768) {
+                            isVisible = false;
+                            guideSidebar.classList.remove('visible');
+                            tocToggle.classList.remove('active');
+                            tocToggle.innerHTML = '📋';
+                            tocToggle.title = 'Toggle Table of Contents';
+                        }
+                    }
+                });
+            });
+            
+            // Highlight current section in TOC
+            const sections = document.querySelectorAll('.guide-section');
+            const tocLinks = document.querySelectorAll('.toc a');
+            
+            function highlightTOC() {
+                let currentSection = '';
+                sections.forEach(section => {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 150 && rect.bottom >= 150) {
+                        currentSection = section.id;
+                    }
+                });
+                
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${currentSection}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            
+            window.addEventListener('scroll', highlightTOC);
+            highlightTOC();
+        });
+    </script>
+      <style>
+        .guide-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        .guide-sidebar {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            width: 220px;
+            height: fit-content;
+            z-index: 50;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .guide-sidebar.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }        
+        .toc {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .toc-toggle {
+            position: fixed;
+            top: 120px;
+            right: 2rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            z-index: 51;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .toc-toggle:hover {
+            background: var(--primary-hover);
+            transform: scale(1.1);
+        }
+        
+        .toc-toggle.active {
+            background: var(--error-color);
+        }
+        
+        .toc h4 {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+        
+        .toc ul {
+            list-style: none;
+        }
+        
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .toc a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            padding: 0.25rem 0;
+            display: block;
+            transition: color 0.2s;
+        }
+        
+        .toc a:hover,
+        .toc a.active {
+            color: var(--primary-color);
+        }
+          .guide-main {
+            max-width: none;
+            padding-right: 0;
+        }
+        
+        .guide-header {
+            margin-bottom: 3rem;
+        }
+        
+        .guide-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+        
+        .guide-header p {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+        }
+          .guide-section {
+            margin-bottom: 4rem;
+            padding-bottom: 3rem;
+            border-bottom: 2px solid var(--border-color);
+            max-width: none;
+        }
+        
+        .guide-section:last-child {
+            border-bottom: none;
+        }
+        
+        .guide-section h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .guide-section h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1.5rem;
+            color: var(--text-color);
+        }
+        
+        .guide-section p {
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+        
+        .guide-section ul,
+        .guide-section ol {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+        
+        .guide-section li {
+            margin-bottom: 0.75rem;
+            line-height: 1.7;
+            color: var(--text-color);
+            font-size: 1.05rem;
+        }
+          .options-table {
+            display: grid;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+        
+        .option {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+        
+        .option-name {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .option-desc {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+          @media (max-width: 1024px) {
+            .guide-sidebar {
+                position: fixed;
+                top: 50%;
+                right: 1rem;
+                transform: translateY(-50%) translateX(100%);
+                width: 280px;
+            }
+            
+            .guide-sidebar.visible {
+                transform: translateY(-50%) translateX(0);
+            }
+            
+            .toc-toggle {
+                right: 1rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .guide-content {
+                padding: 1rem;
+            }
+            
+            .guide-header h1 {
+                font-size: 2rem;
+            }
+            
+            .guide-section h2 {
+                font-size: 1.75rem;
+            }
+            
+            .guide-section h3 {
+                font-size: 1.25rem;
+            }
+            
+            .guide-sidebar {
+                width: calc(100vw - 2rem);
+                right: 1rem;
+                left: 1rem;
+                max-width: 320px;
+            }
+            
+            .toc {
+                max-height: 60vh;
+            }
+            
+            .options-table {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

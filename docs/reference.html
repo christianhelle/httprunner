@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference - HTTP File Runner</title>
+    <meta name="description" content="Complete API reference for HTTP File Runner command-line options, file formats, and features">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span class="emoji">🚀</span>
+                <span class="brand-text">HTTP File Runner</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="guide.html" class="nav-link">Guide</a></li>
+                <li><a href="reference.html" class="nav-link active">Reference</a></li>                <li><a href="cicd.html" class="nav-link">CI/CD</a></li>
+                <li><a href="docker.html" class="nav-link">Docker</a></li>
+                <li><a href="https://github.com/christianhelle/httprunner" class="nav-link external">GitHub</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>    <main class="guide-content">
+        <div class="container">
+            <!-- TOC Toggle Button -->
+            <button class="toc-toggle" id="tocToggle" title="Toggle Table of Contents">
+                📋
+            </button>
+            
+            <!-- Floating TOC Sidebar -->
+            <div class="guide-sidebar" id="guideSidebar">
+                <nav class="toc">
+                    <h4>API Reference</h4>
+                    <ul>
+                        <li><a href="#command-line">Command Line</a></li>
+                        <li><a href="#http-syntax">HTTP File Syntax</a></li>
+                        <li><a href="#variables-syntax">Variables</a></li>
+                        <li><a href="#environment-format">Environment Files</a></li>
+                        <li><a href="#assertions-reference">Assertions</a></li>
+                        <li><a href="#output-formats">Output Formats</a></li>
+                        <li><a href="#exit-codes">Exit Codes</a></li>
+                        <li><a href="#version-info">Version Information</a></li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="guide-main">
+                <header class="guide-header">
+                    <h1>API Reference</h1>
+                    <p>Complete reference documentation for HTTP File Runner syntax, options, and features.</p>
+                </header>
+
+                <section id="command-line" class="guide-section">
+                    <h2>Command Line Interface</h2>
+                    
+                    <h3>Synopsis</h3>
+                    <div class="syntax-block">
+                        <code>httprunner [OPTIONS] [FILE...]
+httprunner [OPTIONS] --discover</code>
+                    </div>
+
+                    <h3>Arguments</h3>
+                    <div class="param-table">
+                        <div class="param">
+                            <div class="param-name">FILE</div>
+                            <div class="param-type">string[]</div>
+                            <div class="param-desc">One or more .http files to process</div>
+                        </div>
+                    </div>
+
+                    <h3>Options</h3>
+                    <div class="param-table">
+                        <div class="param">
+                            <div class="param-name">--discover</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Recursively discover and process all .http files from current directory</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">--verbose</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Show detailed HTTP request and response information</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">--log [filename]</div>
+                            <div class="param-type">string?</div>
+                            <div class="param-desc">Log output to a file (defaults to 'log' if no filename specified)</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">--env &lt;environment&gt;</div>
+                            <div class="param-type">string</div>
+                            <div class="param-desc">Specify environment from http-client.env.json</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">--version, -v</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Show version information and exit</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">--help, -h</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Show help information and exit</div>
+                        </div>
+                    </div>
+
+                    <h3>Examples</h3>
+                    <div class="code-block">
+                        <code># Basic usage
+httprunner api-tests.http
+
+# Multiple files
+httprunner auth.http users.http posts.http
+
+# Discovery mode with logging
+httprunner --discover --verbose --log test-results.log
+
+# Environment-specific testing
+httprunner api-tests.http --env production --log prod-test.log</code>
+                    </div>
+                </section>
+
+                <section id="http-syntax" class="guide-section">
+                    <h2>HTTP File Syntax</h2>
+                    
+                    <h3>File Structure</h3>
+                    <div class="syntax-block">
+                        <code>[comments]
+[variables]
+[request-block]
+[assertions]
+
+[request-block]
+[assertions]
+...</code>
+                    </div>
+
+                    <h3>Request Block Format</h3>
+                    <div class="syntax-block">
+                        <code>METHOD URL [HTTP-VERSION]
+[Header-Name: Header-Value]
+...
+
+[request-body]</code>
+                    </div>
+
+                    <h3>Supported HTTP Methods</h3>
+                    <div class="method-table">
+                        <div class="method">
+                            <div class="method-name">GET</div>
+                            <div class="method-desc">Retrieve data from server</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">POST</div>
+                            <div class="method-desc">Send data to server</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">PUT</div>
+                            <div class="method-desc">Update resource on server</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">DELETE</div>
+                            <div class="method-desc">Delete resource from server</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">PATCH</div>
+                            <div class="method-desc">Partially update resource</div>
+                        </div>
+                    </div>
+
+                    <h3>Comments</h3>
+                    <div class="code-block">
+                        <code># This is a comment
+# Comments start with # and continue to end of line
+
+GET https://api.example.com/users  # Inline comments are also supported</code>
+                    </div>
+
+                    <h3>Headers</h3>
+                    <div class="code-block">
+                        <code>GET https://api.example.com/users
+Authorization: Bearer token123
+Accept: application/json
+Content-Type: application/json
+X-Custom-Header: custom-value</code>
+                    </div>
+
+                    <h3>Request Body</h3>
+                    <div class="code-block">
+                        <code># JSON body
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com"
+}
+
+# Form data
+POST https://api.example.com/upload
+Content-Type: application/x-www-form-urlencoded
+
+name=John&email=john@example.com
+
+# Text body
+POST https://api.example.com/notes
+Content-Type: text/plain
+
+This is a plain text note.</code>
+                    </div>
+                </section>
+
+                <section id="variables-syntax" class="guide-section">
+                    <h2>Variables</h2>
+                    
+                    <h3>Variable Definition</h3>
+                    <div class="syntax-block">
+                        <code>@variable-name=value</code>
+                    </div>
+
+                    <h3>Variable Usage</h3>
+                    <div class="syntax-block">
+                        <code>{{variable-name}}</code>
+                    </div>
+
+                    <h3>Variable Scoping Rules</h3>
+                    <ul>
+                        <li>Variables must be defined before they can be used</li>
+                        <li>Variables are file-scoped (each .http file has its own variable namespace)</li>
+                        <li>Later variable definitions override earlier ones with the same name</li>
+                        <li>Variables can reference other variables that were defined earlier</li>
+                    </ul>
+
+                    <h3>Variable Composition</h3>
+                    <div class="code-block">
+                        <code>@protocol=https
+@hostname=api.example.com
+@port=443
+@version=v1
+@baseUrl={{protocol}}://{{hostname}}:{{port}}/{{version}}
+
+GET {{baseUrl}}/users</code>
+                    </div>
+
+                    <h3>Valid Variable Names</h3>
+                    <ul>
+                        <li>Must start with a letter or underscore</li>
+                        <li>Can contain letters, numbers, underscores, and hyphens</li>
+                        <li>Case-sensitive</li>
+                        <li>No spaces allowed</li>
+                    </ul>
+
+                    <h3>Variable Usage Locations</h3>
+                    <ul>
+                        <li>URLs</li>
+                        <li>Header names and values</li>
+                        <li>Request body content</li>
+                        <li>Other variable definitions</li>
+                    </ul>
+                </section>
+
+                <section id="environment-format" class="guide-section">
+                    <h2>Environment Files</h2>
+                    
+                    <h3>File Name</h3>
+                    <div class="syntax-block">
+                        <code>http-client.env.json</code>
+                    </div>
+
+                    <h3>File Location</h3>
+                    <p>The environment file should be placed in:</p>
+                    <ul>
+                        <li>Same directory as the .http file</li>
+                        <li>Any parent directory of the .http file</li>
+                    </ul>
+
+                    <h3>JSON Schema</h3>
+                    <div class="code-block">
+                        <code>{
+  "environment-name": {
+    "variable-name": "value",
+    "another-variable": "another-value"
+  },
+  "another-environment": {
+    "variable-name": "different-value"
+  }
+}</code>
+                    </div>
+
+                    <h3>Complete Example</h3>
+                    <div class="code-block">
+                        <code>{
+  "dev": {
+    "BaseUrl": "https://localhost:44320",
+    "ApiKey": "dev-key-123",
+    "Database": "dev_db",
+    "LogLevel": "debug"
+  },
+  "staging": {
+    "BaseUrl": "https://staging-api.example.com",
+    "ApiKey": "staging-key-456",
+    "Database": "staging_db",
+    "LogLevel": "info"
+  },
+  "production": {
+    "BaseUrl": "https://api.example.com",
+    "ApiKey": "prod-key-789",
+    "Database": "prod_db",
+    "LogLevel": "warn"
+  }
+}</code>
+                    </div>
+
+                    <h3>Variable Override Order</h3>
+                    <ol>
+                        <li>Environment variables from http-client.env.json (loaded first)</li>
+                        <li>Variables defined in .http file (override environment variables)</li>
+                    </ol>
+                </section>
+
+                <section id="assertions-reference" class="guide-section">
+                    <h2>Response Assertions</h2>
+                    
+                    <h3>Assertion Types</h3>
+                    <div class="param-table">
+                        <div class="param">
+                            <div class="param-name">EXPECTED_RESPONSE_STATUS</div>
+                            <div class="param-type">integer</div>
+                            <div class="param-desc">Assert HTTP status code (exact match)</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">EXPECTED_RESPONSE_BODY</div>
+                            <div class="param-type">string</div>
+                            <div class="param-desc">Assert response body contains text (substring match)</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">EXPECTED_RESPONSE_HEADERS</div>
+                            <div class="param-type">string</div>
+                            <div class="param-desc">Assert header exists and contains value (format: "Header-Name: value")</div>
+                        </div>
+                    </div>
+
+                    <h3>Assertion Syntax</h3>
+                    <div class="syntax-block">
+                        <code>METHOD URL
+[headers]
+
+[body]
+
+EXPECTED_RESPONSE_STATUS status-code
+EXPECTED_RESPONSE_BODY "expected-text"
+EXPECTED_RESPONSE_HEADERS "Header-Name: expected-value"</code>
+                    </div>
+
+                    <h3>Multiple Assertions</h3>
+                    <div class="code-block">
+                        <code>GET https://api.example.com/users/1
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "John Doe"
+EXPECTED_RESPONSE_BODY "john@example.com"
+EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
+EXPECTED_RESPONSE_HEADERS "Cache-Control: no-cache"</code>
+                    </div>
+
+                    <h3>Assertion Matching Rules</h3>
+                    <div class="rule-table">
+                        <div class="rule">
+                            <div class="rule-type">Status Code</div>
+                            <div class="rule-match">Exact match</div>
+                            <div class="rule-example">200 matches only 200</div>
+                        </div>
+                        <div class="rule">
+                            <div class="rule-type">Response Body</div>
+                            <div class="rule-match">Substring match (case-sensitive)</div>
+                            <div class="rule-example">"user" matches "username: john"</div>
+                        </div>
+                        <div class="rule">
+                            <div class="rule-type">Response Headers</div>
+                            <div class="rule-match">Header exists and value substring match</div>
+                            <div class="rule-example">"Content-Type: json" matches "Content-Type: application/json"</div>
+                        </div>
+                    </div>
+
+                    <h3>Assertion Behavior</h3>
+                    <ul>
+                        <li>All assertions must pass for the request to be considered successful</li>
+                        <li>If any assertion fails, the request is marked as failed</li>
+                        <li>Assertions are evaluated in the order they appear</li>
+                        <li>When assertions are present, response headers and body are always captured</li>
+                    </ul>
+                </section>
+
+                <section id="output-formats" class="guide-section">
+                    <h2>Output Formats</h2>
+                    
+                    <h3>Default Output</h3>
+                    <div class="code-block">
+                        <code>🚀 HTTP File Runner - Processing file: requests.http
+==================================================
+Found 3 HTTP request(s)
+
+✅ GET https://api.example.com/users - Status: 200
+❌ GET https://api.example.com/missing - Status: 404
+✅ POST https://api.example.com/users - Status: 201
+
+==================================================
+Summary: 2/3 requests succeeded</code>
+                    </div>
+
+                    <h3>Verbose Output</h3>
+                    <div class="code-block">
+                        <code>🚀 HTTP File Runner - Processing file: requests.http
+==================================================
+Found 1 HTTP request(s)
+
+📤 Request Details:
+Method: GET
+URL: https://api.example.com/users
+Headers:
+  Authorization: Bearer token123
+  Accept: application/json
+------------------------------
+
+✅ GET https://api.example.com/users - Status: 200 - 145ms
+
+📥 Response Details:
+Status: 200
+Duration: 145ms
+Headers:
+  content-type: application/json
+  content-length: 1234
+  server: nginx/1.18.0
+Body:
+[{"id":1,"name":"John Doe","email":"john@example.com"}]
+------------------------------</code>
+                    </div>
+
+                    <h3>Discovery Mode Output</h3>
+                    <div class="code-block">
+                        <code>🔍 Discovering .http files recursively...
+Found 4 .http file(s):
+  📄 .\tests\auth.http
+  📄 .\tests\users.http
+  📄 .\examples\simple.http
+  📄 .\api\health.http
+
+🚀 HTTP File Runner - Processing file: .\tests\auth.http
+==================================================
+Found 2 HTTP request(s)
+...
+
+🎯 Overall Summary:
+Files processed: 4
+Total requests: 12/15</code>
+                    </div>
+
+                    <h3>Assertion Output</h3>
+                    <div class="code-block">
+                        <code>✅ GET https://api.example.com/users - Status: 200 - 123ms
+
+🔍 Assertion Results:
+  ✅ Status code: Expected 200, Got 200
+  ✅ Response body contains: "John Doe"
+  ❌ Response header: Expected "Cache-Control: no-cache", Got "Cache-Control: max-age=3600"
+
+❌ Request failed due to assertion failures</code>
+                    </div>
+
+                    <h3>Status Indicators</h3>
+                    <div class="indicator-table">
+                        <div class="indicator">
+                            <div class="indicator-icon">✅</div>
+                            <div class="indicator-desc">Successful request (2xx status, all assertions pass)</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">❌</div>
+                            <div class="indicator-desc">Failed request (non-2xx status or assertion failure)</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">🚀</div>
+                            <div class="indicator-desc">Processing information</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">🔍</div>
+                            <div class="indicator-desc">Discovery or assertion information</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">📤</div>
+                            <div class="indicator-desc">Request details (verbose mode)</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">📥</div>
+                            <div class="indicator-desc">Response details (verbose mode)</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">📄</div>
+                            <div class="indicator-desc">File information</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">🎯</div>
+                            <div class="indicator-desc">Summary information</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="exit-codes" class="guide-section">
+                    <h2>Exit Codes</h2>
+                    
+                    <div class="param-table">
+                        <div class="param">
+                            <div class="param-name">0</div>
+                            <div class="param-type">Success</div>
+                            <div class="param-desc">All requests completed successfully (2xx status, all assertions passed)</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">1</div>
+                            <div class="param-type">General Error</div>
+                            <div class="param-desc">One or more requests failed, file not found, or invalid arguments</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">2</div>
+                            <div class="param-type">Invalid Usage</div>
+                            <div class="param-desc">Invalid command-line arguments or options</div>
+                        </div>
+                    </div>
+
+                    <h3>Success Criteria</h3>
+                    <p>A request is considered successful when:</p>
+                    <ul>
+                        <li>HTTP status code is in 2xx range (200-299)</li>
+                        <li>All assertions (if any) pass</li>
+                        <li>No network or connection errors occur</li>
+                    </ul>
+
+                    <h3>Failure Scenarios</h3>
+                    <ul>
+                        <li>HTTP status code is not 2xx (4xx, 5xx)</li>
+                        <li>Any assertion fails</li>
+                        <li>Network connection error</li>
+                        <li>DNS resolution failure</li>
+                        <li>Timeout</li>
+                        <li>Invalid URL format</li>
+                    </ul>
+                </section>
+
+                <section id="version-info" class="guide-section">
+                    <h2>Version Information</h2>
+                    
+                    <h3>Version Command</h3>
+                    <div class="code-block">
+                        <code>httprunner --version
+httprunner -v</code>
+                    </div>
+
+                    <h3>Version Output Format</h3>
+                    <div class="code-block">
+                        <code>HTTP File Runner v1.2.3
+Git Tag: v1.2.3
+Git Commit: a1b2c3d4e5f6789
+Build Time: 2025-06-19 10:30:45 UTC</code>
+                    </div>
+
+                    <h3>Version Components</h3>
+                    <div class="param-table">
+                        <div class="param">
+                            <div class="param-name">Version</div>
+                            <div class="param-type">Semantic Version</div>
+                            <div class="param-desc">Application version following semver (MAJOR.MINOR.PATCH)</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">Git Tag</div>
+                            <div class="param-type">Git Reference</div>
+                            <div class="param-desc">Git tag from which the build was created</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">Git Commit</div>
+                            <div class="param-type">Commit Hash</div>
+                            <div class="param-desc">Short commit hash of the build</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">Build Time</div>
+                            <div class="param-type">ISO 8601 DateTime</div>
+                            <div class="param-desc">UTC timestamp when the binary was built</div>
+                        </div>
+                    </div>
+
+                    <h3>Build Information</h3>
+                    <p>Version information is automatically generated at build time using:</p>
+                    <ul>
+                        <li>Git repository metadata</li>
+                        <li>Build system timestamp</li>                        <li>Semantic versioning from git tags</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>HTTP File Runner</h4>
+                    <p>A powerful command-line tool for executing HTTP requests from .http files.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="reference.html">API Reference</a></li>
+                        <li><a href="cicd.html">CI/CD Setup</a></li>
+                        <li><a href="docker.html">Docker Setup</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/christianhelle/httprunner">GitHub</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/issues">Issues</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>License</h4>
+                    <p>MIT License</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Zig.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

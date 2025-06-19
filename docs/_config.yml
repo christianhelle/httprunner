@@ -1,0 +1,40 @@
+# GitHub Pages Configuration
+# This file is optional but helps with GitHub Pages configuration
+
+# Exclude files from the site build
+exclude:
+  - README.md
+  - "*.md"
+  - .gitignore
+  - LICENSE
+
+# Include all HTML, CSS, JS files
+include:
+  - "*.html"
+  - "*.css" 
+  - "*.js"
+
+# Plugins (GitHub Pages automatically includes these)
+plugins:
+  - jekyll-relative-links
+
+# Settings
+relative_links:
+  enabled: true
+  collections: false
+
+# Site metadata
+title: "HTTP File Runner Documentation"
+description: "Complete documentation for HTTP File Runner - a powerful command-line tool for executing HTTP requests from .http files"
+url: "https://christianhelle.github.io"
+baseurl: "/httprunner"
+
+# Repository information
+repository: "christianhelle/httprunner"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  hard_wrap: false

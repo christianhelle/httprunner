@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://christianhelle.github.io/httprunner/</loc>
+        <lastmod>2025-06-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://christianhelle.github.io/httprunner/guide.html</loc>
+        <lastmod>2025-06-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://christianhelle.github.io/httprunner/reference.html</loc>
+        <lastmod>2025-06-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>    <url>
+        <loc>https://christianhelle.github.io/httprunner/cicd.html</loc>
+        <lastmod>2025-06-19</lastmod>
+        <changefreq>quarterly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://christianhelle.github.io/httprunner/docker.html</loc>
+        <lastmod>2025-06-19</lastmod>
+        <changefreq>quarterly</changefreq>
+        <priority>0.7</priority>
+    </url>
+</urlset>

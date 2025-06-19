@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Setup - HTTP File Runner</title>
+    <meta name="description" content="Complete CI/CD pipeline setup documentation for HTTP File Runner using GitHub Actions">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span class="emoji">🚀</span>
+                <span class="brand-text">HTTP File Runner</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="guide.html" class="nav-link">Guide</a></li>
+                <li><a href="reference.html" class="nav-link">Reference</a></li>
+                <li><a href="cicd.html" class="nav-link active">CI/CD</a></li>
+                <li><a href="docker.html" class="nav-link">Docker</a></li>
+                <li><a href="https://github.com/christianhelle/httprunner" class="nav-link external">GitHub</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="guide-content">
+        <div class="container">
+            <!-- TOC Toggle Button -->
+            <button class="toc-toggle" id="tocToggle" title="Toggle Table of Contents">
+                📋
+            </button>
+            
+            <!-- Floating TOC Sidebar -->
+            <div class="guide-sidebar" id="guideSidebar">
+                <nav class="toc">
+                    <h4>Table of Contents</h4>
+                    <ul>
+                        <li><a href="#overview">Overview</a></li>
+                        <li><a href="#pipeline-components">Pipeline Components</a></li>
+                        <li><a href="#development-tools">Development Tools</a></li>
+                        <li><a href="#repository-config">Repository Configuration</a></li>
+                        <li><a href="#usage-workflows">Usage Workflows</a></li>
+                        <li><a href="#benefits">Pipeline Benefits</a></li>
+                        <li><a href="#troubleshooting">Troubleshooting</a></li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="guide-main">
+                <header class="guide-header">
+                    <h1>CI/CD Setup</h1>
+                    <p>Complete CI/CD pipeline setup documentation for HTTP File Runner using GitHub Actions.</p>
+                </header>
+
+                <section id="overview" class="guide-section">
+                    <h2>Overview</h2>
+                    <p>This document describes the complete CI/CD pipeline setup for the HTTP File Runner project using GitHub Actions. The pipeline provides automated building, testing, security scanning, and deployment across multiple platforms.</p>
+                </section>
+
+                <section id="pipeline-components" class="guide-section">
+                    <h2>Pipeline Components</h2>
+                    <p>The CI/CD pipeline consists of multiple jobs that run in parallel and sequence to ensure comprehensive testing and deployment.</p>
+
+                    <h3>Job Overview</h3>
+                    <div class="jobs-grid">
+                        <div class="job-card">
+                            <h4>🧪 Test Job</h4>
+                            <p>Builds and tests on multiple platforms (Ubuntu, Windows, macOS) using Zig's built-in testing framework.</p>
+                        </div>
+                        <div class="job-card">
+                            <h4>🔍 CodeQL Analysis</h4>
+                            <p>GitHub's semantic code analysis engine for finding security vulnerabilities and coding errors.</p>
+                        </div>
+                        <div class="job-card">
+                            <h4>🔐 Trivy Vulnerability Scan</h4>
+                            <p>Comprehensive vulnerability scanner for containers, filesystems, and Git repositories.</p>
+                        </div>
+                        <div class="job-card">
+                            <h4>📦 Binary Release</h4>
+                            <p>Cross-platform binary compilation and GitHub Release creation with automated asset upload.</p>
+                        </div>
+                        <div class="job-card">
+                            <h4>🐳 Docker Build & Push</h4>
+                            <p>Container image building for multiple architectures and publishing to registries.</p>
+                        </div>
+                        <div class="job-card">
+                            <h4>📦 Snap Package</h4>
+                            <p>Linux universal package building and publishing to Snap Store.</p>
+                        </div>
+                    </div>
+
+                    <h3>Workflow Triggers</h3>
+                    <ul>
+                        <li><strong>Push to main:</strong> Full pipeline execution</li>
+                        <li><strong>Pull requests:</strong> Testing and security scans only</li>
+                        <li><strong>Release tags:</strong> Complete build, test, and deployment</li>
+                        <li><strong>Manual trigger:</strong> On-demand workflow execution</li>
+                    </ul>
+                </section>
+
+                <section id="development-tools" class="guide-section">
+                    <h2>Development Tools</h2>
+                    <p>Essential tools and automation for development workflow enhancement.</p>
+
+                    <h3>Automated Setup</h3>
+                    <div class="template-grid">
+                        <div class="template-card">
+                            <h4>🛠️ Development Setup Script</h4>
+                            <p>PowerShell script that automates the complete development environment setup.</p>
+                            <ul>
+                                <li>Zig compiler installation via Scoop</li>
+                                <li>Git hooks configuration</li>
+                                <li>Development dependencies</li>
+                                <li>IDE extensions (optional)</li>
+                            </ul>
+                        </div>
+                        <div class="template-card">
+                            <h4>📋 Issue Templates</h4>
+                            <p>Standardized GitHub issue templates for consistent reporting.</p>
+                            <ul>
+                                <li>Bug reports with reproduction steps</li>
+                                <li>Feature requests with use cases</li>
+                                <li>Documentation improvements</li>
+                                <li>Performance issues</li>
+                            </ul>
+                        </div>
+                        <div class="template-card">
+                            <h4>🔄 Pull Request Template</h4>
+                            <p>Comprehensive PR template ensuring quality submissions.</p>
+                            <ul>
+                                <li>Change description checklist</li>
+                                <li>Testing verification</li>
+                                <li>Documentation updates</li>
+                                <li>Breaking change notifications</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="repository-config" class="guide-section">
+                    <h2>Repository Configuration</h2>
+                    <p>Essential repository settings and protections for maintaining code quality.</p>
+
+                    <h3>Branch Protection Rules</h3>
+                    <ul>
+                        <li>Require pull request reviews before merging</li>
+                        <li>Require status checks to pass before merging</li>
+                        <li>Require branches to be up to date before merging</li>
+                        <li>Require conversation resolution before merging</li>
+                        <li>Restrict pushes that create files larger than 100MB</li>
+                    </ul>
+
+                    <div class="config-note">
+                        <p><strong>Security:</strong> The main branch is protected and requires all checks to pass before merging.</p>
+                    </div>
+                </section>
+
+                <section id="usage-workflows" class="guide-section">
+                    <h2>Usage Workflows</h2>
+                    <p>Common development workflows and their corresponding CI/CD pipeline behaviors.</p>
+
+                    <h3>Development Workflow</h3>
+                    <ol>
+                        <li><strong>Feature Development:</strong> Create feature branch → Implement → Push → CI runs tests</li>
+                        <li><strong>Pull Request:</strong> Open PR → CI runs full test suite → Review → Merge</li>
+                        <li><strong>Release:</strong> Tag release → CI builds binaries → Creates GitHub release → Publishes packages</li>
+                    </ol>
+
+                    <h3>CI/CD Behavior by Event</h3>
+                    <ul>
+                        <li><strong>Feature branches:</strong> Test job only</li>
+                        <li><strong>Pull requests:</strong> Test + CodeQL + Trivy scan</li>
+                        <li><strong>Main branch:</strong> Full pipeline without publishing</li>
+                        <li><strong>Release tags:</strong> Complete pipeline with publishing</li>
+                    </ul>
+
+                    <div class="workflow-note">
+                        <p><strong>Tip:</strong> Use conventional commits to trigger automatic versioning and changelog generation.</p>
+                    </div>
+                </section>
+
+                <section id="benefits" class="guide-section">
+                    <h2>Pipeline Benefits</h2>
+                    <p>Key advantages of this comprehensive CI/CD setup.</p>
+
+                    <div class="benefits-grid">
+                        <div class="benefit-card">
+                            <div class="icon">🚀</div>
+                            <h4>Automated Quality</h4>
+                            <p>Comprehensive testing and security scanning on every change</p>
+                        </div>
+                        <div class="benefit-card">
+                            <div class="icon">🔒</div>
+                            <h4>Security First</h4>
+                            <p>Multiple security tools detect vulnerabilities early in development</p>
+                        </div>
+                        <div class="benefit-card">
+                            <div class="icon">📦</div>
+                            <h4>Multi-Platform</h4>
+                            <p>Automated builds for Windows, macOS, Linux, and containers</p>
+                        </div>
+                        <div class="benefit-card">
+                            <div class="icon">⚡</div>
+                            <h4>Fast Feedback</h4>
+                            <p>Parallel job execution provides quick results on all changes</p>
+                        </div>
+                        <div class="benefit-card">
+                            <div class="icon">🔄</div>
+                            <h4>Reproducible</h4>
+                            <p>Consistent build environment ensures reliable deployments</p>
+                        </div>
+                        <div class="benefit-card">
+                            <div class="icon">📊</div>
+                            <h4>Visibility</h4>
+                            <p>Clear status indicators and detailed logs for troubleshooting</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="troubleshooting" class="guide-section">
+                    <h2>Troubleshooting</h2>
+                    <p>Common issues and their solutions when working with the CI/CD pipeline.</p>
+
+                    <h3>Common Issues</h3>
+                    <div class="issue-grid">
+                        <div class="issue-card">
+                            <h4>Build Failures</h4>
+                            <p>Compilation errors or test failures in the pipeline.</p>
+                            <div class="issue-solution">Solution: Check Zig version compatibility and run tests locally first</div>
+                        </div>
+                        <div class="issue-card">
+                            <h4>Security Scan Failures</h4>
+                            <p>Trivy or CodeQL detecting potential vulnerabilities.</p>
+                            <div class="issue-solution">Solution: Review findings, update dependencies, or add suppressions if false positive</div>
+                        </div>
+                        <div class="issue-card">
+                            <h4>Docker Build Issues</h4>
+                            <p>Container image building failing due to platform differences.</p>
+                            <div class="issue-solution">Solution: Test Docker build locally and check multi-arch compatibility</div>
+                        </div>
+                        <div class="issue-card">
+                            <h4>Release Publishing Failures</h4>
+                            <p>GitHub release creation or package publishing errors.</p>
+                            <div class="issue-solution">Solution: Verify repository permissions and check token scopes</div>
+                        </div>
+                    </div>
+
+                    <h3>Getting Help</h3>
+                    <ul>
+                        <li>Check existing issues and documentation</li>
+                        <li>Create issue with appropriate template</li>
+                        <li>Review CI logs for detailed error information</li>
+                        <li>Use development setup script for local testing</li>
+                    </ul>
+
+                    <div class="help-note">
+                        <p><strong>Note:</strong> This CI/CD pipeline provides a robust foundation for developing, testing, and releasing the HTTP File Runner project while maintaining high code quality and security standards.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>HTTP File Runner</h4>
+                    <p>A powerful command-line tool for executing HTTP requests from .http files.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="guide.html">User Guide</a></li>
+                        <li><a href="reference.html">API Reference</a></li>
+                        <li><a href="cicd.html">CI/CD Setup</a></li>
+                        <li><a href="docker.html">Docker Setup</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/christianhelle/httprunner">GitHub</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/issues">Issues</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/discussions">Discussions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>License</h4>
+                    <p>MIT License</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Zig.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
