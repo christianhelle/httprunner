@@ -342,6 +342,33 @@ body {
     position: relative;
 }
 
+.install-card.featured {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.install-card.featured h2 {
+    color: white;
+    font-size: 1.5rem;
+}
+
+.install-card.featured .badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.install-card.featured .install-code {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.install-card.featured .install-code code {
+    color: white;
+}
+
 .install-header {
     display: flex;
     align-items: center;
@@ -379,9 +406,40 @@ body {
     overflow-x: auto;
 }
 
-.install-code code {
+.install-code h4 {
     color: var(--text-color);
-    white-space: pre-line;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0.5rem 0 0.25rem 0;
+    font-family: var(--font-family);
+}
+
+.install-code h4:first-child {
+    margin-top: 0;
+}
+
+.install-code a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.install-code a:hover {
+    text-decoration: underline;
+}
+
+.install-notes {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+}
+
+.install-notes h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-color);
 }
 
 .install-card p {
@@ -389,60 +447,180 @@ body {
     font-size: 0.875rem;
 }
 
-/* Usage */
-.usage {
-    padding: 5rem 0;
-    background: var(--bg-secondary);
-}
-
-.usage-content {
+.install-platforms {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 2rem;
-    margin-bottom: 3rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
 }
 
-.usage-example {
+.platform-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.install-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.features-list {
+    margin-top: 1.5rem;
+}
+
+.features-list h4 {
+    color: white;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.features-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.features-list li {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+.platform-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.platform-list li {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+}
+
+.platform-list code {
+    background: var(--bg-secondary);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.docker-usage {
+    margin-top: 1rem;
+}
+
+.docker-usage h4 {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.troubleshooting {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+}
+
+.troubleshooting h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+}
+
+.troubleshoot-section {
+    margin: 1.5rem 0;
+}
+
+.troubleshoot-section h3 {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.troubleshoot-section p {
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.troubleshoot-section ol,
+.troubleshoot-section ul {
+    color: var(--text-muted);
+    margin-left: 1.5rem;
+}
+
+.troubleshoot-section li {
+    margin: 0.25rem 0;
+}
+
+.verification {
+    margin-top: 3rem;
+    padding: 2rem;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    padding: 2rem;
 }
 
-.usage-example h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
+.verification h2 {
+    font-size: 1.5rem;
     margin-bottom: 1rem;
     color: var(--text-color);
 }
 
-.code-block {
-    background: #1e1e1e;
-    border-radius: var(--border-radius);
-    padding: 1.5rem;
-    overflow-x: auto;
-}
-
-.code-block code {
-    color: #d4d4d4;
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    line-height: 1.5;
-    white-space: pre-line;
-}
-
-.cta {
-    text-align: center;
-    padding: 2rem;
-    background: var(--bg-color);
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-}
-
-.cta p {
-    font-size: 1.125rem;
+.verification p {
     color: var(--text-muted);
     margin-bottom: 1rem;
+}
+
+.next-steps {
+    margin-top: 3rem;
+}
+
+.next-steps h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    text-align: center;
+}
+
+.next-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.next-step-card {
+    display: block;
+    padding: 1.5rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+
+.next-step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+}
+
+.next-step-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.next-step-card p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Installation page specific styles */
+.hero-small {
+    padding: 3rem 0;
 }
 
 /* Footer */

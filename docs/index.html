@@ -14,11 +14,10 @@
             <div class="nav-brand">
                 <span class="emoji">🚀</span>
                 <span class="brand-text">HTTP File Runner</span>
-            </div>
-            <ul class="nav-menu">
+            </div>            <ul class="nav-menu">
                 <li><a href="#home" class="nav-link">Home</a></li>
                 <li><a href="#features" class="nav-link">Features</a></li>
-                <li><a href="#installation" class="nav-link">Installation</a></li>
+                <li><a href="install.html" class="nav-link">Installation</a></li>
                 <li><a href="#usage" class="nav-link">Usage</a></li>
                 <li><a href="guide.html" class="nav-link">Guide</a></li>
                 <li><a href="reference.html" class="nav-link">Reference</a></li>
@@ -42,9 +41,8 @@
                     </h1>
                     <p class="hero-subtitle">
                         A powerful command-line tool written in Zig that parses .http files and executes HTTP requests with beautiful colored output
-                    </p>
-                    <div class="hero-buttons">
-                        <a href="#installation" class="btn btn-primary">Get Started</a>
+                    </p>                    <div class="hero-buttons">
+                        <a href="install.html" class="btn btn-primary">Get Started</a>
                         <a href="https://github.com/christianhelle/httprunner" class="btn btn-secondary">View on GitHub</a>
                     </div>
                     <div class="badges">
@@ -130,21 +128,42 @@
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="installation" class="installation">
+        </section>        <section id="installation" class="installation">
             <div class="container">
                 <h2 class="section-title">Installation</h2>
                 <div class="install-options">
                     <div class="install-card">
                         <div class="install-header">
-                            <h3>Snap Store</h3>
+                            <h3>Quick Install Script</h3>
                             <span class="badge recommended">Recommended</span>
+                        </div>
+                        <div class="install-code">
+                            <h4>Linux/macOS:</h4>
+                            <code>curl -fsSL https://christianhelle.com/httprunner/install | bash</code>
+                            <h4>Windows (PowerShell):</h4>
+                            <code>irm https://christianhelle.com/httprunner/install.ps1 | iex</code>
+                        </div>
+                        <p>One-command installation that automatically detects your platform, downloads the latest release, and adds it to your PATH.</p>
+                    </div>
+                    
+                    <div class="install-card">
+                        <div class="install-header">
+                            <h3>Manual Download</h3>
+                        </div>
+                        <div class="install-code">
+                            <code><a href="https://github.com/christianhelle/httprunner/releases/latest" target="_blank">Download from GitHub Releases</a></code>
+                        </div>
+                        <p>Download the appropriate binary for your platform (Linux, macOS x86_64/ARM64, Windows) and extract to your PATH.</p>
+                    </div>
+                    
+                    <div class="install-card">
+                        <div class="install-header">
+                            <h3>Snap Store</h3>
                         </div>
                         <div class="install-code">
                             <code>sudo snap install httprunner</code>
                         </div>
-                        <p>The easiest way to install on Linux systems with snap support.</p>
+                        <p>Easy installation on Linux systems with snap support.</p>
                     </div>
                     
                     <div class="install-card">
@@ -167,6 +186,16 @@
                             <code>docker pull christianhelle/httprunner</code>
                         </div>
                         <p>Run in a containerized environment without installing dependencies.</p>
+                    </div>
+                </div>
+                
+                <div class="install-notes">
+                    <h3>Custom Installation Directory</h3>
+                    <div class="install-code">
+                        <h4>Linux/macOS:</h4>
+                        <code>INSTALL_DIR=$HOME/.local/bin curl -fsSL https://christianhelle.com/httprunner/install | bash</code>
+                        <h4>Windows:</h4>
+                        <code>irm https://christianhelle.com/httprunner/install.ps1 | iex -InstallDir "C:\Tools"</code>
                     </div>
                 </div>
             </div>
