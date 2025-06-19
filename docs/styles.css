@@ -1313,3 +1313,12 @@ body {
     line-height: 1.6;
     white-space: pre;
 }
+
+.install-code.download-link {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.install-code.download-link code {
+    color: var(--text-color);
+}
