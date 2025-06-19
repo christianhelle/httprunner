@@ -3,7 +3,7 @@
 # HTTP File Runner - Installation Script
 # This script downloads and installs the latest release of httprunner
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
