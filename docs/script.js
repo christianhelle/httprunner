@@ -1,5 +1,62 @@
+// Theme management
+function initializeTheme() {
+    // Check for saved theme preference or default to system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const currentTheme = savedTheme || systemTheme;
+    
+    // Apply theme
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    
+    // Update toggle button if it exists
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+        themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+        themeToggle.title = `Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} mode`;
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    // Apply new theme
+    document.documentElement.setAttribute('data-theme', newTheme);
+    
+    // Save preference
+    localStorage.setItem('theme', newTheme);
+    
+    // Update toggle button
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+        themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        themeToggle.title = `Switch to ${newTheme === 'dark' ? 'light' : 'dark'} mode`;
+    }
+}
+
 // Mobile navigation toggle
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize theme
+    initializeTheme();
+    
+    // Add theme toggle event listener
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+    
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('theme')) {
+            const newTheme = e.matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+                themeToggle.title = `Switch to ${newTheme === 'dark' ? 'light' : 'dark'} mode`;
+            }
+        }
+    });
     const hamburger = document.querySelector('.hamburger');
     const navMenu = document.querySelector('.nav-menu');
     
@@ -205,6 +262,16 @@ style.textContent = `
         border-top: 1px solid var(--border-color);
         box-shadow: var(--shadow-lg);
         z-index: 99;
+    }
+    
+    .nav-menu.active::after {
+        content: '';
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem 0;
+        border-top: 1px solid var(--border-color);
+        margin-top: 1rem;
     }
     
     .hamburger.active span:nth-child(1) {

@@ -5,35 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTTP File Runner - Installation Scripts</title>
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333;
+            --primary-color: #2563eb;
+            --section-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --code-bg: #1e1e1e;
+            --code-color: #f8f8f2;
+        }
+        
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --text-color: #f1f5f9;
+            --primary-color: #3b82f6;
+            --section-bg: #1e293b;
+            --border-color: #334155;
+            --code-bg: #111827;
+            --code-color: #e5e7eb;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             max-width: 800px;
             margin: 2rem auto;
             padding: 2rem;
             line-height: 1.6;
-            color: #333;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .theme-toggle:hover {
+            background-color: var(--section-bg);
         }
         .header {
             text-align: center;
             margin-bottom: 2rem;
         }
         .header h1 {
-            color: #2563eb;
+            color: var(--primary-color);
         }
         .install-section {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: var(--section-bg);
+            border: 1px solid var(--border-color);
             border-radius: 0.5rem;
             padding: 1.5rem;
             margin: 1rem 0;
         }
         .install-section h2 {
             margin-top: 0;
-            color: #1e293b;
+            color: var(--text-color);
         }
         .command {
-            background: #1e1e1e;
-            color: #f8f8f2;
+            background: var(--code-bg);
+            color: var(--code-color);
             padding: 1rem;
             border-radius: 0.25rem;
             font-family: 'Monaco', 'Consolas', monospace;
@@ -57,6 +94,7 @@
     </style>
 </head>
 <body>
+    <button class="theme-toggle" aria-label="Toggle theme">🌙</button>
     <div class="header">
         <h1>🚀 HTTP File Runner</h1>
         <p>Installation Scripts</p>
@@ -81,5 +119,57 @@
     </div>
 
     <p>For more installation options and detailed documentation, visit: <a href="https://christianhelle.com/httprunner/" class="link">christianhelle.com/httprunner</a></p>
+    
+    <script>
+        // Theme management for install-scripts page
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const currentTheme = savedTheme || systemTheme;
+            
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+                themeToggle.title = `Switch to ${currentTheme === 'dark' ? 'light' : 'dark'} mode`;
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+                themeToggle.title = `Switch to ${newTheme === 'dark' ? 'light' : 'dark'} mode`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            
+            const themeToggle = document.querySelector('.theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+            
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                if (!localStorage.getItem('theme')) {
+                    const newTheme = e.matches ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    const themeToggle = document.querySelector('.theme-toggle');
+                    if (themeToggle) {
+                        themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+                        themeToggle.title = `Switch to ${newTheme === 'dark' ? 'light' : 'dark'} mode`;
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
