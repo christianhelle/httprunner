@@ -344,29 +344,43 @@ body {
 
 .install-card.featured {
     grid-column: 1 / -1;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-    color: white;
+    background: var(--bg-color);
+    color: var(--text-color);
     margin-bottom: 2rem;
+    border: 2px solid var(--primary-color);
 }
 
-.install-card.featured h2 {
-    color: white;
+.install-card.featured h2,
+.install-card.featured h3 {
+    color: var(--text-color);
     font-size: 1.5rem;
 }
 
 .install-card.featured .badge {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--success-color);
     color: white;
 }
 
 .install-card.featured .install-code {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
 .install-card.featured .install-code code {
-    color: white;
+    color: var(--text-color);
+}
+
+.install-card.featured .platform-section h4 {
+    color: var(--text-color);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0.5rem 0 0.25rem 0;
+    font-family: var(--font-family);
+}
+
+.install-card.featured .platform-section h4:first-child {
+    margin-top: 0;
 }
 
 .install-header {
@@ -454,10 +468,11 @@ body {
     margin: 1.5rem 0;
 }
 
-.platform-section h3 {
+.platform-section h3,
+.platform-section h4 {
     font-size: 1.1rem;
     margin-bottom: 0.5rem;
-    color: white;
+    color: var(--text-color);
 }
 
 .install-options-grid {
@@ -1147,6 +1162,24 @@ body {
     color: var(--text-color);
 }
 
+/* Call to Action */
+.cta {
+    text-align: center;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.cta p {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+}
+
 /* Responsive adjustments for new components */
 @media (max-width: 768px) {
     .jobs-grid,
@@ -1254,4 +1287,29 @@ body {
     .sidebar-overlay {
         display: none;
     }
+}
+
+.install-code code {
+    color: var(--text-color);
+    white-space: pre-line;
+    word-break: break-word;
+    display: block;
+    line-height: 1.6;
+}
+
+.code-block {
+    background: #1e1e1e;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+}
+
+.code-block code {
+    color: #d4d4d4;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: pre;
 }
