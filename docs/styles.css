@@ -101,6 +101,24 @@ body {
     font-size: 0.875rem;
 }
 
+.theme-toggle {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 1rem;
+}
+
+.theme-toggle:hover {
+    background-color: var(--bg-secondary);
+}
+
 .hamburger {
     display: none;
     flex-direction: column;
@@ -1321,4 +1339,21 @@ body {
 
 .install-code.download-link code {
     color: var(--text-color);
+}
+
+/* Mobile Navigation Styles */
+@media (max-width: 768px) {
+    .nav-menu {
+        display: none;
+    }
+    
+    .hamburger {
+        display: flex;
+    }
+    
+    .theme-toggle {
+        margin-left: 0.5rem;
+        padding: 0.4rem;
+        font-size: 1.1rem;
+    }
 }
