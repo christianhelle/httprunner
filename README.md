@@ -44,21 +44,65 @@ The version information is automatically generated at build time using git repos
 
 ## Installation
 
-### Option 1: Install from Snap Store (Recommended)
+### Option 1: Quick Install Script (Recommended)
+
+**Linux/macOS:**
+
+```bash
+curl -fsSL https://christianhelle.com/httprunner/install | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://christianhelle.com/httprunner/install.ps1 | iex
+```
+
+The install scripts will:
+
+- Automatically detect your platform and architecture
+- Download the latest release from GitHub
+- Install the binary to an appropriate location
+- Add it to your PATH (if desired)
+
+**Custom installation directory:**
+
+```bash
+# Linux/macOS
+INSTALL_DIR=$HOME/.local/bin curl -fsSL https://christianhelle.com/httprunner/install | bash
+
+# Windows
+irm https://christianhelle.com/httprunner/install.ps1 | iex -InstallDir "C:\Tools"
+```
+
+### Option 2: Manual Download
+
+Download the latest release for your platform from the [GitHub Releases page](https://github.com/christianhelle/httprunner/releases/latest):
+
+- **Linux x86_64:** `httprunner-linux-x86_64.tar.gz`
+- **macOS x86_64:** `httprunner-macos-x86_64.tar.gz`
+- **macOS ARM64:** `httprunner-macos-aarch64.tar.gz`
+- **Windows x86_64:** `httprunner-windows-x86_64.zip`
+
+Extract the archive and add the binary to your PATH.
+
+### Option 3: Install from Snap Store
 
 ```bash
 sudo snap install httprunner
 ```
 
-### Option 2: Build from Source
+### Option 4: Build from Source
 
 Make sure you have Zig installed (version 0.14 or later).
 
 ```bash
+git clone https://github.com/christianhelle/httprunner.git
+cd httprunner
 zig build
 ```
 
-### Option 3: Use Docker
+### Option 5: Use Docker
 
 The httprunner is available as a Docker image on Docker Hub at `christianhelle/httprunner`.
 
@@ -832,3 +876,49 @@ The project follows standard GitHub flow:
 ## License
 
 This project is open source and available under the MIT License.
+
+## Installer Scripts
+
+The project includes installer scripts for easy deployment:
+
+- `install.sh` - Bash installer script for Linux and macOS
+- `install.ps1` - PowerShell installer script for Windows
+- Both scripts automatically detect platform/architecture and download the latest release
+- Scripts are deployed to GitHub Pages and accessible at:
+  - <https://christianhelle.com/httprunner/install>
+  - <https://christianhelle.com/httprunner/install.ps1>
+
+### Testing the Installer Scripts
+
+```bash
+# Test the installer scripts locally
+./test-installer.sh
+```
+
+## Development
+
+For development, testing, and debugging:
+
+- Use `zig build -Ddebug` for debug builds with symbols
+- Use `zig build -Drelease-fast` for optimized release builds
+- Run tests with `zig test tests/*.zig`
+- Format code with `zig fmt src/*.zig`
+
+### Debugging Tips
+
+- Use `print()` statements for simple logging
+- Use a debugger like `gdb` or `lldb` for step-by-step debugging
+- Check `zig-out/bin/` for build artifacts and logs
+
+### Testing
+
+Unit tests are located in the `tests/` directory and can be run with:
+
+```bash
+zig test tests/*.zig
+```
+
+## Acknowledgments
+
+- Inspired by various open-source HTTP clients and API testing tools
+- Thanks to the Zig community for their support and contributions
