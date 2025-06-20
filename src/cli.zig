@@ -21,13 +21,11 @@ pub const CliOptions = struct {
         }
     }
     pub fn parse(allocator: Allocator, args: []const []const u8) !CliOptions {
-        // Check for help flag first
         if (containsFlag(args, "--help") or containsFlag(args, "-h")) {
             showUsage();
             return error.InvalidArguments;
         }
 
-        // Check for version flag first
         if (containsFlag(args, "--version") or containsFlag(args, "-v")) {
             return CliOptions{
                 .discover_mode = false,
@@ -41,7 +39,6 @@ pub const CliOptions = struct {
             };
         }
 
-        // Check for upgrade flag
         if (containsFlag(args, "--upgrade")) {
             return CliOptions{
                 .discover_mode = false,
