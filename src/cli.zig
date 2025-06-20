@@ -203,12 +203,12 @@ pub fn showVersion() void {
 
 pub fn showDonationBanner() void {
     print("\n", .{});
-    print("╭──────────────────────────────💝 Support─────────────────────────────────╮\n", .{});
-    print("│ 💖 Enjoying httprunner? Consider supporting the project!                │\n", .{});
-    print("│                                                                         │\n", .{});
-    print("│ 🎯 Sponsor: https://github.com/sponsors/christianhelle                  │\n", .{});
-    print("│ ☕ Buy me a coffee: https://www.buymeacoffee.com/christianhelle         │\n", .{});
-    print("│                                                                         │\n", .{});
-    print("│ 🐛 Found an issue? https://github.com/christianhelle/httprunnner/issues │\n", .{});
-    print("╰─────────────────────────────────────────────────────────────────────────╯\n", .{});
+    print("╭──────────────────────────────💝 Support────────────────────────────────╮\n", .{});
+    print("│ 💖 Enjoying httprunner? Consider supporting the project!               │\n", .{});
+    print("│                                                                        │\n", .{});
+    print("│ 🎯 Sponsor: https://github.com/sponsors/christianhelle                 │\n", .{});
+    print("│ ☕ Buy me a coffee: https://www.buymeacoffee.com/christianhelle        │\n", .{});
+    print("│                                                                        │\n", .{});
+    print("│ 🐛 Found an issue? https://github.com/christianhelle/httprunner/issues │\n", .{});
+    print("╰────────────────────────────────────────────────────────────────────────╯\n", .{});
 }
