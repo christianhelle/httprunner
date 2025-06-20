@@ -43,15 +43,15 @@ pub fn main() !void {
         }
         const found_files = try discovery.runDiscoveryMode(allocator, &discovered_files);
         if (found_files) {
-            try processHttpFiles(allocator, discovered_files.items, options.verbose, options.log_file, options.environment);
+            try processHttpFiles(allocator, discovered_files.items, options);
         }
     } else {
-        try processHttpFiles(allocator, options.files, options.verbose, options.log_file, options.environment);
+        try processHttpFiles(allocator, options.files, options);
     }
 }
 
-fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8) !void {
-    if (try processor.processHttpFiles(allocator, files, verbose, log_filename, environment)) {
+fn processHttpFiles(allocator: Allocator, files: []const []const u8, options: cli.CliOptions) !void {
+    if (try processor.processHttpFiles(allocator, files, options.verbose, options.log_file, options.environment)) {
         std.debug.print("{s}✅ All discovered files processed successfully{s}\n", .{ colors.GREEN, colors.RESET });
     } else {
         std.debug.print("{s}❌ Some discovered files failed to process{s}\n", .{ colors.RED, colors.RESET });
