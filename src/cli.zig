@@ -9,6 +9,7 @@ pub const CliOptions = struct {
     discover_mode: bool,
     verbose: bool,
     show_version: bool,
+    upgrade_mode: bool,
     log_file: ?[]const u8,
     environment: ?[]const u8,
     files: []const []const u8,
@@ -32,6 +33,21 @@ pub const CliOptions = struct {
                 .discover_mode = false,
                 .verbose = false,
                 .show_version = true,
+                .upgrade_mode = false,
+                .log_file = null,
+                .environment = null,
+                .files = &[_][]const u8{},
+                .allocator = null,
+            };
+        }
+
+        // Check for upgrade flag
+        if (containsFlag(args, "--upgrade")) {
+            return CliOptions{
+                .discover_mode = false,
+                .verbose = false,
+                .show_version = false,
+                .upgrade_mode = true,
                 .log_file = null,
                 .environment = null,
                 .files = &[_][]const u8{},
@@ -59,6 +75,7 @@ pub const CliOptions = struct {
                 .discover_mode = true,
                 .verbose = verbose,
                 .show_version = false,
+                .upgrade_mode = false,
                 .log_file = log_file,
                 .environment = environment,
                 .files = &[_][]const u8{},
@@ -78,6 +95,7 @@ pub const CliOptions = struct {
             if (std.mem.eql(u8, arg, "--discover") or
                 std.mem.eql(u8, arg, "--verbose") or
                 std.mem.eql(u8, arg, "--version") or
+                std.mem.eql(u8, arg, "--upgrade") or
                 std.mem.eql(u8, arg, "--help") or
                 std.mem.eql(u8, arg, "-v") or
                 std.mem.eql(u8, arg, "-h"))
@@ -112,6 +130,7 @@ pub const CliOptions = struct {
             .discover_mode = discover_mode,
             .verbose = verbose,
             .show_version = false,
+            .upgrade_mode = false,
             .log_file = log_file,
             .environment = environment,
             .files = files_owned,
@@ -162,6 +181,7 @@ pub fn showUsage() void {
     print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]\n", .{});
     print("  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover\n", .{});
     print("  httprunner --version | -v\n", .{});
+    print("  httprunner --upgrade\n", .{});
     print("  httprunner --help | -h\n", .{});
     print("\n{s}Arguments:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  <http-file>    One or more .http files to process\n", .{});
@@ -170,6 +190,7 @@ pub fn showUsage() void {
     print("  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)\n", .{});
     print("  --env <env>    Specify environment name to load variables from http-client.env.json\n", .{});
     print("  --version, -v  Show version information\n", .{});
+    print("  --upgrade      Update httprunner to the latest version\n", .{});
     print("  --help, -h     Show this help message\n", .{});
 }
 
