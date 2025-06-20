@@ -20,6 +20,12 @@ pub const CliOptions = struct {
         }
     }
     pub fn parse(allocator: Allocator, args: []const []const u8) !CliOptions {
+        // Check for help flag first
+        if (containsFlag(args, "--help") or containsFlag(args, "-h")) {
+            showUsage();
+            return error.InvalidArguments;
+        }
+
         // Check for version flag first
         if (containsFlag(args, "--version") or containsFlag(args, "-v")) {
             return CliOptions{
@@ -72,7 +78,9 @@ pub const CliOptions = struct {
             if (std.mem.eql(u8, arg, "--discover") or
                 std.mem.eql(u8, arg, "--verbose") or
                 std.mem.eql(u8, arg, "--version") or
-                std.mem.eql(u8, arg, "-v"))
+                std.mem.eql(u8, arg, "--help") or
+                std.mem.eql(u8, arg, "-v") or
+                std.mem.eql(u8, arg, "-h"))
             {
                 continue;
             } else if (std.mem.eql(u8, arg, "--log")) {
@@ -154,6 +162,7 @@ pub fn showUsage() void {
     print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]\n", .{});
     print("  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover\n", .{});
     print("  httprunner --version | -v\n", .{});
+    print("  httprunner --help | -h\n", .{});
     print("\n{s}Arguments:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  <http-file>    One or more .http files to process\n", .{});
     print("  --discover     Recursively discover and process all .http files from current directory\n", .{});
@@ -161,6 +170,7 @@ pub fn showUsage() void {
     print("  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)\n", .{});
     print("  --env <env>    Specify environment name to load variables from http-client.env.json\n", .{});
     print("  --version, -v  Show version information\n", .{});
+    print("  --help, -h     Show this help message\n", .{});
 }
 
 pub fn showVersion() void {
