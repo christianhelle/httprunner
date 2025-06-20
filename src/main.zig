@@ -5,6 +5,7 @@ const cli = @import("cli.zig");
 const colors = @import("colors.zig");
 const discovery = @import("discovery.zig");
 const processor = @import("processor.zig");
+const upgrade = @import("upgrade.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -22,9 +23,13 @@ pub fn main() !void {
         }
     };
     defer options.deinit();
-
     if (options.show_version) {
         cli.showVersion();
+        return;
+    }
+
+    if (options.upgrade_mode) {
+        try upgrade.runUpgrade();
         return;
     }
 
