@@ -200,3 +200,15 @@ pub fn showVersion() void {
     print("Git commit: {s}{s}{s}\n", .{ colors.YELLOW, version_info.GIT_COMMIT, colors.RESET });
     print("Build date: {s}{s}{s}\n", .{ colors.YELLOW, version_info.BUILD_DATE, colors.RESET });
 }
+
+pub fn showDonationBanner() void {
+    print("\n", .{});
+    print("╭──────────────────────────────💝 Support─────────────────────────────────╮\n", .{});
+    print("│ 💖 Enjoying httprunner? Consider supporting the project!                │\n", .{});
+    print("│                                                                         │\n", .{});
+    print("│ 🎯 Sponsor: https://github.com/sponsors/christianhelle                  │\n", .{});
+    print("│ ☕ Buy me a coffee: https://www.buymeacoffee.com/christianhelle         │\n", .{});
+    print("│                                                                         │\n", .{});
+    print("│ 🐛 Found an issue? https://github.com/christianhelle/httprunnner/issues │\n", .{});
+    print("╰─────────────────────────────────────────────────────────────────────────╯\n", .{});
+}

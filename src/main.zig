@@ -53,8 +53,10 @@ pub fn main() !void {
 fn processHttpFiles(allocator: Allocator, files: []const []const u8, options: cli.CliOptions) !void {
     if (try processor.processHttpFiles(allocator, files, options.verbose, options.log_file, options.environment)) {
         std.debug.print("{s}✅ All discovered files processed successfully{s}\n", .{ colors.GREEN, colors.RESET });
+        cli.showDonationBanner();
     } else {
         std.debug.print("{s}❌ Some discovered files failed to process{s}\n", .{ colors.RED, colors.RESET });
+        cli.showDonationBanner();
         std.process.exit(1);
     }
 }
