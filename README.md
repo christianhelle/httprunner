@@ -914,10 +914,6 @@ The project follows standard GitHub flow:
 5. CI checks run automatically
 6. Merge after review and approval
 
-## License
-
-This project is open source and available under the MIT License.
-
 ## Installer Scripts
 
 The project includes installer scripts for easy deployment:
@@ -959,7 +955,6 @@ Unit tests are located in the `tests/` directory and can be run with:
 zig test tests/*.zig
 ```
 
-## Acknowledgments
+## License
 
-- Inspired by various open-source HTTP clients and API testing tools
-- Thanks to the Zig community for their support and contributions
+This project is open source and available under the MIT License
