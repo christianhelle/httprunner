@@ -111,6 +111,47 @@ The httprunner is available as a Docker image on Docker Hub at `christianhelle/h
 docker pull christianhelle/httprunner
 ```
 
+## Upgrading
+
+### Quick Upgrade
+
+If you have httprunner already installed, you can easily upgrade to the latest version using the built-in upgrade command:
+
+```bash
+# Upgrade to the latest version
+httprunner --upgrade
+```
+
+The upgrade command will:
+
+- Automatically detect your platform (Windows, Linux, macOS)
+- Download and run the appropriate install script
+- Update httprunner to the latest version available
+- Preserve your existing installation location
+
+**What it runs under the hood:**
+
+- **Linux/macOS:** `curl -fsSL https://christianhelle.com/httprunner/install | bash`
+- **Windows:** `irm https://christianhelle.com/httprunner/install.ps1 | iex`
+
+After upgrading, you may need to restart your terminal to use the updated version.
+
+### Manual Upgrade
+
+Alternatively, you can always re-run the installation scripts manually:
+
+**Linux/macOS:**
+
+```bash
+curl -fsSL https://christianhelle.com/httprunner/install | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://christianhelle.com/httprunner/install.ps1 | iex
+```
+
 ## Usage
 
 ### If installed via Snap
