@@ -35,6 +35,7 @@ httprunner -v
 ```
 
 This displays:
+
 - Application version (semantic versioning)
 - Git tag information
 - Git commit hash
@@ -958,3 +959,9 @@ zig test tests/*.zig
 ## License
 
 This project is open source and available under the MIT License
+
+#
+
+For tips and tricks on software development, check out [my blog](https://christianhelle.com)
+
+If you find this useful and feel a bit generous then feel free to [buy me a coffee ☕](https://www.buymeacoffee.com/christianhelle)
