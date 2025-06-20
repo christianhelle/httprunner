@@ -4,12 +4,28 @@ const print = std.debug.print;
 
 const colors = @import("colors.zig");
 
+fn isInstalledViaSnap() bool {
+    if (builtin.os.tag != .linux) return false;
+
+    var child = std.process.Child.init(&[_][]const u8{ "snap", "list", "httprunner" }, std.heap.page_allocator);
+    child.stdout_behavior = .Ignore;
+    child.stderr_behavior = .Ignore;
+
+    const result = child.spawnAndWait() catch return false;
+
+    return switch (result) {
+        .Exited => |code| code == 0,
+        else => false,
+    };
+}
+
 pub fn runUpgrade() !void {
     print("{s}🚀 Upgrading httprunner to the latest version...{s}\n", .{ colors.BLUE, colors.RESET });
 
     const command = switch (builtin.os.tag) {
         .windows => "irm https://christianhelle.com/httprunner/install.ps1 | iex",
-        .linux, .macos => "curl -fsSL https://christianhelle.com/httprunner/install | bash",
+        .linux => if (isInstalledViaSnap()) "snap refresh httprunner" else "curl -fsSL https://christianhelle.com/httprunner/install | bash",
+        .macos => "curl -fsSL https://christianhelle.com/httprunner/install | bash",
         else => {
             print("{s}❌ Upgrade is not supported on this platform{s}\n", .{ colors.RED, colors.RESET });
             return;
@@ -18,7 +34,11 @@ pub fn runUpgrade() !void {
 
     const shell_args = switch (builtin.os.tag) {
         .windows => [_][]const u8{ "powershell.exe", "-Command", command },
-        .linux, .macos => [_][]const u8{ "/bin/bash", "-c", command },
+        .linux => if (isInstalledViaSnap())
+            [_][]const u8{ "snap", "refresh", "httprunner" }
+        else
+            [_][]const u8{ "/bin/bash", "-c", command },
+        .macos => [_][]const u8{ "/bin/bash", "-c", command },
         else => unreachable,
     };
 
