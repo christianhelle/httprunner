@@ -41,8 +41,20 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         };
     };
     var header_buffer: [8192]u8 = undefined;
+
+    var extra_headers_array = std.ArrayList(http.Header).init(allocator);
+    defer extra_headers_array.deinit();
+
+    for (request.headers.items) |header| {
+        try extra_headers_array.append(.{
+            .name = header.name,
+            .value = header.value,
+        });
+    }
+
     var req = client.open(method, uri, .{
         .server_header_buffer = &header_buffer,
+        .extra_headers = extra_headers_array.items,
     }) catch |err| {
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
