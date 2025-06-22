@@ -16,13 +16,13 @@ GET https://httpbin.org/status/500
 GET https://api.github.com/zen
 GET https://jsonplaceholder.typicode.com/posts/1
 
-# Request with headers (headers are parsed but not sent yet)
+# Request with headers (fully supported)
 GET https://httpbin.org/headers
 User-Agent: HTTPRunner/1.0
 Accept: application/json
 X-Test-Header: test-value
 
-# POST request with body (parsed but body not sent yet)
+# POST request with body (fully supported)
 POST https://httpbin.org/post
 Content-Type: application/json
 
