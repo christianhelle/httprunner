@@ -96,6 +96,24 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
                 }
             }
 
+            if (verbose) {
+                log.write("\n{s}📥 Response Details:{s}\n", .{ colors.BLUE, colors.RESET });
+                log.write("Status: {}\n", .{result.status_code});
+                log.write("Duration: {}ms\n", .{result.duration_ms});
+
+                if (result.response_headers) |headers| {
+                    log.write("Headers:\n", .{});
+                    for (headers) |header| {
+                        log.write("  {s}: {s}\n", .{ header.name, header.value });
+                    }
+                }
+
+                if (result.response_body) |body| {
+                    log.write("Body:\n{s}\n", .{body});
+                }
+                log.write("{s}\n", .{"-" ** 30});
+            }
+
             if (request.assertions.items.len > 0) {
                 log.write("\n{s}🔍 Assertion Results:{s}\n", .{ colors.BLUE, colors.RESET });
                 for (result.assertion_results.items) |assertion_result| {
