@@ -16,7 +16,7 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - ✅ Color-coded output (green for success, red for failure)
 - 📊 Summary statistics showing success/failure counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
-- 📝 Custom headers support (parsing implemented, execution pending)
+- 📝 **Custom headers support** with full request header implementation
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
 - 🔍 **Response assertions** for status codes, body content, and headers
@@ -566,7 +566,7 @@ When assertions are present, the HTTP runner will:
 ### Supported Features
 
 - **Methods**: GET, POST, PUT, DELETE, PATCH
-- **Headers**: Key-value pairs separated by `:` (parsed but not yet applied to requests)
+- **Headers**: Key-value pairs separated by `:` (fully supported and sent with requests)
 - **Body**: Content after headers (separated by empty line)
 - **Comments**: Lines starting with `#`
 
@@ -832,12 +832,10 @@ The tool handles various error conditions gracefully:
 
 ## Current Limitations
 
-- Custom headers are parsed but not yet applied to HTTP requests (planned for future version)
 - Only basic authentication methods supported
 
 ## Future Enhancements
 
-- [ ] Full custom headers support
 - [ ] Authentication (Basic, Bearer tokens)
 - [ ] Request timeouts configuration
 - [ ] JSON response formatting
