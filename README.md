@@ -645,15 +645,23 @@ The `--log` flag enables output logging to a file, which is essential for:
 When running httprunner without any arguments, the following help text is displayed:
 
 ```text
+HTTP File Runner v0.1.9
 Usage:
-  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] 
-  httprunner [--verbose] [--log [filename]] --discover
+  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]
+  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover
+  httprunner --version | -v
+  httprunner --upgrade
+  httprunner --help | -h
 
 Arguments:
   <http-file>    One or more .http files to process
   --discover     Recursively discover and process all .http files from current directory
   --verbose      Show detailed HTTP request and response information
   --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
+  --env <env>    Specify environment name to load variables from http-client.env.json
+  --version, -v  Show version information
+  --upgrade      Update httprunner to the latest version
+  --help, -h     Show this help message
 ```
 
 ### Practical Logging Examples
