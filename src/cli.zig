@@ -174,7 +174,7 @@ fn getEnvironment(args: []const []const u8) ?[]const u8 {
 }
 
 pub fn showUsage() void {
-    print("{s}HTTP File Runner{s} version {s}{s}{s}\n", .{ colors.BLUE, colors.RESET, colors.GREEN, version_info.VERSION, colors.RESET });
+    print("{s}HTTP File Runner{s} v{s}{s}{s}\n", .{ colors.BLUE, colors.RESET, colors.GREEN, version_info.VERSION, colors.RESET });
     print("{s}Usage:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]\n", .{});
     print("  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover\n", .{});
