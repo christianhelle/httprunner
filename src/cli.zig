@@ -174,6 +174,7 @@ fn getEnvironment(args: []const []const u8) ?[]const u8 {
 }
 
 pub fn showUsage() void {
+    print("{s}HTTP File Runner{s} version {s}{s}{s}\n", .{ colors.BLUE, colors.RESET, colors.GREEN, version_info.VERSION, colors.RESET });
     print("{s}Usage:{s}\n", .{ colors.BLUE, colors.RESET });
     print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]\n", .{});
     print("  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover\n", .{});
@@ -192,7 +193,7 @@ pub fn showUsage() void {
 }
 
 pub fn showVersion() void {
-    print("{s}httprunner{s} version {s}{s}{s}\n", .{ colors.BLUE, colors.RESET, colors.GREEN, version_info.VERSION, colors.RESET });
+    print("{s}HTTP File Runner{s} version {s}{s}{s}\n", .{ colors.BLUE, colors.RESET, colors.GREEN, version_info.VERSION, colors.RESET });
     print("Git tag: {s}{s}{s}\n", .{ colors.YELLOW, version_info.GIT_TAG, colors.RESET });
     print("Git commit: {s}{s}{s}\n", .{ colors.YELLOW, version_info.GIT_COMMIT, colors.RESET });
     print("Build date: {s}{s}{s}\n", .{ colors.YELLOW, version_info.BUILD_DATE, colors.RESET });
