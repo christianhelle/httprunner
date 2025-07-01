@@ -49,10 +49,31 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
     var in_body = false;
     var body_content = std.ArrayList(u8).init(allocator);
     defer body_content.deinit();
+    var pending_request_name: ?[]const u8 = null;
 
     while (lines.next()) |line| {
         const trimmed = std.mem.trim(u8, line, " \t\r\n");
-        if (trimmed.len == 0 or std.mem.startsWith(u8, trimmed, "#")) {
+        if (trimmed.len == 0) {
+            continue;
+        }
+
+        if (std.mem.startsWith(u8, trimmed, "# @name ") and trimmed.len > 8) {
+            const name = std.mem.trim(u8, trimmed[8..], " \t");
+            if (pending_request_name) |old_name| {
+                allocator.free(old_name);
+            }
+            pending_request_name = try allocator.dupe(u8, name);
+            continue;
+        } else if (std.mem.startsWith(u8, trimmed, "// @name ") and trimmed.len > 9) {
+            const name = std.mem.trim(u8, trimmed[9..], " \t");
+            if (pending_request_name) |old_name| {
+                allocator.free(old_name);
+            }
+            pending_request_name = try allocator.dupe(u8, name);
+            continue;
+        }
+
+        if (std.mem.startsWith(u8, trimmed, "#") or std.mem.startsWith(u8, trimmed, "//")) {
             continue;
         }
 
@@ -140,7 +161,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
             const substituted_url = try substituteVariables(allocator, url, variables.items);
 
             current_request = HttpRequest{
-                .name = null,
+                .name = pending_request_name,
                 .method = substituted_method,
                 .url = substituted_url,
                 .headers = std.ArrayList(HttpRequest.Header).init(allocator),
@@ -148,6 +169,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 .assertions = std.ArrayList(Assertion).init(allocator),
                 .variables = std.ArrayList(Variable).init(allocator),
             };
+            pending_request_name = null; // Reset after using
             in_body = false;
         } else if (std.mem.indexOf(u8, trimmed, ":") != null and !in_body) {
             if (current_request) |*req| {
@@ -177,6 +199,11 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
             req.body = substituted_body;
         }
         try requests.append(req.*);
+    }
+
+    // Clean up any unused pending request name
+    if (pending_request_name) |name| {
+        allocator.free(name);
     }
 
     return requests;
