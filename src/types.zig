@@ -26,6 +26,9 @@ pub const HttpRequest = struct {
     };
 
     pub fn deinit(self: *HttpRequest, allocator: Allocator) void {
+        if (self.name) |name| {
+            allocator.free(name);
+        }
         allocator.free(self.method);
         allocator.free(self.url);
 
@@ -98,6 +101,9 @@ pub const HttpResult = struct {
     };
 
     pub fn deinit(self: *HttpResult, allocator: Allocator) void {
+        if (self.request_name) |name| {
+            allocator.free(name);
+        }
         if (self.response_headers) |headers| {
             for (headers) |header| {
                 allocator.free(header.name);
