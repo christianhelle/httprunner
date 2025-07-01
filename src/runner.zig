@@ -121,13 +121,6 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
             .response_body = response_body,
             .assertion_results = std.ArrayList(types.AssertionResult).init(allocator),
         };
-        defer {
-            // Only free the request_name from temp_result, not the other fields
-            // since they will be owned by the final result
-            if (temp_result.request_name) |name| {
-                allocator.free(name);
-            }
-        }
 
         assertion_results = try assertions.evaluateAssertions(allocator, request.assertions.items, &temp_result);
 
