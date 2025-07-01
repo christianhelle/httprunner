@@ -12,6 +12,7 @@ pub const Variable = struct {
 };
 
 pub const HttpRequest = struct {
+    name: ?[]const u8,
     method: []const u8,
     url: []const u8,
     headers: std.ArrayList(Header),
