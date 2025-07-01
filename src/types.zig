@@ -11,6 +11,30 @@ pub const Variable = struct {
     }
 };
 
+pub const RequestVariable = struct {
+    reference: []const u8, // e.g., "login.response.body.$.token"
+    request_name: []const u8,
+    source: RequestVariableSource,
+    target: RequestVariableTarget,
+    path: []const u8, // JSONPath, XPath, header name, or "*"
+
+    pub const RequestVariableSource = enum {
+        request,
+        response,
+    };
+
+    pub const RequestVariableTarget = enum {
+        body,
+        headers,
+    };
+
+    pub fn deinit(self: RequestVariable, allocator: Allocator) void {
+        allocator.free(self.reference);
+        allocator.free(self.request_name);
+        allocator.free(self.path);
+    }
+};
+
 pub const HttpRequest = struct {
     name: ?[]const u8,
     method: []const u8,
