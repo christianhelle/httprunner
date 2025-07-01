@@ -7,9 +7,11 @@ const colors = @import("colors.zig");
 const types = @import("types.zig");
 const parser = @import("parser.zig");
 const runner = @import("runner.zig");
+const request_variables = @import("request_variables.zig");
 const Log = @import("log.zig").Log;
 
 const HttpRequest = types.HttpRequest;
+const RequestContext = types.RequestContext;
 
 pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8) !bool {
     var log = Log.init(allocator, log_filename) catch |err| {
@@ -55,38 +57,62 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
 
         var success_count: u32 = 0;
         var request_count: u32 = 0;
+
+        // Build request contexts for sequential execution
+        var request_contexts = std.ArrayList(RequestContext).init(allocator);
+        defer {
+            for (request_contexts.items) |*ctx| {
+                ctx.deinit(allocator);
+            }
+            request_contexts.deinit();
+        }
+
         for (requests.items) |request| {
             request_count += 1;
 
+            // Create a copy of the request for processing
+            var processed_request = try cloneHttpRequest(allocator, request);
+
+            // Substitute request variables in the processed request
+            try substituteRequestVariablesInRequest(allocator, &processed_request, request_contexts.items);
+
             if (verbose) {
                 log.write("\n{s}📤 Request Details:{s}\n", .{ colors.BLUE, colors.RESET });
-                if (request.name) |name| {
+                if (processed_request.name) |name| {
                     log.write("Name: {s}\n", .{name});
                 }
-                log.write("Method: {s}\n", .{request.method});
-                log.write("URL: {s}\n", .{request.url});
+                log.write("Method: {s}\n", .{processed_request.method});
+                log.write("URL: {s}\n", .{processed_request.url});
 
-                if (request.headers.items.len > 0) {
+                if (processed_request.headers.items.len > 0) {
                     log.write("Headers:\n", .{});
-                    for (request.headers.items) |header| {
+                    for (processed_request.headers.items) |header| {
                         log.write("  {s}: {s}\n", .{ header.name, header.value });
                     }
                 }
 
-                if (request.body) |body| {
+                if (processed_request.body) |body| {
                     log.write("Body:\n{s}\n", .{body});
                 }
                 log.write("{s}\n", .{"-" ** 30});
             }
 
-            const result = runner.executeHttpRequest(allocator, request, verbose) catch |err| {
-                log.write("{s}❌ {s} {s} - Error: {}{s}\n", .{ colors.RED, request.method, request.url, err, colors.RESET });
+            const result = runner.executeHttpRequest(allocator, processed_request, verbose) catch |err| {
+                log.write("{s}❌ {s} {s} - Error: {}{s}\n", .{ colors.RED, processed_request.method, processed_request.url, err, colors.RESET });
+
+                // Add to context even if failed
+                const context_name = if (processed_request.name) |name|
+                    try allocator.dupe(u8, name)
+                else
+                    try std.fmt.allocPrint(allocator, "request_{}", .{request_count});
+
+                try request_contexts.append(.{
+                    .name = context_name,
+                    .request = processed_request,
+                    .result = null,
+                });
                 continue;
             };
-            defer {
-                var mut_result = result;
-                mut_result.deinit(allocator);
-            }
 
             if (result.success) {
                 success_count += 1;
@@ -96,7 +122,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
                     "";
                 defer if (result.request_name != null) allocator.free(name_prefix);
 
-                log.write("{s}✅ {s}{s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, name_prefix, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
+                log.write("{s}✅ {s}{s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, name_prefix, processed_request.method, processed_request.url, result.status_code, result.duration_ms, colors.RESET });
             } else {
                 const name_prefix = if (result.request_name) |name|
                     std.fmt.allocPrint(allocator, "{s}: ", .{name}) catch ""
@@ -105,11 +131,23 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
                 defer if (result.request_name != null) allocator.free(name_prefix);
 
                 if (result.error_message) |msg| {
-                    log.write("{s}❌ {s}{s} {s} - Status: {} - {}ms - Error: {s}{s}\n", .{ colors.RED, name_prefix, request.method, request.url, result.status_code, result.duration_ms, msg, colors.RESET });
+                    log.write("{s}❌ {s}{s} {s} - Status: {} - {}ms - Error: {s}{s}\n", .{ colors.RED, name_prefix, processed_request.method, processed_request.url, result.status_code, result.duration_ms, msg, colors.RESET });
                 } else {
-                    log.write("{s}❌ {s}{s} {s} - Status: {} - {}ms{s}\n", .{ colors.RED, name_prefix, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
+                    log.write("{s}❌ {s}{s} {s} - Status: {} - {}ms{s}\n", .{ colors.RED, name_prefix, processed_request.method, processed_request.url, result.status_code, result.duration_ms, colors.RESET });
                 }
             }
+
+            // Add to request context for subsequent requests
+            const context_name = if (processed_request.name) |name|
+                try allocator.dupe(u8, name)
+            else
+                try std.fmt.allocPrint(allocator, "request_{}", .{request_count});
+
+            try request_contexts.append(.{
+                .name = context_name,
+                .request = processed_request,
+                .result = result,
+            });
 
             if (verbose) {
                 log.write("\n{s}📥 Response Details:{s}\n", .{ colors.BLUE, colors.RESET });
@@ -129,7 +167,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
                 log.write("{s}\n", .{"-" ** 30});
             }
 
-            if (request.assertions.items.len > 0) {
+            if (processed_request.assertions.items.len > 0) {
                 log.write("\n{s}🔍 Assertion Results:{s}\n", .{ colors.BLUE, colors.RESET });
                 for (result.assertion_results.items) |assertion_result| {
                     const assertion_type_str = switch (assertion_result.assertion.type) {
@@ -166,4 +204,70 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
     }
 
     return total_success_count == total_request_count;
+}
+
+fn cloneHttpRequest(allocator: Allocator, original: HttpRequest) !HttpRequest {
+    var cloned = HttpRequest{
+        .name = if (original.name) |name| try allocator.dupe(u8, name) else null,
+        .method = try allocator.dupe(u8, original.method),
+        .url = try allocator.dupe(u8, original.url),
+        .headers = std.ArrayList(HttpRequest.Header).init(allocator),
+        .body = if (original.body) |body| try allocator.dupe(u8, body) else null,
+        .assertions = std.ArrayList(types.Assertion).init(allocator),
+        .variables = std.ArrayList(types.Variable).init(allocator),
+    };
+
+    for (original.headers.items) |header| {
+        try cloned.headers.append(.{
+            .name = try allocator.dupe(u8, header.name),
+            .value = try allocator.dupe(u8, header.value),
+        });
+    }
+
+    for (original.assertions.items) |assertion| {
+        try cloned.assertions.append(.{
+            .type = assertion.type,
+            .expected_value = try allocator.dupe(u8, assertion.expected_value),
+        });
+    }
+
+    for (original.variables.items) |variable| {
+        try cloned.variables.append(.{
+            .name = try allocator.dupe(u8, variable.name),
+            .value = try allocator.dupe(u8, variable.value),
+        });
+    }
+
+    return cloned;
+}
+
+fn substituteRequestVariablesInRequest(allocator: Allocator, request: *HttpRequest, context: []const RequestContext) !void {
+    // Substitute in URL
+    const new_url = try request_variables.substituteRequestVariables(allocator, request.url, context);
+    allocator.free(request.url);
+    request.url = new_url;
+
+    // Substitute in headers
+    for (request.headers.items) |*header| {
+        const new_name = try request_variables.substituteRequestVariables(allocator, header.name, context);
+        const new_value = try request_variables.substituteRequestVariables(allocator, header.value, context);
+        allocator.free(header.name);
+        allocator.free(header.value);
+        header.name = new_name;
+        header.value = new_value;
+    }
+
+    // Substitute in body
+    if (request.body) |body| {
+        const new_body = try request_variables.substituteRequestVariables(allocator, body, context);
+        allocator.free(body);
+        request.body = new_body;
+    }
+
+    // Substitute in assertion expected values
+    for (request.assertions.items) |*assertion| {
+        const new_expected = try request_variables.substituteRequestVariables(allocator, assertion.expected_value, context);
+        allocator.free(assertion.expected_value);
+        assertion.expected_value = new_expected;
+    }
 }
