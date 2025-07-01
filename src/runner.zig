@@ -78,9 +78,12 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     };
     defer req.deinit();
 
+    if (request.body) |body| {
+        req.transfer_encoding = .{ .content_length = body.len };
+    }
+
     try req.send();
     if (request.body) |body| {
-        req.transfer_encoding = .chunked;
         try req.writeAll(body);
     }
     try req.finish();
