@@ -80,7 +80,7 @@ fn extractFromRequest(allocator: Allocator, request_var: RequestVariable, reques
                     return try allocator.dupe(u8, body);
                 }
                 // For request body, we don't support JSONPath/XPath parsing yet
-                // Just return the whole body for now
+                // Return the whole body for any path (including non-wildcard)
                 return try allocator.dupe(u8, body);
             }
             return null;
