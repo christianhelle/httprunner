@@ -89,6 +89,7 @@ pub const HttpResult = struct {
     response_headers: ?[]Header,
     response_body: ?[]const u8,
     assertion_results: std.ArrayList(AssertionResult),
+    request_name: ?[]const u8,
 
     pub const Header = struct {
         name: []const u8,
