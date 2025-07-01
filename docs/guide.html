@@ -44,6 +44,7 @@
                         <li><a href="#getting-started">Getting Started</a></li>
                         <li><a href="#http-file-format">HTTP File Format</a></li>
                         <li><a href="#variables">Variables</a></li>
+                        <li><a href="#request-variables">Request Variables</a></li>
                         <li><a href="#environment-files">Environment Files</a></li>
                         <li><a href="#assertions">Response Assertions</a></li>
                         <li><a href="#command-line-options">Command Line Options</a></li>
@@ -162,6 +163,87 @@ Content-Type: application/json
 @baseUrl={{protocol}}://{{hostname}}
 
 GET {{baseUrl}}/status</code>
+                    </div>
+                </section>
+
+                <section id="request-variables" class="guide-section">
+                    <h2>Request Variables</h2>
+                    <p>Request Variables enable powerful request chaining by allowing you to pass data from one HTTP request to another within the same .http file.</p>
+
+                    <h3>Syntax</h3>
+                    <p>Request variables follow this pattern:</p>
+                    <div class="code-block">
+                        <code>{{&lt;request_name&gt;.(request|response).(body|headers).(*|JSONPath|XPath|&lt;header_name&gt;)}}</code>
+                    </div>
+
+                    <h3>Authentication Flow Example</h3>
+                    <div class="code-block">
+                        <code># @name authenticate
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "username": "admin@example.com",
+  "password": "secure123",
+  "access_token": "jwt_token_here",
+  "refresh_token": "refresh_jwt_here",
+  "user_id": "admin_001",
+  "role": "administrator"
+}
+
+###
+
+# @name get_admin_data
+GET https://httpbin.org/get
+Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
+X-User-Role: {{authenticate.response.body.$.json.role}}
+X-User-ID: {{authenticate.response.body.$.json.user_id}}
+
+###
+
+# @name create_audit_log
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "action": "admin_data_access",
+  "user_id": "{{authenticate.response.body.$.json.user_id}}",
+  "original_request": {
+    "username": "{{authenticate.request.body.$.username}}",
+    "timestamp": "2025-07-01T21:16:46Z"
+  },
+  "response_content_type": "{{get_admin_data.response.headers.Content-Type}}"
+}</code>
+                    </div>
+
+                    <h3>Extraction Patterns</h3>
+                    <h4>JSON Bodies</h4>
+                    <ul>
+                        <li><code>$.property_name</code> - Extract top-level properties</li>
+                        <li><code>$.nested.property</code> - Extract nested properties</li>
+                        <li><code>$.json.property</code> - Extract from "json" field (like httpbin.org responses)</li>
+                        <li><code>*</code> - Extract entire body</li>
+                    </ul>
+
+                    <h4>Headers</h4>
+                    <ul>
+                        <li><code>header_name</code> - Extract specific header value (case-insensitive)</li>
+                    </ul>
+
+                    <h4>Request Data</h4>
+                    <ul>
+                        <li>Same patterns as response, but extracts from the original request data</li>
+                    </ul>
+
+                    <div class="feature-box">
+                        <h4>💡 Use Cases</h4>
+                        <ul>
+                            <li><strong>Authentication Workflows:</strong> Extract tokens from login responses</li>
+                            <li><strong>Data Chaining:</strong> Pass IDs or data between sequential requests</li>
+                            <li><strong>Dynamic Headers:</strong> Use response headers in subsequent requests</li>
+                            <li><strong>Request Auditing:</strong> Reference original request data in follow-up calls</li>
+                            <li><strong>API Testing:</strong> Create comprehensive test flows with dependent requests</li>
+                        </ul>
                     </div>
                 </section>
 

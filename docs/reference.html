@@ -44,6 +44,7 @@
                         <li><a href="#command-line">Command Line</a></li>
                         <li><a href="#http-syntax">HTTP File Syntax</a></li>
                         <li><a href="#variables-syntax">Variables</a></li>
+                        <li><a href="#request-variables-syntax">Request Variables</a></li>
                         <li><a href="#environment-format">Environment Files</a></li>
                         <li><a href="#assertions-reference">Assertions</a></li>
                         <li><a href="#output-formats">Output Formats</a></li>
@@ -263,6 +264,98 @@ GET {{baseUrl}}/users</code>
                         <li>Header names and values</li>
                         <li>Request body content</li>
                         <li>Other variable definitions</li>
+                    </ul>
+                </section>
+
+                <section id="request-variables-syntax" class="guide-section">
+                    <h2>Request Variables</h2>
+                    
+                    <h3>Syntax Pattern</h3>
+                    <div class="syntax-block">
+                        <code>{{&lt;request_name&gt;.(request|response).(body|headers).(*|JSONPath|XPath|&lt;header_name&gt;)}}</code>
+                    </div>
+
+                    <h3>Component Breakdown</h3>
+                    <table class="reference-table">
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>request_name</code></td>
+                                <td>Name of a previous request (defined with <code># @name</code>)</td>
+                                <td><code>authenticate</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>request|response</code></td>
+                                <td>Extract from request or response</td>
+                                <td><code>response</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>body|headers</code></td>
+                                <td>Extract from body or headers</td>
+                                <td><code>body</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>extraction_path</code></td>
+                                <td>JSONPath, XPath, header name, or <code>*</code></td>
+                                <td><code>$.json.access_token</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>JSONPath Patterns</h3>
+                    <ul>
+                        <li><code>$.property</code> - Top-level property</li>
+                        <li><code>$.nested.property</code> - Nested property</li>
+                        <li><code>$.json.property</code> - Property within "json" field</li>
+                        <li><code>*</code> - Entire body content</li>
+                    </ul>
+
+                    <h3>Header Extraction</h3>
+                    <ul>
+                        <li><code>Content-Type</code> - Extract Content-Type header</li>
+                        <li><code>authorization</code> - Extract Authorization header (case-insensitive)</li>
+                        <li><code>x-custom-header</code> - Extract custom header</li>
+                    </ul>
+
+                    <h3>Request Naming</h3>
+                    <div class="code-block">
+                        <code># @name request_identifier
+POST https://api.example.com/auth
+Content-Type: application/json
+
+{
+  "username": "user",
+  "password": "pass"
+}</code>
+                    </div>
+
+                    <h3>Usage Examples</h3>
+                    <div class="code-block">
+                        <code># Extract from response body
+{{auth.response.body.$.access_token}}
+
+# Extract from response headers
+{{auth.response.headers.Content-Type}}
+
+# Extract from request body
+{{auth.request.body.$.username}}
+
+# Extract entire response
+{{auth.response.body.*}}</code>
+                    </div>
+
+                    <h3>Execution Order</h3>
+                    <ul>
+                        <li>Request variables can only reference requests that appear earlier in the file</li>
+                        <li>Referenced requests must have been executed successfully</li>
+                        <li>Named requests must use the <code># @name</code> syntax</li>
+                        <li>Variables are resolved at execution time</li>
                     </ul>
                 </section>
 
