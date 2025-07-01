@@ -60,6 +60,9 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
 
             if (verbose) {
                 log.write("\n{s}📤 Request Details:{s}\n", .{ colors.BLUE, colors.RESET });
+                if (request.name) |name| {
+                    log.write("Name: {s}\n", .{name});
+                }
                 log.write("Method: {s}\n", .{request.method});
                 log.write("URL: {s}\n", .{request.url});
 
@@ -87,12 +90,24 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
 
             if (result.success) {
                 success_count += 1;
-                log.write("{s}✅ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
+                const name_prefix = if (result.request_name) |name|
+                    std.fmt.allocPrint(allocator, "{s}: ", .{name}) catch ""
+                else
+                    "";
+                defer if (result.request_name != null) allocator.free(name_prefix);
+
+                log.write("{s}✅ {s}{s} {s} - Status: {} - {}ms{s}\n", .{ colors.GREEN, name_prefix, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
             } else {
+                const name_prefix = if (result.request_name) |name|
+                    std.fmt.allocPrint(allocator, "{s}: ", .{name}) catch ""
+                else
+                    "";
+                defer if (result.request_name != null) allocator.free(name_prefix);
+
                 if (result.error_message) |msg| {
-                    log.write("{s}❌ {s} {s} - Status: {} - {}ms - Error: {s}{s}\n", .{ colors.RED, request.method, request.url, result.status_code, result.duration_ms, msg, colors.RESET });
+                    log.write("{s}❌ {s}{s} {s} - Status: {} - {}ms - Error: {s}{s}\n", .{ colors.RED, name_prefix, request.method, request.url, result.status_code, result.duration_ms, msg, colors.RESET });
                 } else {
-                    log.write("{s}❌ {s} {s} - Status: {} - {}ms{s}\n", .{ colors.RED, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
+                    log.write("{s}❌ {s}{s} {s} - Status: {} - {}ms{s}\n", .{ colors.RED, name_prefix, request.method, request.url, result.status_code, result.duration_ms, colors.RESET });
                 }
             }
 

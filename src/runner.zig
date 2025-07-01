@@ -14,7 +14,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
-            .request_name = null,
+            .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
             .status_code = 0,
             .success = false,
             .error_message = "Invalid URL",
@@ -32,7 +32,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
-            .request_name = null,
+            .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
             .status_code = 0,
             .success = false,
             .error_message = "Invalid HTTP method",
@@ -61,7 +61,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
-            .request_name = null,
+            .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
             .status_code = 0,
             .success = false,
             .error_message = switch (err) {
@@ -111,8 +111,8 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
 
     var assertion_results = std.ArrayList(types.AssertionResult).init(allocator);
     if (has_assertions) {
-        const temp_result = HttpResult{
-            .request_name = null,
+        var temp_result = HttpResult{
+            .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
             .status_code = status_code,
             .success = success,
             .error_message = null,
@@ -121,6 +121,13 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
             .response_body = response_body,
             .assertion_results = std.ArrayList(types.AssertionResult).init(allocator),
         };
+        defer {
+            // Only free the request_name from temp_result, not the other fields
+            // since they will be owned by the final result
+            if (temp_result.request_name) |name| {
+                allocator.free(name);
+            }
+        }
 
         assertion_results = try assertions.evaluateAssertions(allocator, request.assertions.items, &temp_result);
 
@@ -135,7 +142,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     }
 
     return HttpResult{
-        .request_name = null,
+        .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
         .status_code = status_code,
         .success = success,
         .error_message = null,
