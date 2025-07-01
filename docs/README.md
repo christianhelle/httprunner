@@ -40,7 +40,7 @@ docs/
 
 ### Content Organization
 - **Homepage**: Quick overview with feature highlights and installation options
-- **User Guide**: Step-by-step instructions for all features
+- **User Guide**: Step-by-step instructions for all features including Request Variables
 - **API Reference**: Complete command-line and file format documentation
 - **Setup Guides**: Detailed CI/CD and Docker deployment instructions
 

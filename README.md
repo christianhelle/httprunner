@@ -21,7 +21,8 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🛡️ Robust error handling for network issues
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
-- 📋 **Semantic versioning** with git tag and commit information
+- � **Request Variables** for chaining requests and passing data between HTTP calls
+- �📋 **Semantic versioning** with git tag and commit information
 - 🔍 **Build-time version generation** with automatic git integration
 
 ## Version Information
@@ -510,6 +511,93 @@ If a variable is defined in both the `.http` file and the environment file:
 - **Variables in .http file** override environment variables with the same name
 - This allows you to have environment defaults while still being able to override them per request file
 
+## Request Variables
+
+Request Variables allow you to chain HTTP requests by passing data from one request to another within the same `.http` file. This feature enables powerful workflows like authentication flows, data extraction, and response chaining.
+
+### Request Variable Syntax
+
+The syntax for request variables follows this pattern:
+
+```text
+{{<request_name>.(request|response).(body|headers).(*|JSONPath|XPath|<header_name>)}}
+```
+
+Where:
+
+- `request_name`: The name of a previous request (defined with `# @name`)
+- `request|response`: Whether to extract from the request or response
+- `body|headers`: Whether to extract from body or headers  
+- `*|JSONPath|XPath|header_name`: The extraction path
+
+### Authentication Flow Example
+
+```http
+# @name authenticate
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "username": "admin@example.com",
+  "password": "secure123",
+  "access_token": "jwt_token_here",
+  "refresh_token": "refresh_jwt_here",
+  "user_id": "admin_001",
+  "role": "administrator"
+}
+
+###
+
+# @name get_admin_data
+GET https://httpbin.org/get
+Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
+X-User-Role: {{authenticate.response.body.$.json.role}}
+X-User-ID: {{authenticate.response.body.$.json.user_id}}
+
+###
+
+# @name create_audit_log
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "action": "admin_data_access",
+  "user_id": "{{authenticate.response.body.$.json.user_id}}",
+  "original_request": {
+    "username": "{{authenticate.request.body.$.username}}",
+    "timestamp": "2025-07-01T21:16:46Z"
+  },
+  "response_content_type": "{{get_admin_data.response.headers.Content-Type}}"
+}
+```
+
+### Supported Extraction Patterns
+
+**For JSON bodies:**
+
+- `$.property_name` - Extract top-level properties
+- `$.nested.property` - Extract nested properties
+- `$.json.property` - Extract from "json" field (like httpbin.org responses)
+- `*` - Extract entire body
+
+**For headers:**
+
+- `header_name` - Extract specific header value (case-insensitive)
+
+**For request data:**
+
+- Same patterns as response, but extracts from the original request data
+
+### Request Variable Benefits
+
+- **Authentication Workflows**: Extract tokens from login responses
+- **Data Chaining**: Pass IDs or data between sequential requests
+- **Dynamic Headers**: Use response headers in subsequent requests
+- **Request Auditing**: Reference original request data in follow-up calls
+- **API Testing**: Create comprehensive test flows with dependent requests
+
+**Note:** Request variables can only reference requests that appear earlier in the same `.http` file and have been named with `# @name`.
+
 ## Response Assertions
 
 The HTTP File Runner supports assertions to validate HTTP responses. You can assert on status codes, response body content, and response headers.
@@ -578,6 +666,9 @@ The `examples/` directory contains several sample `.http` files:
 - **`basic.http`** - Various GET requests to different websites
 - **`apis.http`** - Requests to public APIs (7 requests)
 - **`status-codes.http`** - Tests different HTTP status codes (15 requests)
+- **`request-variables.http`** - Demonstrates request chaining with variables (5 requests)
+- **`variables.http`** - Shows variable usage and environment files
+- **`comprehensive.http`** - Complete feature demonstration
 
 ## Output
 
