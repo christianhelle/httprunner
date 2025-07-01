@@ -145,3 +145,17 @@ pub const HttpResult = struct {
         self.assertion_results.deinit();
     }
 };
+
+pub const RequestContext = struct {
+    name: []const u8,
+    request: HttpRequest,
+    result: ?HttpResult,
+
+    pub fn deinit(self: *RequestContext, allocator: Allocator) void {
+        allocator.free(self.name);
+        self.request.deinit(allocator);
+        if (self.result) |*result| {
+            result.deinit(allocator);
+        }
+    }
+};
