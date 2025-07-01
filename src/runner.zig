@@ -14,6 +14,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
+            .request_name = null,
             .status_code = 0,
             .success = false,
             .error_message = "Invalid URL",
@@ -31,6 +32,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
+            .request_name = null,
             .status_code = 0,
             .success = false,
             .error_message = "Invalid HTTP method",
@@ -59,6 +61,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
         const end_time = std.time.nanoTimestamp();
         const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
         return HttpResult{
+            .request_name = null,
             .status_code = 0,
             .success = false,
             .error_message = switch (err) {
@@ -109,6 +112,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     var assertion_results = std.ArrayList(types.AssertionResult).init(allocator);
     if (has_assertions) {
         const temp_result = HttpResult{
+            .request_name = null,
             .status_code = status_code,
             .success = success,
             .error_message = null,
@@ -131,6 +135,7 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     }
 
     return HttpResult{
+        .request_name = null,
         .status_code = status_code,
         .success = success,
         .error_message = null,
