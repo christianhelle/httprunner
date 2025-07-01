@@ -140,6 +140,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
             const substituted_url = try substituteVariables(allocator, url, variables.items);
 
             current_request = HttpRequest{
+                .name = null,
                 .method = substituted_method,
                 .url = substituted_url,
                 .headers = std.ArrayList(HttpRequest.Header).init(allocator),
