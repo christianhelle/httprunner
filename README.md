@@ -21,8 +21,8 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🛡️ Robust error handling for network issues
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
-- � **Request Variables** for chaining requests and passing data between HTTP calls
-- �📋 **Semantic versioning** with git tag and commit information
+- 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
+- 📋 **Semantic versioning** with git tag and commit information
 - 🔍 **Build-time version generation** with automatic git integration
 
 ## Version Information
