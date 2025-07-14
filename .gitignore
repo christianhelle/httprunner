@@ -69,3 +69,4 @@ bld/
 *.snap
 src/httprunner.rc
 src/version_info.zig
+.run
