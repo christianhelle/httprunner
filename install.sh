@@ -15,6 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 GITHUB_REPO="christianhelle/httprunner"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+MAN_DIR="${MAN_DIR:-/usr/local/share/man/man1}"
 BINARY_NAME="httprunner"
 
 # Functions
@@ -125,11 +126,54 @@ download_and_install() {
         cp "$temp_dir/$BINARY_NAME" "$INSTALL_DIR/"
         chmod +x "$INSTALL_DIR/$BINARY_NAME"
     fi
-    
+
+    install_man_page "$version"
+
     # Cleanup
     rm -rf "$temp_dir"
     
     log_success "httprunner $version installed successfully!"
+}
+
+install_man_page() {
+    local version="$1"
+    local man_page_name="httprunner.1"
+    local man_page_url="https://github.com/$GITHUB_REPO/releases/download/$version/$man_page_name"
+    local temp_dir=$(mktemp -d)
+
+    log_info "Downloading man page..."
+    if ! curl -L -o "$temp_dir/$man_page_name" "$man_page_url"; then
+        log_warning "Failed to download man page. Skipping installation."
+        rm -rf "$temp_dir"
+        return
+    fi
+
+    log_info "Installing man page to $MAN_DIR..."
+    if [ ! -d "$MAN_DIR" ]; then
+        if ! mkdir -p "$MAN_DIR" 2>/dev/null; then
+            if command -v sudo >/dev/null 2>&1; then
+                sudo mkdir -p "$MAN_DIR"
+            else
+                log_warning "Cannot create directory $MAN_DIR. Skipping man page installation."
+                rm -rf "$temp_dir"
+                return
+            fi
+        fi
+    fi
+
+    if [ ! -w "$MAN_DIR" ]; then
+        if command -v sudo >/dev/null 2>&1; then
+            sudo cp "$temp_dir/$man_page_name" "$MAN_DIR/"
+            sudo chmod 644 "$MAN_DIR/$man_page_name"
+        else
+            log_warning "Cannot write to $MAN_DIR and sudo is not available. Skipping man page installation."
+        fi
+    else
+        cp "$temp_dir/$man_page_name" "$MAN_DIR/"
+        chmod 644 "$MAN_DIR/$man_page_name"
+    fi
+
+    rm -rf "$temp_dir"
 }
 
 verify_installation() {
@@ -155,6 +199,7 @@ show_usage() {
     echo ""
     echo "Environment variables:"
     echo "  INSTALL_DIR     Installation directory (default: /usr/local/bin)"
+    echo "  MAN_DIR         Man page installation directory (default: /usr/local/share/man/man1)"
     echo ""
     echo "Examples:"
     echo "  # Install to default location"

@@ -42,8 +42,19 @@ jobs:
     - name: Build release
       run: zig build -Doptimize=ReleaseFast
 
+    - name: Install pandoc
+      run: sudo apt-get update && sudo apt-get install -y pandoc
+
+    - name: Create man page directory
+      run: mkdir -p man/man1
+
+    - name: Generate man page
+      run: pandoc man/httprunner.1.md -s -t man -o man/man1/httprunner.1
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: httprunner-linux
-        path: zig-out/bin/httprunner
+        path: |
+          zig-out/bin/httprunner
+          man/man1/httprunner.1
