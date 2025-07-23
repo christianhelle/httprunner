@@ -4,7 +4,8 @@ This directory contains the development container configuration for the HTTP Fil
 
 ## What's Included
 
-- **Zig 0.14.0**: The programming language and toolchain
+- **Zig 0.14.1**: The programming language and toolchain
+- **PowerShell Core**: For build scripts and cross-platform automation
 - **VS Code Zig Extension**: `ziglang.vscode-zig` for syntax highlighting, IntelliSense, and debugging
 - **Universal Dev Container**: Pre-configured Linux environment with common development tools
 
@@ -50,6 +51,7 @@ zig build run -- examples/simple.http
 The dev container provides:
 
 - Zig language server (ZLS) for code completion and analysis
+- PowerShell Core for build scripts and automation
 - Syntax highlighting for `.zig` files
 - Integrated terminal with Zig in PATH
 - Git support for version control

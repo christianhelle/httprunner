@@ -1051,7 +1051,8 @@ For the easiest development experience, this repository includes a dev container
 4. When prompted, click "Reopen in Container" or use Command Palette: "Dev Containers: Reopen in Container"
 
 **What's included:**
-- Zig 0.14.0 pre-installed
+- Zig 0.14.1 pre-installed
+- PowerShell Core for build scripts
 - VS Code Zig extension (`ziglang.vscode-zig`)
 - Zig Language Server (ZLS) configured
 - All dependencies ready for development

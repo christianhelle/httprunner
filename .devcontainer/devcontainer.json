@@ -5,7 +5,8 @@
   "features": {
     "ghcr.io/devcontainers-contrib/features/zig:1": {
       "version": "0.14.1"
-    }
+    },
+    "ghcr.io/devcontainers/features/powershell:1": {}
   },
 
   "customizations": {
@@ -21,7 +22,7 @@
     }
   },
 
-  "postCreateCommand": "zig version && echo 'Dev container setup complete!'",
+  "postCreateCommand": "zig version && pwsh --version && echo 'Dev container setup complete!'",
 
   "forwardPorts": [],
   
