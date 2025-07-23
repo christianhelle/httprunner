@@ -1,10 +1,10 @@
 {
-  "name": "HTTP File Runner Dev Environment",
+  "name": "Zig Dev Environment",
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   
   "features": {
     "ghcr.io/devcontainers-contrib/features/zig:1": {
-      "version": "0.14.0"
+      "version": "0.14.1"
     }
   },
 
