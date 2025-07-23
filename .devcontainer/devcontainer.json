@@ -1,0 +1,29 @@
+{
+  "name": "HTTP File Runner Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/zig:1": {
+      "version": "0.14.0"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ziglang.vscode-zig"
+      ],
+      "settings": {
+        "zig.path": "/usr/local/bin/zig",
+        "zig.zls.path": "/usr/local/bin/zls",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "postCreateCommand": "zig version && echo 'Dev container setup complete!'",
+
+  "forwardPorts": [],
+  
+  "remoteUser": "codespace"
+}

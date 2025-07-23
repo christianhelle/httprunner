@@ -427,6 +427,11 @@ body {
     color: white;
 }
 
+.badge.development {
+    background: var(--primary-color);
+    color: white;
+}
+
 .install-code {
     background: #1e1e1e;
     border: 1px solid var(--border-color);
@@ -523,6 +528,64 @@ body {
 .platform-list ul {
     list-style: none;
     padding: 0;
+}
+
+/* Dev Container Styles */
+.install-card.dev-container {
+    background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-secondary) 100%);
+    border: 2px solid var(--primary-color);
+}
+
+.codespaces-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.codespaces-link a:hover {
+    text-decoration: underline;
+}
+
+.dev-features {
+    margin: 1rem 0;
+}
+
+.dev-features h4 {
+    color: var(--text-color);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.dev-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dev-features li {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0;
+    padding-left: 0;
+}
+
+.local-dev {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.local-dev h4 {
+    color: var(--text-color);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.local-dev p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
     margin: 0.5rem 0;
 }
 
