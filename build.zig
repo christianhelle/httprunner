@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // Generate version information at build time
-    const version_step = b.addSystemCommand(&[_][]const u8{ "pwsh", "-ExecutionPolicy", "Bypass", "-File", "generate-version.ps1" });
+    const version_step = generateVersionStep(b);
 
     const exe = b.addExecutable(.{
         .name = "httprunner",
@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) void {
     });
 
     // Generate version info before building
-    exe.step.dependOn(&version_step.step);
+    exe.step.dependOn(version_step);
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
@@ -65,4 +65,96 @@ pub fn build(b: *std.Build) void {
     // running the unit tests.
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
+}
+
+fn generateVersionStep(b: *std.Build) *std.Build.Step {
+    const step = b.allocator.create(std.Build.Step) catch @panic("OOM");
+    step.* = std.Build.Step.init(.{
+        .id = .custom,
+        .name = "generate-version-info",
+        .owner = b,
+        .makeFn = makeVersionInfo,
+    });
+    return step;
+}
+
+fn makeVersionInfo(step: *std.Build.Step, options: std.Build.Step.MakeOptions) !void {
+    _ = options;
+    const b = step.owner;
+    const allocator = b.allocator;
+
+    // Get git information at build time (simplified for reliability)
+    const git_tag = getGitOutput(allocator, &.{ "git", "describe", "--tags", "--abbrev=0" }) orelse "unknown";
+    const git_commit = getGitOutput(allocator, &.{ "git", "rev-parse", "--short", "HEAD" }) orelse "unknown";
+
+    // Parse version from git tag (remove 'v' prefix if present)
+    const version = if (std.mem.startsWith(u8, git_tag, "v"))
+        git_tag[1..]
+    else
+        git_tag;
+
+    // Get current timestamp and format it accurately using std.time
+    const timestamp = std.time.timestamp();
+    const epoch_seconds = std.time.epoch.EpochSeconds{ .secs = @as(u64, @intCast(timestamp)) };
+    const epoch_day = epoch_seconds.getEpochDay();
+    const day_seconds = epoch_seconds.getDaySeconds();
+    const year_day = epoch_day.calculateYearDay();
+    const month_day = year_day.calculateMonthDay();
+
+    var date_buf: [64]u8 = undefined;
+    const build_date = std.fmt.bufPrint(&date_buf, "{d}-{d:0>2}-{d:0>2} {d:0>2}:{d:0>2}:{d:0>2} UTC", .{ year_day.year, month_day.month.numeric(), month_day.day_index + 1, day_seconds.getHoursIntoDay(), day_seconds.getMinutesIntoHour(), day_seconds.getSecondsIntoMinute() }) catch "unknown";
+
+    // Generate version_info.zig content
+    const content = std.fmt.allocPrint(allocator,
+        \\// This file is auto-generated at build time
+        \\pub const VERSION = "{s}";
+        \\pub const GIT_TAG = "{s}";
+        \\pub const GIT_COMMIT = "{s}";
+        \\pub const BUILD_DATE = "{s}";
+        \\
+    , .{ version, git_tag, git_commit, build_date }) catch @panic("OOM");
+
+    // Write directly to the src directory
+    const file_path = "src/version_info.zig";
+    std.fs.cwd().writeFile(.{ .sub_path = file_path, .data = content }) catch |err| {
+        std.log.err("Failed to write version_info.zig: {}", .{err});
+        return;
+    };
+
+    std.log.info("Generated version info: {s} ({s} - {s})", .{ version, git_tag, git_commit });
+}
+
+fn getGitOutput(allocator: std.mem.Allocator, argv: []const []const u8) ?[]const u8 {
+    var child = std.process.Child.init(argv, allocator);
+    child.stdout_behavior = .Pipe;
+    child.stderr_behavior = .Pipe;
+
+    child.spawn() catch return null;
+
+    const stdout = child.stdout.?.readToEndAlloc(allocator, 1024) catch return null;
+    const stderr = child.stderr.?.readToEndAlloc(allocator, 1024) catch {
+        allocator.free(stdout);
+        return null;
+    };
+    defer allocator.free(stderr);
+
+    const term = child.wait() catch {
+        allocator.free(stdout);
+        return null;
+    };
+
+    switch (term) {
+        .Exited => |code| {
+            if (code == 0) {
+                return std.mem.trim(u8, stdout, " \t\n\r");
+            } else {
+                allocator.free(stdout);
+                return null;
+            }
+        },
+        else => {
+            allocator.free(stdout);
+            return null;
+        },
+    }
 }
