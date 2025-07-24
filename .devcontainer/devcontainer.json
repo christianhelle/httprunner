@@ -1,0 +1,16 @@
+{
+  "name": "Zig Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/zig": {
+      "version": "0.14.1"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ziglang.vscode-zig"
+      ]
+    }
+  }
+}
