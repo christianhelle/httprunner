@@ -1034,7 +1034,32 @@ The project includes installer scripts for easy deployment:
 
 ## Development
 
-For development, testing, and debugging:
+### Dev Containers
+
+For the easiest development experience, this repository includes a dev container configuration that provides a pre-configured environment with Zig and VS Code extensions.
+
+**GitHub Codespaces:**
+1. Open the repository on GitHub
+2. Click the green "Code" button → "Codespaces" → "Create codespace on main"
+3. Wait for the environment to set up automatically
+4. Start coding! 🚀
+
+**Local Development with VS Code:**
+1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Clone this repository: `git clone https://github.com/christianhelle/httprunner.git`
+3. Open in VS Code: `code httprunner`
+4. When prompted, click "Reopen in Container" or use Command Palette: "Dev Containers: Reopen in Container"
+
+**What's included:**
+- Zig 0.14.1 pre-installed
+- PowerShell Core for build scripts
+- VS Code Zig extension (`ziglang.vscode-zig`)
+- Zig Language Server (ZLS) configured
+- All dependencies ready for development
+
+### Manual Setup
+
+For development, testing, and debugging without dev containers:
 
 - Use `zig build -Ddebug` for debug builds with symbols
 - Use `zig build -Drelease-fast` for optimized release builds
