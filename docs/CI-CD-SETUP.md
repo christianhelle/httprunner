@@ -14,7 +14,7 @@ This document describes the complete CI/CD pipeline setup for the HTTP File Runn
 
 **Jobs:**
 - **Test Job**: Runs on Ubuntu, Windows, and macOS
-  - Sets up Zig 0.14.0
+  - Sets up Zig 0.15.1
   - Caches build artifacts
   - Checks code formatting with `zig fmt --check`
   - Builds project in debug and release modes

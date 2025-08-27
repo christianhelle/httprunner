@@ -5,7 +5,7 @@ Always reference these instructions first and fallback to search or bash command
 ## Working Effectively
 
 ### Prerequisites and Setup
-- Install Zig 0.14.0 or later from https://ziglang.org/download/
+- Install Zig 0.15.1 or later from https://ziglang.org/download/
 - Ensure git is available for version generation
 - CRITICAL: This project requires internet access for HTTP testing - many validation scenarios will fail in offline environments
 
@@ -171,7 +171,7 @@ EXPECTED_RESPONSE_HEADERS "Header: value"
 ## Troubleshooting
 
 ### Build Issues
-- Ensure Zig 0.14.0+ is installed
+- Ensure Zig 0.15.1+ is installed
 - Check git is available for version generation
 - Clean build: `rm -rf zig-out/ zig-cache/`
 - Network issues may affect git commands in build.zig
