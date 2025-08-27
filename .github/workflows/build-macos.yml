@@ -21,7 +21,7 @@ jobs:
     - name: Setup Zig
       uses: goto-bus-stop/setup-zig@v2
       with:
-        version: '0.14.0'
+        version: '0.15.1'
 
     - name: Cache Zig
       uses: actions/cache@v4
@@ -29,9 +29,9 @@ jobs:
         path: |
           ~/.cache/zig
           zig-cache
-        key: macos-latest-zig-0.14.0-${{ hashFiles('build.zig', 'build.zig.zon') }}
+        key: macos-latest-zig-0.15.1-${{ hashFiles('build.zig', 'build.zig.zon') }}
         restore-keys: |
-          macos-latest-zig-0.14.0-
+          macos-latest-zig-0.15.1-
 
     - name: Build
       run: zig build
