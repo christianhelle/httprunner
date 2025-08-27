@@ -159,12 +159,12 @@ fn extractSimpleJsonProperty(allocator: Allocator, json_body: []const u8, proper
     // Simple JSON property extraction
     // Look for "property": "value" or "property": value
 
-    var search_pattern = std.ArrayList(u8).init(allocator);
-    defer search_pattern.deinit();
+    var search_pattern = std.ArrayList(u8).initCapacity(allocator, 0) catch @panic("OOM");
+    defer search_pattern.deinit(allocator);
 
-    try search_pattern.appendSlice("\"");
-    try search_pattern.appendSlice(property);
-    try search_pattern.appendSlice("\":");
+    try search_pattern.appendSlice(allocator, "\"");
+    try search_pattern.appendSlice(allocator, property);
+    try search_pattern.appendSlice(allocator, "\":");
 
     if (std.mem.indexOf(u8, json_body, search_pattern.items)) |start_pos| {
         var pos = start_pos + search_pattern.items.len;
@@ -232,7 +232,7 @@ fn extractSimpleJsonProperty(allocator: Allocator, json_body: []const u8, proper
 }
 
 pub fn findRequestVariables(allocator: Allocator, input: []const u8) !std.ArrayList(RequestVariable) {
-    var variables = std.ArrayList(RequestVariable).init(allocator);
+    var variables = std.ArrayList(RequestVariable).initCapacity(allocator, 0) catch @panic("OOM");
 
     var i: usize = 0;
     while (i < input.len) {
@@ -251,7 +251,7 @@ pub fn findRequestVariables(allocator: Allocator, input: []const u8) !std.ArrayL
                         i = j + 2;
                         continue;
                     };
-                    try variables.append(request_var);
+                    try variables.append(allocator, request_var);
                 }
 
                 i = j + 2;
@@ -267,8 +267,8 @@ pub fn findRequestVariables(allocator: Allocator, input: []const u8) !std.ArrayL
 }
 
 pub fn substituteRequestVariables(allocator: Allocator, input: []const u8, context: []const RequestContext) ![]const u8 {
-    var result = std.ArrayList(u8).init(allocator);
-    defer result.deinit();
+    var result = std.ArrayList(u8).initCapacity(allocator, 0) catch @panic("OOM");
+    defer result.deinit(allocator);
 
     var i: usize = 0;
     while (i < input.len) {
@@ -285,7 +285,7 @@ pub fn substituteRequestVariables(allocator: Allocator, input: []const u8, conte
                 if (std.mem.count(u8, var_ref, ".") >= 3) {
                     const request_var = parseRequestVariable(allocator, var_ref) catch {
                         // If parsing fails, keep original text
-                        try result.appendSlice(var_ref);
+                        try result.appendSlice(allocator, var_ref);
                         i = j + 2;
                         continue;
                     };
@@ -293,33 +293,33 @@ pub fn substituteRequestVariables(allocator: Allocator, input: []const u8, conte
 
                     const value = extractRequestVariableValue(allocator, request_var, context) catch {
                         // If extraction fails, keep original text
-                        try result.appendSlice(var_ref);
+                        try result.appendSlice(allocator, var_ref);
                         i = j + 2;
                         continue;
                     };
 
                     if (value) |val| {
-                        try result.appendSlice(val);
+                        try result.appendSlice(allocator, val);
                         allocator.free(val);
                     } else {
                         // If value not found, keep original text
-                        try result.appendSlice(var_ref);
+                        try result.appendSlice(allocator, var_ref);
                     }
                 } else {
                     // Not a request variable, keep original text
-                    try result.appendSlice(var_ref);
+                    try result.appendSlice(allocator, var_ref);
                 }
 
                 i = j + 2;
             } else {
-                try result.append(input[i]);
+                try result.append(allocator, input[i]);
                 i += 1;
             }
         } else {
-            try result.append(input[i]);
+            try result.append(allocator, input[i]);
             i += 1;
         }
     }
 
-    return try result.toOwnedSlice();
+    return try result.toOwnedSlice(allocator);
 }

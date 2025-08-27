@@ -84,8 +84,8 @@ pub const CliOptions = struct {
         log_file = getLogFilename(args);
         environment = getEnvironment(args);
 
-        var files_list = std.ArrayList([]const u8).init(allocator);
-        defer files_list.deinit();
+        var files_list = std.ArrayList([]const u8).initCapacity(allocator, 0) catch @panic("OOM");
+        defer files_list.deinit(allocator);
         var i: usize = 1;
         while (i < args.len) : (i += 1) {
             const arg = args[i];
@@ -110,7 +110,7 @@ pub const CliOptions = struct {
                 i += 1;
                 continue;
             } else {
-                try files_list.append(arg);
+                try files_list.append(allocator, arg);
             }
         }
 

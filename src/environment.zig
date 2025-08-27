@@ -28,7 +28,7 @@ const EnvironmentConfig = struct {
 };
 
 pub fn loadEnvironmentFile(allocator: Allocator, http_file_path: []const u8, environment_name: ?[]const u8) !std.ArrayList(Variable) {
-    var variables = std.ArrayList(Variable).init(allocator);
+    var variables = std.ArrayList(Variable).initCapacity(allocator, 0) catch @panic("OOM");
 
     if (environment_name == null) {
         return variables;
@@ -54,7 +54,7 @@ pub fn loadEnvironmentFile(allocator: Allocator, http_file_path: []const u8, env
     if (env_config.environments.get(environment_name.?)) |env_vars| {
         var iterator = env_vars.iterator();
         while (iterator.next()) |entry| {
-            try variables.append(.{
+            try variables.append(allocator, .{
                 .name = try allocator.dupe(u8, entry.key_ptr.*),
                 .value = try allocator.dupe(u8, entry.value_ptr.*),
             });

@@ -34,12 +34,12 @@ pub fn main() !void {
     }
 
     if (options.discover_mode) {
-        var discovered_files = std.ArrayList([]const u8).init(allocator);
+        var discovered_files = std.ArrayList([]const u8).initCapacity(allocator, 0) catch @panic("OOM");
         defer {
             for (discovered_files.items) |file_path| {
                 allocator.free(file_path);
             }
-            discovered_files.deinit();
+            discovered_files.deinit(allocator);
         }
         const found_files = try discovery.runDiscoveryMode(allocator, &discovered_files);
         if (found_files) {
