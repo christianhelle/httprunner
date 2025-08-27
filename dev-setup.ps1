@@ -42,8 +42,8 @@ function Test-ZigInstallation {
             $major = [int]$Matches[1]
             $minor = [int]$Matches[2]
             
-            if ($major -eq 0 -and $minor -lt 14) {
-                Write-Warning "⚠️  Zig version $zigVersion detected. Version 0.15.1 or later is recommended."
+            if ($major -eq 0 -and $minor -lt 15) {
+                Write-Warning "⚠️  Zig version $zigVersion detected. Version 0.15.1 is recommended."
             }
         }
         return $true
