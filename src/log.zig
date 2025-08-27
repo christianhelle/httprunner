@@ -24,7 +24,9 @@ pub const Log = struct {
     pub fn write(self: *Log, comptime fmt: []const u8, args: anytype) void {
         print(fmt, args);
         if (self.log_file) |file| {
-            file.writer().print(fmt, args) catch |err| {
+            const message = std.fmt.allocPrint(std.heap.page_allocator, fmt, args) catch return;
+            defer std.heap.page_allocator.free(message);
+            file.writeAll(message) catch |err| {
                 print("Error writing to log file: {}\n", .{err});
             };
         }

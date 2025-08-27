@@ -19,7 +19,7 @@ pub fn discoverHttpFiles(allocator: Allocator, dir_path: []const u8, files: *std
             .file => {
                 if (std.mem.endsWith(u8, entry.name, ".http")) {
                     const full_path = try std.fs.path.join(allocator, &[_][]const u8{ dir_path, entry.name });
-                    files.append(full_path) catch |err| {
+                    files.append(allocator, full_path) catch |err| {
                         allocator.free(full_path);
                         return err;
                     };

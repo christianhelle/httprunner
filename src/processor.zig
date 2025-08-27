@@ -28,7 +28,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
         log.write("{s}🚀 HTTP File Runner - Processing file: {s}{s}\n", .{ colors.BLUE, http_file, colors.RESET });
         log.write("{s}\n", .{"=" ** 50});
 
-        const requests = parser.parseHttpFile(allocator, http_file, environment) catch |err| {
+        var requests = parser.parseHttpFile(allocator, http_file, environment) catch |err| {
             switch (err) {
                 error.FileNotFound => {
                     log.write("{s}❌ Error: File '{s}' not found{s}\n", .{ colors.RED, http_file, colors.RESET });
@@ -44,7 +44,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
             for (requests.items) |*req| {
                 req.deinit(allocator);
             }
-            requests.deinit();
+            requests.deinit(allocator);
         }
 
         if (requests.items.len == 0) {
@@ -59,12 +59,12 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
         var request_count: u32 = 0;
 
         // Build request contexts for sequential execution
-        var request_contexts = std.ArrayList(RequestContext).init(allocator);
+        var request_contexts = std.ArrayList(RequestContext).initCapacity(allocator, 0) catch @panic("OOM");
         defer {
             for (request_contexts.items) |*ctx| {
                 ctx.deinit(allocator);
             }
-            request_contexts.deinit();
+            request_contexts.deinit(allocator);
         }
 
         for (requests.items) |request| {
@@ -106,7 +106,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
                 else
                     try std.fmt.allocPrint(allocator, "request_{}", .{request_count});
 
-                try request_contexts.append(.{
+                try request_contexts.append(allocator, .{
                     .name = context_name,
                     .request = processed_request,
                     .result = null,
@@ -143,7 +143,7 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
             else
                 try std.fmt.allocPrint(allocator, "request_{}", .{request_count});
 
-            try request_contexts.append(.{
+            try request_contexts.append(allocator, .{
                 .name = context_name,
                 .request = processed_request,
                 .result = result,
@@ -211,28 +211,28 @@ fn cloneHttpRequest(allocator: Allocator, original: HttpRequest) !HttpRequest {
         .name = if (original.name) |name| try allocator.dupe(u8, name) else null,
         .method = try allocator.dupe(u8, original.method),
         .url = try allocator.dupe(u8, original.url),
-        .headers = std.ArrayList(HttpRequest.Header).init(allocator),
+        .headers = std.ArrayList(HttpRequest.Header).initCapacity(allocator, 0) catch @panic("OOM"),
         .body = if (original.body) |body| try allocator.dupe(u8, body) else null,
-        .assertions = std.ArrayList(types.Assertion).init(allocator),
-        .variables = std.ArrayList(types.Variable).init(allocator),
+        .assertions = std.ArrayList(types.Assertion).initCapacity(allocator, 0) catch @panic("OOM"),
+        .variables = std.ArrayList(types.Variable).initCapacity(allocator, 0) catch @panic("OOM"),
     };
 
     for (original.headers.items) |header| {
-        try cloned.headers.append(.{
+        try cloned.headers.append(allocator, .{
             .name = try allocator.dupe(u8, header.name),
             .value = try allocator.dupe(u8, header.value),
         });
     }
 
     for (original.assertions.items) |assertion| {
-        try cloned.assertions.append(.{
+        try cloned.assertions.append(allocator, .{
             .type = assertion.type,
             .expected_value = try allocator.dupe(u8, assertion.expected_value),
         });
     }
 
     for (original.variables.items) |variable| {
-        try cloned.variables.append(.{
+        try cloned.variables.append(allocator, .{
             .name = try allocator.dupe(u8, variable.name),
             .value = try allocator.dupe(u8, variable.value),
         });

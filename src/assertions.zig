@@ -6,12 +6,12 @@ const AssertionResult = types.AssertionResult;
 const HttpResult = types.HttpResult;
 
 pub fn evaluateAssertions(allocator: Allocator, assertions: []const Assertion, result: *const HttpResult) !std.ArrayList(AssertionResult) {
-    var assertion_results = std.ArrayList(AssertionResult).init(allocator);
-    errdefer assertion_results.deinit();
+    var assertion_results = std.ArrayList(AssertionResult).initCapacity(allocator, 0) catch @panic("OOM");
+    errdefer assertion_results.deinit(allocator);
 
     for (assertions) |assertion| {
         const assertion_result = try evaluateAssertion(allocator, assertion, result);
-        try assertion_results.append(assertion_result);
+        try assertion_results.append(allocator, assertion_result);
     }
 
     return assertion_results;
@@ -109,16 +109,16 @@ fn evaluateAssertion(allocator: Allocator, assertion: Assertion, result: *const 
 }
 
 fn formatHeaders(allocator: Allocator, headers: []const HttpResult.Header) ![]u8 {
-    var formatted = std.ArrayList(u8).init(allocator);
-    defer formatted.deinit();
+    var formatted = std.ArrayList(u8).initCapacity(allocator, 0) catch @panic("OOM");
+    defer formatted.deinit(allocator);
 
     for (headers, 0..) |header, i| {
         if (i > 0) {
-            try formatted.appendSlice(", ");
+            try formatted.appendSlice(allocator, ", ");
         }
-        try formatted.appendSlice(header.name);
-        try formatted.appendSlice(": ");
-        try formatted.appendSlice(header.value);
+        try formatted.appendSlice(allocator, header.name);
+        try formatted.appendSlice(allocator, ": ");
+        try formatted.appendSlice(allocator, header.value);
     }
 
     return try allocator.dupe(u8, formatted.items);

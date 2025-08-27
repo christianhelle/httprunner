@@ -16,29 +16,29 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
     const content = try allocator.alloc(u8, file_size);
     defer allocator.free(content);
     _ = try file.readAll(content);
-    var requests = std.ArrayList(HttpRequest).init(allocator);
+    var requests = std.ArrayList(HttpRequest).initCapacity(allocator, 0) catch @panic("OOM");
 
     var env_variables = environment.loadEnvironmentFile(allocator, file_path, environment_name) catch blk: {
         // If environment loading fails, continue without environment variables
-        break :blk std.ArrayList(Variable).init(allocator);
+        break :blk std.ArrayList(Variable).initCapacity(allocator, 0) catch @panic("OOM");
     };
     defer {
         for (env_variables.items) |variable| {
             variable.deinit(allocator);
         }
-        env_variables.deinit();
+        env_variables.deinit(allocator);
     }
 
-    var variables = std.ArrayList(Variable).init(allocator);
+    var variables = std.ArrayList(Variable).initCapacity(allocator, 0) catch @panic("OOM");
     defer {
         for (variables.items) |variable| {
             variable.deinit(allocator);
         }
-        variables.deinit();
+        variables.deinit(allocator);
     }
 
     for (env_variables.items) |env_var| {
-        try variables.append(.{
+        try variables.append(allocator, .{
             .name = try allocator.dupe(u8, env_var.name),
             .value = try allocator.dupe(u8, env_var.value),
         });
@@ -47,8 +47,8 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
 
     var current_request: ?HttpRequest = null;
     var in_body = false;
-    var body_content = std.ArrayList(u8).init(allocator);
-    defer body_content.deinit();
+    var body_content = std.ArrayList(u8).initCapacity(allocator, 0) catch @panic("OOM");
+    defer body_content.deinit(allocator);
     var pending_request_name: ?[]const u8 = null;
 
     while (lines.next()) |line| {
@@ -95,7 +95,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 }
 
                 if (!found) {
-                    try variables.append(.{
+                    try variables.append(allocator, .{
                         .name = try allocator.dupe(u8, var_name),
                         .value = substituted_value,
                     });
@@ -107,7 +107,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
         if (std.mem.startsWith(u8, trimmed, "EXPECTED_RESPONSE_STATUS ")) {
             if (current_request) |*req| {
                 const status_str = std.mem.trim(u8, trimmed[25..], " \t");
-                try req.assertions.append(.{
+                try req.assertions.append(allocator, .{
                     .type = .response_status,
                     .expected_value = try allocator.dupe(u8, status_str),
                 });
@@ -119,7 +119,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 if (body_value.len >= 2 and body_value[0] == '"' and body_value[body_value.len - 1] == '"') {
                     body_value = body_value[1 .. body_value.len - 1];
                 }
-                try req.assertions.append(.{
+                try req.assertions.append(allocator, .{
                     .type = .response_body,
                     .expected_value = try allocator.dupe(u8, body_value),
                 });
@@ -131,7 +131,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 if (headers_value.len >= 2 and headers_value[0] == '"' and headers_value[headers_value.len - 1] == '"') {
                     headers_value = headers_value[1 .. headers_value.len - 1];
                 }
-                try req.assertions.append(.{
+                try req.assertions.append(allocator, .{
                     .type = .response_headers,
                     .expected_value = try allocator.dupe(u8, headers_value),
                 });
@@ -150,7 +150,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                     const substituted_body = try substituteVariables(allocator, body_content.items, variables.items);
                     req.body = substituted_body;
                 }
-                try requests.append(req.*);
+                try requests.append(allocator, req.*);
                 body_content.clearRetainingCapacity();
             }
             var parts = std.mem.splitSequence(u8, trimmed, " ");
@@ -164,10 +164,10 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 .name = pending_request_name,
                 .method = substituted_method,
                 .url = substituted_url,
-                .headers = std.ArrayList(HttpRequest.Header).init(allocator),
+                .headers = std.ArrayList(HttpRequest.Header).initCapacity(allocator, 0) catch @panic("OOM"),
                 .body = null,
-                .assertions = std.ArrayList(Assertion).init(allocator),
-                .variables = std.ArrayList(Variable).init(allocator),
+                .assertions = std.ArrayList(Assertion).initCapacity(allocator, 0) catch @panic("OOM"),
+                .variables = std.ArrayList(Variable).initCapacity(allocator, 0) catch @panic("OOM"),
             };
             pending_request_name = null; // Reset after using
             in_body = false;
@@ -180,7 +180,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 const substituted_name = try substituteVariables(allocator, name, variables.items);
                 const substituted_value = try substituteVariables(allocator, value, variables.items);
 
-                try req.headers.append(.{
+                try req.headers.append(allocator, .{
                     .name = substituted_name,
                     .value = substituted_value,
                 });
@@ -188,9 +188,9 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
         } else {
             in_body = true;
             if (body_content.items.len > 0) {
-                try body_content.append('\n');
+                try body_content.append(allocator, '\n');
             }
-            try body_content.appendSlice(trimmed);
+            try body_content.appendSlice(allocator, trimmed);
         }
     }
     if (current_request) |*req| {
@@ -198,7 +198,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
             const substituted_body = try substituteVariables(allocator, body_content.items, variables.items);
             req.body = substituted_body;
         }
-        try requests.append(req.*);
+        try requests.append(allocator, req.*);
     }
 
     // Clean up any unused pending request name
@@ -210,8 +210,8 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
 }
 
 fn substituteVariables(allocator: Allocator, input: []const u8, variables: []const Variable) ![]const u8 {
-    var result = std.ArrayList(u8).init(allocator);
-    defer result.deinit();
+    var result = std.ArrayList(u8).initCapacity(allocator, 0) catch @panic("OOM");
+    defer result.deinit(allocator);
 
     var i: usize = 0;
     while (i < input.len) {
@@ -226,26 +226,26 @@ fn substituteVariables(allocator: Allocator, input: []const u8, variables: []con
                 var found = false;
                 for (variables) |variable| {
                     if (std.mem.eql(u8, variable.name, var_name)) {
-                        try result.appendSlice(variable.value);
+                        try result.appendSlice(allocator, variable.value);
                         found = true;
                         break;
                     }
                 }
 
                 if (!found) {
-                    try result.appendSlice(input[i .. j + 2]);
+                    try result.appendSlice(allocator, input[i .. j + 2]);
                 }
 
                 i = j + 2;
             } else {
-                try result.append(input[i]);
+                try result.append(allocator, input[i]);
                 i += 1;
             }
         } else {
-            try result.append(input[i]);
+            try result.append(allocator, input[i]);
             i += 1;
         }
     }
 
-    return try result.toOwnedSlice();
+    return try result.toOwnedSlice(allocator);
 }

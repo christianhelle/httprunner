@@ -60,7 +60,7 @@ pub const HttpRequest = struct {
             allocator.free(header.name);
             allocator.free(header.value);
         }
-        self.headers.deinit();
+        self.headers.deinit(allocator);
 
         if (self.body) |body| {
             allocator.free(body);
@@ -69,12 +69,12 @@ pub const HttpRequest = struct {
         for (self.assertions.items) |assertion| {
             assertion.deinit(allocator);
         }
-        self.assertions.deinit();
+        self.assertions.deinit(allocator);
 
         for (self.variables.items) |variable| {
             variable.deinit(allocator);
         }
-        self.variables.deinit();
+        self.variables.deinit(allocator);
     }
 };
 
@@ -142,7 +142,7 @@ pub const HttpResult = struct {
         for (self.assertion_results.items) |*result| {
             result.deinit(allocator);
         }
-        self.assertion_results.deinit();
+        self.assertion_results.deinit(allocator);
     }
 };
 
