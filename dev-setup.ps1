@@ -37,13 +37,13 @@ function Test-ZigInstallation {
         $zigVersion = zig version
         Write-Host "✅ Zig is installed: $zigVersion" -ForegroundColor Green
         
-        # Check if version is compatible (0.14.0 or later)
+        # Check if version is compatible (0.15.1 or later)
         if ($zigVersion -match "(\d+)\.(\d+)\.(\d+)") {
             $major = [int]$Matches[1]
             $minor = [int]$Matches[2]
             
             if ($major -eq 0 -and $minor -lt 14) {
-                Write-Warning "⚠️  Zig version $zigVersion detected. Version 0.14.0 or later is recommended."
+                Write-Warning "⚠️  Zig version $zigVersion detected. Version 0.15.1 or later is recommended."
             }
         }
         return $true
