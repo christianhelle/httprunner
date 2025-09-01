@@ -12,6 +12,7 @@ on:
 jobs:
   build-windows:
     name: Build Windows
+    timeout-minutes: 5
     runs-on: windows-latest
     
     steps:
