@@ -4,7 +4,7 @@ This directory contains the development container configuration for the HTTP Fil
 
 ## What's Included
 
-- **Zig 0.14.1**: The programming language and toolchain
+- **Zig 0.15.1**: The programming language and toolchain
 - **PowerShell Core**: For build scripts and cross-platform automation
 - **VS Code Zig Extension**: `ziglang.vscode-zig` for syntax highlighting, IntelliSense, and debugging
 - **Universal Dev Container**: Pre-configured Linux environment with common development tools
