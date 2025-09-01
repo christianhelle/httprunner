@@ -12,6 +12,7 @@ on:
 jobs:
   build-macos:
     name: Build macOS
+    timeout-minutes: 5
     runs-on: macos-latest
     
     steps:

@@ -12,6 +12,7 @@ on:
 jobs:
   build-linux:
     name: Build Linux
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     
     steps:
