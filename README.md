@@ -3,7 +3,7 @@
 [![Build Linux](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml)
 [![Build macOS](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml)
 [![Build Windows](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml)
-[![Zig Version](https://img.shields.io/badge/zig-0.14.1+-orange.svg)](https://ziglang.org/download/)
+[![Zig Version](https://img.shields.io/badge/zig-0.15.1+-orange.svg)](https://ziglang.org/download/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A simple command-line tool written in Zig that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
@@ -1051,7 +1051,7 @@ For the easiest development experience, this repository includes a dev container
 4. When prompted, click "Reopen in Container" or use Command Palette: "Dev Containers: Reopen in Container"
 
 **What's included:**
-- Zig 0.14.1 pre-installed
+- Zig 0.15.1 pre-installed
 - PowerShell Core for build scripts
 - VS Code Zig extension (`ziglang.vscode-zig`)
 - Zig Language Server (ZLS) configured
