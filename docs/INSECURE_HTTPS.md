@@ -1,110 +1,112 @@
 # Insecure HTTPS Implementation Summary
 
+## ⚠️ CURRENT STATUS: NOT IMPLEMENTED
+
+**The insecure HTTPS feature is currently NOT functional.** The CLI flag and file directive are recognized but show a warning that the feature is not supported in the current build.
+
+### Why Not Implemented?
+
+1. **Zig's std.http.Client** does not support disabling SSL certificate verification
+2. **libcurl dependency** would add external build requirements not available in all CI environments
+3. **Build complexity** - keeping the tool simple and dependency-free is prioritized
+
+### Current Behavior
+
+When the `--insecure` flag or `INSECURE` directive is used, the application will:
+- Parse and recognize the flag/directive
+- Display a warning message:
+  ```
+  ⚠️  Warning: Insecure HTTPS mode is requested but not supported with the current build.
+     Build with libcurl support to enable insecure HTTPS: zig build -Denable-curl=true
+  ```
+- Continue with normal SSL certificate verification (secure mode)
+
 ## Overview
 
-This document summarizes the implementation of insecure HTTPS support in the httprunner project. The feature allows users to bypass SSL certificate verification when testing against endpoints with self-signed or invalid certificates.
+This document describes the **planned implementation** for insecure HTTPS support. The infrastructure is in place but not currently active.
 
-## Implementation Approach
+## Future Enhancement Path
 
-Since the Zig standard library's `std.http.Client` does not provide built-in support for disabling SSL certificate verification, we switched to using **libcurl** as the HTTP client backend. libcurl provides robust control over SSL verification options.
+To enable insecure HTTPS support in the future:
 
-## Changes Made
+### Option 1: libcurl Integration (External Dependency)
+- Add libcurl as optional build dependency
+- Implement curl wrapper module
+- Use curl only when insecure mode is requested
+- **Pros**: Full SSL control, industry-standard library
+- **Cons**: External dependency, build complexity
+
+### Option 2: Wait for Zig stdlib Support
+- Wait for Zig standard library to add SSL verification control
+- Implement when feature becomes available
+- **Pros**: No external dependencies
+- **Cons**: Timeline uncertain
+
+## Changes Made (Infrastructure for Future Use)
 
 ### 1. Build System (`build.zig`)
 
-- Added `libcurl` as a system library dependency
-- Linked against `libcurl` and `libc` for all builds
-- Ensures curl library is available during compilation
+**Current state:** Uses standard Zig stdlib, no external dependencies
+**Ready for:** Can be extended with `-Denable-curl=true` build option
 
-### 2. Curl Wrapper (`src/curl.zig`)
+### 2. ~~Curl Wrapper (`src/curl.zig`)~~ - REMOVED
 
-Created a comprehensive Zig wrapper around libcurl C API:
-
-- **Bindings**: Defined C bindings for curl functions and constants
-- **Request Structure**: `CurlRequest` with support for insecure mode
-- **Response Structure**: `CurlResponse` with headers and body
-- **SSL Options**: 
-  - `CURLOPT_SSL_VERIFYPEER = 0` - Disables peer certificate verification
-  - `CURLOPT_SSL_VERIFYHOST = 0` - Disables hostname verification
-- **Memory Management**: Proper allocation and cleanup
-- **Callbacks**: Write and header callbacks for response handling
+Was implemented but removed due to build dependency issues.
 
 ### 3. Type System (`src/types.zig`)
 
-- Added `insecure: bool` field to `HttpRequest` structure
-- Ensures insecure flag propagates through the request lifecycle
+- ✅ Added `insecure: bool` field to `HttpRequest` structure
+- Ready for implementation when backend support is added
 
 ### 4. Parser (`src/parser.zig`)
 
-- Initializes `insecure = false` for all parsed requests
-- Recognizes `INSECURE` directive in `.http` files:
+- ✅ Recognizes `INSECURE` directive in `.http` files:
   - `INSECURE` (standalone)
   - `# INSECURE` (as comment)
   - `// INSECURE` (alternative comment style)
-- Sets `request.insecure = true` when directive is found
+- ✅ Sets `request.insecure = true` when directive is found
 
 ### 5. CLI Interface (`src/cli.zig`)
 
-Added `insecure` option to CLI:
-
-- **Field**: Added `insecure: bool` to `CliOptions` struct
-- **Flag Recognition**: Recognizes `--insecure` and `-k` flags
-- **Help Text**: Updated usage information to document the flag
-- **Initialization**: Properly initializes insecure flag in all code paths
+- ✅ Added `insecure` option to CLI
+- ✅ Recognizes `--insecure` and `-k` flags
+- ✅ Updated help text with limitation note
+- ✅ Properly propagates flag through application
 
 ### 6. HTTP Runner (`src/runner.zig`)
 
-Complete rewrite to use libcurl:
+**Current implementation:**
+- Uses `std.http.Client` (secure only)
+- Shows warning when `request.insecure` is true
+- Continues with secure connection (ignores insecure request)
 
-- **Main Function**: `executeHttpRequest()` now delegates to `executeWithCurl()`
-- **Curl Integration**: Converts Zig types to curl structures
-- **Error Handling**: Maps curl errors to HttpResult errors
-- **Response Processing**: Converts curl responses back to Zig types
-- **Insecure Mode**: Passes `request.insecure` flag to curl request
+**Future implementation:**
+- Could check for curl availability
+- Fall back to std.http with warning if curl unavailable
+- Use curl when insecure mode requested and available
 
 ### 7. Processor (`src/processor.zig`)
 
-Enhanced to support global insecure flag:
-
-- **Function Signature**: Added `insecure: bool` parameter to `processHttpFiles()`
-- **Flag Application**: Applies CLI insecure flag to all requests when set
-- **Cloning**: Updated `cloneHttpRequest()` to include insecure field
-- **Priority**: CLI flag overrides per-request settings
+- ✅ Accepts `insecure` parameter
+- ✅ Applies global insecure flag to all requests
+- ✅ Updates cloning to include insecure field
 
 ### 8. Main Entry Point (`src/main.zig`)
 
-- **Curl Initialization**: Calls `curl.init()` at startup
-- **Curl Cleanup**: Calls `curl.deinit()` at shutdown
-- **Flag Passing**: Passes `options.insecure` to processor
+**Current state:** Standard initialization, no curl
+**Ready for:** Can add curl init/deinit when curl support is added
 
 ### 9. Documentation
 
-#### README.md Updates:
-
-- Added insecure HTTPS to features list
-- Documented command-line usage with `--insecure` / `-k` flag
-- Created comprehensive "Insecure HTTPS Support" section with:
-  - Security warnings
-  - Usage examples (CLI and file directive)
-  - Implementation details
-  - Use cases
-- Updated build instructions to include libcurl dependency
-- Updated help text example
-- Added `insecure.http` to example files list
-
-#### Example File (`examples/insecure.http`):
-
-Created demonstration file with:
-- Self-signed certificate endpoint
-- Expired certificate endpoint
-- Untrusted root certificate endpoint
-- POST request with insecure mode
-- Regular secure request for comparison
+- ✅ README.md documents the flag (with limitations noted)
+- ✅ CLI help shows the flag
+- ✅ Example file demonstrates usage (examples/insecure.http)
+- ✅ This document explains the status
 
 ### 10. Docker Support (`Dockerfile`)
 
-- Added `libcurl` to runtime dependencies
-- Ensures curl library is available in container
+**Current state:** No curl dependency
+**Ready for:** Can add libcurl when support is implemented
 
 ## Usage
 

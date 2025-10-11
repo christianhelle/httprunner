@@ -26,7 +26,7 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
 - 📋 **Semantic versioning** with git tag and commit information
 - 🔍 **Build-time version generation** with automatic git integration
-- 🔒 **Insecure HTTPS support** for testing endpoints with self-signed certificates
+- 🔒 **Insecure HTTPS flag** (infrastructure in place, not yet functional - requires optional libcurl build)
 
 ## Version Information
 
@@ -99,11 +99,21 @@ sudo snap install httprunner
 
 ### Option 4: Build from Source
 
-Make sure you have Zig installed (version 0.14 or later) and libcurl development libraries.
+Make sure you have Zig installed (version 0.14 or later).
 
-**Prerequisites:**
+**Build:**
 
 ```bash
+git clone https://github.com/christianhelle/httprunner.git
+cd httprunner
+zig build
+```
+
+**Optional: Build with libcurl support for insecure HTTPS (future feature):**
+
+```bash
+# Install libcurl development libraries first
+
 # Ubuntu/Debian
 sudo apt-get install libcurl4-openssl-dev
 
@@ -113,15 +123,8 @@ sudo dnf install libcurl-devel
 # macOS (using Homebrew)
 brew install curl
 
-# Windows (libcurl is typically included with Zig installations)
-```
-
-**Build:**
-
-```bash
-git clone https://github.com/christianhelle/httprunner.git
-cd httprunner
-zig build
+# Then build with curl support
+zig build -Denable-curl=true
 ```
 
 ### Option 5: Use Docker
@@ -673,85 +676,58 @@ When assertions are present, the HTTP runner will:
 
 ## Insecure HTTPS Support
 
-The HTTP File Runner supports connecting to HTTPS endpoints with invalid, self-signed, or expired SSL certificates. This is useful for development and testing environments where you need to bypass certificate verification.
+⚠️ **CURRENT STATUS: NOT YET FUNCTIONAL**
 
-### Using Insecure Mode
+The `--insecure` flag and `INSECURE` directive are **recognized but not currently functional**. When used, the application will show a warning and continue with normal (secure) SSL certificate verification.
 
-There are two ways to enable insecure HTTPS connections:
+### Current Behavior
 
-#### 1. Command-line flag (applies to all requests)
+The CLI infrastructure for insecure HTTPS is in place for future enhancement:
+
+#### 1. Command-line flag (recognized but shows warning)
 
 ```bash
-# Allow insecure HTTPS for all requests in the file
-httprunner myfile.http --insecure
+# Flag is recognized but shows warning
+httprunner myfile.http --insecure  # or -k
 
-# Short form
-httprunner myfile.http -k
-
-# Combined with other flags
-httprunner myfile.http --insecure --verbose
-httprunner --discover --insecure --log results.txt
+# Will display:
+# ⚠️  Warning: Insecure HTTPS mode is requested but not supported with the current build.
+#    Build with libcurl support to enable insecure HTTPS: zig build -Denable-curl=true
 ```
 
-#### 2. Per-request directive in .http file
-
-Use the `INSECURE` directive to enable insecure mode for specific requests:
+#### 2. Per-request directive in .http file (recognized but shows warning)
 
 ```http
-# Enable insecure mode for this request only
+# INSECURE directive is parsed but triggers warning
 # INSECURE
 GET https://self-signed.badssl.com/
 
-###
-
-# Alternative syntax (without comment)
+# Alternative syntaxes also recognized:
 INSECURE
 GET https://expired.badssl.com/
 
-###
-
-# Another request with insecure mode
 // INSECURE
 POST https://untrusted-root.badssl.com/api/test
-Content-Type: application/json
-
-{
-  "test": "data"
-}
-
-###
-
-# Regular secure request (certificate verification enabled)
-GET https://example.com/
 ```
 
-### Security Warning
+### Why Not Implemented?
 
-⚠️ **Warning**: Disabling SSL certificate verification should only be used in development and testing environments. Never use insecure mode in production or with sensitive data.
+1. **Zig's std.http.Client** doesn't support disabling SSL verification
+2. **libcurl dependency** would complicate builds and CI/CD
+3. **Keeping it simple** - prioritizing zero external dependencies
 
-### Implementation Details
+### Future Enhancement
 
-The insecure HTTPS feature is implemented using **libcurl**, which provides robust SSL certificate verification control:
+To enable this feature in the future:
+- Install libcurl development libraries
+- Build with: `zig build -Denable-curl=true`
+- Or wait for Zig stdlib to add SSL control features
 
-- **Certificate verification disabled**: `CURLOPT_SSL_VERIFYPEER = 0`
-- **Hostname verification disabled**: `CURLOPT_SSL_VERIFYHOST = 0`
-- **Protocol support**: TLS 1.0, 1.1, 1.2, and 1.3
-- **Compatible with**: Self-signed certificates, expired certificates, untrusted root CAs, hostname mismatches
+See `docs/INSECURE_HTTPS.md` for detailed implementation plans.
 
-### Use Cases
+### Security Note
 
-- Testing against development servers with self-signed certificates
-- Working with internal APIs that use self-signed certificates
-- Debugging SSL/TLS connection issues
-- Testing certificate expiration scenarios
-- Development environments without proper certificate infrastructure
-
-### Supported Features
-
-- **Methods**: GET, POST, PUT, DELETE, PATCH
-- **Headers**: Key-value pairs separated by `:` (fully supported and sent with requests)
-- **Body**: Content after headers (separated by empty line)
-- **Comments**: Lines starting with `#`
+⚠️ **All HTTPS connections use full SSL certificate verification** - this is the secure default and cannot currently be disabled.
 
 ## Example Files
 

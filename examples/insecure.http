@@ -1,6 +1,10 @@
 # Example demonstrating insecure HTTPS connections
-# This allows connecting to HTTPS endpoints with self-signed certificates
-# or other SSL certificate verification issues
+# ⚠️  NOTE: This feature is not yet functional in the current build.
+# The INSECURE directive will be recognized but will show a warning.
+# All requests will use standard SSL certificate verification.
+#
+# This file demonstrates the syntax for when the feature is implemented.
+# To enable: build with libcurl support (zig build -Denable-curl=true)
 
 # Example 1: Connect to a self-signed HTTPS endpoint
 # INSECURE
