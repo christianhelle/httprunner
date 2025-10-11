@@ -14,6 +14,7 @@ pub const CliOptions = struct {
     environment: ?[]const u8,
     files: []const []const u8,
     allocator: ?Allocator,
+    insecure: bool,
 
     pub fn deinit(self: *CliOptions) void {
         if (self.allocator != null and self.files.len > 0) {
@@ -36,6 +37,7 @@ pub const CliOptions = struct {
                 .environment = null,
                 .files = &[_][]const u8{},
                 .allocator = null,
+                .insecure = false,
             };
         }
 
@@ -49,6 +51,7 @@ pub const CliOptions = struct {
                 .environment = null,
                 .files = &[_][]const u8{},
                 .allocator = null,
+                .insecure = false,
             };
         }
 
@@ -61,6 +64,7 @@ pub const CliOptions = struct {
         var verbose = false;
         var log_file: ?[]const u8 = null;
         var environment: ?[]const u8 = null;
+        var insecure = false;
 
         if (containsFlag(args, "--discover")) {
             discover_mode = true;
@@ -68,6 +72,7 @@ pub const CliOptions = struct {
             verbose = containsFlag(args, "--verbose");
             log_file = getLogFilename(args);
             environment = getEnvironment(args);
+            insecure = containsFlag(args, "--insecure") or containsFlag(args, "-k");
             return CliOptions{
                 .discover_mode = true,
                 .verbose = verbose,
@@ -77,12 +82,14 @@ pub const CliOptions = struct {
                 .environment = environment,
                 .files = &[_][]const u8{},
                 .allocator = null,
+                .insecure = insecure,
             };
         }
 
         verbose = containsFlag(args, "--verbose");
         log_file = getLogFilename(args);
         environment = getEnvironment(args);
+        insecure = containsFlag(args, "--insecure") or containsFlag(args, "-k");
 
         var files_list = std.ArrayList([]const u8).initCapacity(allocator, 0) catch @panic("OOM");
         defer files_list.deinit(allocator);
@@ -94,8 +101,10 @@ pub const CliOptions = struct {
                 std.mem.eql(u8, arg, "--version") or
                 std.mem.eql(u8, arg, "--upgrade") or
                 std.mem.eql(u8, arg, "--help") or
+                std.mem.eql(u8, arg, "--insecure") or
                 std.mem.eql(u8, arg, "-v") or
-                std.mem.eql(u8, arg, "-h"))
+                std.mem.eql(u8, arg, "-h") or
+                std.mem.eql(u8, arg, "-k"))
             {
                 continue;
             } else if (std.mem.eql(u8, arg, "--log")) {
@@ -132,6 +141,7 @@ pub const CliOptions = struct {
             .environment = environment,
             .files = files_owned,
             .allocator = allocator,
+            .insecure = insecure,
         };
     }
 };
@@ -176,8 +186,8 @@ fn getEnvironment(args: []const []const u8) ?[]const u8 {
 pub fn showUsage() void {
     print("{s}HTTP File Runner{s} v{s}{s}{s}\n", .{ colors.BLUE, colors.RESET, colors.GREEN, version_info.VERSION, colors.RESET });
     print("{s}Usage:{s}\n", .{ colors.BLUE, colors.RESET });
-    print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]\n", .{});
-    print("  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover\n", .{});
+    print("  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>] [--insecure]\n", .{});
+    print("  httprunner [--verbose] [--log [filename]] [--env <environment>] [--insecure] --discover\n", .{});
     print("  httprunner --version | -v\n", .{});
     print("  httprunner --upgrade\n", .{});
     print("  httprunner --help | -h\n", .{});
@@ -187,6 +197,7 @@ pub fn showUsage() void {
     print("  --verbose      Show detailed HTTP request and response information\n", .{});
     print("  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)\n", .{});
     print("  --env <env>    Specify environment name to load variables from http-client.env.json\n", .{});
+    print("  --insecure, -k Allow insecure HTTPS connections (skip SSL certificate verification)\n", .{});
     print("  --version, -v  Show version information\n", .{});
     print("  --upgrade      Update httprunner to the latest version\n", .{});
     print("  --help, -h     Show this help message\n", .{});

@@ -137,6 +137,13 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 });
             }
             continue;
+        } else if (std.mem.startsWith(u8, trimmed, "INSECURE") or 
+                   std.mem.startsWith(u8, trimmed, "# INSECURE") or
+                   std.mem.startsWith(u8, trimmed, "// INSECURE")) {
+            if (current_request) |*req| {
+                req.insecure = true;
+            }
+            continue;
         }
         if (std.mem.indexOf(u8, trimmed, "HTTP/") != null or
             std.mem.startsWith(u8, trimmed, "GET ") or
@@ -168,6 +175,7 @@ pub fn parseHttpFile(allocator: Allocator, file_path: []const u8, environment_na
                 .body = null,
                 .assertions = std.ArrayList(Assertion).initCapacity(allocator, 0) catch @panic("OOM"),
                 .variables = std.ArrayList(Variable).initCapacity(allocator, 0) catch @panic("OOM"),
+                .insecure = false,
             };
             pending_request_name = null; // Reset after using
             in_body = false;

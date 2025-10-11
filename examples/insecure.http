@@ -1,0 +1,37 @@
+# Example demonstrating insecure HTTPS connections
+# This allows connecting to HTTPS endpoints with self-signed certificates
+# or other SSL certificate verification issues
+
+# Example 1: Connect to a self-signed HTTPS endpoint
+# INSECURE
+GET https://self-signed.badssl.com/
+
+###
+
+# Example 2: Connect to an expired certificate endpoint
+# INSECURE
+GET https://expired.badssl.com/
+
+###
+
+# Example 3: Connect to an untrusted root certificate endpoint
+INSECURE
+GET https://untrusted-root.badssl.com/
+
+###
+
+# Example 4: POST request to insecure endpoint with body
+# INSECURE
+POST https://self-signed.badssl.com/api/test
+Content-Type: application/json
+
+{
+  "test": "data"
+}
+
+###
+
+# Example 5: Regular secure HTTPS (for comparison - this should work normally)
+GET https://example.com/
+
+###

@@ -22,6 +22,10 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
+    // Link libcurl for HTTP/HTTPS support with insecure options
+    exe.linkSystemLibrary("curl");
+    exe.linkLibC();
+
     // Generate version info before building
     exe.step.dependOn(version_step);
 

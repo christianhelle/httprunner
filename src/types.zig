@@ -43,6 +43,7 @@ pub const HttpRequest = struct {
     body: ?[]const u8,
     assertions: std.ArrayList(Assertion),
     variables: std.ArrayList(Variable),
+    insecure: bool,
 
     pub const Header = struct {
         name: []const u8,

@@ -6,11 +6,16 @@ const colors = @import("colors.zig");
 const discovery = @import("discovery.zig");
 const processor = @import("processor.zig");
 const upgrade = @import("upgrade.zig");
+const curl = @import("curl.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
+
+    // Initialize libcurl
+    try curl.init();
+    defer curl.deinit();
 
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
