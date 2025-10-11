@@ -13,7 +13,7 @@ const Log = @import("log.zig").Log;
 const HttpRequest = types.HttpRequest;
 const RequestContext = types.RequestContext;
 
-pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8) !bool {
+pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose: bool, log_filename: ?[]const u8, environment: ?[]const u8, insecure: bool) !bool {
     var log = Log.init(allocator, log_filename) catch |err| {
         print("{s}❌ Error initializing log: {}{s}\n", .{ colors.RED, err, colors.RESET });
         return err;
@@ -72,6 +72,11 @@ pub fn processHttpFiles(allocator: Allocator, files: []const []const u8, verbose
 
             // Create a copy of the request for processing
             var processed_request = try cloneHttpRequest(allocator, request);
+            
+            // Apply global insecure flag if set
+            if (insecure) {
+                processed_request.insecure = true;
+            }
 
             // Substitute request variables in the processed request
             try substituteRequestVariablesInRequest(allocator, &processed_request, request_contexts.items);
@@ -215,6 +220,7 @@ fn cloneHttpRequest(allocator: Allocator, original: HttpRequest) !HttpRequest {
         .body = if (original.body) |body| try allocator.dupe(u8, body) else null,
         .assertions = std.ArrayList(types.Assertion).initCapacity(allocator, 0) catch @panic("OOM"),
         .variables = std.ArrayList(types.Variable).initCapacity(allocator, 0) catch @panic("OOM"),
+        .insecure = original.insecure,
     };
 
     for (original.headers.items) |header| {

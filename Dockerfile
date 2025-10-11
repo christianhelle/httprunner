@@ -4,7 +4,8 @@ FROM alpine:latest
 # Install necessary runtime dependencies
 RUN apk add --no-cache \
     ca-certificates \
-    curl
+    curl \
+    libcurl
 
 # Create a non-root user
 RUN addgroup -g 1001 -S httprunner && \

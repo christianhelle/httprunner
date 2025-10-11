@@ -56,7 +56,7 @@ pub fn main() !void {
 }
 
 fn processHttpFiles(allocator: Allocator, files: []const []const u8, options: cli.CliOptions) !void {
-    const result = try processor.processHttpFiles(allocator, files, options.verbose, options.log_file, options.environment);
+    const result = try processor.processHttpFiles(allocator, files, options.verbose, options.log_file, options.environment, options.insecure);
     if (result) {
         std.debug.print("{s}✅ All discovered files processed successfully{s}\n", .{ colors.GREEN, colors.RESET });
     } else {
