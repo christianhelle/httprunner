@@ -197,7 +197,7 @@ pub fn showUsage() void {
     print("  --verbose      Show detailed HTTP request and response information\n", .{});
     print("  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)\n", .{});
     print("  --env <env>    Specify environment name to load variables from http-client.env.json\n", .{});
-    print("  --insecure, -k Allow insecure HTTPS connections (skip SSL certificate verification)\n", .{});
+    print("  --insecure, -k Allow insecure HTTPS connections (requires build with -Denable-curl=true)\n", .{});
     print("  --version, -v  Show version information\n", .{});
     print("  --upgrade      Update httprunner to the latest version\n", .{});
     print("  --help, -h     Show this help message\n", .{});

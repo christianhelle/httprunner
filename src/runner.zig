@@ -3,7 +3,6 @@ const http = std.http;
 const Allocator = std.mem.Allocator;
 const types = @import("types.zig");
 const assertions = @import("assertions.zig");
-const curl = @import("curl.zig");
 const HttpRequest = types.HttpRequest;
 const HttpResult = types.HttpResult;
 
@@ -11,116 +10,11 @@ pub fn executeHttpRequest(allocator: Allocator, request: HttpRequest, verbose: b
     const start_time = std.time.nanoTimestamp();
     const has_assertions = request.assertions.items.len > 0;
 
-    // Use libcurl for all requests to support insecure mode
-    return executeWithCurl(allocator, request, verbose, start_time, has_assertions);
-}
-
-fn executeWithCurl(allocator: Allocator, request: HttpRequest, verbose: bool, start_time: i128, has_assertions: bool) !HttpResult {
-    // Prepare curl headers
-    var curl_headers = std.ArrayList(curl.Header).init(allocator);
-    defer curl_headers.deinit();
-    
-    for (request.headers.items) |header| {
-        try curl_headers.append(.{
-            .name = header.name,
-            .value = header.value,
-        });
+    // Warn if insecure mode is requested (not supported with std.http)
+    if (request.insecure) {
+        std.debug.print("⚠️  Warning: Insecure HTTPS mode is requested but not supported with the current build.\n", .{});
+        std.debug.print("   Build with libcurl support to enable insecure HTTPS: zig build -Denable-curl=true\n", .{});
     }
-    
-    const curl_request = curl.CurlRequest{
-        .url = request.url,
-        .method = request.method,
-        .headers = curl_headers.items,
-        .body = request.body,
-        .insecure = request.insecure,
-    };
-    
-    var curl_response = curl.perform(allocator, curl_request) catch |err| {
-        const end_time = std.time.nanoTimestamp();
-        const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
-        return HttpResult{
-            .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
-            .status_code = 0,
-            .success = false,
-            .error_message = switch (err) {
-                error.CurlInitFailed => "Failed to initialize curl",
-                error.CurlPerformFailed => "Failed to perform HTTP request",
-                else => "Connection error",
-            },
-            .duration_ms = duration_ms,
-            .response_headers = null,
-            .response_body = null,
-            .assertion_results = std.ArrayList(types.AssertionResult).initCapacity(allocator, 0) catch @panic("OOM"),
-        };
-    };
-    defer curl_response.deinit();
-    
-    const end_time = std.time.nanoTimestamp();
-    const duration_ms = @as(u64, @intCast(@divTrunc((end_time - start_time), 1_000_000)));
-    
-    const status_code = curl_response.status_code;
-    var success = status_code >= 200 and status_code < 300;
-    
-    var response_headers: ?[]types.HttpResult.Header = null;
-    var response_body: ?[]const u8 = null;
-    
-    if (verbose or has_assertions) {
-        // Convert curl headers to HttpResult headers
-        if (curl_response.headers.len > 0) {
-            var headers = try allocator.alloc(types.HttpResult.Header, curl_response.headers.len);
-            for (curl_response.headers, 0..) |header, i| {
-                headers[i] = .{
-                    .name = try allocator.dupe(u8, header.name),
-                    .value = try allocator.dupe(u8, header.value),
-                };
-            }
-            response_headers = headers;
-        }
-        
-        // Copy response body
-        if (curl_response.body.len > 0) {
-            response_body = try allocator.dupe(u8, curl_response.body);
-        }
-    }
-    
-    var assertion_results = std.ArrayList(types.AssertionResult).initCapacity(allocator, 0) catch @panic("OOM");
-    if (has_assertions) {
-        var temp_result = HttpResult{
-            .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
-            .status_code = status_code,
-            .success = success,
-            .error_message = null,
-            .duration_ms = duration_ms,
-            .response_headers = response_headers,
-            .response_body = response_body,
-            .assertion_results = std.ArrayList(types.AssertionResult).initCapacity(allocator, 0) catch @panic("OOM"),
-        };
-        
-        assertion_results = try assertions.evaluateAssertions(allocator, request.assertions.items, &temp_result);
-        
-        var all_assertions_passed = true;
-        for (assertion_results.items) |assertion_result| {
-            if (!assertion_result.passed) {
-                all_assertions_passed = false;
-                break;
-            }
-        }
-        success = success and all_assertions_passed;
-    }
-    
-    return HttpResult{
-        .request_name = if (request.name) |name| try allocator.dupe(u8, name) else null,
-        .status_code = status_code,
-        .success = success,
-        .error_message = null,
-        .duration_ms = duration_ms,
-        .response_headers = response_headers,
-        .response_body = response_body,
-        .assertion_results = assertion_results,
-    };
-}
-
-fn executeWithStdHttp(allocator: Allocator, request: HttpRequest, verbose: bool, start_time: i128, has_assertions: bool) !HttpResult {
 
     var client = http.Client{ .allocator = allocator };
     defer client.deinit();
