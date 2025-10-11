@@ -26,6 +26,7 @@ A simple command-line tool written in Zig that parses `.http` files and executes
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
 - 📋 **Semantic versioning** with git tag and commit information
 - 🔍 **Build-time version generation** with automatic git integration
+- 🔒 **Insecure HTTPS support** for testing endpoints with self-signed certificates
 
 ## Version Information
 
@@ -98,7 +99,24 @@ sudo snap install httprunner
 
 ### Option 4: Build from Source
 
-Make sure you have Zig installed (version 0.14 or later).
+Make sure you have Zig installed (version 0.14 or later) and libcurl development libraries.
+
+**Prerequisites:**
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install libcurl4-openssl-dev
+
+# Fedora/RHEL
+sudo dnf install libcurl-devel
+
+# macOS (using Homebrew)
+brew install curl
+
+# Windows (libcurl is typically included with Zig installations)
+```
+
+**Build:**
 
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
@@ -653,6 +671,81 @@ When assertions are present, the HTTP runner will:
 3. Display detailed assertion results
 4. Mark the request as failed if any assertion fails
 
+## Insecure HTTPS Support
+
+The HTTP File Runner supports connecting to HTTPS endpoints with invalid, self-signed, or expired SSL certificates. This is useful for development and testing environments where you need to bypass certificate verification.
+
+### Using Insecure Mode
+
+There are two ways to enable insecure HTTPS connections:
+
+#### 1. Command-line flag (applies to all requests)
+
+```bash
+# Allow insecure HTTPS for all requests in the file
+httprunner myfile.http --insecure
+
+# Short form
+httprunner myfile.http -k
+
+# Combined with other flags
+httprunner myfile.http --insecure --verbose
+httprunner --discover --insecure --log results.txt
+```
+
+#### 2. Per-request directive in .http file
+
+Use the `INSECURE` directive to enable insecure mode for specific requests:
+
+```http
+# Enable insecure mode for this request only
+# INSECURE
+GET https://self-signed.badssl.com/
+
+###
+
+# Alternative syntax (without comment)
+INSECURE
+GET https://expired.badssl.com/
+
+###
+
+# Another request with insecure mode
+// INSECURE
+POST https://untrusted-root.badssl.com/api/test
+Content-Type: application/json
+
+{
+  "test": "data"
+}
+
+###
+
+# Regular secure request (certificate verification enabled)
+GET https://example.com/
+```
+
+### Security Warning
+
+⚠️ **Warning**: Disabling SSL certificate verification should only be used in development and testing environments. Never use insecure mode in production or with sensitive data.
+
+### Implementation Details
+
+The insecure HTTPS feature is implemented using **libcurl**, which provides robust SSL certificate verification control:
+
+- **Certificate verification disabled**: `CURLOPT_SSL_VERIFYPEER = 0`
+- **Hostname verification disabled**: `CURLOPT_SSL_VERIFYHOST = 0`
+- **Protocol support**: TLS 1.0, 1.1, 1.2, and 1.3
+- **Compatible with**: Self-signed certificates, expired certificates, untrusted root CAs, hostname mismatches
+
+### Use Cases
+
+- Testing against development servers with self-signed certificates
+- Working with internal APIs that use self-signed certificates
+- Debugging SSL/TLS connection issues
+- Testing certificate expiration scenarios
+- Development environments without proper certificate infrastructure
+
 ### Supported Features
 
 - **Methods**: GET, POST, PUT, DELETE, PATCH
@@ -670,6 +763,7 @@ The `examples/` directory contains several sample `.http` files:
 - **`status-codes.http`** - Tests different HTTP status codes (15 requests)
 - **`request-variables.http`** - Demonstrates request chaining with variables (5 requests)
 - **`variables.http`** - Shows variable usage and environment files
+- **`insecure.http`** - Demonstrates insecure HTTPS connections to self-signed certificate endpoints
 - **`comprehensive.http`** - Complete feature demonstration
 
 ## Output
@@ -740,8 +834,8 @@ When running httprunner without any arguments, the following help text is displa
 ```text
 HTTP File Runner v0.1.9
 Usage:
-  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]
-  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover
+  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>] [--insecure]
+  httprunner [--verbose] [--log [filename]] [--env <environment>] [--insecure] --discover
   httprunner --version | -v
   httprunner --upgrade
   httprunner --help | -h
@@ -752,6 +846,7 @@ Arguments:
   --verbose      Show detailed HTTP request and response information
   --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
   --env <env>    Specify environment name to load variables from http-client.env.json
+  --insecure, -k Allow insecure HTTPS connections (skip SSL certificate verification)
   --version, -v  Show version information
   --upgrade      Update httprunner to the latest version
   --help, -h     Show this help message
