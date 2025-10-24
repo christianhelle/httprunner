@@ -153,12 +153,22 @@ The following directories remain shared between both implementations:
 
 ## Benefits of This Restructure
 
-1. **Clarity**: Clear distinction between active and deprecated implementations
-2. **Default**: Rust is obviously the default (in root directory)
-3. **Preservation**: Zig code preserved for reference and transition period
-4. **Migration Path**: Clear path for users to migrate from Zig to Rust
-5. **Maintainability**: Easier to maintain with clear focus on Rust
-6. **Community**: Better aligned with Rust ecosystem and community
+1. **Technical**: Rust implementation resolves Zig's HTTP/HTTPS configuration limitations
+2. **Clarity**: Clear distinction between active and deprecated implementations
+3. **Default**: Rust is obviously the default (in root directory)
+4. **Preservation**: Zig code preserved for reference and transition period
+5. **Migration Path**: Clear path for users to migrate from Zig to Rust
+6. **Maintainability**: Easier to maintain with clear focus on Rust
+7. **Community**: Better aligned with Rust ecosystem and community
+
+## Technical Context
+
+The restructuring was driven by fundamental limitations in Zig's HTTP implementation:
+
+- **Primary Issue**: Zig's `std.http` client cannot bypass certificate validation for HTTPS calls
+- **Impact**: Unable to test against development environments with self-signed certificates
+- **Failed Alternative**: libcurl integration was too complex for cross-platform maintenance
+- **Rust Solution**: The `reqwest` crate provides flexible, cross-platform HTTP/HTTPS support
 
 ## Rollback Plan
 

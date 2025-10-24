@@ -5,10 +5,18 @@
 
 ## Migration Notice
 
-The HTTP File Runner has been reimplemented in Rust for better maintainability, ecosystem support, and performance. The new Rust implementation is now the default and recommended version.
+The HTTP File Runner has been reimplemented in Rust due to technical limitations in Zig's HTTP implementation. The new Rust implementation is now the default and recommended version.
 
 ### Why Rust?
 
+The primary reason for migration was **Zig's HTTP/HTTPS limitations**:
+
+- **Critical Issue**: Zig's standard library HTTP client cannot be configured to make insecure HTTPS calls (bypassing certificate validation)
+- **Development Impact**: This limitation makes it difficult to test against development environments with self-signed certificates
+- **libcurl Complexity**: Attempted migration to libcurl from Zig proved too complex to maintain across Linux, macOS, and Windows platforms
+- **Rust Solution**: The `reqwest` crate provides a mature, flexible HTTP client with easy HTTPS configuration without platform-specific issues
+
+Additional benefits:
 - **Better ecosystem**: Rich library support for HTTP, async operations, and CLI tools
 - **Active development**: More active development and modern tooling
 - **Performance**: Comparable or better performance with better memory safety

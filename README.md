@@ -18,6 +18,15 @@ This repository contains two implementations of HTTP File Runner:
 - **Zig** (deprecated): Located in [`zig/`](./zig) directory - Legacy implementation that will be removed in a future version
 
 **Why Rust became the default?**
+
+The primary driver for migrating to Rust was **technical limitations in Zig's HTTP implementation**:
+
+- **HTTPS Flexibility**: Zig's standard library HTTP client cannot be configured to make insecure HTTPS calls (bypassing certificate validation), which is sometimes necessary for development/testing environments with self-signed certificates
+- **HTTP Client Limitations**: Zig's std.http has configuration constraints that can't be easily worked around
+- **libcurl Complexity**: Attempting to use libcurl from Zig proved too complex to maintain across Linux, macOS, and Windows
+- **Rust's reqwest**: Provides a mature, flexible HTTP client with easy configuration for all HTTPS scenarios without platform-specific hassles
+
+Additional benefits:
 - Better ecosystem with rich library support
 - Easier maintenance and contribution
 - Active development with modern tooling
