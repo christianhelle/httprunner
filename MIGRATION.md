@@ -145,6 +145,27 @@ cargo build --release
 
 ## Why the Switch?
 
+### Primary Technical Reason
+
+**Zig's HTTP/HTTPS Limitations**: The main driver for the migration was technical constraints in Zig's standard library:
+
+1. **HTTPS Configuration**: Zig's `std.http` client cannot be configured to make insecure HTTPS calls (bypassing certificate validation)
+   - This limitation makes it impossible to test against development environments with self-signed certificates
+   - No straightforward way to configure TLS/SSL verification behavior
+   
+2. **libcurl Migration Failed**: Attempted to use libcurl from Zig as an alternative
+   - Cross-platform compilation proved too complex
+   - Maintaining libcurl bindings for Linux, macOS, and Windows was a maintenance nightmare
+   - Build system complexity increased significantly
+   
+3. **Rust's Solution**: The `reqwest` crate provides:
+   - Easy HTTPS configuration including certificate validation control
+   - Battle-tested HTTP client used by thousands of projects
+   - Cross-platform support that "just works"
+   - No external dependencies or platform-specific build hassles
+
+### Additional Benefits
+
 1. **Ecosystem**: Rust has a richer ecosystem with more libraries
 2. **Maintenance**: Easier to maintain with better tooling
 3. **Community**: Larger community, more contributors
