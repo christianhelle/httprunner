@@ -4,6 +4,31 @@
 
 This document summarizes the Rust port of the HTTP File Runner from Zig to Rust. The port maintains feature parity with the original Zig implementation while leveraging Rust's ecosystem and safety features.
 
+## Motivation for the Port
+
+The primary reason for porting from Zig to Rust was **technical limitations in Zig's HTTP implementation**:
+
+### Critical Issue: HTTPS Configuration Limitations
+
+- **Problem**: Zig's standard library HTTP client (`std.http`) cannot be configured to make insecure HTTPS calls
+  - No way to bypass certificate validation for self-signed certificates
+  - No configuration options for TLS/SSL verification behavior
+  - Makes testing against development environments extremely difficult
+
+- **Failed Workaround**: Attempted to migrate to libcurl
+  - Cross-platform compilation complexity (Linux, macOS, Windows)
+  - Significant build system overhead
+  - Maintenance burden too high for a CLI tool
+  - Platform-specific linking issues
+
+- **Rust Solution**: The `reqwest` crate provides:
+  - Easy HTTPS configuration with `danger_accept_invalid_certs()`
+  - Battle-tested, mature HTTP client
+  - Cross-platform support without external dependencies
+  - No platform-specific build complications
+
+This technical limitation was a blocker for the project's goals, making the Rust port necessary rather than just desirable.
+
 ## Project Structure
 
 ```

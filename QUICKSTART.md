@@ -1,5 +1,7 @@
 # Quick Start Guide - HTTP File Runner (Rust)
 
+> **Note**: This is the Rust implementation. The original Zig implementation has been deprecated due to limitations in Zig's HTTP/HTTPS client that prevented configuring insecure HTTPS calls necessary for development environments with self-signed certificates.
+
 ## Installation
 
 ### From Source
