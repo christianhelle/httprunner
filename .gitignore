@@ -1,6 +1,17 @@
-# Zig build artifacts
+# Rust build artifacts
+/target/
+Cargo.lock
+*.rs.bk
+*.pdb
+
+# Zig build artifacts (legacy)
 zig-out/
 zig-cache/
+.zig-cache
+zig/zig-out/
+zig/zig-cache/
+zig/.zig-cache
+zig/src/version_info.zig
 
 # OS generated files
 .DS_Store
@@ -20,7 +31,6 @@ Thumbs.db
 
 # Windows
 *.exe
-*.pdb
 
 # Linux
 *.out
@@ -65,8 +75,6 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
-.zig-cache
 *.snap
 src/httprunner.rc
-src/version_info.zig
 .run
