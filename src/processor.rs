@@ -117,7 +117,7 @@ pub fn process_http_files(
                     .unwrap_or_default();
 
                 log.writeln(&format!(
-                    "{} {}{} {} - Status: {} - {}ms",
+                    "{} {} {} {} - Status: {} - {}ms",
                     colors::green("✅"),
                     name_prefix,
                     processed_request.method,
@@ -134,7 +134,7 @@ pub fn process_http_files(
 
                 if let Some(ref msg) = result.error_message {
                     log.writeln(&format!(
-                        "{} {}{} {} - Status: {} - {}ms - Error: {}",
+                        "{} {} {} {} - Status: {} - {}ms - Error: {}",
                         colors::red("❌"),
                         name_prefix,
                         processed_request.method,
@@ -145,7 +145,7 @@ pub fn process_http_files(
                     ));
                 } else {
                     log.writeln(&format!(
-                        "{} {}{} {} - Status: {} - {}ms",
+                        "{} {} {} {} - Status: {} - {}ms",
                         colors::red("❌"),
                         name_prefix,
                         processed_request.method,
