@@ -41,6 +41,7 @@ impl Cli {
     }
 }
 
+#[allow(dead_code)]
 pub fn show_version() {
     println!(
         "{} HTTP File Runner {} version {}",

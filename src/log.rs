@@ -18,6 +18,7 @@ impl Log {
         Ok(Log { log_file })
     }
 
+    #[allow(dead_code)]
     pub fn write(&mut self, message: &str) {
         print!("{}", message);
         if let Some(ref mut file) = self.log_file {
