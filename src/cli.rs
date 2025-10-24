@@ -3,11 +3,11 @@ use clap::Parser;
 
 const LONG_VERSION: &str = concat!(
     env!("VERSION"),
-    "\nGit tag: ",
+    "\ngit tag: ",
     env!("GIT_TAG"),
-    "\nGit commit: ",
+    "\ngit commit: ",
     env!("GIT_COMMIT"),
-    "\nBuild date: ",
+    "\nbuild date: ",
     env!("BUILD_DATE")
 );
 
