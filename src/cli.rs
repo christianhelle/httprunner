@@ -1,10 +1,21 @@
 use crate::colors;
 use clap::Parser;
 
+const LONG_VERSION: &str = concat!(
+    env!("VERSION"),
+    "\nGit tag: ",
+    env!("GIT_TAG"),
+    "\nGit commit: ",
+    env!("GIT_COMMIT"),
+    "\nBuild date: ",
+    env!("BUILD_DATE")
+);
+
 #[derive(Parser)]
 #[command(name = "httprunner")]
 #[command(about = "HTTP File Runner - Execute HTTP requests from .http files", long_about = None)]
 #[command(version = env!("VERSION"))]
+#[command(long_version = LONG_VERSION)]
 pub struct Cli {
     /// One or more .http files to process
     #[arg(value_name = "FILE")]
