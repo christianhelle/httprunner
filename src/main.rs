@@ -11,7 +11,7 @@ mod runner;
 mod types;
 mod upgrade;
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
@@ -27,9 +27,10 @@ fn main() -> anyhow::Result<()> {
         }
         discovered
     } else if cli_args.files.is_empty() {
-        eprintln!("{} No .http files specified", colors::red("❌"));
-        eprintln!("Use --help for usage information");
-        std::process::exit(1);
+        // Show help when no arguments are provided
+        let mut cmd = cli::Cli::command();
+        cmd.print_help()?;
+        std::process::exit(0);
     } else {
         cli_args.files.clone()
     };
