@@ -1,0 +1,32 @@
+name: httprunner
+base: core22
+version: git
+summary: Execute HTTP requests from .http files with colored output
+description: |
+  HTTP File Runner is a command-line tool written in Zig for parsing and 
+  executing HTTP requests from .http files. Features include:
+  
+  • Support for GET, POST, PUT, DELETE, PATCH methods
+  • Color-coded output with emojis for success/failure indication
+  • Custom headers support
+  • Detailed error reporting with status codes
+  • Summary statistics
+  • Robust network error handling
+
+grade: stable
+confinement: strict
+
+apps:
+  httprunner:
+    command: bin/httprunner
+    plugs:
+      - network
+      - home
+
+parts:
+  httprunner:
+    plugin: rust
+    source: .
+    build-packages:
+      - libssl-dev
+      - pkg-config
