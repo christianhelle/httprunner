@@ -1,4 +1,3 @@
-use crate::colors;
 use clap::Parser;
 
 const LONG_VERSION: &str = concat!(
@@ -50,19 +49,6 @@ impl Cli {
             None => None,
         }
     }
-}
-
-#[allow(dead_code)]
-pub fn show_version() {
-    println!(
-        "{} HTTP File Runner {} version {}",
-        colors::blue(""),
-        "",
-        colors::green(env!("VERSION"))
-    );
-    println!("Git tag: {}{}", colors::yellow(""), env!("GIT_TAG"));
-    println!("Git commit: {}{}", colors::yellow(""), env!("GIT_COMMIT"));
-    println!("Build date: {}{}", colors::yellow(""), env!("BUILD_DATE"));
 }
 
 pub fn show_donation_banner() {
