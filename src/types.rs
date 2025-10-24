@@ -8,6 +8,7 @@ pub struct Variable {
 
 #[derive(Debug, Clone)]
 pub struct RequestVariable {
+    #[allow(dead_code)]
     pub reference: String,
     pub request_name: String,
     pub source: RequestVariableSource,
@@ -35,6 +36,7 @@ pub struct HttpRequest {
     pub headers: Vec<Header>,
     pub body: Option<String>,
     pub assertions: Vec<Assertion>,
+    #[allow(dead_code)]
     pub variables: Vec<Variable>,
 }
 
