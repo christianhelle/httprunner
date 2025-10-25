@@ -3,8 +3,9 @@ name: Build macOS
 on:
   push:
     paths:      
-      - '**/*.zig'
-      - 'build.zig'
+      - '**/*.rs'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
       - '.github/workflows/build-macos.yml'
   pull_request:
     branches: [ main ]
@@ -12,39 +13,30 @@ on:
 jobs:
   build-macos:
     name: Build macOS
-    timeout-minutes: 5
+    timeout-minutes: 10
     runs-on: macos-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
 
-    - name: Setup Zig
-      uses: christianhelle/setup-zig@main
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        version: '0.15.1'
-
-    - name: Cache Zig
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/zig
-          zig-cache
-        key: macos-latest-zig-0.15.1-${{ hashFiles('build.zig', 'build.zig.zon') }}
-        restore-keys: |
-          macos-latest-zig-0.15.1-
+        toolchain: stable
+        cache: true
 
     - name: Build
-      run: zig build
+      run: cargo build
 
     - name: Run tests
-      run: zig build test
+      run: cargo test
 
     - name: Build release
-      run: zig build -Doptimize=ReleaseFast
+      run: cargo build --release
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: httprunner-macos
-        path: zig-out/bin/httprunner
+        path: target/release/httprunner
