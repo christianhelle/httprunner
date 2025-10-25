@@ -27,31 +27,24 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
-    - name: Setup Zig
-      uses: christianhelle/setup-zig@main
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        version: '0.15.1'
-
-    - name: Cache Zig
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/zig
-          zig-cache
-        key: ${{ runner.os }}-zig-test-${{ hashFiles('build.zig', 'build.zig.zon') }}
+        toolchain: stable
+        cache: true
 
     - name: Build debug
-      run: zig build
+      run: cargo build
 
     - name: Build release
-      run: zig build -Doptimize=ReleaseFast
+      run: cargo build --release
 
     - name: Verify binary exists (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        if (Test-Path "zig-out/bin/httprunner.exe") {
+        if (Test-Path "target/release/httprunner.exe") {
           Write-Host "✅ Binary created successfully"
-          & "zig-out/bin/httprunner.exe" --help
+          & "target/release/httprunner.exe" --help
         } else {
           Write-Error "❌ Binary not found"
           exit 1
@@ -60,9 +53,9 @@ jobs:
     - name: Verify binary exists (Unix)
       if: matrix.os != 'windows-latest'
       run: |
-        if [ -f "zig-out/bin/httprunner" ]; then
+        if [ -f "target/release/httprunner" ]; then
           echo "✅ Binary created successfully"
-          ./zig-out/bin/httprunner --help || true
+          ./target/release/httprunner --help || true
         else
           echo "❌ Binary not found"
           exit 1
@@ -77,16 +70,23 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
-    - name: Setup Zig
-      uses: christianhelle/setup-zig@main
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        version: '0.15.1'
+        toolchain: stable
+        components: rustfmt, clippy
 
     - name: Check formatting
       run: |
-        echo "Checking Zig code formatting..."
-        zig fmt --check . || (echo "❌ Code is not properly formatted. Run 'zig fmt .' to fix." && exit 1)
+        echo "Checking Rust code formatting..."
+        cargo fmt --check || (echo "❌ Code is not properly formatted. Run 'cargo fmt' to fix." && exit 1)
         echo "✅ Code formatting is correct"
+
+    - name: Run clippy
+      run: |
+        echo "Running clippy..."
+        cargo clippy -- -D warnings || echo "⚠️ Clippy warnings found"
+        echo "✅ Clippy check completed"
 
   test-unit:
     name: Test Unit Tests
@@ -97,21 +97,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
-    - name: Setup Zig
-      uses: christianhelle/setup-zig@main
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        version: '0.15.1'
+        toolchain: stable
+        cache: true
 
     - name: Run unit tests
       run: |
         echo "Running unit tests..."
-        zig build test
+        cargo test
         echo "✅ All tests passed"
 
     - name: Test with examples
       run: |
         echo "Testing with example files..."
-        zig build
+        cargo build --release
         
         # Test if examples directory exists and contains .http files
         if [ -d "examples" ] && [ "$(ls -A examples/*.http 2>/dev/null)" ]; then
@@ -121,7 +122,7 @@ jobs:
           # Test with a simple example if it exists
           if [ -f "examples/basic.http" ]; then
             echo "Testing with basic.http..."
-            timeout 30s ./zig-out/bin/httprunner examples/basic.http || echo "Test completed (may have failed due to network)"
+            timeout 30s ./target/release/httprunner examples/basic.http || echo "Test completed (may have failed due to network)"
           fi
         else
           echo "No example files found, skipping integration test"
