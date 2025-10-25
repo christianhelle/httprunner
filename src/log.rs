@@ -35,15 +35,13 @@ impl Log {
 }
 
 fn create_log_file(base_filename: &str) -> Result<File> {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)?
-        .as_secs();
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
     let log_filename = format!("{}_{}.log", base_filename, timestamp);
-    
+
     let file = OpenOptions::new()
         .create(true)
         .append(true)
         .open(&log_filename)?;
-    
+
     Ok(file)
 }

@@ -23,7 +23,10 @@ pub fn discover_http_files(dir_path: &str) -> Result<Vec<String>> {
 }
 
 pub fn run_discovery_mode() -> Result<Vec<String>> {
-    println!("{} Discovering .http files recursively...", colors::blue("🔍"));
+    println!(
+        "{} Discovering .http files recursively...",
+        colors::blue("🔍")
+    );
 
     let files = discover_http_files(".")?;
 

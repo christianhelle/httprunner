@@ -7,19 +7,19 @@ fn main() {
         .unwrap_or_else(|| "unknown".to_string());
     let git_commit = get_git_output(&["git", "rev-parse", "--short", "HEAD"])
         .unwrap_or_else(|| "unknown".to_string());
-    
+
     // Parse version from git tag (remove 'v' prefix if present)
     let version = git_tag.strip_prefix('v').unwrap_or(&git_tag);
-    
+
     // Get current timestamp
     let build_date = Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
-    
+
     // Set environment variables for build
     println!("cargo:rustc-env=VERSION={}", version);
     println!("cargo:rustc-env=GIT_TAG={}", git_tag);
     println!("cargo:rustc-env=GIT_COMMIT={}", git_commit);
     println!("cargo:rustc-env=BUILD_DATE={}", build_date);
-    
+
     // Rerun if git changes
     println!("cargo:rerun-if-changed=../.git/HEAD");
     println!("cargo:rerun-if-changed=../.git/refs/tags");

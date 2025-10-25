@@ -1,5 +1,5 @@
-use crate::types::{Assertion, AssertionType, Header, HttpRequest, Variable};
 use crate::environment;
+use crate::types::{Assertion, AssertionType, Header, HttpRequest, Variable};
 use anyhow::{Context, Result};
 use std::fs;
 
@@ -22,14 +22,18 @@ pub fn parse_http_file(
 
     for line in lines {
         let trimmed = line.trim();
-        
+
         if trimmed.is_empty() {
             continue;
         }
 
         // Check for request name
         if trimmed.starts_with("# @name ") || trimmed.starts_with("// @name ") {
-            let name_start = if trimmed.starts_with("# @name ") { 8 } else { 9 };
+            let name_start = if trimmed.starts_with("# @name ") {
+                8
+            } else {
+                9
+            };
             pending_request_name = Some(trimmed[name_start..].trim().to_string());
             continue;
         }
@@ -72,7 +76,8 @@ pub fn parse_http_file(
         } else if trimmed.starts_with("EXPECTED_RESPONSE_BODY ") {
             if let Some(ref mut req) = current_request {
                 let mut body_value = trimmed[23..].trim();
-                if body_value.starts_with('"') && body_value.ends_with('"') && body_value.len() >= 2 {
+                if body_value.starts_with('"') && body_value.ends_with('"') && body_value.len() >= 2
+                {
                     body_value = &body_value[1..body_value.len() - 1];
                 }
                 req.assertions.push(Assertion {
@@ -84,7 +89,10 @@ pub fn parse_http_file(
         } else if trimmed.starts_with("EXPECTED_RESPONSE_HEADERS ") {
             if let Some(ref mut req) = current_request {
                 let mut headers_value = trimmed[26..].trim();
-                if headers_value.starts_with('"') && headers_value.ends_with('"') && headers_value.len() >= 2 {
+                if headers_value.starts_with('"')
+                    && headers_value.ends_with('"')
+                    && headers_value.len() >= 2
+                {
                     headers_value = &headers_value[1..headers_value.len() - 1];
                 }
                 req.assertions.push(Assertion {
@@ -174,11 +182,11 @@ fn substitute_variables(input: &str, variables: &[Variable]) -> String {
         if ch == '{' {
             if chars.peek() == Some(&'{') {
                 chars.next(); // consume second '{'
-                
+
                 // Find closing }}
                 let mut var_name = String::new();
                 let mut found_closing = false;
-                
+
                 while let Some(ch) = chars.next() {
                     if ch == '}' {
                         if chars.peek() == Some(&'}') {
