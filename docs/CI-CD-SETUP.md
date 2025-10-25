@@ -14,9 +14,9 @@ This document describes the complete CI/CD pipeline setup for the HTTP File Runn
 
 **Jobs:**
 - **Test Job**: Runs on Ubuntu, Windows, and macOS
-  - Sets up Zig 0.15.1
+  - Sets up Rust toolchain
   - Caches build artifacts
-  - Checks code formatting with `zig fmt --check`
+  - Checks code formatting with `cargo fmt --check`
   - Builds project in debug and release modes
   - Runs unit tests
 
@@ -64,7 +64,7 @@ This document describes the complete CI/CD pipeline setup for the HTTP File Runn
 - Automated security issue detection
 - Integration with GitHub Security tab
 
-### 4. Dependency Management (`.github/workflows/dependency-update.yml`)
+### 4. Dependency Management (`.github/workflows/N/A (Rust uses Cargo and Renovate)`)
 
 **Triggers:**
 - Weekly schedule (Mondays at 4 AM)

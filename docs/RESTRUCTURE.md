@@ -1,8 +1,10 @@
 # Repository Restructuring Summary
 
+> **Note**: The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This document is kept for historical reference.
+
 ## Overview
 
-This document summarizes the restructuring of the HTTP File Runner repository to support both Zig and Rust implementations, with Rust as the default.
+This document summarizes the historical restructuring of the HTTP File Runner repository when it supported both Zig and Rust implementations.
 
 ## Changes Made
 
