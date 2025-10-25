@@ -29,11 +29,7 @@ pub fn process_http_files(
         let requests = match parser::parse_http_file(http_file, environment) {
             Ok(reqs) => reqs,
             Err(e) => {
-                log.writeln(&format!(
-                    "{} Error parsing file: {}",
-                    colors::red("❌"),
-                    e
-                ));
+                log.writeln(&format!("{} Error parsing file: {}", colors::red("❌"), e));
                 continue;
             }
         };
@@ -194,7 +190,8 @@ pub fn process_http_files(
                     if let Some(ref result) = ctx.result {
                         log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
                         for assertion_result in &result.assertion_results {
-                            let assertion_type_str = match assertion_result.assertion.assertion_type {
+                            let assertion_type_str = match assertion_result.assertion.assertion_type
+                            {
                                 AssertionType::ResponseStatus => "Status Code",
                                 AssertionType::ResponseBody => "Response Body",
                                 AssertionType::ResponseHeaders => "Response Headers",
@@ -288,7 +285,9 @@ fn substitute_request_variables_in_request(
 
     // Substitute in body
     if let Some(ref body) = request.body {
-        request.body = Some(request_variables::substitute_request_variables(body, context)?);
+        request.body = Some(request_variables::substitute_request_variables(
+            body, context,
+        )?);
     }
 
     // Substitute in assertion expected values

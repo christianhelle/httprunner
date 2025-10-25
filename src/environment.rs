@@ -21,7 +21,7 @@ pub fn load_environment_file(
     }
 
     let env_config = parse_environment_file(&env_file_path.unwrap())?;
-    
+
     if let Some(env_vars) = env_config.get(environment_name.unwrap()) {
         for (name, value) in env_vars {
             variables.push(Variable {
@@ -66,7 +66,7 @@ fn parse_environment_file(file_path: &Path) -> Result<HashMap<String, HashMap<St
     if let Value::Object(root) = json {
         for (env_name, env_value) in root {
             let mut env_vars = HashMap::new();
-            
+
             if let Value::Object(vars) = env_value {
                 for (var_name, var_value) in vars {
                     let value_str = match var_value {
@@ -76,7 +76,7 @@ fn parse_environment_file(file_path: &Path) -> Result<HashMap<String, HashMap<St
                     env_vars.insert(var_name.clone(), value_str);
                 }
             }
-            
+
             config.insert(env_name.clone(), env_vars);
         }
     }
