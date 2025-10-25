@@ -1,6 +1,6 @@
 # Ignore build artifacts when building Docker image
-zig-cache/
-zig-out/
+target/
+Cargo.lock
 
 # Ignore git directory
 .git/
@@ -18,6 +18,7 @@ SECURITY.md
 # Ignore development files
 .vscode/
 .idea/
+.devcontainer/
 *.swp
 *.swo
 *~
@@ -44,6 +45,6 @@ examples/
 
 # Keep only what's needed for the container
 !src/
-!build.zig
-!build.zig.zon
+!Cargo.toml
+!build.rs
 !LICENSE
