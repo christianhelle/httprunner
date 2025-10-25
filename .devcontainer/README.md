@@ -4,9 +4,9 @@ This directory contains the development container configuration for the HTTP Fil
 
 ## What's Included
 
-- **Zig 0.15.1**: The programming language and toolchain
+- **Rust toolchain**: The programming language and toolchain (stable channel)
 - **PowerShell Core**: For build scripts and cross-platform automation
-- **VS Code Zig Extension**: `ziglang.vscode-zig` for syntax highlighting, IntelliSense, and debugging
+- **VS Code Rust Extensions**: `rust-analyzer` for syntax highlighting, IntelliSense, and debugging
 - **Universal Dev Container**: Pre-configured Linux environment with common development tools
 
 ## Usage
@@ -34,26 +34,26 @@ Once inside the dev container, you can:
 
 ```bash
 # Build the project
-zig build
+cargo build
 
 # Run tests
-zig build test
+cargo test
 
 # Run the application
-zig build run -- --help
+cargo run -- --help
 
 # Test with example files
-zig build run -- examples/simple.http
+cargo run -- examples/simple.http
 ```
 
 ## Features
 
 The dev container provides:
 
-- Zig language server (ZLS) for code completion and analysis
+- Rust analyzer for code completion and analysis
 - PowerShell Core for build scripts and automation
-- Syntax highlighting for `.zig` files
-- Integrated terminal with Zig in PATH
+- Syntax highlighting for `.rs` files
+- Integrated terminal with Rust toolchain in PATH
 - Git support for version control
 - All dependencies pre-installed and configured
 
@@ -65,3 +65,7 @@ If you encounter issues:
 2. Make sure the Dev Containers extension is installed and updated
 3. Try rebuilding the container: Command Palette → "Dev Containers: Rebuild Container"
 4. Check the dev container logs for any error messages
+
+## Legacy Zig Implementation
+
+The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig).
