@@ -1,5 +1,7 @@
 # Quick Reference: Zig to Rust Migration
 
+> **Note**: The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This document is kept for historical reference.
+
 This document provides a quick reference for developers and users transitioning from the Zig implementation to the Rust implementation.
 
 ## Build Commands
@@ -183,7 +185,7 @@ cargo build --release
 - **Issues**: https://github.com/christianhelle/httprunner/issues
 - **Discussions**: https://github.com/christianhelle/httprunner/discussions
 - **Documentation**: See main README.md
-- **Zig Legacy Docs**: See zig/README.md
+- **Zig Legacy Docs**: See https://github.com/christianhelle/httprunner-zig
 
 ## Common Migration Questions
 
@@ -194,7 +196,7 @@ cargo build --release
 **A:** Yes! `http-client.env.json` format is unchanged.
 
 ### Q: Can I still use the Zig version?
-**A:** Yes, it's in the `zig/` directory, but it's no longer maintained.
+**A:** Yes, it has been moved to a separate repository, but it's no longer maintained.
 
 ### Q: What if I prefer Zig?
 **A:** The Zig version will remain available for now, but we recommend migrating to Rust for continued updates and support.
@@ -210,4 +212,4 @@ cargo build --release
 - Main README: [README.md](README.md)
 - Restructuring details: [RESTRUCTURE.md](RESTRUCTURE.md)
 - Rust quickstart: [QUICKSTART.md](QUICKSTART.md)
-- Zig deprecation notice: [zig/README.md](zig/README.md)
+- Zig deprecation notice: [https://github.com/christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig)

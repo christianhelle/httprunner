@@ -1,5 +1,7 @@
 # HTTP File Runner - Rust Port Summary
 
+> **Note**: The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This document is kept for historical reference.
+
 ## Overview
 
 This document summarizes the Rust port of the HTTP File Runner from Zig to Rust. The port maintains feature parity with the original Zig implementation while leveraging Rust's ecosystem and safety features.
