@@ -5,6 +5,12 @@ edition = "2021"
 authors = ["Christian Helle"]
 description = "HTTP File Runner - Execute HTTP requests from .http files"
 license = "MIT"
+repository = "https://github.com/christianhelle/httprunner"
+homepage = "https://github.com/christianhelle/httprunner"
+documentation = "https://github.com/christianhelle/httprunner"
+readme = "README.md"
+keywords = ["http", "rest", "api", "testing", "cli"]
+categories = ["command-line-utilities", "development-tools", "web-programming::http-client"]
 
 [dependencies]
 native-tls = "0.2"
