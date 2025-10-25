@@ -4,7 +4,7 @@ Always reference these instructions first and fallback to search or bash command
 
 ## Project Overview
 
-This is a Rust project (previously Zig). The Zig implementation has been moved to `zig/` and is deprecated.
+This is a Rust project. The original Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig).
 
 **Why Rust?** The primary reason for migration was Zig's HTTP limitations - the standard library cannot configure insecure HTTPS calls (bypassing certificate validation), which is necessary for development environments with self-signed certificates. libcurl integration proved too complex for cross-platform maintenance.
 
@@ -93,8 +93,8 @@ src/
 └── upgrade.rs        # Self-update feature
 ```
 
-### Legacy Zig Implementation (Deprecated)
-The Zig implementation is in `zig/` directory and is no longer actively maintained. It was deprecated due to HTTP/HTTPS configuration limitations.
+### Legacy Zig Implementation (Moved)
+The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). It was moved due to HTTP/HTTPS configuration limitations.
 
 ### Example Files for Testing
 ```
@@ -118,7 +118,6 @@ examples/
 - Run tests with output: `cargo test -- --nocapture`
 - Run specific test: `cargo test test_name`
 - Tests are embedded in source files using Rust's built-in test system
-- Tests are embedded in source files using Zig's built-in test system
 - No external test dependencies required
 
 ### Integration Testing
@@ -198,14 +197,14 @@ EXPECTED_RESPONSE_HEADERS "Header: value"
 - Use `--verbose` flag for detailed debugging
 - Check example files for correct syntax
 - Validate `.http` file format
-- For HTTPS issues with self-signed certificates, the Rust implementation can be configured to accept them (this was impossible in Zig)
+- For HTTPS issues with self-signed certificates, the Rust implementation can be configured to accept them
 
 ### Performance Notes
 - Release builds: `cargo build --release`
 - Debug builds include symbols for debugging
-- Binary size: ~5-10MB for release builds (larger than Zig due to dependencies)
+- Binary size: ~5-10MB for release builds
 - Memory usage: minimal, suitable for CI/CD environments
-- Performance is comparable to Zig for I/O-bound HTTP operations
+- Performance is optimized for I/O-bound HTTP operations
 
 ## Version Management
 - Version info auto-generated from git tags at build time via `build.rs`
@@ -215,12 +214,4 @@ EXPECTED_RESPONSE_HEADERS "Header: value"
 
 ## Legacy Zig Implementation
 
-The Zig implementation is in `zig/` directory and is deprecated. It was moved there due to:
-- Inability to configure HTTPS certificate validation in Zig's std.http
-- libcurl integration complexity across platforms
-- Better HTTP client support in Rust ecosystem (reqwest)
-
-If you need to work with the Zig code:
-- `cd zig && zig build`
-- See `zig/README.md` for deprecation details
-- New features should only be added to the Rust implementation
+The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now only contains the Rust implementation, which is actively maintained and recommended for all use cases.
