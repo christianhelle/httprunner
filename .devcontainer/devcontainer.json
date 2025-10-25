@@ -1,16 +1,24 @@
 {
-  "name": "Zig Dev Environment",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "name": "Rust Dev Environment",
+  "image": "mcr.microsoft.com/devcontainers/rust:latest",
   "features": {
-    "ghcr.io/devcontainers-contrib/features/zig": {
-      "version": "0.15.1"
-    }
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "customizations": {
     "vscode": {
       "extensions": [
-        "ziglang.vscode-zig"
-      ]
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "serayuzgur.crates",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.cargo.features": "all"
+      }
     }
-  }
+  },
+  "postCreateCommand": "rustc --version && cargo --version",
+  "remoteUser": "vscode"
 }
