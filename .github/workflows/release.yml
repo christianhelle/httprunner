@@ -19,19 +19,19 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            target: x86_64-linux
+            target: x86_64-unknown-linux-gnu
             binary_name: httprunner
             archive_name: httprunner-linux-x86_64.tar.gz
           - os: windows-latest
-            target: x86_64-windows
+            target: x86_64-pc-windows-msvc
             binary_name: httprunner.exe
             archive_name: httprunner-windows-x86_64.zip
           - os: macos-latest
-            target: x86_64-macos
+            target: x86_64-apple-darwin
             binary_name: httprunner
             archive_name: httprunner-macos-x86_64.tar.gz
           - os: macos-latest
-            target: aarch64-macos
+            target: aarch64-apple-darwin
             binary_name: httprunner
             archive_name: httprunner-macos-aarch64.tar.gz
 
@@ -39,30 +39,21 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
-    - name: Setup Zig
-      uses: christianhelle/setup-zig@main
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        version: '0.15.1'
-
-    - name: Cache Zig
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/zig
-          zig-cache
-        key: ${{ runner.os }}-zig-release-${{ hashFiles('build.zig', 'build.zig.zon') }}
-        restore-keys: |
-          ${{ runner.os }}-zig-release-
+        toolchain: stable
+        target: ${{ matrix.target }}
+        cache: true
 
     - name: Build release binary
-      run: |
-        zig build -Doptimize=ReleaseSmall -Dtarget=${{ matrix.target }}
+      run: cargo build --release --target ${{ matrix.target }}
 
     - name: Create archive (Linux/macOS)
       if: matrix.os != 'windows-latest'
       run: |
         mkdir -p release
-        cp zig-out/bin/${{ matrix.binary_name }} release/
+        cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release/
         cp README.md release/
         cp LICENSE release/
         cd release
@@ -72,7 +63,7 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         mkdir release
-        copy zig-out\bin\${{ matrix.binary_name }} release\
+        copy target\${{ matrix.target }}\release\${{ matrix.binary_name }} release\
         copy README.md release\
         copy LICENSE release\
         Compress-Archive -Path release\* -DestinationPath ${{ matrix.archive_name }}
