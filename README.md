@@ -8,30 +8,7 @@
 
 A simple command-line tool written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
-> **Note**: This project was originally written in Zig. The Zig implementation has been moved to the [`zig/`](./zig) directory and is deprecated. Rust is now the default and recommended implementation.
-
-## Implementations
-
-This repository contains two implementations of HTTP File Runner:
-
-- **Rust** (default, active): Located in the repository root - This is the primary, actively maintained implementation
-- **Zig** (deprecated): Located in [`zig/`](./zig) directory - Legacy implementation that will be removed in a future version
-
-**Why Rust became the default?**
-
-The primary driver for migrating to Rust was **technical limitations in Zig's HTTP implementation**:
-
-- **HTTPS Flexibility**: Zig's standard library HTTP client cannot be configured to make insecure HTTPS calls (bypassing certificate validation), which is sometimes necessary for development/testing environments with self-signed certificates
-- **HTTP Client Limitations**: Zig's std.http has configuration constraints that can't be easily worked around
-- **libcurl Complexity**: Attempting to use libcurl from Zig proved too complex to maintain across Linux, macOS, and Windows
-- **Rust's reqwest**: Provides a mature, flexible HTTP client with easy configuration for all HTTPS scenarios without platform-specific hassles
-
-Additional benefits:
-- Better ecosystem with rich library support
-- Easier maintenance and contribution
-- Active development with modern tooling
-- Strong community support
-- Comparable or better performance
+> **Note**: This project was originally written in Zig. The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now contains only the Rust implementation, which is actively maintained and recommended for all use cases.
 
 ## Features
 
@@ -784,40 +761,40 @@ Here are common scenarios for using the `--log` functionality:
 
 ```bash
 # Save output to default 'log' file
-./zig-out/bin/httprunner examples/simple.http --log
+httprunner examples/simple.http --log
 
 # Save output to custom file
-./zig-out/bin/httprunner examples/apis.http --log api_test_results.txt
+httprunner examples/apis.http --log api_test_results.txt
 ```
 
 **Verbose Logging for Debugging:**
 
 ```bash
 # Detailed logging for debugging API issues
-./zig-out/bin/httprunner examples/status-codes.http --verbose --log debug_session.log
+httprunner examples/status-codes.http --verbose --log debug_session.log
 
 # Log discovery results with full details
-./zig-out/bin/httprunner --discover --verbose --log full_discovery.log
+httprunner --discover --verbose --log full_discovery.log
 ```
 
 **CI/CD Integration:**
 
 ```bash
 # Generate test reports for build systems
-./zig-out/bin/httprunner --discover --log test_report_$(date +%Y%m%d_%H%M%S).log
+httprunner --discover --log test_report_$(date +%Y%m%d_%H%M%S).log
 
 # Daily API health checks
-./zig-out/bin/httprunner examples/apis.http --verbose --log daily_health_check.log
+httprunner examples/apis.http --verbose --log daily_health_check.log
 ```
 
 **Performance Monitoring:**
 
 ```bash
 # Track API performance over time
-./zig-out/bin/httprunner examples/comprehensive.http --verbose --log performance_$(date +%Y%m%d).log
+httprunner examples/comprehensive.http --verbose --log performance_$(date +%Y%m%d).log
 
 # Load testing documentation
-./zig-out/bin/httprunner examples/*.http --log load_test_results.log
+httprunner examples/*.http --log load_test_results.log
 ```
 
 **Example Log File Output:**
@@ -1021,9 +998,8 @@ This project uses GitHub Actions for continuous integration and deployment:
   - CodeQL static analysis
   - Dependency vulnerability scanning
 
-- **Dependency Updates** (`dependency-update.yml`): Automated dependency updates
-  - Weekly Zig version checks
-  - Automated pull requests for updates
+- **Dependency Updates**: Automated dependency updates via Renovate
+  - Automated pull requests for Cargo dependency updates
 
 ### Release Process
 
@@ -1143,7 +1119,7 @@ cargo test test_name
 
 ## Legacy Zig Implementation
 
-The original Zig implementation has been moved to the [`zig/`](./zig) directory. It is deprecated and will be removed in a future version. Please use the Rust implementation for all new projects and consider migrating existing projects.
+The original Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). The Zig version is no longer maintained in this repository. Please use the Rust implementation for all projects.
 
 ## License
 
