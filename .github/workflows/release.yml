@@ -227,6 +227,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
+    - name: Update Version
+      shell: pwsh
+      run: |
+        $version = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+        $version | Set-Content -Path Cargo.toml
+
     - name: Setup Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
