@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HTTP File Runner - Documentation</title>
-    <meta name="description" content="A powerful command-line tool for executing HTTP requests from .http files">
+    <meta name="description" content="A simple command-line tool written in Rust that parses .http files and executes HTTP requests">
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
 </head>
@@ -41,8 +41,11 @@
                         HTTP File Runner
                     </h1>
                     <p class="hero-subtitle">
-                        A powerful command-line tool written in Zig that parses .http files and executes HTTP requests with beautiful colored output
-                    </p>                    <div class="hero-buttons">
+                        A simple command-line tool written in Rust that parses .http files and executes HTTP requests, providing colored output with emojis to indicate success or failure
+                    </p>
+                    <p class="hero-note" style="font-size: 0.9em; margin-top: 1em; opacity: 0.9;">
+                        <em>Originally written in Zig, ported to Rust due to limitations in Zig's standard library HTTP client APIs for configuring insecure HTTPS connections.</em>
+                    </p><div class="hero-buttons">
                         <a href="install.html" class="btn btn-primary">Get Started</a>
                         <a href="https://github.com/christianhelle/httprunner" class="btn btn-secondary">View on GitHub</a>
                     </div>
@@ -276,7 +279,7 @@ Content-Type: application/json
             <div class="footer-content">
                 <div class="footer-section">
                     <h4>HTTP File Runner</h4>
-                    <p>A powerful command-line tool for executing HTTP requests from .http files.</p>
+                    <p>A simple command-line tool written in Rust for executing HTTP requests from .http files.</p>
                 </div>
                 <div class="footer-section">
                     <h4>Documentation</h4>
@@ -300,7 +303,7 @@ Content-Type: application/json
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Zig.</p>
+                <p>&copy; 2025 HTTP File Runner. Built with ❤️ using Rust.</p>
             </div>
         </div>
     </footer>
