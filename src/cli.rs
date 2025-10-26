@@ -17,13 +17,17 @@ const LONG_VERSION: &str = concat!(
 #[command(long_version = LONG_VERSION)]
 pub struct Cli {
     /// One or more .http files to process
-    #[arg(value_name = "FILE")]
+    #[arg(
+        value_name = "FILE",
+        num_args = 1..,
+        required_unless_present_any = ["discover", "upgrade"],
+        conflicts_with_all = ["discover", "upgrade"]
+    )]
     pub files: Vec<String>,
 
     /// Show detailed HTTP request and response information
     #[arg(short, long)]
     pub verbose: bool,
-
     /// Log output to a file (defaults to 'log' if no filename is specified)
     #[arg(long, value_name = "FILENAME", num_args = 0..=1)]
     pub log: Option<Option<String>>,
