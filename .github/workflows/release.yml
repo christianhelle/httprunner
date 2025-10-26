@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  VERSION: 0.2.${{ github.run_id }}
+  VERSION: 0.2.${{ github.run_number }}
 
 jobs:
   build:
