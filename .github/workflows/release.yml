@@ -8,6 +8,9 @@ on:
         required: true
         type: string
 
+env:
+  VERSION: 0.2.0
+
 jobs:
   build:
     name: Build Release
