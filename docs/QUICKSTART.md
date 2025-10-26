@@ -4,19 +4,39 @@
 
 ## Installation
 
-### From Source
+### Option 1: From Crates.io (Recommended for Rust users)
 
 ```bash
-cd rust
+cargo install httprunner
+```
+
+The binary will be installed to `~/.cargo/bin/` (or `%USERPROFILE%\.cargo\bin\` on Windows).
+
+### Option 2: From Source
+
+```bash
+git clone https://github.com/christianhelle/httprunner.git
+cd httprunner
 cargo build --release
 # Binary will be at: target/release/httprunner
 ```
 
-### Install Locally
+### Option 3: Install Locally
 
 ```bash
-cd rust
 cargo install --path .
+```
+
+### Option 4: Quick Install Scripts
+
+**Linux/macOS:**
+```bash
+curl -fsSL https://christianhelle.com/httprunner/install | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://christianhelle.com/httprunner/install.ps1 | iex
 ```
 
 ## Basic Usage
