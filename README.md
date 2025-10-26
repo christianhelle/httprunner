@@ -92,13 +92,23 @@ Download the latest release for your platform from the [GitHub Releases page](ht
 
 Extract the archive and add the binary to your PATH.
 
-### Option 3: Install from Snap Store
+### Option 3: Install from Crates.io
+
+If you have Rust tooling installed, you can install httprunner directly from Crates.io:
+
+```bash
+cargo install httprunner
+```
+
+This will download, compile, and install the latest version of httprunner. The binary will be installed to `~/.cargo/bin/` (or `%USERPROFILE%\.cargo\bin\` on Windows), which should already be in your PATH if you installed Rust via rustup.
+
+### Option 4: Install from Snap Store
 
 ```bash
 sudo snap install httprunner
 ```
 
-### Option 4: Build from Source
+### Option 5: Build from Source
 
 Make sure you have Rust installed (version 1.70 or later).
 
@@ -110,7 +120,7 @@ cargo build --release
 
 The binary will be at `target/release/httprunner` (or `httprunner.exe` on Windows).
 
-### Option 5: Use Docker
+### Option 6: Use Docker
 
 The httprunner is available as a Docker image on Docker Hub at `christianhelle/httprunner`.
 
