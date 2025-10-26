@@ -126,8 +126,8 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ steps.version.outputs.version }}
-        name: Release ${{ steps.version.outputs.version }}
+        tag_name: v${{ env.VERSION }}
+        name: Release v${{ env.VERSION }}
         body: |
           ## What's Changed
           ${{ steps.changelog.outputs.changelog }}
