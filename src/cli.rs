@@ -19,8 +19,7 @@ pub struct Cli {
     /// One or more .http files to process
     #[arg(
         value_name = "FILE",
-        num_args = 1..,
-        required_unless_present_any = ["discover", "upgrade"],
+        num_args = 0..,
         conflicts_with_all = ["discover", "upgrade"]
     )]
     pub files: Vec<String>,
