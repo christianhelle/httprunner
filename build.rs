@@ -2,6 +2,16 @@ use chrono::Utc;
 use std::process::Command;
 
 fn main() {
+    // Embed Windows icon
+    #[cfg(windows)]
+    {
+        let mut res = winres::WindowsResource::new();
+        res.set_icon("images/icon.ico");
+        if let Err(e) = res.compile() {
+            eprintln!("Warning: Failed to embed icon: {}", e);
+        }
+    }
+
     // Get git information
     let git_tag = get_git_output(&["git", "describe", "--tags", "--abbrev=0"])
         .unwrap_or_else(|| "unknown".to_string());
