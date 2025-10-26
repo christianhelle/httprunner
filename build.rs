@@ -21,8 +21,9 @@ fn main() {
     println!("cargo:rustc-env=BUILD_DATE={}", build_date);
 
     // Rerun if git changes
-    println!("cargo:rerun-if-changed=../.git/HEAD");
-    println!("cargo:rerun-if-changed=../.git/refs/tags");
+    println!("cargo:rerun-if-changed=.git/HEAD");
+    println!("cargo:rerun-if-changed=.git/refs/tags");
+    println!("cargo:rerun-if-changed=.git/packed-refs");
 }
 
 fn get_git_output(args: &[&str]) -> Option<String> {
