@@ -202,28 +202,27 @@ fn send_http_request(
 }
 
 fn parse_http_response(response_str: &str) -> Result<HttpResponse> {
-    let mut lines = response_str.lines();
+    // Prefer CRLF per RFC; fall back to LF for robustness
+    let (head, body) = if let Some(i) = response_str.find("\r\n\r\n") {
+        (&response_str[..i], &response_str[i + 4..])
+    } else if let Some(i) = response_str.find("\n\n") {
+        (&response_str[..i], &response_str[i + 2..])
+    } else {
+        return Err(anyhow!("Invalid HTTP response: missing header terminator"));
+    };
 
-    // Parse status line
-    let status_line = lines.next().ok_or_else(|| anyhow!("Empty response"))?;
+    let mut head_lines = head.lines();
+    let status_line = head_lines.next().ok_or_else(|| anyhow!("Empty response"))?;
     let parts: Vec<&str> = status_line.split_whitespace().collect();
     if parts.len() < 2 {
         return Err(anyhow!("Invalid status line"));
     }
-
     let status_code = parts[1]
         .parse::<u16>()
         .map_err(|_| anyhow!("Invalid status code"))?;
 
-    // Parse headers
     let mut headers = HashMap::new();
-    let mut body_start = 0;
-
-    for (i, line) in lines.enumerate() {
-        if line.is_empty() {
-            body_start = i + 1;
-            break;
-        }
+    for line in head_lines {
         if let Some(colon_pos) = line.find(':') {
             let name = line[..colon_pos].trim().to_string();
             let value = line[colon_pos + 1..].trim().to_string();
@@ -231,17 +230,10 @@ fn parse_http_response(response_str: &str) -> Result<HttpResponse> {
         }
     }
 
-    // Parse body
-    let body = response_str
-        .lines()
-        .skip(body_start)
-        .collect::<Vec<_>>()
-        .join("\n");
-
     Ok(HttpResponse {
         status_code,
         headers,
-        body,
+        body: body.to_string(),
     })
 }
 
