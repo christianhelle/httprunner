@@ -10,9 +10,14 @@ homepage = "https://github.com/christianhelle/httprunner"
 documentation = "https://github.com/christianhelle/httprunner"
 readme = "README.md"
 keywords = ["http", "rest", "api", "testing", "cli"]
-categories = ["command-line-utilities", "development-tools", "web-programming::http-client"]
+categories = [
+  "command-line-utilities",
+  "development-tools",
+  "web-programming::http-client",
+]
 
 [dependencies]
+reqwest = { version = "0.12", features = ["blocking", "json"] }
 native-tls = "0.2"
 serde_json = "1.0"
 colored = "3.0.0"
