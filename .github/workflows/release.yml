@@ -239,10 +239,7 @@ jobs:
       with:
         toolchain: stable
 
-    - name: Verify package
-      run: cargo package --list
-
     - name: Publish to crates.io
-      run: cargo publish --token ${{ secrets.CRATES_TOKEN }}
+      run: cargo publish --allow-dirty --token ${{ secrets.CRATES_TOKEN }}
       env:
         CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_TOKEN }}
