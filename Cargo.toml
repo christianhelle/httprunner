@@ -27,3 +27,6 @@ walkdir = "2.5"
 
 [build-dependencies]
 chrono = "0.4"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
