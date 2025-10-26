@@ -25,7 +25,7 @@ pub struct Cli {
     pub verbose: bool,
 
     /// Log output to a file (defaults to 'log' if no filename is specified)
-    #[arg(long, value_name = "FILENAME")]
+    #[arg(long, value_name = "FILENAME", num_args = 0..=1)]
     pub log: Option<Option<String>>,
 
     /// Specify environment name to load variables from http-client.env.json
