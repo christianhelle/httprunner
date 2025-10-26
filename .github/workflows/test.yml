@@ -85,9 +85,8 @@ jobs:
     - name: Run clippy
       run: |
         echo "Running clippy..."
-        cargo clippy -- -D warnings || echo "⚠️ Clippy warnings found"
+        cargo clippy -- -D warnings
         echo "✅ Clippy check completed"
-
   test-unit:
     name: Test Unit Tests
     runs-on: ubuntu-latest
