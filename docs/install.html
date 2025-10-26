@@ -90,6 +90,25 @@
                 </div>                <div class="install-options-grid">
                     <div class="install-card">
                         <div class="install-header">
+                            <h3>Cargo (Crates.io)</h3>
+                            <span class="badge rust">Rust</span>
+                        </div>
+                        <div class="install-code">
+                            <code>cargo install httprunner</code>
+                        </div>
+                        <p>For users with Rust tooling installed. Compiles and installs the latest version from Crates.io.</p>
+                        <div class="features-list">
+                            <ul>
+                                <li>✅ Always get the latest version</li>
+                                <li>✅ Automatically installs to <code>~/.cargo/bin/</code></li>
+                                <li>✅ Optimized for your system architecture</li>
+                                <li>⚙️ Requires Rust 1.70+ from <a href="https://rustup.rs/" target="_blank">rustup.rs</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="install-card">
+                        <div class="install-header">
                             <h3>Manual Download</h3>
                         </div>                        <div class="install-code download-link">
                             <code><a href="https://github.com/christianhelle/httprunner/releases/latest" target="_blank">📥 Download from GitHub Releases</a></code>
@@ -122,9 +141,9 @@
                         <div class="install-code">
                             <code>git clone https://github.com/christianhelle/httprunner.git<br>
                             cd httprunner<br>
-                            zig build</code>
+                            cargo build --release</code>
                         </div>
-                        <p>Requires Zig 0.14 or later. Gives you the latest features and customization options.</p>
+                        <p>Requires Rust 1.70 or later. Gives you the latest features and customization options.</p>
                     </div>
 
                     <div class="install-card">

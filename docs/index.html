@@ -161,6 +161,17 @@
                     
                     <div class="install-card">
                         <div class="install-header">
+                            <h3>Cargo (Crates.io)</h3>
+                            <span class="badge rust">Rust</span>
+                        </div>
+                        <div class="install-code">
+                            <code>cargo install httprunner</code>
+                        </div>
+                        <p>For users with Rust tooling installed. Compiles and installs from Crates.io.</p>
+                    </div>
+                    
+                    <div class="install-card">
+                        <div class="install-header">
                             <h3>Manual Download</h3>
                         </div>
                         <div class="install-code download-link">
@@ -186,9 +197,9 @@
                         <div class="install-code">
                             <code>git clone https://github.com/christianhelle/httprunner.git<br>
                             cd httprunner<br>
-                            zig build</code>
+                            cargo build --release</code>
                         </div>
-                        <p>Requires Zig 0.14 or later. Gives you the latest features and customization options.</p>
+                        <p>Requires Rust 1.70 or later. Gives you the latest features and customization options.</p>
                     </div>
                     
                     <div class="install-card">
@@ -207,7 +218,7 @@
                         <div class="install-code codespaces-link">
                             <code><a href="https://github.com/codespaces/new?repo=christianhelle/httprunner" target="_blank">Start coding instantly</a></code>
                         </div>
-                        <p>Pre-configured development environment with Zig and VS Code ready to go.</p>
+                        <p>Pre-configured development environment with Rust and VS Code ready to go.</p>
                     </div>
                 </div>
             </div>
