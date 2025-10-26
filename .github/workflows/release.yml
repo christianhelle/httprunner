@@ -85,6 +85,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
+    - name: Create tag
+      uses: actions/github-script@v8
+      with:
+        github-token: ${{ github.token }}
+        script: |
+          github.rest.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: "refs/tags/${{ env.VERSION }}",
+            sha: context.sha
+          })
+
     - name: Download all artifacts
       uses: actions/download-artifact@v6
       with:
