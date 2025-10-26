@@ -432,6 +432,11 @@ body {
     color: white;
 }
 
+.badge.rust {
+    background: #ce422b;
+    color: white;
+}
+
 .install-code {
     background: #1e1e1e;
     border: 1px solid var(--border-color);
