@@ -15,11 +15,31 @@ A command-line tool that parses `.http` files and executes HTTP requests, provid
 - 📝 Custom headers support with full request header implementation
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
+- 🔒 **Insecure HTTPS support** with `--insecure` flag for development environments
 - 🔍 Response assertions for status codes, body content, and headers
 - 🔧 Variables support with substitution in URLs, headers, and request bodies
 - 🔧 Request Variables for chaining requests and passing data between HTTP calls
 - 📋 Semantic versioning with git tag and commit information
 - 🔍 Build-time version generation with automatic git integration
+
+## Version Information
+
+The application includes comprehensive version information accessible via:
+
+```bash
+httprunner --version
+# or
+httprunner -v
+```
+
+This displays:
+
+- Application version (semantic versioning)
+- Git tag information
+- Git commit hash
+- Build timestamp
+
+The version information is automatically generated at build time using git repository data.
 
 ## Usage
 
@@ -31,6 +51,9 @@ httprunner <http-file>
 
 # Run with verbose output
 httprunner <http-file> --verbose
+
+# Run with insecure HTTPS (accept invalid certificates)
+httprunner <http-file> --insecure
 
 # Run and save output to a log file
 httprunner <http-file> --log
@@ -149,6 +172,21 @@ Use the `--env` flag to specify which environment to use:
 ```bash
 httprunner myfile.http --env dev
 ```
+
+## Insecure HTTPS
+
+For development and testing environments with self-signed certificates, use the `--insecure` flag to bypass certificate validation:
+
+```bash
+# Allow insecure HTTPS connections
+httprunner myfile.http --insecure
+
+# Combine with other flags
+httprunner myfile.http --insecure --verbose
+httprunner --discover --insecure --log results.txt
+```
+
+⚠️ **Security Warning**: The `--insecure` flag disables SSL/TLS certificate verification. Use only in development/testing environments. Never use in production.
 
 ## Request Variables
 
