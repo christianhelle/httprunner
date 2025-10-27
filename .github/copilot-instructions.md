@@ -6,7 +6,7 @@ Always reference these instructions first and fallback to search or bash command
 
 This is a Rust project. The original Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig).
 
-**Why Rust?** The primary reason for migration was Zig's HTTP limitations - the standard library cannot configure insecure HTTPS calls (bypassing certificate validation), which is necessary for development environments with self-signed certificates. libcurl integration proved too complex for cross-platform maintenance.
+**Why Rust?** The Rust implementation provides full control over HTTPS configuration, including optional insecure HTTPS support via the `--insecure` flag for development environments with self-signed certificates. The original Zig implementation had limitations in this area.
 
 ## Working Effectively
 
@@ -27,6 +27,7 @@ This is a Rust project. The original Zig implementation has been moved to a sepa
 - Debug build: `cargo build` (creates `target/debug/httprunner` on Unix, `target/debug/httprunner.exe` on Windows)
 - Run with examples: `cargo run -- examples/simple.http`
 - Run with verbose mode: `cargo run -- examples/simple.http --verbose`
+- Run with insecure HTTPS: `cargo run -- examples/simple.http --insecure`
 - Run discovery mode: `cargo run -- --discover`
 - Show help: `cargo run -- --help`
 - Show version: `cargo run -- --version`
@@ -64,6 +65,7 @@ Always test these complete scenarios after making changes:
    cargo run -- examples/variables.http
    cargo run -- examples/request-variables.http
    cargo run -- examples/asserts.http
+   cargo run -- examples/simple.http --insecure
    cargo run -- --discover
    ```
 
