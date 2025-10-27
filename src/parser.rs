@@ -19,9 +19,23 @@ pub fn parse_http_file(
     let mut in_body = false;
     let mut body_content = String::new();
     let mut pending_request_name: Option<String> = None;
+    let mut in_intellij_script = false;
 
     for line in lines {
         let trimmed = line.trim();
+
+        // Check for IntelliJ HTTP Client script blocks
+        if trimmed.starts_with("> {%") {
+            in_intellij_script = true;
+            continue;
+        }
+
+        if in_intellij_script {
+            if trimmed.ends_with("%}") {
+                in_intellij_script = false;
+            }
+            continue;
+        }
 
         if trimmed.is_empty() {
             continue;
