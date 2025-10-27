@@ -12,22 +12,32 @@ fn main() {
         }
     }
 
+    // Get Cargo.toml version as fallback
+    let cargo_version = env!("CARGO_PKG_VERSION");
+
     // Get git information
     let git_tag = get_git_output(&["git", "describe", "--tags", "--abbrev=0"])
-        .unwrap_or_else(|| "unknown".to_string());
-    let git_commit = get_git_output(&["git", "rev-parse", "--short", "HEAD"])
-        .unwrap_or_else(|| "unknown".to_string());
+        .filter(|s| !s.is_empty() && s != "unknown");
+    let git_commit =
+        get_git_output(&["git", "rev-parse", "--short", "HEAD"]).filter(|s| !s.is_empty());
 
-    // Parse version from git tag (remove 'v' prefix if present)
-    let version = git_tag.strip_prefix('v').unwrap_or(&git_tag);
+    // Determine version: prefer git tag, fallback to Cargo.toml version
+    let version = if let Some(ref tag) = &git_tag {
+        tag.strip_prefix('v').unwrap_or(tag).to_string()
+    } else {
+        cargo_version.to_string()
+    };
+
+    let git_tag_display = git_tag.unwrap_or_else(|| format!("v{}", cargo_version));
+    let git_commit_display = git_commit.unwrap_or_else(|| "unknown".to_string());
 
     // Get current timestamp
     let build_date = Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
 
     // Set environment variables for build
     println!("cargo:rustc-env=VERSION={}", version);
-    println!("cargo:rustc-env=GIT_TAG={}", git_tag);
-    println!("cargo:rustc-env=GIT_COMMIT={}", git_commit);
+    println!("cargo:rustc-env=GIT_TAG={}", git_tag_display);
+    println!("cargo:rustc-env=GIT_COMMIT={}", git_commit_display);
     println!("cargo:rustc-env=BUILD_DATE={}", build_date);
 
     // Rerun if git changes
