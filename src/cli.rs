@@ -35,6 +35,10 @@ pub struct Cli {
     #[arg(long, value_name = "ENVIRONMENT")]
     pub env: Option<String>,
 
+    /// Allow insecure HTTPS connections (accept invalid certificates and hostnames)
+    #[arg(long)]
+    pub insecure: bool,
+
     /// Recursively discover and process all .http files from current directory
     #[arg(long)]
     pub discover: bool,

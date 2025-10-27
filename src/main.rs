@@ -40,6 +40,7 @@ fn main() -> anyhow::Result<()> {
         cli_args.verbose,
         cli_args.get_log_filename().as_deref(),
         cli_args.env.as_deref(),
+        cli_args.insecure,
     )?;
 
     if result {

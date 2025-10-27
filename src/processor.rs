@@ -11,6 +11,7 @@ pub fn process_http_files(
     verbose: bool,
     log_filename: Option<&str>,
     environment: Option<&str>,
+    insecure: bool,
 ) -> Result<bool> {
     let mut log = Log::new(log_filename)?;
 
@@ -79,7 +80,7 @@ pub fn process_http_files(
                 log.writeln(&"-".repeat(30));
             }
 
-            let result = match runner::execute_http_request(&processed_request, verbose) {
+            let result = match runner::execute_http_request(&processed_request, verbose, insecure) {
                 Ok(res) => res,
                 Err(e) => {
                     log.writeln(&format!(
