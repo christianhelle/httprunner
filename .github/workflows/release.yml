@@ -33,6 +33,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Update Version
       shell: pwsh
@@ -85,6 +88,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Create tag
       uses: actions/github-script@v8
@@ -158,6 +164,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Download Linux binary
       uses: actions/download-artifact@v6
@@ -227,6 +236,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Update Version
       shell: pwsh
