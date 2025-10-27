@@ -10,6 +10,8 @@ pub fn execute_http_request(request: &HttpRequest, verbose: bool) -> Result<Http
     let has_assertions = !request.assertions.is_empty();
 
     let client = Client::builder()
+        .danger_accept_invalid_hostnames(true)
+        .danger_accept_invalid_certs(true)
         .timeout(std::time::Duration::from_secs(30))
         .build()?;
 
