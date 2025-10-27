@@ -25,13 +25,13 @@ pub fn parse_http_file(
         let trimmed = line.trim();
 
         // Check for IntelliJ HTTP Client script blocks
-        if trimmed.starts_with("> {%") {
+        if line.trim_start().starts_with("> {%") {
             in_intellij_script = true;
             continue;
         }
 
         if in_intellij_script {
-            if trimmed.ends_with("%}") {
+            if trimmed == "%}" || trimmed.ends_with("%}") {
                 in_intellij_script = false;
             }
             continue;
