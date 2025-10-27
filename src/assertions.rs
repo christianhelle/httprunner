@@ -9,7 +9,7 @@ pub fn evaluate_assertions(assertions: &[Assertion], result: &HttpResult) -> Vec
 
 fn evaluate_assertion(assertion: &Assertion, result: &HttpResult) -> AssertionResult {
     match assertion.assertion_type {
-        AssertionType::ResponseStatus => {
+        AssertionType::Status => {
             let expected_status = match assertion.expected_value.parse::<u16>() {
                 Ok(status) => status,
                 Err(_) => {
@@ -38,7 +38,7 @@ fn evaluate_assertion(assertion: &Assertion, result: &HttpResult) -> AssertionRe
             }
         }
 
-        AssertionType::ResponseBody => {
+        AssertionType::Body => {
             if let Some(ref body) = result.response_body {
                 let passed = body.contains(&assertion.expected_value);
                 AssertionResult {
@@ -64,7 +64,7 @@ fn evaluate_assertion(assertion: &Assertion, result: &HttpResult) -> AssertionRe
             }
         }
 
-        AssertionType::ResponseHeaders => {
+        AssertionType::Headers => {
             if let Some(ref headers) = result.response_headers {
                 let colon_pos = assertion.expected_value.find(':');
                 if colon_pos.is_none() {
@@ -84,11 +84,11 @@ fn evaluate_assertion(assertion: &Assertion, result: &HttpResult) -> AssertionRe
 
                 let mut found = false;
                 for (name, value) in headers {
-                    if name.eq_ignore_ascii_case(expected_name) {
-                        if value.contains(expected_value) {
-                            found = true;
-                            break;
-                        }
+                    if name.eq_ignore_ascii_case(expected_name)
+                        && value.contains(expected_value)
+                    {
+                        found = true;
+                        break;
                     }
                 }
 
