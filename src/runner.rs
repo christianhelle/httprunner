@@ -5,15 +5,23 @@ use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::time::Instant;
 
-pub fn execute_http_request(request: &HttpRequest, verbose: bool) -> Result<HttpResult> {
+pub fn execute_http_request(
+    request: &HttpRequest,
+    verbose: bool,
+    insecure: bool,
+) -> Result<HttpResult> {
     let start_time = Instant::now();
     let has_assertions = !request.assertions.is_empty();
 
-    let client = Client::builder()
-        .danger_accept_invalid_hostnames(true)
-        .danger_accept_invalid_certs(true)
-        .timeout(std::time::Duration::from_secs(30))
-        .build()?;
+    let mut client_builder = Client::builder().timeout(std::time::Duration::from_secs(30));
+
+    if insecure {
+        client_builder = client_builder
+            .danger_accept_invalid_hostnames(true)
+            .danger_accept_invalid_certs(true);
+    }
+
+    let client = client_builder.build()?;
 
     let method = request.method.to_uppercase();
     let method = reqwest::Method::from_bytes(method.as_bytes())?;
