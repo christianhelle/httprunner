@@ -23,6 +23,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📝 **Custom headers support** with full request header implementation
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
+- 🔒 **Insecure HTTPS support** with `--insecure` flag for development environments
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
@@ -181,6 +182,9 @@ httprunner <http-file>
 # Run a single .http file with verbose output
 httprunner <http-file> --verbose
 
+# Run a single .http file with insecure HTTPS (accept invalid certificates)
+httprunner <http-file> --insecure
+
 # Run a single .http file and save output to a log file
 httprunner <http-file> --log
 
@@ -218,6 +222,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 
 # Run with verbose output
 .\target\release\httprunner.exe <http-file> --verbose
+
+# Run with insecure HTTPS (accept invalid certificates)
+.\target\release\httprunner.exe <http-file> --insecure
 
 # Run and save output to a log file
 .\target\release\httprunner.exe <http-file> --log
@@ -348,6 +355,9 @@ docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianh
 # Run with a single .http file with verbose output
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose
 
+# Run with insecure HTTPS (accept invalid certificates)
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --insecure
+
 # Run with a single .http file and save output to log
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --log
 
@@ -382,6 +392,44 @@ httprunner examples/simple.http
 ```
 
 **Note**: The Docker container mounts your current directory as `/app` in read-only mode to access your `.http` files. Make sure your `.http` files are in the current directory or subdirectories.
+
+## Insecure HTTPS
+
+By default, httprunner validates SSL/TLS certificates and hostnames for secure HTTPS connections. For development environments with self-signed certificates or testing scenarios, you can use the `--insecure` flag to bypass certificate validation.
+
+### Using the --insecure Flag
+
+```bash
+# Accept self-signed certificates
+httprunner https-endpoints.http --insecure
+
+# Combine with other flags
+httprunner https-endpoints.http --insecure --verbose
+httprunner https-endpoints.http --insecure --log test.log
+```
+
+### What --insecure Does
+
+When the `--insecure` flag is enabled:
+- ✅ Accepts invalid SSL/TLS certificates
+- ✅ Accepts invalid hostnames
+- ✅ Allows connections to servers with self-signed certificates
+- ⚠️ **Warning**: Only use in development/testing environments
+
+### Example
+
+```http
+# This will fail without --insecure if the certificate is self-signed
+GET https://localhost:44320/api/users
+Authorization: Bearer {{token}}
+```
+
+Run with:
+```bash
+httprunner api-test.http --insecure
+```
+
+**Security Note**: The `--insecure` flag should **only** be used in development and testing environments. Never use it in production as it disables important security checks that protect against man-in-the-middle attacks.
 
 ## .http File Format
 
@@ -746,8 +794,8 @@ When running httprunner without any arguments, the following help text is displa
 ```text
 HTTP File Runner v0.1.9
 Usage:
-  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>]
-  httprunner [--verbose] [--log [filename]] [--env <environment>] --discover
+  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>] [--insecure]
+  httprunner [--verbose] [--log [filename]] [--env <environment>] [--insecure] --discover
   httprunner --version | -v
   httprunner --upgrade
   httprunner --help | -h
@@ -758,6 +806,7 @@ Arguments:
   --verbose      Show detailed HTTP request and response information
   --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
   --env <env>    Specify environment name to load variables from http-client.env.json
+  --insecure     Allow insecure HTTPS connections (accept invalid certificates and hostnames)
   --version, -v  Show version information
   --upgrade      Update httprunner to the latest version
   --help, -h     Show this help message
