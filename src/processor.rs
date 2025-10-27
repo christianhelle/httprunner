@@ -165,7 +165,7 @@ pub fn process_http_files(
             });
 
             if verbose {
-                if let Some(ref ctx) = request_contexts.last() {
+                if let Some(ctx) = request_contexts.last() {
                     if let Some(ref result) = ctx.result {
                         log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
                         log.writeln(&format!("Status: {}", result.status_code));
@@ -187,15 +187,15 @@ pub fn process_http_files(
             }
 
             if !processed_request.assertions.is_empty() {
-                if let Some(ref ctx) = request_contexts.last() {
+                if let Some(ctx) = request_contexts.last() {
                     if let Some(ref result) = ctx.result {
                         log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
                         for assertion_result in &result.assertion_results {
                             let assertion_type_str = match assertion_result.assertion.assertion_type
                             {
-                                AssertionType::ResponseStatus => "Status Code",
-                                AssertionType::ResponseBody => "Response Body",
-                                AssertionType::ResponseHeaders => "Response Headers",
+                                AssertionType::Status => "Status Code",
+                                AssertionType::Body => "Response Body",
+                                AssertionType::Headers => "Response Headers",
                             };
 
                             if assertion_result.passed {

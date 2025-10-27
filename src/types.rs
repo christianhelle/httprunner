@@ -54,9 +54,9 @@ pub struct Assertion {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum AssertionType {
-    ResponseStatus,
-    ResponseBody,
-    ResponseHeaders,
+    Status,
+    Body,
+    Headers,
 }
 
 #[derive(Debug)]

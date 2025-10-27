@@ -64,31 +64,31 @@ pub fn parse_http_file(
         }
 
         // Parse assertions
-        if trimmed.starts_with("EXPECTED_RESPONSE_STATUS ") {
+        if let Some(stripped) = trimmed.strip_prefix("EXPECTED_RESPONSE_STATUS ") {
             if let Some(ref mut req) = current_request {
-                let status_str = trimmed[25..].trim();
+                let status_str = stripped.trim();
                 req.assertions.push(Assertion {
-                    assertion_type: AssertionType::ResponseStatus,
+                    assertion_type: AssertionType::Status,
                     expected_value: status_str.to_string(),
                 });
             }
             continue;
-        } else if trimmed.starts_with("EXPECTED_RESPONSE_BODY ") {
+        } else if let Some(stripped) = trimmed.strip_prefix("EXPECTED_RESPONSE_BODY ") {
             if let Some(ref mut req) = current_request {
-                let mut body_value = trimmed[23..].trim();
+                let mut body_value = stripped.trim();
                 if body_value.starts_with('"') && body_value.ends_with('"') && body_value.len() >= 2
                 {
                     body_value = &body_value[1..body_value.len() - 1];
                 }
                 req.assertions.push(Assertion {
-                    assertion_type: AssertionType::ResponseBody,
+                    assertion_type: AssertionType::Body,
                     expected_value: body_value.to_string(),
                 });
             }
             continue;
-        } else if trimmed.starts_with("EXPECTED_RESPONSE_HEADERS ") {
+        } else if let Some(stripped) = trimmed.strip_prefix("EXPECTED_RESPONSE_HEADERS ") {
             if let Some(ref mut req) = current_request {
-                let mut headers_value = trimmed[26..].trim();
+                let mut headers_value = stripped.trim();
                 if headers_value.starts_with('"')
                     && headers_value.ends_with('"')
                     && headers_value.len() >= 2
@@ -96,7 +96,7 @@ pub fn parse_http_file(
                     headers_value = &headers_value[1..headers_value.len() - 1];
                 }
                 req.assertions.push(Assertion {
-                    assertion_type: AssertionType::ResponseHeaders,
+                    assertion_type: AssertionType::Headers,
                     expected_value: headers_value.to_string(),
                 });
             }

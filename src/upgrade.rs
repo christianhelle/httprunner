@@ -13,7 +13,7 @@ pub fn run_upgrade() -> Result<()> {
     println!("{} Running: {}", colors::yellow("📦"), command);
 
     let output = Command::new("powershell.exe")
-        .args(&["-Command", command])
+        .args(["-Command", command])
         .output()?;
 
     if output.status.success() {
