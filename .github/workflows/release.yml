@@ -63,6 +63,9 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Fetch tags
+        run: git fetch --tags --force
+
       - name: Update Version
         shell: pwsh
         run: |
@@ -253,6 +256,9 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Fetch tags
+        run: git fetch --tags --force
 
       - name: Update Version
         shell: pwsh
