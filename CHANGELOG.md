@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.20...HEAD)
+
+**Merged pull requests:**
+
+- Add JSONPath array indexing support for variable substitution [\#53](https://github.com/christianhelle/httprunner/pull/53) ([christianhelle](https://github.com/christianhelle))
+
 ## [v0.3.20](https://github.com/christianhelle/httprunner/tree/v0.3.20) (2025-10-27)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.19...v0.3.20)
