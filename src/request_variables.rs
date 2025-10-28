@@ -135,12 +135,12 @@ fn extract_json_property(json_body: &str, property: &str) -> Result<Option<Strin
         if let Some(bracket_pos) = part.find('[') {
             let property_name = &part[..bracket_pos];
             let index_part = &part[bracket_pos..];
-            
+
             // Extract the property first
             match extract_simple_json_property(&current_json, property_name) {
                 Ok(Some(value)) => {
                     current_json = value;
-                    
+
                     // Now handle array indexing
                     if let Some(index_value) = parse_array_index(index_part) {
                         match extract_array_element(&current_json, index_value) {
@@ -179,39 +179,39 @@ fn parse_array_index(index_str: &str) -> Option<usize> {
 
 fn extract_array_element(json_body: &str, index: usize) -> Result<Option<String>> {
     let trimmed = json_body.trim();
-    
+
     if !trimmed.starts_with('[') {
         return Err(anyhow!("Expected array but got: {}", trimmed));
     }
-    
+
     let chars: Vec<char> = trimmed.chars().collect();
     let mut pos = 1; // Skip opening [
     let mut current_index = 0;
-    
+
     while pos < chars.len() {
         // Skip whitespace
         while pos < chars.len() && matches!(chars[pos], ' ' | '\t' | '\n' | '\r') {
             pos += 1;
         }
-        
+
         if pos >= chars.len() || chars[pos] == ']' {
             return Ok(None); // Array ended, index not found
         }
-        
+
         let element_start = pos;
-        
+
         // Find the end of this array element
         let mut depth = 0;
         let mut in_string = false;
         let mut escape_next = false;
-        
+
         while pos < chars.len() {
             if escape_next {
                 escape_next = false;
                 pos += 1;
                 continue;
             }
-            
+
             match chars[pos] {
                 '\\' => escape_next = true,
                 '"' if !escape_next => in_string = !in_string,
@@ -220,27 +220,27 @@ fn extract_array_element(json_body: &str, index: usize) -> Result<Option<String>
                 ',' if !in_string && depth == 0 => break,
                 _ => {}
             }
-            
+
             if depth < 0 {
                 break; // Closing array bracket
             }
-            
+
             pos += 1;
         }
-        
+
         if current_index == index {
             let element: String = chars[element_start..pos].iter().collect();
             return Ok(Some(element.trim().to_string()));
         }
-        
+
         current_index += 1;
-        
+
         // Skip comma
         if pos < chars.len() && chars[pos] == ',' {
             pos += 1;
         }
     }
-    
+
     Ok(None)
 }
 
