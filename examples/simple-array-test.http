@@ -1,0 +1,22 @@
+# Test case for the user's specific scenario
+# Testing: JSONPath with array indexing in URL construction
+
+# Simulates getting a list of API versions
+# @name get_versions
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "data": [
+    {
+      "version": "2.3.0",
+      "url": "http://ocpi.dev001.onteal.net/versions/2.3.0"
+    }
+  ]
+}
+
+###
+
+# Use the version from the array in the URL path
+# This should resolve to: https://httpbin.org/get?path=/versions/2.3.0
+GET https://httpbin.org/get?path=/versions/{{get_versions.response.body.$.json.data[0].version}}
