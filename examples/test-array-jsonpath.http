@@ -1,0 +1,39 @@
+# Test Array JSONPath Chaining
+# This file tests the array indexing feature in request variables
+
+# Step 1: Get versions (simulating the response with httpbin.org)
+# @name get_versions
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "data": [
+    {
+      "version": "2.3.0",
+      "url": "http://ocpi.dev001.onteal.net/versions/2.3.0"
+    },
+    {
+      "version": "2.2.0",
+      "url": "http://ocpi.dev001.onteal.net/versions/2.2.0"
+    }
+  ]
+}
+
+###
+
+# Step 2: Use the first version from the array in the URL
+# @name get_specific_version
+GET https://httpbin.org/get?version={{get_versions.response.body.$.json.data[0].version}}
+
+###
+
+# Step 3: Use the URL from the first array element
+# This demonstrates nested property access in array elements
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "requested_url": "{{get_versions.response.body.$.json.data[0].url}}",
+  "version": "{{get_versions.response.body.$.json.data[0].version}}",
+  "second_version": "{{get_versions.response.body.$.json.data[1].version}}"
+}
