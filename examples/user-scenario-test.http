@@ -1,0 +1,23 @@
+# User's Exact Scenario Test
+# Response: {"data":[{"version":"2.3.0","url":"http://ocpi.dev001.onteal.net/versions/2.3.0"}]}
+# Expected URL: https://ocpi.dev001.onteal.net/versions/2.3.0
+
+# Simulate the user's API response
+# @name get_versions
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "data": [
+    {
+      "version": "2.3.0",
+      "url": "http://ocpi.dev001.onteal.net/versions/2.3.0"
+    }
+  ]
+}
+
+###
+
+# This should now work correctly!
+# Expected: https://httpbin.org/get?endpoint=ocpi.dev001.onteal.net/versions/2.3.0
+GET https://httpbin.org/get?endpoint=ocpi.dev001.onteal.net/versions/{{get_versions.response.body.$.json.data[0].version}}

@@ -1,0 +1,58 @@
+# Comprehensive Array JSONPath Test Suite
+# Tests various array indexing scenarios
+
+# Test 1: Simple array with objects
+# @name test_simple_array
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "items": [
+    {"id": 1, "name": "first"},
+    {"id": 2, "name": "second"},
+    {"id": 3, "name": "third"}
+  ]
+}
+
+###
+
+# Test 2: Access different array indices
+GET https://httpbin.org/get?first={{test_simple_array.response.body.$.json.items[0].name}}&second={{test_simple_array.response.body.$.json.items[1].name}}&third={{test_simple_array.response.body.$.json.items[2].id}}
+
+###
+
+# Test 3: Nested arrays
+# @name test_nested
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "data": {
+    "versions": [
+      {"version": "3.0.0", "status": "stable"},
+      {"version": "2.5.0", "status": "deprecated"}
+    ]
+  }
+}
+
+###
+
+# Test 4: Use nested array data
+GET https://httpbin.org/get?version={{test_nested.response.body.$.json.data.versions[0].version}}&status={{test_nested.response.body.$.json.data.versions[0].status}}
+
+###
+
+# Test 5: Array with string values
+# @name test_string_array
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "tags": ["rust", "http", "cli"]
+}
+
+###
+
+# Note: Direct array indexing of primitive values (not objects) 
+# like tags[0] is not yet supported - would need additional parsing
+# This test demonstrates object arrays work well
