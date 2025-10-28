@@ -3,7 +3,7 @@ base: core22
 version: git
 summary: Execute HTTP requests from .http files with colored output
 description: |
-  HTTP File Runner is a command-line tool written in Zig for parsing and 
+  HTTP File Runner is a command-line tool written in Rust for parsing and 
   executing HTTP requests from .http files. Features include:
   
   • Support for GET, POST, PUT, DELETE, PATCH methods
