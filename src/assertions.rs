@@ -84,9 +84,7 @@ fn evaluate_assertion(assertion: &Assertion, result: &HttpResult) -> AssertionRe
 
                 let mut found = false;
                 for (name, value) in headers {
-                    if name.eq_ignore_ascii_case(expected_name)
-                        && value.contains(expected_value)
-                    {
+                    if name.eq_ignore_ascii_case(expected_name) && value.contains(expected_value) {
                         found = true;
                         break;
                     }
