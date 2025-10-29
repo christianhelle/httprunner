@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.20...HEAD)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.21...HEAD)
+
+**Merged pull requests:**
+
+- Add variable substitution support for assertions [\#54](https://github.com/christianhelle/httprunner/pull/54) ([christianhelle](https://github.com/christianhelle))
+
+## [v0.3.21](https://github.com/christianhelle/httprunner/tree/v0.3.21) (2025-10-28)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.20...v0.3.21)
 
 **Merged pull requests:**
 
