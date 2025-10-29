@@ -2,10 +2,11 @@
 
 <#
 .SYNOPSIS
-    HTTP File Runner - Installation Script for Windows
+    HTTP File Runner - Installation/Upgrade Script for Windows
 
 .DESCRIPTION
     This script downloads and installs the latest release of httprunner for Windows.
+    If httprunner is already installed, it will upgrade to the latest version.
 
 .PARAMETER InstallDir
     The directory to install httprunner to. Defaults to a directory in the user's PATH.
@@ -13,11 +14,8 @@
 .PARAMETER AddToPath
     Whether to add the installation directory to the user's PATH. Default is $true.
 
-.PARAMETER Force
-    Force installation even if httprunner is already installed.
-
 .EXAMPLE
-    # Install using default settings
+    # Install or upgrade using default settings
     irm https://christianhelle.com/httprunner/install.ps1 | iex
 
 .EXAMPLE
@@ -32,7 +30,6 @@
 param(
     [string]$InstallDir = "",
     [bool]$AddToPath = $true,
-    [switch]$Force,
     [switch]$Help
 )
 
@@ -85,7 +82,6 @@ function Show-Usage {
     Write-Host "Parameters:" -ForegroundColor "Yellow"
     Write-Host "  -InstallDir <path>   Installation directory" -ForegroundColor "White"
     Write-Host "  -AddToPath <bool>    Add to PATH (default: true)" -ForegroundColor "White"
-    Write-Host "  -Force              Force installation" -ForegroundColor "White"
     Write-Host "  -Help               Show this help" -ForegroundColor "White"
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor "Yellow"
@@ -259,14 +255,11 @@ function Main {
     
     Write-Info "Starting HTTP File Runner installation for Windows..."
     
-    # Check if already installed
-    if (-not $Force) {
-        $existingVersion = Test-HttpRunnerInstalled
-        if ($existingVersion) {
-            Write-Warning "httprunner is already installed: $existingVersion"
-            Write-Info "Use -Force to reinstall"
-            return
-        }
+    # Check if already installed and inform user
+    $existingVersion = Test-HttpRunnerInstalled
+    if ($existingVersion) {
+        Write-Info "Existing installation detected: $existingVersion"
+        Write-Info "Proceeding with installation (will upgrade if newer version available)..."
     }
     
     # Determine installation directory

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# HTTP File Runner - Installation Script
+# HTTP File Runner - Installation/Upgrade Script
 # This script downloads and installs the latest release of httprunner
+# If httprunner is already installed, it will upgrade to the latest version
 
 set -euo pipefail
 
@@ -145,7 +146,7 @@ verify_installation() {
 }
 
 show_usage() {
-    echo "HTTP File Runner Installation Script"
+    echo "HTTP File Runner Installation/Upgrade Script"
     echo ""
     echo "Usage: $0 [OPTIONS]"
     echo ""
@@ -157,7 +158,7 @@ show_usage() {
     echo "  INSTALL_DIR     Installation directory (default: /usr/local/bin)"
     echo ""
     echo "Examples:"
-    echo "  # Install to default location"
+    echo "  # Install or upgrade to default location"
     echo "  curl -fsSL https://christianhelle.com/httprunner/install | bash"
     echo ""
     echo "  # Install to custom directory"
@@ -188,6 +189,14 @@ main() {
     done
     
     log_info "Starting HTTP File Runner installation..."
+    
+    # Check if already installed and inform user
+    if command -v "$BINARY_NAME" >/dev/null 2>&1; then
+        local existing_version=$($BINARY_NAME --version 2>/dev/null | head -n1 || echo "unknown")
+        log_info "Existing installation detected: $existing_version"
+        log_info "Proceeding with installation (will upgrade if newer version available)..."
+    fi
+    
     log_info "Target directory: $INSTALL_DIR"
     
     # Detect platform
