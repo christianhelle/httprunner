@@ -83,7 +83,7 @@ pub fn parse_http_file(
                 let status_str = stripped.trim();
                 req.assertions.push(Assertion {
                     assertion_type: AssertionType::Status,
-                    expected_value: status_str.to_string(),
+                    expected_value: substitute_variables(status_str, &variables),
                 });
             }
             continue;
@@ -96,7 +96,7 @@ pub fn parse_http_file(
                 }
                 req.assertions.push(Assertion {
                     assertion_type: AssertionType::Body,
-                    expected_value: body_value.to_string(),
+                    expected_value: substitute_variables(body_value, &variables),
                 });
             }
             continue;
@@ -111,7 +111,7 @@ pub fn parse_http_file(
                 }
                 req.assertions.push(Assertion {
                     assertion_type: AssertionType::Headers,
-                    expected_value: headers_value.to_string(),
+                    expected_value: substitute_variables(headers_value, &variables),
                 });
             }
             continue;
