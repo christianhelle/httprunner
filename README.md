@@ -656,7 +656,7 @@ Content-Type: application/json
 
 ## Response Assertions
 
-The HTTP File Runner supports assertions to validate HTTP responses. You can assert on status codes, response body content, and response headers.
+The HTTP File Runner supports assertions to validate HTTP responses. You can assert on status codes, response body content, and response headers. **Variables are fully supported in assertions**, allowing you to use the same variables in both requests and assertions for consistent validation.
 
 ### Assertion Syntax
 
@@ -692,6 +692,44 @@ EXPECTED_RESPONSE_BODY "slideshow"
 EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
 ```
 
+### Variable Substitution in Assertions
+
+Variables can be used in assertions, making it easy to verify that response data matches the request parameters:
+
+```http
+# Define variables
+@baseUrl=https://api.github.com
+@endpoint=/users/christianhelle/repos
+@perPage=5
+
+# Make request with pagination parameters
+GET {{baseUrl}}{{endpoint}}?per_page={{perPage}}&page=1
+Accept: application/vnd.github.v3+json
+
+EXPECTED_RESPONSE_STATUS 200
+# Assert that the Link header contains the base URL
+EXPECTED_RESPONSE_HEADERS "Link: {{baseUrl}}"
+
+# Another example with URL in response body
+@apiBase=https://httpbin.org
+@resource=/get
+@queryParam=page=1&limit=10
+
+GET {{apiBase}}{{resource}}?{{queryParam}}
+
+EXPECTED_RESPONSE_STATUS 200
+# Assert that response body contains the full URL
+EXPECTED_RESPONSE_BODY "{{apiBase}}{{resource}}"
+EXPECTED_RESPONSE_BODY "{{queryParam}}"
+```
+
+This is particularly useful for:
+
+- **Pagination**: Verifying Link headers contain the correct base URL and parameters
+- **API Responses**: Ensuring the response includes the request URL or parameters
+- **Data Validation**: Checking that response data matches request variables
+- **Dynamic Assertions**: Using environment-specific values in assertions
+
 ### Assertion Behavior
 
 - ✅ **Status Code**: Exact match with expected HTTP status code
@@ -699,6 +737,7 @@ EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
 - ✅ **Response Headers**: Checks if the specified header exists and contains the expected value (substring match)
 - 🔍 **Assertion Results**: Detailed output shows which assertions passed/failed
 - ⚠️ **Request Success**: A request is considered successful only if all assertions pass (in addition to 2xx status code)
+- 🔧 **Variable Support**: All assertion values support variable substitution using `{{variable_name}}` syntax
 
 When assertions are present, the HTTP runner will:
 
@@ -724,6 +763,9 @@ The `examples/` directory contains several sample `.http` files:
 - **`status-codes.http`** - Tests different HTTP status codes (15 requests)
 - **`request-variables.http`** - Demonstrates request chaining with variables (5 requests)
 - **`variables.http`** - Shows variable usage and environment files
+- **`asserts.http`** - Response assertion examples
+- **`assertion-variables.http`** - Variable substitution in assertions
+- **`pagination-variables.http`** - Pagination scenarios with variable assertions
 - **`comprehensive.http`** - Complete feature demonstration
 
 ## Output
