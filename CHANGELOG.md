@@ -6,6 +6,7 @@
 
 **Merged pull requests:**
 
+- Add support for '\> ' prefix on assertion keywords [\#55](https://github.com/christianhelle/httprunner/pull/55) ([christianhelle](https://github.com/christianhelle))
 - Add variable substitution support for assertions [\#54](https://github.com/christianhelle/httprunner/pull/54) ([christianhelle](https://github.com/christianhelle))
 
 ## [v0.3.21](https://github.com/christianhelle/httprunner/tree/v0.3.21) (2025-10-28)
