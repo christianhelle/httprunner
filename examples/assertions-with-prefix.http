@@ -1,0 +1,38 @@
+# Test assertions with "> " prefix
+
+# Test 1: All assertions with "> " prefix
+GET https://httpbin.org/status/200
+
+> EXPECTED_RESPONSE_STATUS 200
+
+###
+
+# Test 2: Mixed - some with prefix, some without
+GET https://httpbin.org/get
+
+> EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_HEADERS content-type: application/json
+
+###
+
+# Test 3: All assertions without prefix (backward compatibility)
+GET https://httpbin.org/json
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "slideshow"
+
+###
+
+# Test 4: Body assertion with prefix
+GET https://httpbin.org/json
+
+> EXPECTED_RESPONSE_STATUS 200
+> EXPECTED_RESPONSE_BODY "slideshow"
+
+###
+
+# Test 5: Headers assertion with prefix
+GET https://httpbin.org/headers
+
+> EXPECTED_RESPONSE_STATUS 200
+> EXPECTED_RESPONSE_HEADERS content-type: application/json
