@@ -77,8 +77,10 @@ pub fn parse_http_file(
             continue;
         }
 
-        // Parse assertions
-        if let Some(stripped) = trimmed.strip_prefix("EXPECTED_RESPONSE_STATUS ") {
+        // Parse assertions (with optional "> " prefix)
+        let assertion_line = trimmed.strip_prefix("> ").unwrap_or(trimmed);
+
+        if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_STATUS ") {
             if let Some(ref mut req) = current_request {
                 let status_str = stripped.trim();
                 req.assertions.push(Assertion {
@@ -87,7 +89,7 @@ pub fn parse_http_file(
                 });
             }
             continue;
-        } else if let Some(stripped) = trimmed.strip_prefix("EXPECTED_RESPONSE_BODY ") {
+        } else if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_BODY ") {
             if let Some(ref mut req) = current_request {
                 let mut body_value = stripped.trim();
                 if body_value.starts_with('"') && body_value.ends_with('"') && body_value.len() >= 2
@@ -100,7 +102,7 @@ pub fn parse_http_file(
                 });
             }
             continue;
-        } else if let Some(stripped) = trimmed.strip_prefix("EXPECTED_RESPONSE_HEADERS ") {
+        } else if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_HEADERS ") {
             if let Some(ref mut req) = current_request {
                 let mut headers_value = stripped.trim();
                 if headers_value.starts_with('"')
