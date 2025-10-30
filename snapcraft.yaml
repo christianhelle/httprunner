@@ -17,27 +17,11 @@ grade: stable
 confinement: strict
 license: MIT
 
-architectures:
-  - build-on: amd64
-  - build-on: arm64
-  - build-on: armhf
-
 apps:
   httprunner:
     command: bin/httprunner
-    plugs:
-      - network
-      - home
 
 parts:
   httprunner:
     plugin: rust
     source: .
-    rust-channel: stable
-    build-packages:
-      - libssl-dev
-      - pkg-config
-      - git
-    stage-packages:
-      - libssl3
-      - ca-certificates
