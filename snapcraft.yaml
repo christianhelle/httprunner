@@ -1,5 +1,5 @@
 name: httprunner
-base: core22
+base: core24
 version: git
 summary: Execute HTTP requests from .http files with colored output
 description: |
@@ -16,11 +16,6 @@ description: |
 grade: stable
 confinement: strict
 license: MIT
-
-architectures:
-  - build-on: amd64
-  - build-on: arm64
-  - build-on: armhf
 
 apps:
   httprunner:
