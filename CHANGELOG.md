@@ -8,6 +8,10 @@
 
 - Show same output when using -V and --version arguments [\#59](https://github.com/christianhelle/httprunner/pull/59) ([christianhelle](https://github.com/christianhelle))
 
+**Merged pull requests:**
+
+- Reduce binary output size [\#60](https://github.com/christianhelle/httprunner/pull/60) ([christianhelle](https://github.com/christianhelle))
+
 ## [0.3.24](https://github.com/christianhelle/httprunner/tree/0.3.24) (2025-10-31)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.22...0.3.24)
