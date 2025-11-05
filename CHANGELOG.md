@@ -2,7 +2,19 @@
 
 ## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.21...HEAD)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.24...HEAD)
+
+**Implemented enhancements:**
+
+- Show same output when using -V and --version arguments [\#59](https://github.com/christianhelle/httprunner/pull/59) ([christianhelle](https://github.com/christianhelle))
+
+## [0.3.24](https://github.com/christianhelle/httprunner/tree/0.3.24) (2025-10-31)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.22...0.3.24)
+
+## [v0.3.22](https://github.com/christianhelle/httprunner/tree/v0.3.22) (2025-10-30)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.21...v0.3.22)
 
 **Merged pull requests:**
 
@@ -52,11 +64,7 @@
 
 ## [v0.3.17](https://github.com/christianhelle/httprunner/tree/v0.3.17) (2025-10-26)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.2.18822372762...v0.3.17)
-
-## [v0.2.18822372762](https://github.com/christianhelle/httprunner/tree/v0.2.18822372762) (2025-10-26)
-
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.2.0...v0.2.18822372762)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.2.0...v0.3.17)
 
 **Implemented enhancements:**
 
