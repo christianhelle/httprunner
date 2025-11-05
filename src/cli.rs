@@ -13,7 +13,7 @@ const LONG_VERSION: &str = concat!(
 #[derive(Parser)]
 #[command(name = "httprunner")]
 #[command(about = "HTTP File Runner - Execute HTTP requests from .http files", long_about = None)]
-#[command(version = env!("VERSION"))]
+#[command(version = LONG_VERSION)]
 #[command(long_version = LONG_VERSION)]
 pub struct Cli {
     /// One or more .http files to process
