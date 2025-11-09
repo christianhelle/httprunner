@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Use Rust 2024 [\#61](https://github.com/christianhelle/httprunner/pull/61) ([christianhelle](https://github.com/christianhelle))
 - Show same output when using -V and --version arguments [\#59](https://github.com/christianhelle/httprunner/pull/59) ([christianhelle](https://github.com/christianhelle))
 
 **Merged pull requests:**
