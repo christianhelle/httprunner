@@ -55,7 +55,9 @@ fn main() -> anyhow::Result<()> {
         );
     }
 
-    cli::show_donation_banner();
+    if !cli_args.no_banner {
+        cli::show_donation_banner();
+    }
 
     if !result {
         std::process::exit(1);
