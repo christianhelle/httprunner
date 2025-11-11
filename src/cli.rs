@@ -46,6 +46,10 @@ pub struct Cli {
     /// Update httprunner to the latest version
     #[arg(long)]
     pub upgrade: bool,
+
+    /// Do not show the donation banner
+    #[arg(long)]
+    pub no_banner: bool,
 }
 
 impl Cli {
