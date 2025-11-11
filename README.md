@@ -191,6 +191,9 @@ httprunner <http-file> --log
 # Run a single .http file with verbose output and save to a custom log file
 httprunner <http-file> --verbose --log results.txt
 
+# Run without the donation banner
+httprunner <http-file> --no-banner
+
 # Run multiple .http files
 httprunner <http-file1> <http-file2> [...]
 
@@ -232,6 +235,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 # Run with verbose output and save to a custom log file
 .\target\release\httprunner.exe <http-file> --verbose --log results.txt
 
+# Run without the donation banner
+.\target\release\httprunner.exe <http-file> --no-banner
+
 # Run multiple files
 .\target\release\httprunner.exe examples\simple.http examples\basic.http
 
@@ -265,6 +271,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 
 # Run a single .http file with verbose output and save to a custom log file
 ./target/release/httprunner <http-file> --verbose --log results.txt
+
+# Run without the donation banner
+./target/release/httprunner <http-file> --no-banner
 
 # Run multiple .http files
 ./target/release/httprunner <http-file1> <http-file2> [...]
@@ -430,6 +439,24 @@ httprunner api-test.http --insecure
 ```
 
 **Security Note**: The `--insecure` flag should **only** be used in development and testing environments. Never use it in production as it disables important security checks that protect against man-in-the-middle attacks.
+
+## Suppressing the Donation Banner
+
+By default, httprunner displays a donation banner encouraging users to support the project. If you prefer to run without this banner (useful in CI/CD environments or scripts), use the `--no-banner` flag:
+
+```bash
+# Run without the donation banner
+httprunner examples/simple.http --no-banner
+
+# Works with all other flags
+httprunner examples/simple.http --no-banner --verbose
+httprunner --discover --no-banner --log results.txt
+```
+
+This is particularly useful in:
+- **Automated scripts**: Keep output clean in scripts and CI/CD pipelines
+- **Log files**: Reduce banner noise in logged output
+- **User preference**: Suppress the banner if you're not interested in support options
 
 ## .http File Format
 
@@ -849,6 +876,7 @@ Arguments:
   --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
   --env <env>    Specify environment name to load variables from http-client.env.json
   --insecure     Allow insecure HTTPS connections (accept invalid certificates and hostnames)
+  --no-banner    Do not show the donation banner
   --version, -v  Show version information
   --upgrade      Update httprunner to the latest version
   --help, -h     Show this help message
