@@ -13,6 +13,13 @@ description: |
   • Summary statistics
   • Robust network error handling
 
+title: HTTP File Runner
+contact: https://github.com/christianhelle/httprunner/issues
+issues: https://github.com/christianhelle/httprunner/issues
+source-code: https://github.com/christianhelle/httprunner
+website: https://christianhelle.com/httprunner
+donation: https://buymeacoffee.com/christianhelle
+
 grade: stable
 confinement: strict
 license: MIT
