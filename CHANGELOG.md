@@ -2,7 +2,27 @@
 
 ## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.24...HEAD)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.26...HEAD)
+
+**Implemented enhancements:**
+
+- Simplify snapcraft.yaml [\#63](https://github.com/christianhelle/httprunner/pull/63) ([christianhelle](https://github.com/christianhelle))
+
+**Merged pull requests:**
+
+- Restore critical snapcraft dependencies removed in PR \#63 [\#64](https://github.com/christianhelle/httprunner/pull/64) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
+## [0.3.26](https://github.com/christianhelle/httprunner/tree/0.3.26) (2025-11-11)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.26...0.3.26)
+
+## [v0.3.26](https://github.com/christianhelle/httprunner/tree/v0.3.26) (2025-11-11)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.25...v0.3.26)
+
+## [0.3.25](https://github.com/christianhelle/httprunner/tree/0.3.25) (2025-11-11)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.24...0.3.25)
 
 **Implemented enhancements:**
 
