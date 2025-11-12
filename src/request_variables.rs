@@ -1,5 +1,5 @@
 use crate::types::{RequestContext, RequestVariable, RequestVariableSource, RequestVariableTarget};
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 pub fn parse_request_variable(reference: &str) -> Result<RequestVariable> {
     // Parse syntax: {{<request_name>.(request|response).(body|headers).(*|JSONPath|XPath|<header_name>)}}
