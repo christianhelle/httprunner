@@ -1,0 +1,95 @@
+name: Publish Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  publish-container:
+    name: Publish Container
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags --force
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "version=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          echo "Latest tag: ${LATEST_TAG}"
+
+      - name: Update Version
+        shell: pwsh
+        run: |
+          $version = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ steps.get_tag.outputs.version }}"'
+          $version | Set-Content -Path Cargo.toml
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          cache: true
+
+      - name: Build release binary
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Prepare binary
+        run: |
+          mkdir -p artifacts
+          cp target/x86_64-unknown-linux-gnu/release/httprunner artifacts/
+          chmod +x artifacts/httprunner
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            ${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.get_tag.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.get_tag.outputs.version }}
+            type=semver,pattern={{major}},value=${{ steps.get_tag.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/christianhelle/httprunner:${{ steps.get_tag.outputs.version }}
+            ghcr.io/christianhelle/httprunner:latest
+            christianhelle/httprunner:${{ steps.get_tag.outputs.version }}
+            christianhelle/httprunner:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
