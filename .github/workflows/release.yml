@@ -230,7 +230,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: christianhelle/httprunner:${{ env.VERSION }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
 
