@@ -221,8 +221,10 @@ jobs:
             ghcr.io/${{ github.repository }}
             ${{ github.repository }}
           tags: |
-            type=ref,event=branch
-            type=semver,pattern=${{ env.VERSION }}
+            type=semver,pattern={{version}},value=${{ steps.get_tag.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.get_tag.outputs.version }}
+            type=semver,pattern={{major}},value=${{ steps.get_tag.outputs.version }}
+            type=raw,value=latest
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -230,7 +232,11 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: christianhelle/httprunner:${{ env.VERSION }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.get_tag.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.get_tag.outputs.version }}
+            type=semver,pattern={{major}},value=${{ steps.get_tag.outputs.version }}
+            type=raw,value=latest
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
 
