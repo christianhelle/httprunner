@@ -1,9 +1,10 @@
 # Use a minimal base image
 FROM debian:bullseye-slim
 
-# Install minimal dependencies
+# Install minimal dependencies including OpenSSL
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    libssl3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the pre-built binary from the artifacts directory
