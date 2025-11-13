@@ -1,5 +1,5 @@
 # Use a minimal base image
-FROM debian:bullseye-slim
+FROM ubuntu:24.04
 
 # Install minimal dependencies including OpenSSL
 RUN apt-get update && apt-get install -y \
