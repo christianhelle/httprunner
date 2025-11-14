@@ -38,8 +38,8 @@ pub struct HttpRequest {
     pub assertions: Vec<Assertion>,
     #[allow(dead_code)]
     pub variables: Vec<Variable>,
-    pub timeout: Option<u64>,            // Read timeout in seconds
-    pub connection_timeout: Option<u64>, // Connection timeout in seconds
+    pub timeout: Option<u64>,            // Read timeout in milliseconds
+    pub connection_timeout: Option<u64>, // Connection timeout in milliseconds
 }
 
 #[derive(Debug, Clone)]

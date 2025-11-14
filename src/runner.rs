@@ -14,12 +14,13 @@ pub fn execute_http_request(
     let has_assertions = !request.assertions.is_empty();
 
     // Default timeouts: 30 seconds for connection, 60 seconds for read
-    let connection_timeout = request.connection_timeout.unwrap_or(30);
-    let read_timeout = request.timeout.unwrap_or(60);
+    // Timeouts are stored in milliseconds
+    let connection_timeout = request.connection_timeout.unwrap_or(30_000);
+    let read_timeout = request.timeout.unwrap_or(60_000);
 
     let mut client_builder = Client::builder()
-        .connect_timeout(std::time::Duration::from_secs(connection_timeout))
-        .timeout(std::time::Duration::from_secs(read_timeout));
+        .connect_timeout(std::time::Duration::from_millis(connection_timeout))
+        .timeout(std::time::Duration::from_millis(read_timeout));
 
     if insecure {
         client_builder = client_builder
