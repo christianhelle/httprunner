@@ -19,6 +19,7 @@ A command-line tool that parses `.http` files and executes HTTP requests, provid
 - 🔍 Response assertions for status codes, body content, and headers
 - 🔧 Variables support with substitution in URLs, headers, and request bodies
 - 🔧 Request Variables for chaining requests and passing data between HTTP calls
+- ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 Semantic versioning with git tag and commit information
 - 🔍 Build-time version generation with automatic git integration
 
@@ -227,6 +228,117 @@ Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
 
 **For headers:**
 - `header_name` - Extract specific header value (case-insensitive)
+
+## Timeout Configuration
+
+The HTTP File Runner allows you to customize request timeouts for better control over HTTP operations. You can set both connection timeouts (for establishing connections) and read timeouts (for waiting for responses).
+
+### Default Timeouts
+
+- **Connection timeout**: 30 seconds (time to establish a connection)
+- **Read timeout**: 60 seconds (time to wait for response data)
+
+### Timeout Directives
+
+Use comment directives before a request to customize timeouts:
+
+#### Read Timeout (`@timeout`)
+
+Sets the maximum time to wait for response data from an established connection:
+
+```http
+# @timeout 600
+GET https://example.com/api/long-running
+```
+
+#### Connection Timeout (`@connection-timeout`)
+
+Sets the maximum time to establish a connection with the server:
+
+```http
+// @connection-timeout 10
+GET https://example.com/api
+```
+
+### Time Units
+
+By default, timeout values are in **seconds**, but you can specify explicit units:
+
+- `ms` - milliseconds
+- `s` - seconds
+- `m` - minutes
+
+#### Examples with Units
+
+```http
+# Timeout in seconds (default)
+# @timeout 30
+GET https://example.com/api
+
+###
+
+# Timeout in seconds (explicit)
+# @timeout 30 s
+GET https://example.com/api
+
+###
+
+# Timeout in minutes
+# @timeout 2 m
+GET https://example.com/api/slow
+
+###
+
+# Timeout in milliseconds
+# @timeout 5000 ms
+GET https://example.com/api/fast
+
+###
+
+# Both timeouts customized
+# @timeout 120
+// @connection-timeout 10
+GET https://example.com/api/data
+```
+
+### Comment Style Support
+
+Both `#` and `//` comment styles are supported:
+
+```http
+# Using hash comments
+# @timeout 60
+// @connection-timeout 5
+GET https://example.com/api
+```
+
+### Practical Use Cases
+
+**Long-running operations:**
+```http
+# Wait up to 10 minutes for data processing
+# @timeout 600
+POST https://example.com/api/process
+Content-Type: application/json
+
+{"data": "large_dataset"}
+```
+
+**Quick health checks:**
+```http
+# Fast timeout for health check endpoints
+# @timeout 5
+// @connection-timeout 2
+GET https://example.com/health
+```
+
+**Slow network conditions:**
+```http
+# Allow more time in development environments
+# @timeout 2 m
+// @connection-timeout 30
+GET https://dev.example.com/api
+```
 
 ## Response Assertions
 
