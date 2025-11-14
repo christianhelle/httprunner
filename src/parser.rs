@@ -202,8 +202,8 @@ pub fn parse_http_file(
             }
         } else if trimmed.contains(':') && !in_body {
             // Parse header
-            if let Some(ref mut req) = current_request {
-                if let Some(colon_pos) = trimmed.find(':') {
+            if let Some(ref mut req) = current_request
+                && let Some(colon_pos) = trimmed.find(':') {
                     let name = trimmed[..colon_pos].trim();
                     let value = trimmed[colon_pos + 1..].trim();
 
@@ -212,7 +212,6 @@ pub fn parse_http_file(
                         value: substitute_variables(value, &variables),
                     });
                 }
-            }
         } else {
             // Body content
             in_body = true;
