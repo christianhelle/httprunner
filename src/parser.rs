@@ -19,6 +19,8 @@ pub fn parse_http_file(
     let mut in_body = false;
     let mut body_content = String::new();
     let mut pending_request_name: Option<String> = None;
+    let mut pending_timeout: Option<u64> = None;
+    let mut pending_connection_timeout: Option<u64> = None;
     let mut in_intellij_script = false;
 
     for line in lines {
@@ -49,6 +51,32 @@ pub fn parse_http_file(
                 9
             };
             pending_request_name = Some(trimmed[name_start..].trim().to_string());
+            continue;
+        }
+
+        // Check for timeout directive
+        if trimmed.starts_with("# @timeout ") || trimmed.starts_with("// @timeout ") {
+            let timeout_start = if trimmed.starts_with("# @timeout ") {
+                11
+            } else {
+                12
+            };
+            let timeout_value = trimmed[timeout_start..].trim();
+            pending_timeout = parse_timeout_value(timeout_value);
+            continue;
+        }
+
+        // Check for connection-timeout directive
+        if trimmed.starts_with("# @connection-timeout ")
+            || trimmed.starts_with("// @connection-timeout ")
+        {
+            let timeout_start = if trimmed.starts_with("# @connection-timeout ") {
+                22
+            } else {
+                23
+            };
+            let timeout_value = trimmed[timeout_start..].trim();
+            pending_connection_timeout = parse_timeout_value(timeout_value);
             continue;
         }
 
@@ -144,6 +172,8 @@ pub fn parse_http_file(
                     body: None,
                     assertions: Vec::new(),
                     variables: Vec::new(),
+                    timeout: pending_timeout.take(),
+                    connection_timeout: pending_connection_timeout.take(),
                 });
                 in_body = false;
             }
@@ -241,4 +271,117 @@ fn substitute_variables(input: &str, variables: &[Variable]) -> String {
     }
 
     result
+}
+
+fn parse_timeout_value(value: &str) -> Option<u64> {
+    let value = value.trim();
+
+    // Check for time unit suffix
+    if value.ends_with("ms") {
+        // Milliseconds
+        let num_str = value[..value.len() - 2].trim();
+        num_str.parse::<u64>().ok().map(|ms| ms / 1000)
+    } else if value.ends_with('m') {
+        // Minutes
+        let num_str = value[..value.len() - 1].trim();
+        num_str.parse::<u64>().ok().map(|m| m * 60)
+    } else if value.ends_with('s') {
+        // Seconds (explicit)
+        let num_str = value[..value.len() - 1].trim();
+        num_str.parse::<u64>().ok()
+    } else {
+        // No unit, default to seconds
+        value.parse::<u64>().ok()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_timeout_value_seconds_default() {
+        assert_eq!(parse_timeout_value("30"), Some(30));
+        assert_eq!(parse_timeout_value("100"), Some(100));
+    }
+
+    #[test]
+    fn test_parse_timeout_value_seconds_explicit() {
+        assert_eq!(parse_timeout_value("30 s"), Some(30));
+        assert_eq!(parse_timeout_value("100s"), Some(100));
+    }
+
+    #[test]
+    fn test_parse_timeout_value_minutes() {
+        assert_eq!(parse_timeout_value("2 m"), Some(120));
+        assert_eq!(parse_timeout_value("5m"), Some(300));
+    }
+
+    #[test]
+    fn test_parse_timeout_value_milliseconds() {
+        assert_eq!(parse_timeout_value("5000 ms"), Some(5));
+        assert_eq!(parse_timeout_value("10000ms"), Some(10));
+    }
+
+    #[test]
+    fn test_parse_timeout_value_invalid() {
+        assert_eq!(parse_timeout_value("invalid"), None);
+        assert_eq!(parse_timeout_value(""), None);
+    }
+
+    #[test]
+    fn test_parse_http_file_with_timeout() {
+        let content = r#"
+# @timeout 600
+GET https://example.com/api
+"#;
+        // Create a temporary file for testing
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_timeout.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 1);
+        assert_eq!(requests[0].timeout, Some(600));
+        assert_eq!(requests[0].connection_timeout, None);
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_connection_timeout() {
+        let content = r#"
+// @connection-timeout 2 m
+GET https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_connection_timeout.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 1);
+        assert_eq!(requests[0].timeout, None);
+        assert_eq!(requests[0].connection_timeout, Some(120));
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_both_timeouts() {
+        let content = r#"
+# @timeout 600
+// @connection-timeout 30
+GET https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_both_timeouts.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 1);
+        assert_eq!(requests[0].timeout, Some(600));
+        assert_eq!(requests[0].connection_timeout, Some(30));
+
+        std::fs::remove_file(&test_file).ok();
+    }
 }
