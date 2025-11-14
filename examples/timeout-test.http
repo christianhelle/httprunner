@@ -30,6 +30,12 @@ GET https://httpbin.org/delay/1
 
 ###
 
+# Test with sub-second timeout (millisecond precision)
+# @timeout 1500 ms
+GET https://httpbin.org/status/200
+
+###
+
 # Test with custom connection timeout
 // @connection-timeout 5
 GET https://httpbin.org/status/200
