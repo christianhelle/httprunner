@@ -1,0 +1,38 @@
+[
+  {
+    "label": "cargo build",
+    "command": "cargo",
+    "args": ["build"],
+    "use_new_terminal": false
+  },
+  {
+    "label": "cargo build --release",
+    "command": "cargo",
+    "args": ["build", "--release"],
+    "use_new_terminal": false
+  },
+  {
+    "label": "cargo test",
+    "command": "cargo",
+    "args": ["test"],
+    "use_new_terminal": false
+  },
+  {
+    "label": "cargo run",
+    "command": "cargo",
+    "args": ["run", "--", "examples/simple.http"],
+    "use_new_terminal": false
+  },
+  {
+    "label": "cargo clippy",
+    "command": "cargo",
+    "args": ["clippy"],
+    "use_new_terminal": false
+  },
+  {
+    "label": "cargo fmt",
+    "command": "cargo",
+    "args": ["fmt"],
+    "use_new_terminal": false
+  }
+]
