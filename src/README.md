@@ -264,7 +264,7 @@ GET https://example.com/api
 
 By default, timeout values are in **seconds**, but you can specify explicit units:
 
-- `ms` - milliseconds
+- `ms` - milliseconds (supports sub-second precision like 999ms or 1500ms)
 - `s` - seconds
 - `m` - minutes
 
@@ -289,9 +289,15 @@ GET https://example.com/api/slow
 
 ###
 
-# Timeout in milliseconds
+# Timeout in milliseconds (full precision supported)
 # @timeout 5000 ms
 GET https://example.com/api/fast
+
+###
+
+# Sub-second timeout (1.5 seconds)
+# @timeout 1500 ms
+GET https://example.com/api/quick
 
 ###
 
