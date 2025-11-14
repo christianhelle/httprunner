@@ -1,0 +1,48 @@
+# Test timeout customization
+# This file tests various timeout configurations
+
+# Test with default timeouts (30s connection, 60s read)
+GET https://httpbin.org/delay/1
+
+###
+
+# Test with custom timeout in seconds (default unit)
+# @timeout 10
+GET https://httpbin.org/delay/2
+
+###
+
+# Test with custom timeout in seconds (explicit unit)
+# @timeout 10 s
+GET https://httpbin.org/delay/2
+
+###
+
+# Test with custom timeout in minutes
+# @timeout 2 m
+GET https://httpbin.org/delay/3
+
+###
+
+# Test with custom timeout in milliseconds
+# @timeout 5000 ms
+GET https://httpbin.org/delay/1
+
+###
+
+# Test with custom connection timeout
+// @connection-timeout 5
+GET https://httpbin.org/status/200
+
+###
+
+# Test with both custom timeouts
+# @timeout 15
+// @connection-timeout 10
+GET https://httpbin.org/delay/2
+
+###
+
+# Test with connection timeout in minutes
+// @connection-timeout 2 m
+GET https://httpbin.org/status/200

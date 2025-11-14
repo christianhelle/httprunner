@@ -13,7 +13,13 @@ pub fn execute_http_request(
     let start_time = Instant::now();
     let has_assertions = !request.assertions.is_empty();
 
-    let mut client_builder = Client::builder().timeout(std::time::Duration::from_secs(30));
+    // Default timeouts: 30 seconds for connection, 60 seconds for read
+    let connection_timeout = request.connection_timeout.unwrap_or(30);
+    let read_timeout = request.timeout.unwrap_or(60);
+
+    let mut client_builder = Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(connection_timeout))
+        .timeout(std::time::Duration::from_secs(read_timeout));
 
     if insecure {
         client_builder = client_builder
