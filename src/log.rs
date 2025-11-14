@@ -18,14 +18,6 @@ impl Log {
         Ok(Log { log_file })
     }
 
-    #[allow(dead_code)]
-    pub fn write(&mut self, message: &str) {
-        print!("{}", message);
-        if let Some(ref mut file) = self.log_file {
-            let _ = file.write_all(message.as_bytes());
-        }
-    }
-
     pub fn writeln(&mut self, message: &str) {
         println!("{}", message);
         if let Some(ref mut file) = self.log_file {
