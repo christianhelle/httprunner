@@ -55,28 +55,22 @@ pub fn parse_http_file(
         }
 
         // Check for timeout directive
-        if trimmed.starts_with("# @timeout ") || trimmed.starts_with("// @timeout ") {
-            let timeout_start = if trimmed.starts_with("# @timeout ") {
-                11
-            } else {
-                12
-            };
-            let timeout_value = trimmed[timeout_start..].trim();
-            pending_timeout = parse_timeout_value(timeout_value);
+        let timeout_value = trimmed
+            .strip_prefix("# @timeout ")
+            .or_else(|| trimmed.strip_prefix("// @timeout "))
+            .map(|s| s.trim());
+        if let Some(value) = timeout_value {
+            pending_timeout = parse_timeout_value(value);
             continue;
         }
 
         // Check for connection-timeout directive
-        if trimmed.starts_with("# @connection-timeout ")
-            || trimmed.starts_with("// @connection-timeout ")
-        {
-            let timeout_start = if trimmed.starts_with("# @connection-timeout ") {
-                22
-            } else {
-                23
-            };
-            let timeout_value = trimmed[timeout_start..].trim();
-            pending_connection_timeout = parse_timeout_value(timeout_value);
+        let connection_timeout_value = trimmed
+            .strip_prefix("# @connection-timeout ")
+            .or_else(|| trimmed.strip_prefix("// @connection-timeout "))
+            .map(|s| s.trim());
+        if let Some(value) = connection_timeout_value {
+            pending_connection_timeout = parse_timeout_value(value);
             continue;
         }
 
@@ -277,21 +271,22 @@ fn parse_timeout_value(value: &str) -> Option<u64> {
     let value = value.trim();
 
     // Check for time unit suffix
+    // Returns timeout in milliseconds
     if value.ends_with("ms") {
         // Milliseconds
         let num_str = value[..value.len() - 2].trim();
-        num_str.parse::<u64>().ok().map(|ms| ms / 1000)
-    } else if value.ends_with('m') {
-        // Minutes
-        let num_str = value[..value.len() - 1].trim();
-        num_str.parse::<u64>().ok().map(|m| m * 60)
-    } else if value.ends_with('s') {
-        // Seconds (explicit)
-        let num_str = value[..value.len() - 1].trim();
         num_str.parse::<u64>().ok()
+    } else if value.ends_with('m') {
+        // Minutes - convert to milliseconds
+        let num_str = value[..value.len() - 1].trim();
+        num_str.parse::<u64>().ok().and_then(|m| m.checked_mul(60_000))
+    } else if value.ends_with('s') {
+        // Seconds (explicit) - convert to milliseconds
+        let num_str = value[..value.len() - 1].trim();
+        num_str.parse::<u64>().ok().and_then(|s| s.checked_mul(1_000))
     } else {
-        // No unit, default to seconds
-        value.parse::<u64>().ok()
+        // No unit, default to seconds - convert to milliseconds
+        value.parse::<u64>().ok().and_then(|s| s.checked_mul(1_000))
     }
 }
 
@@ -301,26 +296,28 @@ mod tests {
 
     #[test]
     fn test_parse_timeout_value_seconds_default() {
-        assert_eq!(parse_timeout_value("30"), Some(30));
-        assert_eq!(parse_timeout_value("100"), Some(100));
+        assert_eq!(parse_timeout_value("30"), Some(30_000));
+        assert_eq!(parse_timeout_value("100"), Some(100_000));
     }
 
     #[test]
     fn test_parse_timeout_value_seconds_explicit() {
-        assert_eq!(parse_timeout_value("30 s"), Some(30));
-        assert_eq!(parse_timeout_value("100s"), Some(100));
+        assert_eq!(parse_timeout_value("30 s"), Some(30_000));
+        assert_eq!(parse_timeout_value("100s"), Some(100_000));
     }
 
     #[test]
     fn test_parse_timeout_value_minutes() {
-        assert_eq!(parse_timeout_value("2 m"), Some(120));
-        assert_eq!(parse_timeout_value("5m"), Some(300));
+        assert_eq!(parse_timeout_value("2 m"), Some(120_000));
+        assert_eq!(parse_timeout_value("5m"), Some(300_000));
     }
 
     #[test]
     fn test_parse_timeout_value_milliseconds() {
-        assert_eq!(parse_timeout_value("5000 ms"), Some(5));
-        assert_eq!(parse_timeout_value("10000ms"), Some(10));
+        assert_eq!(parse_timeout_value("5000 ms"), Some(5_000));
+        assert_eq!(parse_timeout_value("10000ms"), Some(10_000));
+        assert_eq!(parse_timeout_value("999 ms"), Some(999));
+        assert_eq!(parse_timeout_value("1500 ms"), Some(1_500));
     }
 
     #[test]
@@ -342,7 +339,7 @@ GET https://example.com/api
 
         let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 1);
-        assert_eq!(requests[0].timeout, Some(600));
+        assert_eq!(requests[0].timeout, Some(600_000)); // 600 seconds = 600,000 ms
         assert_eq!(requests[0].connection_timeout, None);
 
         std::fs::remove_file(&test_file).ok();
@@ -361,7 +358,7 @@ GET https://example.com/api
         let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0].timeout, None);
-        assert_eq!(requests[0].connection_timeout, Some(120));
+        assert_eq!(requests[0].connection_timeout, Some(120_000)); // 2 minutes = 120,000 ms
 
         std::fs::remove_file(&test_file).ok();
     }
@@ -379,8 +376,8 @@ GET https://example.com/api
 
         let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 1);
-        assert_eq!(requests[0].timeout, Some(600));
-        assert_eq!(requests[0].connection_timeout, Some(30));
+        assert_eq!(requests[0].timeout, Some(600_000)); // 600 seconds = 600,000 ms
+        assert_eq!(requests[0].connection_timeout, Some(30_000)); // 30 seconds = 30,000 ms
 
         std::fs::remove_file(&test_file).ok();
     }
