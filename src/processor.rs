@@ -263,69 +263,70 @@ pub fn process_http_files(
 
             if verbose
                 && let Some(ctx) = request_contexts.last()
-                    && let Some(ref result) = ctx.result {
-                        log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
-                        log.writeln(&format!("Status: {}", result.status_code));
-                        log.writeln(&format!("Duration: {}ms", result.duration_ms));
+                && let Some(ref result) = ctx.result
+            {
+                log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
+                log.writeln(&format!("Status: {}", result.status_code));
+                log.writeln(&format!("Duration: {}ms", result.duration_ms));
 
-                        if let Some(ref headers) = result.response_headers {
-                            log.writeln("Headers:");
-                            for (name, value) in headers {
-                                log.writeln(&format!("  {}: {}", name, value));
-                            }
-                        }
-
-                        if let Some(ref body) = result.response_body {
-                            log.writeln(&format!("Body:\n{}", body));
-                        }
-                        log.writeln(&"-".repeat(30));
+                if let Some(ref headers) = result.response_headers {
+                    log.writeln("Headers:");
+                    for (name, value) in headers {
+                        log.writeln(&format!("  {}: {}", name, value));
                     }
+                }
+
+                if let Some(ref body) = result.response_body {
+                    log.writeln(&format!("Body:\n{}", body));
+                }
+                log.writeln(&"-".repeat(30));
+            }
 
             if !processed_request.assertions.is_empty()
                 && let Some(ctx) = request_contexts.last()
-                    && let Some(ref result) = ctx.result {
-                        log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
-                        for assertion_result in &result.assertion_results {
-                            let assertion_type_str = match assertion_result.assertion.assertion_type
-                            {
-                                AssertionType::Status => "Status Code",
-                                AssertionType::Body => "Response Body",
-                                AssertionType::Headers => "Response Headers",
-                            };
+                && let Some(ref result) = ctx.result
+            {
+                log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
+                for assertion_result in &result.assertion_results {
+                    let assertion_type_str = match assertion_result.assertion.assertion_type {
+                        AssertionType::Status => "Status Code",
+                        AssertionType::Body => "Response Body",
+                        AssertionType::Headers => "Response Headers",
+                    };
 
-                            if assertion_result.passed {
-                                log.writeln(&format!(
-                                    "{}   ✅ {}: Expected '{}'",
-                                    colors::green(""),
-                                    assertion_type_str,
-                                    assertion_result.assertion.expected_value
-                                ));
-                            } else {
-                                log.writeln(&format!(
-                                    "{}   ❌ {}: {}",
-                                    colors::red(""),
-                                    assertion_type_str,
-                                    assertion_result
-                                        .error_message
-                                        .as_ref()
-                                        .unwrap_or(&"Failed".to_string())
-                                ));
-                                if let Some(ref actual) = assertion_result.actual_value {
-                                    log.writeln(&format!(
-                                        "{}      Expected: '{}'",
-                                        colors::yellow(""),
-                                        assertion_result.assertion.expected_value
-                                    ));
-                                    log.writeln(&format!(
-                                        "{}      Actual: '{}'",
-                                        colors::yellow(""),
-                                        actual
-                                    ));
-                                }
-                            }
+                    if assertion_result.passed {
+                        log.writeln(&format!(
+                            "{}   ✅ {}: Expected '{}'",
+                            colors::green(""),
+                            assertion_type_str,
+                            assertion_result.assertion.expected_value
+                        ));
+                    } else {
+                        log.writeln(&format!(
+                            "{}   ❌ {}: {}",
+                            colors::red(""),
+                            assertion_type_str,
+                            assertion_result
+                                .error_message
+                                .as_ref()
+                                .unwrap_or(&"Failed".to_string())
+                        ));
+                        if let Some(ref actual) = assertion_result.actual_value {
+                            log.writeln(&format!(
+                                "{}      Expected: '{}'",
+                                colors::yellow(""),
+                                assertion_result.assertion.expected_value
+                            ));
+                            log.writeln(&format!(
+                                "{}      Actual: '{}'",
+                                colors::yellow(""),
+                                actual
+                            ));
                         }
-                        log.writeln(&"-".repeat(30));
                     }
+                }
+                log.writeln(&"-".repeat(30));
+            }
         }
 
         log.writeln(&format!("\n{}", "=".repeat(50)));
