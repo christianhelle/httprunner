@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.26...HEAD)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.28...HEAD)
+
+**Merged pull requests:**
+
+- Add customizable HTTP request timeouts with millisecond precision [\#65](https://github.com/christianhelle/httprunner/pull/65) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
+## [0.3.28](https://github.com/christianhelle/httprunner/tree/0.3.28) (2025-11-12)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.26...0.3.28)
 
 **Implemented enhancements:**
 
@@ -14,11 +22,7 @@
 
 ## [0.3.26](https://github.com/christianhelle/httprunner/tree/0.3.26) (2025-11-11)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.3.26...0.3.26)
-
-## [v0.3.26](https://github.com/christianhelle/httprunner/tree/v0.3.26) (2025-11-11)
-
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.25...v0.3.26)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.25...0.3.26)
 
 ## [0.3.25](https://github.com/christianhelle/httprunner/tree/0.3.25) (2025-11-11)
 
