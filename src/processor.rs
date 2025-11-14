@@ -164,9 +164,9 @@ pub fn process_http_files(
                 result: Some(result),
             });
 
-            if verbose {
-                if let Some(ctx) = request_contexts.last() {
-                    if let Some(ref result) = ctx.result {
+            if verbose
+                && let Some(ctx) = request_contexts.last()
+                    && let Some(ref result) = ctx.result {
                         log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
                         log.writeln(&format!("Status: {}", result.status_code));
                         log.writeln(&format!("Duration: {}ms", result.duration_ms));
@@ -183,12 +183,10 @@ pub fn process_http_files(
                         }
                         log.writeln(&"-".repeat(30));
                     }
-                }
-            }
 
-            if !processed_request.assertions.is_empty() {
-                if let Some(ctx) = request_contexts.last() {
-                    if let Some(ref result) = ctx.result {
+            if !processed_request.assertions.is_empty()
+                && let Some(ctx) = request_contexts.last()
+                    && let Some(ref result) = ctx.result {
                         log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
                         for assertion_result in &result.assertion_results {
                             let assertion_type_str = match assertion_result.assertion.assertion_type
@@ -231,8 +229,6 @@ pub fn process_http_files(
                         }
                         log.writeln(&"-".repeat(30));
                     }
-                }
-            }
         }
 
         log.writeln(&format!("\n{}", "=".repeat(50)));
