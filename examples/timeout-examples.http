@@ -1,0 +1,68 @@
+# HTTP Request Timeout Configuration Examples
+# This file demonstrates the timeout customization feature
+
+# Default timeouts (no directives)
+# - Connection timeout: 30 seconds
+# - Read timeout: 60 seconds
+GET https://httpbin.org/status/200
+
+###
+
+# Custom read timeout using default unit (seconds)
+# Wait up to 10 minutes for response
+# @timeout 600
+GET https://httpbin.org/delay/5
+
+###
+
+# Custom read timeout with explicit seconds unit
+# @timeout 45 s
+GET https://httpbin.org/delay/5
+
+###
+
+# Custom read timeout in minutes
+# Wait up to 2 minutes for response
+# @timeout 2 m
+GET https://httpbin.org/delay/30
+
+###
+
+# Custom read timeout in milliseconds
+# 5000ms = 5 seconds
+# @timeout 5000 ms
+GET https://httpbin.org/delay/2
+
+###
+
+# Custom connection timeout
+# Allow up to 5 seconds to establish connection
+// @connection-timeout 5
+GET https://httpbin.org/status/200
+
+###
+
+# Custom connection timeout in minutes
+// @connection-timeout 2 m
+GET https://httpbin.org/status/200
+
+###
+
+# Both timeouts customized
+# Connection: 10 seconds, Read: 15 seconds
+# @timeout 15
+// @connection-timeout 10
+GET https://httpbin.org/delay/5
+
+###
+
+# Multiple requests with different timeout settings
+# First request: short timeout
+# @timeout 5
+GET https://httpbin.org/delay/2
+
+###
+
+# Second request: longer timeout
+# @timeout 30
+GET https://httpbin.org/delay/10
