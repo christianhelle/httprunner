@@ -1,5 +1,31 @@
+# ========================================================================
 # Conditional Request Execution Example
-# This file demonstrates how to use @dependsOn and @if directives for conditional execution
+# ========================================================================
+#
+# This file demonstrates how to use @dependsOn and @if directives for
+# conditional execution in HTTP files.
+#
+# FEATURES:
+# ---------
+# 1. @dependsOn directive: Execute request only if dependency returns HTTP 200
+#    Syntax: # @dependsOn <request-name>
+#
+# 2. @if directive (status check): Execute request only if condition matches
+#    Syntax: # @if <request-name>.response.status <expected-status>
+#
+# 3. @if directive (JSONPath check): Execute request only if body value matches
+#    Syntax: # @if <request-name>.response.body.$.<path> <expected-value>
+#
+# 4. Multiple conditions: All conditions must be met for execution
+#
+# USE CASE:
+# ---------
+# This feature is ideal for end-to-end integration testing of APIs where:
+# - Requests need to execute in a specific order
+# - Later requests depend on earlier request results
+# - You want to handle different response scenarios (200, 404, etc.)
+#
+# ========================================================================
 
 ####
 # Variables
