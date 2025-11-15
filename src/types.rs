@@ -72,7 +72,7 @@ pub struct Condition {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConditionType {
-    Status,           // Check response status code
+    Status,               // Check response status code
     BodyJsonPath(String), // Check JSONPath expression in response body
 }
 

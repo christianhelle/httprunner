@@ -3,10 +3,7 @@ use crate::types::{Condition, ConditionType, RequestContext};
 use anyhow::Result;
 
 /// Evaluates if all conditions for a request are met
-pub fn evaluate_conditions(
-    conditions: &[Condition],
-    context: &[RequestContext],
-) -> Result<bool> {
+pub fn evaluate_conditions(conditions: &[Condition], context: &[RequestContext]) -> Result<bool> {
     if conditions.is_empty() {
         return Ok(true);
     }
@@ -21,10 +18,7 @@ pub fn evaluate_conditions(
 }
 
 /// Evaluates a single condition
-fn evaluate_single_condition(
-    condition: &Condition,
-    context: &[RequestContext],
-) -> Result<bool> {
+fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) -> Result<bool> {
     // Find the request context by name
     let target_context = context
         .iter()
@@ -69,8 +63,7 @@ fn evaluate_single_condition(
 /// Extracts a value from JSON using a JSONPath expression
 fn extract_json_value(json_body: &str, json_path: &str) -> Result<Option<String>> {
     // Handle $.property format
-    if json_path.starts_with("$.") {
-        let property = &json_path[2..];
+    if let Some(property) = json_path.strip_prefix("$.") {
         return request_variables::extract_json_property(json_body, property);
     }
 
@@ -78,10 +71,7 @@ fn extract_json_value(json_body: &str, json_path: &str) -> Result<Option<String>
 }
 
 /// Checks if a request's dependencies are met (for @dependsOn)
-pub fn check_dependency(
-    depends_on: &Option<String>,
-    context: &[RequestContext],
-) -> bool {
+pub fn check_dependency(depends_on: &Option<String>, context: &[RequestContext]) -> bool {
     if let Some(dep_name) = depends_on {
         // Find the dependent request
         let target_context = context.iter().find(|ctx| ctx.name == *dep_name);
@@ -95,7 +85,7 @@ pub fn check_dependency(
         // Dependency not found or not executed
         return false;
     }
-    
+
     // No dependency, always satisfied
     true
 }
