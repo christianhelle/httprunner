@@ -125,7 +125,7 @@ fn extract_from_response(
     }
 }
 
-fn extract_json_property(json_body: &str, property: &str) -> Result<Option<String>> {
+pub fn extract_json_property(json_body: &str, property: &str) -> Result<Option<String>> {
     // Handle nested properties like "json.token" and array indexing like "data[0].version"
     let parts: Vec<&str> = property.split('.').collect();
     let mut current_json = json_body.to_string();

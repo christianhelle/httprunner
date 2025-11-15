@@ -1,6 +1,7 @@
 mod assertions;
 mod cli;
 mod colors;
+mod conditions;
 mod discovery;
 mod environment;
 mod log;

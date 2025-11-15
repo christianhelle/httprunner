@@ -1,5 +1,5 @@
 use crate::environment;
-use crate::types::{Assertion, AssertionType, Header, HttpRequest, Variable};
+use crate::types::{Assertion, AssertionType, Condition, ConditionType, Header, HttpRequest, Variable};
 use anyhow::{Context, Result};
 use std::fs;
 
@@ -21,6 +21,8 @@ pub fn parse_http_file(
     let mut pending_request_name: Option<String> = None;
     let mut pending_timeout: Option<u64> = None;
     let mut pending_connection_timeout: Option<u64> = None;
+    let mut pending_depends_on: Option<String> = None;
+    let mut pending_conditions: Vec<Condition> = Vec::new();
     let mut in_intellij_script = false;
 
     for line in lines {
@@ -71,6 +73,28 @@ pub fn parse_http_file(
             .map(|s| s.trim());
         if let Some(value) = connection_timeout_value {
             pending_connection_timeout = parse_timeout_value(value);
+            continue;
+        }
+
+        // Check for @dependsOn directive
+        let depends_on_value = trimmed
+            .strip_prefix("# @dependsOn ")
+            .or_else(|| trimmed.strip_prefix("// @dependsOn "))
+            .map(|s| s.trim());
+        if let Some(value) = depends_on_value {
+            pending_depends_on = Some(value.to_string());
+            continue;
+        }
+
+        // Check for @if directive
+        let if_value = trimmed
+            .strip_prefix("# @if ")
+            .or_else(|| trimmed.strip_prefix("// @if "))
+            .map(|s| s.trim());
+        if let Some(value) = if_value {
+            if let Some(condition) = parse_condition(value) {
+                pending_conditions.push(condition);
+            }
             continue;
         }
 
@@ -168,6 +192,8 @@ pub fn parse_http_file(
                     variables: Vec::new(),
                     timeout: pending_timeout.take(),
                     connection_timeout: pending_connection_timeout.take(),
+                    depends_on: pending_depends_on.take(),
+                    conditions: std::mem::take(&mut pending_conditions),
                 });
                 in_body = false;
             }
@@ -265,6 +291,52 @@ fn substitute_variables(input: &str, variables: &[Variable]) -> String {
     }
 
     result
+}
+
+fn parse_condition(value: &str) -> Option<Condition> {
+    // Parse @if directive
+    // Format 1: @if request-name.response.status 200
+    // Format 2: @if request-name.response.body.$.property expected_value
+    
+    let parts: Vec<&str> = value.split_whitespace().collect();
+    if parts.len() < 2 {
+        return None;
+    }
+    
+    let reference = parts[0];
+    let expected_value = parts[1..].join(" ");
+    
+    // Parse the reference to determine condition type
+    // Format: request-name.response.status or request-name.response.body.$.property
+    let ref_parts: Vec<&str> = reference.split('.').collect();
+    
+    if ref_parts.len() < 3 {
+        return None;
+    }
+    
+    let request_name = ref_parts[0].to_string();
+    
+    // Check if this is a status check
+    if ref_parts.len() == 3 && ref_parts[1] == "response" && ref_parts[2] == "status" {
+        return Some(Condition {
+            request_name,
+            condition_type: ConditionType::Status,
+            expected_value,
+        });
+    }
+    
+    // Check if this is a body JSONPath check
+    // Format: request-name.response.body.$.property
+    if ref_parts.len() >= 4 && ref_parts[1] == "response" && ref_parts[2] == "body" {
+        let json_path = ref_parts[3..].join(".");
+        return Some(Condition {
+            request_name,
+            condition_type: ConditionType::BodyJsonPath(json_path),
+            expected_value,
+        });
+    }
+    
+    None
 }
 
 fn parse_timeout_value(value: &str) -> Option<u64> {

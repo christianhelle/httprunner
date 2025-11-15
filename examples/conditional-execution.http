@@ -1,0 +1,79 @@
+# Conditional Request Execution Example
+# This file demonstrates how to use @dependsOn and @if directives for conditional execution
+
+####
+# Variables
+@expected_user_name=testuser123
+
+###
+# Step 1: First request that always runs
+# @name request-one
+GET https://httpbin.org/status/200
+
+###
+# Step 2: Only execute if request-one returns HTTP 200 status
+# @name request-two
+# @dependsOn request-one
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+    "username": "{{expected_user_name}}",
+    "action": "create_user"
+}
+
+###
+# Step 3: Only execute if request-two returns a 200 status (using @if)
+# @name request-three
+# @if request-two.response.status 200
+PUT https://httpbin.org/put
+Content-Type: application/json
+
+{
+    "username": "{{expected_user_name}}",
+    "action": "update_user",
+    "data": "some new data"
+}
+
+###
+# Step 4: Test with 404 - this will not run since request-two returns 200
+# @name request-four
+# @if request-two.response.status 404
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+    "username": "{{expected_user_name}}",
+    "action": "user_not_found_fallback"
+}
+
+###
+# Step 5: Check response body using JSONPath condition
+# Only execute if request-two returns specific JSON data
+# @name request-five
+# @if request-two.response.status 200
+# @if request-two.response.body.$.json.username testuser123
+DELETE https://httpbin.org/delete
+Content-Type: application/json
+
+{
+    "username": "{{expected_user_name}}",
+    "action": "cleanup"
+}
+
+###
+# Step 6: Demonstrate failure scenario - this request will fail with 404
+# @name failing-request
+GET https://httpbin.org/status/404
+
+###
+# Step 7: This should be skipped because failing-request doesn't return 200
+# @name should-skip
+# @dependsOn failing-request
+GET https://httpbin.org/get
+
+###
+# Step 8: This should run because it depends on request-one which succeeded
+# @name should-run
+# @dependsOn request-one
+GET https://httpbin.org/get
