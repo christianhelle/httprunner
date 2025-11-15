@@ -7,6 +7,31 @@ use crate::runner;
 use crate::types::{AssertionType, HttpRequest, RequestContext};
 use anyhow::Result;
 
+/// Helper function to format request name for logging
+fn format_request_name(name: &Option<String>) -> String {
+    name.as_ref()
+        .map(|n| format!("{}: ", n))
+        .unwrap_or_default()
+}
+
+/// Helper function to add a skipped request to the context
+fn add_skipped_request_context(
+    request_contexts: &mut Vec<RequestContext>,
+    processed_request: HttpRequest,
+    request_count: u32,
+) {
+    let context_name = processed_request
+        .name
+        .clone()
+        .unwrap_or_else(|| format!("request_{}", request_count));
+
+    request_contexts.push(RequestContext {
+        name: context_name,
+        request: processed_request,
+        result: None,
+    });
+}
+
 pub fn process_http_files(
     files: &[String],
     verbose: bool,
@@ -58,33 +83,26 @@ pub fn process_http_files(
             let mut processed_request = request.clone();
 
             // Check if dependencies are met
-            if !conditions::check_dependency(&processed_request.depends_on, &request_contexts) {
-                let name_str = processed_request
-                    .name
-                    .as_ref()
-                    .map(|n| format!("{}: ", n))
-                    .unwrap_or_default();
+            if let Some(dep_name) = processed_request.depends_on.as_ref() {
+                if !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts) {
+                    let name_str = format_request_name(&processed_request.name);
 
-                log.writeln(&format!(
-                    "{} {} {} {} - Skipped: dependency '{}' not met (must return HTTP 200)",
-                    colors::yellow("⏭️"),
-                    name_str,
-                    processed_request.method,
-                    processed_request.url,
-                    processed_request.depends_on.as_ref().unwrap()
-                ));
+                    log.writeln(&format!(
+                        "{} {} {} {} - Skipped: dependency '{}' not met (must return HTTP 200)",
+                        colors::yellow("⏭️"),
+                        name_str,
+                        processed_request.method,
+                        processed_request.url,
+                        dep_name
+                    ));
 
-                let context_name = processed_request
-                    .name
-                    .clone()
-                    .unwrap_or_else(|| format!("request_{}", request_count));
-
-                request_contexts.push(RequestContext {
-                    name: context_name,
-                    request: processed_request,
-                    result: None,
-                });
-                continue;
+                    add_skipped_request_context(
+                        &mut request_contexts,
+                        processed_request,
+                        request_count,
+                    );
+                    continue;
+                }
             }
 
             // Check if conditions are met
@@ -95,11 +113,7 @@ pub fn process_http_files(
                 ) {
                     Ok(conditions_met) => {
                         if !conditions_met {
-                            let name_str = processed_request
-                                .name
-                                .as_ref()
-                                .map(|n| format!("{}: ", n))
-                                .unwrap_or_default();
+                            let name_str = format_request_name(&processed_request.name);
 
                             log.writeln(&format!(
                                 "{} {} {} {} - Skipped: conditions not met",
@@ -109,38 +123,31 @@ pub fn process_http_files(
                                 processed_request.url
                             ));
 
-                            let context_name = processed_request
-                                .name
-                                .clone()
-                                .unwrap_or_else(|| format!("request_{}", request_count));
-
-                            request_contexts.push(RequestContext {
-                                name: context_name,
-                                request: processed_request,
-                                result: None,
-                            });
+                            add_skipped_request_context(
+                                &mut request_contexts,
+                                processed_request,
+                                request_count,
+                            );
                             continue;
                         }
                     }
                     Err(e) => {
+                        let name_str = format_request_name(&processed_request.name);
+
                         log.writeln(&format!(
-                            "{} {} {} - Error evaluating conditions: {}",
+                            "{} {} {} {} - Error evaluating conditions: {}",
                             colors::red("❌"),
+                            name_str,
                             processed_request.method,
                             processed_request.url,
                             e
                         ));
 
-                        let context_name = processed_request
-                            .name
-                            .clone()
-                            .unwrap_or_else(|| format!("request_{}", request_count));
-
-                        request_contexts.push(RequestContext {
-                            name: context_name,
-                            request: processed_request,
-                            result: None,
-                        });
+                        add_skipped_request_context(
+                            &mut request_contexts,
+                            processed_request,
+                            request_count,
+                        );
                         continue;
                     }
                 }

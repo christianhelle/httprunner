@@ -24,12 +24,10 @@ fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) 
         .iter()
         .find(|ctx| ctx.name == condition.request_name);
 
-    if target_context.is_none() {
+    let Some(ctx) = target_context else {
         // Referenced request not found or not executed yet
         return Ok(false);
-    }
-
-    let ctx = target_context.unwrap();
+    };
 
     // Check if the request has a result
     let result = match &ctx.result {
@@ -49,7 +47,7 @@ fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) 
             if let Some(ref body) = result.response_body {
                 let extracted_value = extract_json_value(body, json_path)?;
                 if let Some(value) = extracted_value {
-                    Ok(value == condition.expected_value)
+                    Ok(value.trim() == condition.expected_value.trim())
                 } else {
                     Ok(false)
                 }
