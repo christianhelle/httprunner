@@ -264,4 +264,186 @@ mod tests {
         let context = vec![];
         assert!(check_dependency(&None, &context));
     }
+
+    #[test]
+    fn test_evaluate_body_jsonpath_condition_success() {
+        let condition = Condition {
+            request_name: "request1".to_string(),
+            condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
+            expected_value: "testuser".to_string(),
+        };
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "POST".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some(r#"{"username": "testuser", "id": 123}"#.to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(evaluate_conditions(&vec![condition], &context).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate_body_jsonpath_condition_failure() {
+        let condition = Condition {
+            request_name: "request1".to_string(),
+            condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
+            expected_value: "wronguser".to_string(),
+        };
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "POST".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some(r#"{"username": "testuser", "id": 123}"#.to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate_multiple_conditions_all_met() {
+        let conditions = vec![
+            Condition {
+                request_name: "request1".to_string(),
+                condition_type: ConditionType::Status,
+                expected_value: "200".to_string(),
+            },
+            Condition {
+                request_name: "request1".to_string(),
+                condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
+                expected_value: "testuser".to_string(),
+            },
+        ];
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "POST".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some(r#"{"username": "testuser", "id": 123}"#.to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(evaluate_conditions(&conditions, &context).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate_multiple_conditions_one_fails() {
+        let conditions = vec![
+            Condition {
+                request_name: "request1".to_string(),
+                condition_type: ConditionType::Status,
+                expected_value: "200".to_string(),
+            },
+            Condition {
+                request_name: "request1".to_string(),
+                condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
+                expected_value: "wronguser".to_string(),
+            },
+        ];
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "POST".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some(r#"{"username": "testuser", "id": 123}"#.to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(!evaluate_conditions(&conditions, &context).unwrap());
+    }
 }
