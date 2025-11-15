@@ -19,6 +19,7 @@ A command-line tool that parses `.http` files and executes HTTP requests, provid
 - 🔍 Response assertions for status codes, body content, and headers
 - 🔧 Variables support with substitution in URLs, headers, and request bodies
 - 🔧 Request Variables for chaining requests and passing data between HTTP calls
+- 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 Semantic versioning with git tag and commit information
 - 🔍 Build-time version generation with automatic git integration
@@ -228,6 +229,50 @@ Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
 
 **For headers:**
 - `header_name` - Extract specific header value (case-insensitive)
+
+## Conditional Execution
+
+Execute requests conditionally based on previous request results using `@dependsOn` and `@if` directives.
+
+### `@dependsOn` Directive
+
+Execute only if dependency returns HTTP 200:
+
+```http
+# @name check-user
+GET https://api.example.com/user/123
+
+###
+# @dependsOn check-user
+PUT https://api.example.com/user/123
+```
+
+### `@if` Directive - Status Check
+
+```http
+# @name check-user
+GET https://api.example.com/user/123
+
+###
+# Create if not found (404)
+# @if check-user.response.status 404
+POST https://api.example.com/user
+```
+
+### `@if` Directive - JSONPath Check
+
+```http
+# @name create-user
+POST https://api.example.com/user
+
+###
+# Execute only if username matches
+# @if create-user.response.status 200
+# @if create-user.response.body.$.username testuser
+PUT https://api.example.com/user/activate
+```
+
+**Note:** Multiple `@if` directives require ALL conditions to be met (AND logic).
 
 ## Timeout Configuration
 
@@ -440,6 +485,7 @@ src/
 ├── discovery.rs         # Recursive file discovery
 ├── assertions.rs        # Response assertion validation
 ├── request_variables.rs # Request chaining
+├── conditions.rs        # Conditional execution logic
 ├── environment.rs       # Environment variable handling
 ├── log.rs               # Logging functionality
 └── upgrade.rs           # Self-update feature

@@ -45,6 +45,7 @@
                         <li><a href="#http-file-format">HTTP File Format</a></li>
                         <li><a href="#variables">Variables</a></li>
                         <li><a href="#request-variables">Request Variables</a></li>
+                        <li><a href="#conditional-execution">Conditional Execution</a></li>
                         <li><a href="#environment-files">Environment Files</a></li>
                         <li><a href="#assertions">Response Assertions</a></li>
                         <li><a href="#command-line-options">Command Line Options</a></li>
@@ -243,6 +244,116 @@ Content-Type: application/json
                             <li><strong>Dynamic Headers:</strong> Use response headers in subsequent requests</li>
                             <li><strong>Request Auditing:</strong> Reference original request data in follow-up calls</li>
                             <li><strong>API Testing:</strong> Create comprehensive test flows with dependent requests</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="conditional-execution" class="guide-section">
+                    <h2>Conditional Execution</h2>
+                    <p>Execute HTTP requests conditionally based on previous request results using <code>@dependsOn</code> and <code>@if</code> directives. This enables complex integration testing scenarios and workflow automation.</p>
+
+                    <h3>@dependsOn Directive</h3>
+                    <p>Execute a request only if a dependent request returns HTTP 200 status.</p>
+                    
+                    <div class="code-block">
+                        <code># @name check-user
+GET https://api.example.com/user/123
+
+###
+# Only execute if check-user succeeds (returns 200)
+# @name update-user
+# @dependsOn check-user
+PUT https://api.example.com/user/123
+Content-Type: application/json
+
+{
+  "name": "Updated Name"
+}</code>
+                    </div>
+
+                    <h3>@if Directive - Status Code Check</h3>
+                    <p>Execute a request only if a previous request returns a specific HTTP status code.</p>
+                    
+                    <div class="code-block">
+                        <code># @name check-user
+GET https://api.example.com/user/123
+
+###
+# Create user only if they don't exist (404)
+# @name create-user
+# @if check-user.response.status 404
+POST https://api.example.com/user
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "email": "user@example.com"
+}</code>
+                    </div>
+
+                    <h3>@if Directive - JSONPath Body Check</h3>
+                    <p>Execute a request only if a JSONPath expression in the response body matches an expected value.</p>
+                    
+                    <div class="code-block">
+                        <code># @name create-user
+POST https://api.example.com/user
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "role": "admin"
+}
+
+###
+# Update only if user was created with admin role
+# @name activate-admin
+# @if create-user.response.status 200
+# @if create-user.response.body.$.username testuser
+# @if create-user.response.body.$.role admin
+PUT https://api.example.com/user/activate</code>
+                    </div>
+
+                    <h3>Multiple Conditions</h3>
+                    <p>Multiple <code>@if</code> directives can be specified for a single request. <strong>All conditions must be met</strong> for the request to execute (AND logic).</p>
+                    
+                    <div class="code-block">
+                        <code># @name login
+POST https://api.example.com/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "secret"
+}
+
+###
+# Only execute if login succeeded AND returned admin role
+# @name admin-dashboard
+# @if login.response.status 200
+# @if login.response.body.$.role admin
+GET https://api.example.com/admin/dashboard
+Authorization: Bearer {{login.response.body.$.token}}</code>
+                    </div>
+
+                    <div class="callout callout-info">
+                        <h4>💡 Use Cases</h4>
+                        <ul>
+                            <li><strong>Progressive User Setup:</strong> Check if user exists → Create only if 404 → Verify → Update</li>
+                            <li><strong>Error Handling:</strong> Try primary API → Use fallback if primary fails</li>
+                            <li><strong>Conditional Updates:</strong> Update resources only when specific conditions are met</li>
+                            <li><strong>Role-Based Testing:</strong> Execute admin-only requests based on user role</li>
+                            <li><strong>Data Validation:</strong> Proceed only if response data matches expectations</li>
+                        </ul>
+                    </div>
+
+                    <div class="callout callout-tip">
+                        <h4>📝 Notes</h4>
+                        <ul>
+                            <li>Conditional directives support both <code>#</code> and <code>//</code> comment styles</li>
+                            <li>Requests can have both <code>@dependsOn</code> and multiple <code>@if</code> directives</li>
+                            <li>Conditions can only reference requests that appear earlier in the .http file</li>
+                            <li>All request names used in conditions must be defined with <code># @name</code></li>
+                            <li>Skipped requests show: <code>⏭️ request-name - Skipped: conditions not met</code></li>
                         </ul>
                     </div>
                 </section>
