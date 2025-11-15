@@ -27,6 +27,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
+- 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
 - 🔍 **Build-time version generation** with automatic git integration
@@ -681,6 +682,179 @@ Content-Type: application/json
 - **API Testing**: Create comprehensive test flows with dependent requests
 
 **Note:** Request variables can only reference requests that appear earlier in the same `.http` file and have been named with `# @name`.
+
+## Conditional Request Execution
+
+Execute HTTP requests conditionally based on previous request results using `@dependsOn` and `@if` directives. This powerful feature enables complex integration testing scenarios and workflow automation.
+
+### `@dependsOn` Directive
+
+Execute a request only if a dependent request returns HTTP 200 status.
+
+**Syntax:**
+```http
+# @dependsOn <request-name>
+```
+
+**Example:**
+```http
+# @name check-user
+GET https://api.example.com/user/123
+
+###
+# Only execute if check-user succeeds (returns 200)
+# @name update-user
+# @dependsOn check-user
+PUT https://api.example.com/user/123
+Content-Type: application/json
+
+{
+  "name": "Updated Name"
+}
+```
+
+### `@if` Directive - Status Code Check
+
+Execute a request only if a previous request returns a specific HTTP status code.
+
+**Syntax:**
+```http
+# @if <request-name>.response.status <expected-status>
+```
+
+**Example:**
+```http
+# @name check-user
+GET https://api.example.com/user/123
+
+###
+# Create user only if they don't exist (404)
+# @name create-user
+# @if check-user.response.status 404
+POST https://api.example.com/user
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "email": "user@example.com"
+}
+```
+
+### `@if` Directive - JSONPath Body Check
+
+Execute a request only if a JSONPath expression in the response body matches an expected value.
+
+**Syntax:**
+```http
+# @if <request-name>.response.body.$.<path> <expected-value>
+```
+
+**Example:**
+```http
+# @name create-user
+POST https://api.example.com/user
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "role": "admin"
+}
+
+###
+# Update only if user was created with admin role
+# @name activate-admin
+# @if create-user.response.status 200
+# @if create-user.response.body.$.username testuser
+# @if create-user.response.body.$.role admin
+PUT https://api.example.com/user/activate
+```
+
+### Multiple Conditions
+
+Multiple `@if` directives can be specified for a single request. **All conditions must be met** for the request to execute (AND logic).
+
+**Example:**
+```http
+# @name login
+POST https://api.example.com/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "secret"
+}
+
+###
+# Only execute if login succeeded AND returned admin role
+# @name admin-dashboard
+# @if login.response.status 200
+# @if login.response.body.$.role admin
+GET https://api.example.com/admin/dashboard
+Authorization: Bearer {{login.response.body.$.token}}
+```
+
+### Conditional Execution Use Cases
+
+**Progressive User Setup:**
+```http
+# Check if user exists
+# @name check-user
+GET https://api.example.com/user/123
+
+###
+# Create only if not found
+# @if check-user.response.status 404
+POST https://api.example.com/user
+Content-Type: application/json
+{ "id": 123, "name": "New User" }
+
+###
+# Verify creation succeeded
+# @name verify-user
+# @dependsOn check-user
+GET https://api.example.com/user/123
+
+###
+# Update if verified
+# @if verify-user.response.status 200
+PUT https://api.example.com/user/123
+Content-Type: application/json
+{ "verified": true }
+```
+
+**Error Handling with Fallbacks:**
+```http
+# @name primary-api
+GET https://primary-api.example.com/data
+
+###
+# Use fallback API if primary fails
+# @if primary-api.response.status 503
+GET https://backup-api.example.com/data
+
+###
+# Process results if either succeeded
+# @name process-data
+# @dependsOn primary-api
+POST https://api.example.com/process
+```
+
+### Skipped Request Output
+
+When a request is skipped due to unmet conditions, the output shows:
+
+```text
+⏭️ request-name: POST https://api.example.com/endpoint - Skipped: dependency 'check-user' not met (must return HTTP 200)
+⏭️ request-name: PUT https://api.example.com/endpoint - Skipped: conditions not met
+```
+
+This makes it easy to understand why requests were not executed in your test workflows.
+
+**Note:** 
+- Conditional directives support both `#` and `//` comment styles
+- Requests can have both `@dependsOn` and multiple `@if` directives
+- Conditions can only reference requests that appear earlier in the `.http` file
+- All request names used in conditions must be defined with `# @name`
 
 ## Timeout Configuration
 
