@@ -1,4 +1,5 @@
 use crate::colors;
+use crate::conditions;
 use crate::log::Log;
 use crate::parser;
 use crate::request_variables;
@@ -55,6 +56,92 @@ pub fn process_http_files(
 
             // Clone request for processing
             let mut processed_request = request.clone();
+
+            // Check if dependencies are met
+            if !conditions::check_dependency(&processed_request.depends_on, &request_contexts) {
+                let name_str = processed_request
+                    .name
+                    .as_ref()
+                    .map(|n| format!("{}: ", n))
+                    .unwrap_or_default();
+                
+                log.writeln(&format!(
+                    "{} {} {} {} - Skipped: dependency '{}' not met (must return HTTP 200)",
+                    colors::yellow("⏭️"),
+                    name_str,
+                    processed_request.method,
+                    processed_request.url,
+                    processed_request.depends_on.as_ref().unwrap()
+                ));
+
+                let context_name = processed_request
+                    .name
+                    .clone()
+                    .unwrap_or_else(|| format!("request_{}", request_count));
+
+                request_contexts.push(RequestContext {
+                    name: context_name,
+                    request: processed_request,
+                    result: None,
+                });
+                continue;
+            }
+
+            // Check if conditions are met
+            if !processed_request.conditions.is_empty() {
+                match conditions::evaluate_conditions(&processed_request.conditions, &request_contexts) {
+                    Ok(conditions_met) => {
+                        if !conditions_met {
+                            let name_str = processed_request
+                                .name
+                                .as_ref()
+                                .map(|n| format!("{}: ", n))
+                                .unwrap_or_default();
+                            
+                            log.writeln(&format!(
+                                "{} {} {} {} - Skipped: conditions not met",
+                                colors::yellow("⏭️"),
+                                name_str,
+                                processed_request.method,
+                                processed_request.url
+                            ));
+
+                            let context_name = processed_request
+                                .name
+                                .clone()
+                                .unwrap_or_else(|| format!("request_{}", request_count));
+
+                            request_contexts.push(RequestContext {
+                                name: context_name,
+                                request: processed_request,
+                                result: None,
+                            });
+                            continue;
+                        }
+                    }
+                    Err(e) => {
+                        log.writeln(&format!(
+                            "{} {} {} - Error evaluating conditions: {}",
+                            colors::red("❌"),
+                            processed_request.method,
+                            processed_request.url,
+                            e
+                        ));
+
+                        let context_name = processed_request
+                            .name
+                            .clone()
+                            .unwrap_or_else(|| format!("request_{}", request_count));
+
+                        request_contexts.push(RequestContext {
+                            name: context_name,
+                            request: processed_request,
+                            result: None,
+                        });
+                        continue;
+                    }
+                }
+            }
 
             // Substitute request variables
             substitute_request_variables_in_request(&mut processed_request, &request_contexts)?;

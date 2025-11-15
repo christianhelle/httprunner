@@ -40,6 +40,8 @@ pub struct HttpRequest {
     pub variables: Vec<Variable>,
     pub timeout: Option<u64>,            // Read timeout in milliseconds
     pub connection_timeout: Option<u64>, // Connection timeout in milliseconds
+    pub depends_on: Option<String>,      // Request name this depends on (for @dependsOn)
+    pub conditions: Vec<Condition>,      // Conditions for execution (for @if)
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +61,19 @@ pub enum AssertionType {
     Status,
     Body,
     Headers,
+}
+
+#[derive(Debug, Clone)]
+pub struct Condition {
+    pub request_name: String,
+    pub condition_type: ConditionType,
+    pub expected_value: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConditionType {
+    Status,           // Check response status code
+    BodyJsonPath(String), // Check JSONPath expression in response body
 }
 
 #[derive(Debug)]
