@@ -94,8 +94,9 @@ pub fn parse_http_file(
             .or_else(|| trimmed.strip_prefix("// @if "))
             .map(|s| s.trim());
         if let Some(value) = if_value {
-            if let Some(condition) = parse_condition(value) {
-                pending_conditions.push(condition);
+            match parse_condition(value) {
+                Some(condition) => pending_conditions.push(condition),
+                None => eprintln!("Warning: Invalid @if directive format: '{}'", value),
             }
             continue;
         }
