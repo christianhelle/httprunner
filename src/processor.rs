@@ -64,7 +64,7 @@ pub fn process_http_files(
                     .as_ref()
                     .map(|n| format!("{}: ", n))
                     .unwrap_or_default();
-                
+
                 log.writeln(&format!(
                     "{} {} {} {} - Skipped: dependency '{}' not met (must return HTTP 200)",
                     colors::yellow("⏭️"),
@@ -89,7 +89,10 @@ pub fn process_http_files(
 
             // Check if conditions are met
             if !processed_request.conditions.is_empty() {
-                match conditions::evaluate_conditions(&processed_request.conditions, &request_contexts) {
+                match conditions::evaluate_conditions(
+                    &processed_request.conditions,
+                    &request_contexts,
+                ) {
                     Ok(conditions_met) => {
                         if !conditions_met {
                             let name_str = processed_request
@@ -97,7 +100,7 @@ pub fn process_http_files(
                                 .as_ref()
                                 .map(|n| format!("{}: ", n))
                                 .unwrap_or_default();
-                            
+
                             log.writeln(&format!(
                                 "{} {} {} {} - Skipped: conditions not met",
                                 colors::yellow("⏭️"),

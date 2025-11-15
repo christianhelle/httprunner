@@ -1,5 +1,7 @@
 use crate::environment;
-use crate::types::{Assertion, AssertionType, Condition, ConditionType, Header, HttpRequest, Variable};
+use crate::types::{
+    Assertion, AssertionType, Condition, ConditionType, Header, HttpRequest, Variable,
+};
 use anyhow::{Context, Result};
 use std::fs;
 
@@ -297,25 +299,25 @@ fn parse_condition(value: &str) -> Option<Condition> {
     // Parse @if directive
     // Format 1: @if request-name.response.status 200
     // Format 2: @if request-name.response.body.$.property expected_value
-    
+
     let parts: Vec<&str> = value.split_whitespace().collect();
     if parts.len() < 2 {
         return None;
     }
-    
+
     let reference = parts[0];
     let expected_value = parts[1..].join(" ");
-    
+
     // Parse the reference to determine condition type
     // Format: request-name.response.status or request-name.response.body.$.property
     let ref_parts: Vec<&str> = reference.split('.').collect();
-    
+
     if ref_parts.len() < 3 {
         return None;
     }
-    
+
     let request_name = ref_parts[0].to_string();
-    
+
     // Check if this is a status check
     if ref_parts.len() == 3 && ref_parts[1] == "response" && ref_parts[2] == "status" {
         return Some(Condition {
@@ -324,7 +326,7 @@ fn parse_condition(value: &str) -> Option<Condition> {
             expected_value,
         });
     }
-    
+
     // Check if this is a body JSONPath check
     // Format: request-name.response.body.$.property
     if ref_parts.len() >= 4 && ref_parts[1] == "response" && ref_parts[2] == "body" {
@@ -335,7 +337,7 @@ fn parse_condition(value: &str) -> Option<Condition> {
             expected_value,
         });
     }
-    
+
     None
 }
 
@@ -351,11 +353,17 @@ fn parse_timeout_value(value: &str) -> Option<u64> {
     } else if value.ends_with('m') {
         // Minutes - convert to milliseconds
         let num_str = value[..value.len() - 1].trim();
-        num_str.parse::<u64>().ok().and_then(|m| m.checked_mul(60_000))
+        num_str
+            .parse::<u64>()
+            .ok()
+            .and_then(|m| m.checked_mul(60_000))
     } else if value.ends_with('s') {
         // Seconds (explicit) - convert to milliseconds
         let num_str = value[..value.len() - 1].trim();
-        num_str.parse::<u64>().ok().and_then(|s| s.checked_mul(1_000))
+        num_str
+            .parse::<u64>()
+            .ok()
+            .and_then(|s| s.checked_mul(1_000))
     } else {
         // No unit, default to seconds - convert to milliseconds
         value.parse::<u64>().ok().and_then(|s| s.checked_mul(1_000))
@@ -450,6 +458,103 @@ GET https://example.com/api
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0].timeout, Some(600_000)); // 600 seconds = 600,000 ms
         assert_eq!(requests[0].connection_timeout, Some(30_000)); // 30 seconds = 30,000 ms
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_depends_on() {
+        let content = r#"
+# @name request-one
+GET https://example.com/api
+
+###
+# @name request-two
+# @dependsOn request-one
+POST https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_depends_on.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0].depends_on, None);
+        assert_eq!(requests[1].depends_on, Some("request-one".to_string()));
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_if_status() {
+        let content = r#"
+# @name request-one
+GET https://example.com/api
+
+###
+# @name request-two
+# @if request-one.response.status 200
+POST https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_if_status.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0].conditions.len(), 0);
+        assert_eq!(requests[1].conditions.len(), 1);
+        assert_eq!(requests[1].conditions[0].request_name, "request-one");
+        assert_eq!(requests[1].conditions[0].expected_value, "200");
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_if_jsonpath() {
+        let content = r#"
+# @name request-one
+GET https://example.com/api
+
+###
+# @name request-two
+# @if request-one.response.body.$.username testuser
+POST https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_if_jsonpath.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0].conditions.len(), 0);
+        assert_eq!(requests[1].conditions.len(), 1);
+        assert_eq!(requests[1].conditions[0].request_name, "request-one");
+        assert_eq!(requests[1].conditions[0].expected_value, "testuser");
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_multiple_conditions() {
+        let content = r#"
+# @name request-one
+GET https://example.com/api
+
+###
+# @name request-two
+# @if request-one.response.status 200
+# @if request-one.response.body.$.username testuser
+POST https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_multiple_conditions.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0].conditions.len(), 0);
+        assert_eq!(requests[1].conditions.len(), 2);
 
         std::fs::remove_file(&test_file).ok();
     }
