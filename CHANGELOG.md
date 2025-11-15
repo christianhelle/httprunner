@@ -4,6 +4,10 @@
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.28...HEAD)
 
+**Implemented enhancements:**
+
+- Add conditional request execution with @dependsOn and @if directives [\#66](https://github.com/christianhelle/httprunner/pull/66) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 **Merged pull requests:**
 
 - Add customizable HTTP request timeouts with millisecond precision [\#65](https://github.com/christianhelle/httprunner/pull/65) ([Copilot](https://github.com/apps/copilot-swe-agent))
