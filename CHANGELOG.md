@@ -10,6 +10,7 @@
 
 **Merged pull requests:**
 
+- Refactor conditional execution code based on PR\#66 review comments [\#67](https://github.com/christianhelle/httprunner/pull/67) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add customizable HTTP request timeouts with millisecond precision [\#65](https://github.com/christianhelle/httprunner/pull/65) ([Copilot](https://github.com/apps/copilot-swe-agent))
 
 ## [0.3.28](https://github.com/christianhelle/httprunner/tree/0.3.28) (2025-11-12)
