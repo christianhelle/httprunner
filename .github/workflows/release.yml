@@ -205,7 +205,7 @@ jobs:
 
   publish-crates:
     name: Publish to crates.io
-    needs: release
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
