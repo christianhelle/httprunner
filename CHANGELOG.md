@@ -2,7 +2,15 @@
 
 ## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.28...HEAD)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.30...HEAD)
+
+**Implemented enhancements:**
+
+- Improve summary output with separate skipped request tracking [\#68](https://github.com/christianhelle/httprunner/pull/68) ([christianhelle](https://github.com/christianhelle))
+
+## [0.3.30](https://github.com/christianhelle/httprunner/tree/0.3.30) (2025-11-16)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.28...0.3.30)
 
 **Implemented enhancements:**
 
