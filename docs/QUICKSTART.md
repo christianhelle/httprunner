@@ -77,7 +77,7 @@ Found 2 HTTP request(s)
 ✅ POST https://httpbin.org/post - Status: 200 - 145ms
 
 ==================================================
-File Summary: 2/2 requests succeeded
+File Summary: 2 Passed, 0 Failed, 0 Skipped
 ```
 
 ### 3. Use Variables

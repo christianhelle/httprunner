@@ -9,8 +9,8 @@ A command-line tool that parses `.http` files and executes HTTP requests, provid
 - 🔍 `--discover` mode to recursively find and run all `.http` files
 - 📝 `--verbose` mode for detailed request and response information
 - 📋 `--log` mode to save all output to a file for analysis and reporting
-- ✅ Color-coded output (green for success, red for failure)
-- 📊 Summary statistics showing success/failure counts (per file and overall)
+- ✅ Color-coded output (green for success, red for failure, yellow for skipped)
+- 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
 - 📝 Custom headers support with full request header implementation
 - 🎯 Detailed error reporting with status codes
@@ -428,7 +428,7 @@ The tool provides colored output with emojis:
 - ✅ **Green**: Successful requests (2xx status codes)
 - ❌ **Red**: Failed requests (4xx, 5xx status codes, or connection errors)
 - 🚀 **Blue**: Informational messages
-- ⚠️ **Yellow**: Warnings
+- ⚠️ **Yellow**: Warnings and skipped requests
 
 ### Example Output
 
@@ -443,7 +443,7 @@ Found 4 HTTP request(s)
 ✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200 - 112ms
 
 ==================================================
-Summary: 3/4 requests succeeded
+File Summary: 3 Passed, 1 Failed, 0 Skipped
 ```
 
 ## Verbose Mode
