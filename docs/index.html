@@ -41,7 +41,7 @@
                         HTTP File Runner
                     </h1>
                     <p class="hero-subtitle">
-                        A simple command-line tool written in Rust that parses .http files and executes HTTP requests, providing colored output with emojis to indicate success or failure
+                        A simple command-line tool written in Rust that parses .http files and executes HTTP requests, providing colored output with emojis to indicate success, failure, or skipped requests
                     </p>
                     <p class="hero-note" style="font-size: 0.9em; margin-top: 1em; margin-bottom: 2em; opacity: 0.9;">
                         <em>Originally written in Zig, ported to Rust due to limitations in Zig's standard library HTTP client APIs for configuring insecure HTTPS connections.</em>
@@ -89,7 +89,7 @@
                                 ✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
                             </div>
                             <div class="terminal-line output">
-                                Summary: 3/4 requests succeeded
+                                File Summary: <span style="color: #4ade80;">3</span> Passed, <span style="color: #f87171;">1</span> Failed, <span style="color: #facc15;">0</span> Skipped
                             </div>
                         </div>
                     </div>
