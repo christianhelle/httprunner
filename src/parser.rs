@@ -347,20 +347,20 @@ fn parse_timeout_value(value: &str) -> Option<u64> {
 
     // Check for time unit suffix
     // Returns timeout in milliseconds
-    if value.ends_with("ms") {
+    if let Some(stripped) = value.strip_suffix("ms") {
         // Milliseconds
-        let num_str = value[..value.len() - 2].trim();
+        let num_str = stripped.trim();
         num_str.parse::<u64>().ok()
-    } else if value.ends_with('m') {
+    } else if let Some(stripped) = value.strip_suffix('m') {
         // Minutes - convert to milliseconds
-        let num_str = value[..value.len() - 1].trim();
+        let num_str = stripped.trim();
         num_str
             .parse::<u64>()
             .ok()
             .and_then(|m| m.checked_mul(60_000))
-    } else if value.ends_with('s') {
+    } else if let Some(stripped) = value.strip_suffix('s') {
         // Seconds (explicit) - convert to milliseconds
-        let num_str = value[..value.len() - 1].trim();
+        let num_str = stripped.trim();
         num_str
             .parse::<u64>()
             .ok()
