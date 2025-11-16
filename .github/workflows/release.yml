@@ -126,49 +126,16 @@ jobs:
         with:
           path: artifacts
 
-      - name: Get version
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          else
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          if [ -f CHANGELOG.md ]; then
-            echo "changelog<<EOF" >> $GITHUB_OUTPUT
-            cat CHANGELOG.md | head -n 50 >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "changelog=Release ${{ steps.version.outputs.version }}" >> $GITHUB_OUTPUT
-          fi
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION }}
           name: Release v${{ env.VERSION }}
-          body: |
-            ## What's Changed
-            ${{ steps.changelog.outputs.changelog }}
-
-            ## Download
-            Download the appropriate binary for your platform below.
-
-            ## Installation
-            1. Download the archive for your platform
-            2. Extract the binary
-            3. Add to your PATH or run directly
-
-            ## Checksums
-            See the attached checksums file for verification.
+          generate_release_notes: true
           files: |
             artifacts/**/*
           draft: false
-          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          prerelease: ${{ contains(env.VERSION, '-') }}
 
   publish-container:
     name: Publish Container
