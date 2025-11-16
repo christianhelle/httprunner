@@ -17,8 +17,8 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 🔍 `--discover` mode to recursively find and run all `.http` files
 - 📝 `--verbose` mode for detailed request and response information
 - 📋 `--log` mode to save all output to a file for analysis and reporting
-- ✅ Color-coded output (green for success, red for failure)
-- 📊 Summary statistics showing success/failure counts (per file and overall)
+- ✅ Color-coded output (green for success, red for failure, yellow for skipped)
+- 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
 - 📝 **Custom headers support** with full request header implementation
 - 🎯 Detailed error reporting with status codes
@@ -848,6 +848,13 @@ When a request is skipped due to unmet conditions, the output shows:
 ⏭️ request-name: PUT https://api.example.com/endpoint - Skipped: conditions not met
 ```
 
+Skipped requests are reflected in the summary:
+
+```text
+==================================================
+File Summary: 8 Passed, 0 Failed, 2 Skipped
+```
+
 This makes it easy to understand why requests were not executed in your test workflows.
 
 **Note:** 
@@ -1094,7 +1101,7 @@ The tool provides colored output with emojis:
 - ✅ **Green**: Successful requests (2xx status codes)
 - ❌ **Red**: Failed requests (4xx, 5xx status codes, or connection errors)
 - 🚀 **Blue**: Informational messages
-- ⚠️ **Yellow**: Warnings
+- ⚠️ **Yellow**: Warnings and skipped requests
 
 ### Example Output
 
@@ -1109,7 +1116,7 @@ Found 4 HTTP request(s)
 ✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
 
 ==================================================
-Summary: 3/4 requests succeeded
+File Summary: 3 Passed, 1 Failed, 0 Skipped
 ```
 
 ### Verbose Mode
@@ -1233,7 +1240,7 @@ Found 4 HTTP request(s)
 ✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
 
 ==================================================
-Summary: 3/4 requests succeeded
+File Summary: 3 Passed, 1 Failed, 0 Skipped
 ```
 
 When combined with `--verbose`, the log file includes full request and response details, making it invaluable for debugging and documentation purposes.
@@ -1288,7 +1295,7 @@ Body:
 ------------------------------
 
 ==================================================
-Summary: 3/4 requests succeeded
+File Summary: 3 Passed, 1 Failed, 0 Skipped
 ```
 
 ### Multiple Files Output
@@ -1313,7 +1320,7 @@ Found 4 HTTP request(s)
 ✅ GET https://jsonplaceholder.typicode.com/users/1 - Status: 200
 
 ==================================================
-File Summary: 3/4 requests succeeded
+File Summary: 3 Passed, 1 Failed, 0 Skipped
 
 🚀 HTTP File Runner - Processing file: .\examples\quick.http
 ==================================================
@@ -1323,11 +1330,11 @@ Found 2 HTTP request(s)
 ❌ GET https://httpbin.org/status/404 - Status: 404
 
 ==================================================
-File Summary: 1/2 requests succeeded
+File Summary: 1 Passed, 1 Failed, 0 Skipped
 
 🎯 Overall Summary:
 Files processed: 2
-Total requests: 4/6
+Total requests: 4 Passed, 2 Failed, 0 Skipped
 ```
 
 ### Status Code Examples
