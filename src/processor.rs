@@ -42,7 +42,8 @@ pub fn process_http_files(
     let mut log = Log::new(log_filename)?;
 
     let mut total_success_count = 0u32;
-    let mut total_request_count = 0u32;
+    let mut total_failed_count = 0u32;
+    let mut total_skipped_count = 0u32;
     let mut files_processed = 0u32;
 
     for http_file in files {
@@ -73,6 +74,8 @@ pub fn process_http_files(
         files_processed += 1;
 
         let mut success_count = 0u32;
+        let mut failed_count = 0u32;
+        let mut skipped_count = 0u32;
         let mut request_count = 0u32;
         let mut request_contexts: Vec<RequestContext> = Vec::new();
 
@@ -83,26 +86,27 @@ pub fn process_http_files(
             let mut processed_request = request.clone();
 
             // Check if dependencies are met
-            if let Some(dep_name) = processed_request.depends_on.as_ref() {
-                if !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts) {
-                    let name_str = format_request_name(&processed_request.name);
+            if let Some(dep_name) = processed_request.depends_on.as_ref()
+                && !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts)
+            {
+                let name_str = format_request_name(&processed_request.name);
 
-                    log.writeln(&format!(
-                        "{} {} {} {} - Skipped: dependency '{}' not met (must return HTTP 200)",
-                        colors::yellow("⏭️"),
-                        name_str,
-                        processed_request.method,
-                        processed_request.url,
-                        dep_name
-                    ));
+                log.writeln(&format!(
+                    "{} {} {} {} - Skipped: dependency '{}' not met (must return HTTP 200)",
+                    colors::yellow("⏭️"),
+                    name_str,
+                    processed_request.method,
+                    processed_request.url,
+                    dep_name
+                ));
 
-                    add_skipped_request_context(
-                        &mut request_contexts,
-                        processed_request,
-                        request_count,
-                    );
-                    continue;
-                }
+                add_skipped_request_context(
+                    &mut request_contexts,
+                    processed_request,
+                    request_count,
+                );
+                skipped_count += 1;
+                continue;
             }
 
             // Check if conditions are met
@@ -128,6 +132,7 @@ pub fn process_http_files(
                                 processed_request,
                                 request_count,
                             );
+                            skipped_count += 1;
                             continue;
                         }
                     }
@@ -148,6 +153,7 @@ pub fn process_http_files(
                             processed_request,
                             request_count,
                         );
+                        skipped_count += 1;
                         continue;
                     }
                 }
@@ -198,6 +204,7 @@ pub fn process_http_files(
                         request: processed_request,
                         result: None,
                     });
+                    failed_count += 1;
                     continue;
                 }
             };
@@ -220,6 +227,7 @@ pub fn process_http_files(
                     result.duration_ms
                 ));
             } else {
+                failed_count += 1;
                 let name_prefix = result
                     .request_name
                     .as_ref()
@@ -330,39 +338,30 @@ pub fn process_http_files(
         }
 
         log.writeln(&format!("\n{}", "=".repeat(50)));
-        let summary_color = if success_count == request_count {
-            colors::green("")
-        } else if success_count > 0 {
-            colors::yellow("")
-        } else {
-            colors::red("")
-        };
         log.writeln(&format!(
-            "File Summary: {}{}{}/{} requests succeeded\n",
-            summary_color, success_count, "", request_count
+            "File Summary: {} Passed, {} Failed, {} Skipped\n",
+            colors::green(&format!("{}", success_count)),
+            colors::red(&format!("{}", failed_count)),
+            colors::yellow(&format!("{}", skipped_count))
         ));
 
         total_success_count += success_count;
-        total_request_count += request_count;
+        total_failed_count += failed_count;
+        total_skipped_count += skipped_count;
     }
 
     if files_processed > 1 {
         log.writeln(&format!("{} Overall Summary:", colors::blue("🎯")));
         log.writeln(&format!("Files processed: {}", files_processed));
-        let summary_color = if total_success_count == total_request_count {
-            colors::green("")
-        } else if total_success_count > 0 {
-            colors::yellow("")
-        } else {
-            colors::red("")
-        };
         log.writeln(&format!(
-            "Total requests: {}{}{}/{}\n",
-            summary_color, total_success_count, "", total_request_count
+            "Total requests: {} Passed, {} Failed, {} Skipped\n",
+            colors::green(&format!("{}", total_success_count)),
+            colors::red(&format!("{}", total_failed_count)),
+            colors::yellow(&format!("{}", total_skipped_count))
         ));
     }
 
-    Ok(total_success_count == total_request_count)
+    Ok(total_failed_count == 0)
 }
 
 fn substitute_request_variables_in_request(
