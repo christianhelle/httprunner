@@ -339,10 +339,10 @@ pub fn process_http_files(
 
         log.writeln(&format!("\n{}", "=".repeat(50)));
         log.writeln(&format!(
-            "File Summary: {} Passed, {} Failed, {} Skipped\n",
-            colors::green(&format!("{}", success_count)),
-            colors::red(&format!("{}", failed_count)),
-            colors::yellow(&format!("{}", skipped_count))
+            "File Summary: {}, {}, {}\n",
+            colors::green(&format!("{} Passed", success_count)),
+            colors::red(&format!("{} Failed", failed_count)),
+            colors::yellow(&format!("{} Skipped", skipped_count))
         ));
 
         total_success_count += success_count;
@@ -354,10 +354,10 @@ pub fn process_http_files(
         log.writeln(&format!("{} Overall Summary:", colors::blue("🎯")));
         log.writeln(&format!("Files processed: {}", files_processed));
         log.writeln(&format!(
-            "Total requests: {} Passed, {} Failed, {} Skipped\n",
-            colors::green(&format!("{}", total_success_count)),
-            colors::red(&format!("{}", total_failed_count)),
-            colors::yellow(&format!("{}", total_skipped_count))
+            "Total requests: {}, {}, {}\n",
+            colors::green(&format!("{} Passed", total_success_count)),
+            colors::red(&format!("{} Failed", total_failed_count)),
+            colors::yellow(&format!("{} Skipped", total_skipped_count))
         ));
     }
 
