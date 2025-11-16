@@ -505,7 +505,7 @@ Found 3 HTTP request(s)
 ✅ POST https://api.example.com/users - Status: 201
 
 ==================================================
-Summary: 2/3 requests succeeded</code>
+File Summary: 2 Passed, 1 Failed, 0 Skipped</code>
                     </div>
 
                     <h3>Verbose Output</h3>
@@ -552,7 +552,7 @@ Found 2 HTTP request(s)
 
 🎯 Overall Summary:
 Files processed: 4
-Total requests: 12/15</code>
+Total requests: 12 Passed, 2 Failed, 1 Skipped</code>
                     </div>
 
                     <h3>Assertion Output</h3>
@@ -576,6 +576,10 @@ Total requests: 12/15</code>
                         <div class="indicator">
                             <div class="indicator-icon">❌</div>
                             <div class="indicator-desc">Failed request (non-2xx status or assertion failure)</div>
+                        </div>
+                        <div class="indicator">
+                            <div class="indicator-icon">⏭️</div>
+                            <div class="indicator-desc">Skipped request (conditions not met)</div>
                         </div>
                         <div class="indicator">
                             <div class="indicator-icon">🚀</div>
@@ -611,7 +615,7 @@ Total requests: 12/15</code>
                         <div class="param">
                             <div class="param-name">0</div>
                             <div class="param-type">Success</div>
-                            <div class="param-desc">All requests completed successfully (2xx status, all assertions passed)</div>
+                            <div class="param-desc">All requests passed (2xx status, all assertions passed). Skipped requests don't affect exit code.</div>
                         </div>
                         <div class="param">
                             <div class="param-name">1</div>
