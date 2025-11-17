@@ -32,6 +32,23 @@ fn add_skipped_request_context(
     });
 }
 
+/// Process one or more HTTP files, executing their requests and logging results.
+///
+/// This function parses each provided HTTP file, evaluates request dependencies and conditions,
+/// substitutes request variables from prior results, executes requests, evaluates assertions,
+/// and records per-request contexts and summary logs. If `insecure` is `true`, TLS certificate
+/// verification is skipped for HTTP requests.
+///
+/// # Returns
+///
+/// `true` if no request failures were encountered across all processed files, `false` otherwise.
+///
+/// # Examples
+///
+/// ```
+/// let ok = process_http_files(&[], false, None, None, false).unwrap();
+/// assert!(ok);
+/// ```
 pub fn process_http_files(
     files: &[String],
     verbose: bool,
