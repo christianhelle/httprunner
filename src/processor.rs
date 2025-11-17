@@ -148,10 +148,11 @@ pub fn process_http_files(
                                 } else {
                                     "@if"
                                 };
-                                let request_ref = condition
-                                    .request_name
-                                    .as_deref()
-                                    .unwrap_or("<unnamed>");
+                                let request_ref = if condition.request_name.is_empty() {
+                                    "<unnamed>"
+                                } else {
+                                    condition.request_name.as_str()
+                                };
 
                                 if eval_result.condition_met {
                                     log.writeln(&format!(
