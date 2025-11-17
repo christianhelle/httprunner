@@ -769,9 +769,55 @@ Content-Type: application/json
 PUT https://api.example.com/user/activate
 ```
 
+### `@if-not` Directive - Negated Conditions
+
+Execute a request only if a condition does **NOT** match. Works the opposite way of `@if`.
+
+**Syntax:**
+```http
+# @if-not <request-name>.response.status <status-code>
+# @if-not <request-name>.response.body.$.<path> <expected-value>
+```
+
+**Example:**
+```http
+# @name check-user
+GET https://api.example.com/user/123
+
+###
+# Create user only if they exist (NOT 404)
+# @name update-user
+# @if-not check-user.response.status 404
+PUT https://api.example.com/user/123
+Content-Type: application/json
+
+{
+  "name": "Updated Name"
+}
+
+###
+# Create user only if check failed (NOT 200)
+# @name create-user
+# @if-not check-user.response.status 200
+POST https://api.example.com/user
+Content-Type: application/json
+
+{
+  "id": 123,
+  "name": "New User"
+}
+
+###
+# Execute only if response does NOT contain an error
+# @name process-result
+# @if create-user.response.status 200
+# @if-not create-user.response.body.$.error true
+PUT https://api.example.com/user/activate
+```
+
 ### Multiple Conditions
 
-Multiple `@if` directives can be specified for a single request. **All conditions must be met** for the request to execute (AND logic).
+Multiple `@if` and `@if-not` directives can be specified for a single request. **All conditions must be met** for the request to execute (AND logic).
 
 **Example:**
 ```http
@@ -859,7 +905,8 @@ This makes it easy to understand why requests were not executed in your test wor
 
 **Note:** 
 - Conditional directives support both `#` and `//` comment styles
-- Requests can have both `@dependsOn` and multiple `@if` directives
+- Requests can have both `@dependsOn` and multiple `@if` or `@if-not` directives
+- `@if-not` works as the opposite of `@if` - condition must NOT match to execute
 - Conditions can only reference requests that appear earlier in the `.http` file
 - All request names used in conditions must be defined with `# @name`
 

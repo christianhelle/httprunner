@@ -232,7 +232,7 @@ Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
 
 ## Conditional Execution
 
-Execute requests conditionally based on previous request results using `@dependsOn` and `@if` directives.
+Execute requests conditionally based on previous request results using `@dependsOn`, `@if`, and `@if-not` directives.
 
 ### `@dependsOn` Directive
 
@@ -272,7 +272,27 @@ POST https://api.example.com/user
 PUT https://api.example.com/user/activate
 ```
 
-**Note:** Multiple `@if` directives require ALL conditions to be met (AND logic).
+### `@if-not` Directive - Negated Conditions
+
+Execute only if condition does NOT match:
+
+```http
+# @name check-user
+GET https://api.example.com/user/123
+
+###
+# Update if user exists (NOT 404)
+# @if-not check-user.response.status 404
+PUT https://api.example.com/user/123
+
+###
+# Execute only if no error occurred
+# @if create-user.response.status 200
+# @if-not create-user.response.body.$.error true
+PUT https://api.example.com/user/activate
+```
+
+**Note:** Multiple `@if` and `@if-not` directives require ALL conditions to be met (AND logic).
 
 ## Timeout Configuration
 
