@@ -35,27 +35,34 @@ fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) 
         None => return Ok(false), // Request failed, condition not met
     };
 
-    match &condition.condition_type {
+    let condition_met = match &condition.condition_type {
         ConditionType::Status => {
             // Compare status code
             let expected_status = condition.expected_value.trim();
             let actual_status = result.status_code.to_string();
-            Ok(actual_status == expected_status)
+            actual_status == expected_status
         }
         ConditionType::BodyJsonPath(json_path) => {
             // Extract value using JSONPath and compare
             if let Some(ref body) = result.response_body {
                 let extracted_value = extract_json_value(body, json_path)?;
                 if let Some(value) = extracted_value {
-                    Ok(value.trim() == condition.expected_value.trim())
+                    value.trim() == condition.expected_value.trim()
                 } else {
-                    Ok(false)
+                    false
                 }
             } else {
-                Ok(false)
+                false
             }
         }
-    }
+    };
+
+    // Apply negation if @if-not
+    Ok(if condition.negate {
+        !condition_met
+    } else {
+        condition_met
+    })
 }
 
 /// Extracts a value from JSON using a JSONPath expression
@@ -107,6 +114,7 @@ mod tests {
             request_name: "request1".to_string(),
             condition_type: ConditionType::Status,
             expected_value: "200".to_string(),
+            negate: false,
         };
 
         let request = HttpRequest {
@@ -149,6 +157,7 @@ mod tests {
             request_name: "request1".to_string(),
             condition_type: ConditionType::Status,
             expected_value: "404".to_string(),
+            negate: false,
         };
 
         let request = HttpRequest {
@@ -269,6 +278,7 @@ mod tests {
             request_name: "request1".to_string(),
             condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
             expected_value: "testuser".to_string(),
+            negate: false,
         };
 
         let request = HttpRequest {
@@ -311,6 +321,7 @@ mod tests {
             request_name: "request1".to_string(),
             condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
             expected_value: "wronguser".to_string(),
+            negate: false,
         };
 
         let request = HttpRequest {
@@ -354,11 +365,13 @@ mod tests {
                 request_name: "request1".to_string(),
                 condition_type: ConditionType::Status,
                 expected_value: "200".to_string(),
+                negate: false,
             },
             Condition {
                 request_name: "request1".to_string(),
                 condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
                 expected_value: "testuser".to_string(),
+                negate: false,
             },
         ];
 
@@ -403,11 +416,13 @@ mod tests {
                 request_name: "request1".to_string(),
                 condition_type: ConditionType::Status,
                 expected_value: "200".to_string(),
+                negate: false,
             },
             Condition {
                 request_name: "request1".to_string(),
                 condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
                 expected_value: "wronguser".to_string(),
+                negate: false,
             },
         ];
 
@@ -443,5 +458,181 @@ mod tests {
         }];
 
         assert!(!evaluate_conditions(&conditions, &context).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate_status_condition_negated_success() {
+        // @if-not status 404 should pass when status is 200
+        let condition = Condition {
+            request_name: "request1".to_string(),
+            condition_type: ConditionType::Status,
+            expected_value: "404".to_string(),
+            negate: true,
+        };
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "GET".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some("test body".to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(evaluate_conditions(&vec![condition], &context).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate_status_condition_negated_failure() {
+        // @if-not status 200 should fail when status is 200
+        let condition = Condition {
+            request_name: "request1".to_string(),
+            condition_type: ConditionType::Status,
+            expected_value: "200".to_string(),
+            negate: true,
+        };
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "GET".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some("test body".to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate_body_jsonpath_condition_negated_success() {
+        // @if-not body value should pass when value doesn't match
+        let condition = Condition {
+            request_name: "request1".to_string(),
+            condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
+            expected_value: "wronguser".to_string(),
+            negate: true,
+        };
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "POST".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some(r#"{"username": "testuser", "id": 123}"#.to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(evaluate_conditions(&vec![condition], &context).unwrap());
+    }
+
+    #[test]
+    fn test_evaluate_body_jsonpath_condition_negated_failure() {
+        // @if-not body value should fail when value matches
+        let condition = Condition {
+            request_name: "request1".to_string(),
+            condition_type: ConditionType::BodyJsonPath("$.username".to_string()),
+            expected_value: "testuser".to_string(),
+            negate: true,
+        };
+
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "POST".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some(r#"{"username": "testuser", "id": 123}"#.to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
     }
 }
