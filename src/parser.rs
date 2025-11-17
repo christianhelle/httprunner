@@ -94,9 +94,22 @@ pub fn parse_http_file(
             .or_else(|| trimmed.strip_prefix("// @if "))
             .map(|s| s.trim());
         if let Some(value) = if_value {
-            match parse_condition(value) {
+            match parse_condition(value, false) {
                 Some(condition) => pending_conditions.push(condition),
                 None => eprintln!("Warning: Invalid @if directive format: '{}'", value),
+            }
+            continue;
+        }
+
+        // Check for @if-not directive
+        let if_not_value = trimmed
+            .strip_prefix("# @if-not ")
+            .or_else(|| trimmed.strip_prefix("// @if-not "))
+            .map(|s| s.trim());
+        if let Some(value) = if_not_value {
+            match parse_condition(value, true) {
+                Some(condition) => pending_conditions.push(condition),
+                None => eprintln!("Warning: Invalid @if-not directive format: '{}'", value),
             }
             continue;
         }
@@ -296,8 +309,8 @@ fn substitute_variables(input: &str, variables: &[Variable]) -> String {
     result
 }
 
-fn parse_condition(value: &str) -> Option<Condition> {
-    // Parse @if directive
+fn parse_condition(value: &str, negate: bool) -> Option<Condition> {
+    // Parse @if or @if-not directive
     // Format 1: @if request-name.response.status 200
     // Format 2: @if request-name.response.body.$.property expected_value
 
@@ -325,6 +338,7 @@ fn parse_condition(value: &str) -> Option<Condition> {
             request_name,
             condition_type: ConditionType::Status,
             expected_value,
+            negate,
         });
     }
 
@@ -336,6 +350,7 @@ fn parse_condition(value: &str) -> Option<Condition> {
             request_name,
             condition_type: ConditionType::BodyJsonPath(json_path),
             expected_value,
+            negate,
         });
     }
 
@@ -556,6 +571,84 @@ POST https://example.com/api
         assert_eq!(requests.len(), 2);
         assert_eq!(requests[0].conditions.len(), 0);
         assert_eq!(requests[1].conditions.len(), 2);
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_if_not_status() {
+        let content = r#"
+# @name request-one
+GET https://example.com/api
+
+###
+# @name request-two
+# @if-not request-one.response.status 404
+POST https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_if_not_status.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0].conditions.len(), 0);
+        assert_eq!(requests[1].conditions.len(), 1);
+        assert_eq!(requests[1].conditions[0].request_name, "request-one");
+        assert_eq!(requests[1].conditions[0].expected_value, "404");
+        assert_eq!(requests[1].conditions[0].negate, true);
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_if_not_jsonpath() {
+        let content = r#"
+# @name request-one
+GET https://example.com/api
+
+###
+# @name request-two
+# @if-not request-one.response.body.$.username testuser
+POST https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_if_not_jsonpath.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0].conditions.len(), 0);
+        assert_eq!(requests[1].conditions.len(), 1);
+        assert_eq!(requests[1].conditions[0].request_name, "request-one");
+        assert_eq!(requests[1].conditions[0].expected_value, "testuser");
+        assert_eq!(requests[1].conditions[0].negate, true);
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_mixed_if_and_if_not() {
+        let content = r#"
+# @name request-one
+GET https://example.com/api
+
+###
+# @name request-two
+# @if request-one.response.status 200
+# @if-not request-one.response.body.$.error true
+POST https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_mixed_conditions.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 2);
+        assert_eq!(requests[0].conditions.len(), 0);
+        assert_eq!(requests[1].conditions.len(), 2);
+        assert_eq!(requests[1].conditions[0].negate, false); // @if
+        assert_eq!(requests[1].conditions[1].negate, true); // @if-not
 
         std::fs::remove_file(&test_file).ok();
     }
