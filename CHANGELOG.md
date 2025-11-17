@@ -2,18 +2,19 @@
 
 ## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.30...HEAD)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.33...HEAD)
+
+**Implemented enhancements:**
+
+- Introduce `@if-not` directive for negated conditions [\#69](https://github.com/christianhelle/httprunner/pull/69) ([christianhelle](https://github.com/christianhelle))
+
+## [0.3.33](https://github.com/christianhelle/httprunner/tree/0.3.33) (2025-11-16)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.28...0.3.33)
 
 **Implemented enhancements:**
 
 - Improve summary output with separate skipped request tracking [\#68](https://github.com/christianhelle/httprunner/pull/68) ([christianhelle](https://github.com/christianhelle))
-
-## [0.3.30](https://github.com/christianhelle/httprunner/tree/0.3.30) (2025-11-16)
-
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.28...0.3.30)
-
-**Implemented enhancements:**
-
 - Add conditional request execution with @dependsOn and @if directives [\#66](https://github.com/christianhelle/httprunner/pull/66) ([Copilot](https://github.com/apps/copilot-swe-agent))
 
 **Merged pull requests:**
