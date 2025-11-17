@@ -785,7 +785,7 @@ Execute a request only if a condition does **NOT** match. Works the opposite way
 GET https://api.example.com/user/123
 
 ###
-# Create user only if they exist (NOT 404)
+# Update user only if they exist (NOT 404)
 # @name update-user
 # @if-not check-user.response.status 404
 PUT https://api.example.com/user/123
