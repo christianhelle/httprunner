@@ -128,9 +128,7 @@ pub fn process_http_files(
                                     "@if"
                                 };
                                 let request_ref = processed_request
-                                    .name
-                                    .as_ref()
-                                    .map(|n| n.as_str())
+                                    .name.as_deref()
                                     .unwrap_or("<unnamed>");
 
                                 if eval_result.condition_met {
