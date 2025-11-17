@@ -5,6 +5,46 @@ use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::time::Instant;
 
+/// Executes an HTTP request described by `request`, returning a structured `HttpResult`.
+///
+/// The function builds a blocking HTTP client (respecting per-request or default timeouts),
+/// optionally disables certificate/hostname validation when `insecure` is true, sends the request,
+/// and collects response metadata. Response headers and body are collected when `verbose` is true,
+/// the request has assertions, or the request is named. If the request includes assertions they
+/// are evaluated and the overall `success` value is updated to reflect assertion outcomes.
+/// Connection and timeout errors are mapped to user-friendly error messages in the result.
+///
+/// # Parameters
+///
+/// - `request`: the HTTP request description (URL, method, headers, optional body, timeouts, name, assertions).
+/// - `verbose`: when true, include response headers and body in the returned `HttpResult`.
+/// - `insecure`: when true, accept invalid TLS certificates and hostnames for the request.
+///
+/// # Returns
+///
+/// An `HttpResult` containing the request name (if any), HTTP status code (0 on request failure),
+/// a `success` flag that reflects both HTTP success and assertion results, an optional error message
+/// for failures, round-trip duration in milliseconds, optional response headers/body, and any
+/// assertion evaluation results.
+///
+/// # Examples
+///
+/// ```
+/// // Construct a simple GET request (fields shown conceptually)
+/// let req = HttpRequest {
+///     name: Some("example".to_string()),
+///     method: "GET".to_string(),
+///     url: "https://example.com/".to_string(),
+///     headers: Vec::new(),
+///     body: None,
+///     timeout: None,
+///     connection_timeout: None,
+///     assertions: Vec::new(),
+/// };
+///
+/// let result = execute_http_request(&req, /*verbose=*/ true, /*insecure=*/ false).unwrap();
+/// assert!(result.status_code > 0);
+/// ```
 pub fn execute_http_request(
     request: &HttpRequest,
     verbose: bool,

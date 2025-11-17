@@ -5,6 +5,21 @@ use crate::types::{
 use anyhow::{Context, Result};
 use std::fs;
 
+/// Parses an HTTP description file into a list of HttpRequest objects, applying environment variables and in-file directives.
+///
+/// The parser reads the file at `file_path`, loads environment variables (optionally selecting `environment_name`), expands `{{variable}}` templates, and recognizes in-file directives such as request naming (`# @name` / `// @name`), timeouts (`@timeout`, `@connection-timeout`), dependency (`@dependsOn`), conditional execution (`@if` and `@if-not`), variable definitions (`@NAME=VALUE`), assertions (`EXPECTED_RESPONSE_*`), headers, and request bodies. IntelliJ HTTP Client script blocks are ignored. Each detected HTTP request becomes an HttpRequest with populated fields including name, method, url, headers, body, assertions, variables, timeouts, depends_on, and conditions.
+///
+/// # Returns
+///
+/// A `Vec<HttpRequest>` containing one HttpRequest per request found in the file, with variables substituted and pending directives applied.
+///
+/// # Examples
+///
+/// ```
+/// // Parse requests from "examples/requests.http" using the default environment
+/// let requests = parse_http_file("examples/requests.http", None).unwrap();
+/// assert!(!requests.is_empty());
+/// ```
 pub fn parse_http_file(
     file_path: &str,
     environment_name: Option<&str>,
@@ -256,6 +271,23 @@ fn is_http_request_line(line: &str) -> bool {
         || line.starts_with("PATCH ")
 }
 
+/// Substitutes `{{name}}` placeholders in a string with provided variable values.
+///
+/// Placeholders are delimited by double braces (`{{` and `}}`). If a placeholder's
+/// name matches a `Variable.name` in `variables`, the placeholder is replaced with
+/// that `Variable.value`. Unmatched or unterminated placeholders are left unchanged
+/// (unterminated placeholders keep their leading `{{` and collected text).
+///
+/// # Examples
+///
+/// ```
+/// use crate::Variable;
+///
+/// let vars = vec![Variable { name: "USER".into(), value: "alice".into() }];
+/// let s = "Hello, {{USER}}! Unknown: {{MISSING}}".to_string();
+/// let out = substitute_variables(&s, &vars);
+/// assert_eq!(out, "Hello, alice! Unknown: {{MISSING}}");
+/// ```
 fn substitute_variables(input: &str, variables: &[Variable]) -> String {
     let mut result = String::new();
     let mut chars = input.chars().peekable();
@@ -309,6 +341,38 @@ fn substitute_variables(input: &str, variables: &[Variable]) -> String {
     result
 }
 
+/// Parses an `@if` or `@if-not` directive string into a `Condition`.
+///
+/// The `value` should contain a reference and an expected value separated by whitespace.
+/// Supported reference formats:
+/// - `request-name.response.status` (expects a status check)
+/// - `request-name.response.body.$.path.to.field` (expects a JSONPath-like body check)
+///
+/// `negate` marks the produced condition as negated (true for `@if-not`, false for `@if`).
+///
+/// # Returns
+///
+/// `Some(Condition)` if the directive is a valid status or body JSONPath condition; `None` if the format is invalid.
+///
+/// # Examples
+///
+/// ```
+/// use crate::ConditionType;
+///
+/// // Status condition
+/// let c = parse_condition("login.response.status 200", false).unwrap();
+/// assert_eq!(c.request_name, "login");
+/// assert!(matches!(c.condition_type, ConditionType::Status));
+/// assert_eq!(c.expected_value, "200");
+/// assert!(!c.negate);
+///
+/// // Body JSONPath condition (negated)
+/// let c2 = parse_condition("fetch.response.body.$.user.id 42", true).unwrap();
+/// assert_eq!(c2.request_name, "fetch");
+/// assert!(matches!(c2.condition_type, ConditionType::BodyJsonPath(ref p) if p == " $.user.id".trim_start_matches('.').trim_start_matches('$').trim()));
+/// assert_eq!(c2.expected_value, "42");
+/// assert!(c2.negate);
+/// ```
 fn parse_condition(value: &str, negate: bool) -> Option<Condition> {
     // Parse @if or @if-not directive
     // Format 1: @if request-name.response.status 200
@@ -551,6 +615,35 @@ POST https://example.com/api
         std::fs::remove_file(&test_file).ok();
     }
 
+    /// Verifies that parsing an HTTP file attaches multiple `@if` conditions to the following request.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Creates a temporary HTTP file with two requests where the second request
+    /// // has two `@if` condition directives. The parser should return two
+    /// // requests and the second should have two conditions.
+    /// let content = r#"
+    /// # @name request-one
+    /// GET https://example.com/api
+    ///
+    /// ###
+    /// # @name request-two
+    /// # @if request-one.response.status 200
+    /// # @if request-one.response.body.$.username testuser
+    /// POST https://example.com/api
+    /// "#;
+    /// let temp_dir = std::env::temp_dir();
+    /// let test_file = temp_dir.join("test_multiple_conditions.http");
+    /// std::fs::write(&test_file, content).unwrap();
+    ///
+    /// let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+    /// assert_eq!(requests.len(), 2);
+    /// assert_eq!(requests[0].conditions.len(), 0);
+    /// assert_eq!(requests[1].conditions.len(), 2);
+    ///
+    /// std::fs::remove_file(&test_file).ok();
+    /// ```
     #[test]
     fn test_parse_http_file_with_multiple_conditions() {
         let content = r#"
