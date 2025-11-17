@@ -2,6 +2,15 @@ use crate::request_variables;
 use crate::types::{Condition, ConditionType, RequestContext};
 use anyhow::Result;
 
+#[derive(Debug)]
+pub struct ConditionEvaluationResult {
+    pub condition_met: bool,
+    pub actual_value: Option<String>,
+    pub expected_value: String,
+    pub condition_type: String,
+    pub negated: bool,
+}
+
 /// Evaluates if all conditions for a request are met
 pub fn evaluate_conditions(conditions: &[Condition], context: &[RequestContext]) -> Result<bool> {
     if conditions.is_empty() {
@@ -17,8 +26,40 @@ pub fn evaluate_conditions(conditions: &[Condition], context: &[RequestContext])
     Ok(true)
 }
 
+/// Evaluates conditions with detailed results for verbose output
+pub fn evaluate_conditions_verbose(
+    conditions: &[Condition],
+    context: &[RequestContext],
+) -> Result<(bool, Vec<ConditionEvaluationResult>)> {
+    if conditions.is_empty() {
+        return Ok((true, vec![]));
+    }
+
+    let mut results = Vec::new();
+    let mut all_met = true;
+
+    for condition in conditions {
+        let result = evaluate_single_condition_verbose(condition, context)?;
+        if !result.condition_met {
+            all_met = false;
+        }
+        results.push(result);
+    }
+
+    Ok((all_met, results))
+}
+
 /// Evaluates a single condition
 fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) -> Result<bool> {
+    let result = evaluate_single_condition_verbose(condition, context)?;
+    Ok(result.condition_met)
+}
+
+/// Evaluates a single condition with detailed result
+fn evaluate_single_condition_verbose(
+    condition: &Condition,
+    context: &[RequestContext],
+) -> Result<ConditionEvaluationResult> {
     // Find the request context by name
     let target_context = context
         .iter()
@@ -26,43 +67,74 @@ fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) 
 
     let Some(ctx) = target_context else {
         // Referenced request not found or not executed yet
-        return Ok(false);
+        return Ok(ConditionEvaluationResult {
+            condition_met: false,
+            actual_value: None,
+            expected_value: condition.expected_value.clone(),
+            condition_type: format_condition_type(&condition.condition_type),
+            negated: condition.negate,
+        });
     };
 
     // Check if the request has a result
     let result = match &ctx.result {
         Some(r) => r,
-        None => return Ok(false), // Request failed, condition not met
+        None => {
+            return Ok(ConditionEvaluationResult {
+                condition_met: false,
+                actual_value: None,
+                expected_value: condition.expected_value.clone(),
+                condition_type: format_condition_type(&condition.condition_type),
+                negated: condition.negate,
+            });
+        }
     };
 
-    let condition_met = match &condition.condition_type {
+    let (actual_value, base_condition_met) = match &condition.condition_type {
         ConditionType::Status => {
             // Compare status code
             let expected_status = condition.expected_value.trim();
             let actual_status = result.status_code.to_string();
-            actual_status == expected_status
+            let met = actual_status == expected_status;
+            (Some(actual_status), met)
         }
         ConditionType::BodyJsonPath(json_path) => {
             // Extract value using JSONPath and compare
             if let Some(ref body) = result.response_body {
                 let extracted_value = extract_json_value(body, json_path)?;
                 if let Some(value) = extracted_value {
-                    value.trim() == condition.expected_value.trim()
+                    let met = value.trim() == condition.expected_value.trim();
+                    (Some(value), met)
                 } else {
-                    false
+                    (Some("<not found>".to_string()), false)
                 }
             } else {
-                false
+                (Some("<no body>".to_string()), false)
             }
         }
     };
 
     // Apply negation if @if-not
-    Ok(if condition.negate {
-        !condition_met
+    let condition_met = if condition.negate {
+        !base_condition_met
     } else {
-        condition_met
+        base_condition_met
+    };
+
+    Ok(ConditionEvaluationResult {
+        condition_met,
+        actual_value,
+        expected_value: condition.expected_value.clone(),
+        condition_type: format_condition_type(&condition.condition_type),
+        negated: condition.negate,
     })
+}
+
+fn format_condition_type(condition_type: &ConditionType) -> String {
+    match condition_type {
+        ConditionType::Status => "status".to_string(),
+        ConditionType::BodyJsonPath(path) => format!("body.{}", path),
+    }
 }
 
 /// Extracts a value from JSON using a JSONPath expression

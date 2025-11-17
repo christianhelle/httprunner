@@ -111,20 +111,77 @@ pub fn process_http_files(
 
             // Check if conditions are met
             if !processed_request.conditions.is_empty() {
-                match conditions::evaluate_conditions(
-                    &processed_request.conditions,
-                    &request_contexts,
-                ) {
-                    Ok(conditions_met) => {
-                        if !conditions_met {
-                            let name_str = format_request_name(&processed_request.name);
+                if verbose {
+                    // Use verbose evaluation to get detailed results
+                    match conditions::evaluate_conditions_verbose(
+                        &processed_request.conditions,
+                        &request_contexts,
+                    ) {
+                        Ok((conditions_met, evaluation_results)) => {
+                            // Log condition evaluation details
+                            log.writeln(&format!("\n{} Evaluating Conditions:", colors::blue("ℹ")));
 
+                            for (i, eval_result) in evaluation_results.iter().enumerate() {
+                                let directive = if eval_result.negated {
+                                    "@if-not"
+                                } else {
+                                    "@if"
+                                };
+                                let status_icon = if eval_result.condition_met {
+                                    colors::green("✓")
+                                } else {
+                                    colors::red("✗")
+                                };
+
+                                let actual =
+                                    eval_result.actual_value.as_deref().unwrap_or("<unknown>");
+                                let comparison = if eval_result.negated { "!=" } else { "==" };
+
+                                log.writeln(&format!(
+                                    "  {} Condition {}: {} {} {} {} \"{}\" (actual: \"{}\")",
+                                    status_icon,
+                                    i + 1,
+                                    directive,
+                                    processed_request
+                                        .name
+                                        .as_ref()
+                                        .unwrap_or(&"<unnamed>".to_string()),
+                                    eval_result.condition_type,
+                                    comparison,
+                                    eval_result.expected_value,
+                                    actual
+                                ));
+                            }
+
+                            if !conditions_met {
+                                let name_str = format_request_name(&processed_request.name);
+                                log.writeln(&format!(
+                                    "{} {} {} {} - Skipped: conditions not met\n",
+                                    colors::yellow("⏭️"),
+                                    name_str,
+                                    processed_request.method,
+                                    processed_request.url
+                                ));
+
+                                add_skipped_request_context(
+                                    &mut request_contexts,
+                                    processed_request,
+                                    request_count,
+                                );
+                                skipped_count += 1;
+                                continue;
+                            }
+                            log.writeln(""); // Empty line for readability
+                        }
+                        Err(e) => {
+                            let name_str = format_request_name(&processed_request.name);
                             log.writeln(&format!(
-                                "{} {} {} {} - Skipped: conditions not met",
-                                colors::yellow("⏭️"),
+                                "{} {} {} {} - Error evaluating conditions: {}\n",
+                                colors::red("❌"),
                                 name_str,
                                 processed_request.method,
-                                processed_request.url
+                                processed_request.url,
+                                e
                             ));
 
                             add_skipped_request_context(
@@ -136,25 +193,53 @@ pub fn process_http_files(
                             continue;
                         }
                     }
-                    Err(e) => {
-                        let name_str = format_request_name(&processed_request.name);
+                } else {
+                    // Non-verbose mode: simple evaluation
+                    match conditions::evaluate_conditions(
+                        &processed_request.conditions,
+                        &request_contexts,
+                    ) {
+                        Ok(conditions_met) => {
+                            if !conditions_met {
+                                let name_str = format_request_name(&processed_request.name);
 
-                        log.writeln(&format!(
-                            "{} {} {} {} - Error evaluating conditions: {}",
-                            colors::red("❌"),
-                            name_str,
-                            processed_request.method,
-                            processed_request.url,
-                            e
-                        ));
+                                log.writeln(&format!(
+                                    "{} {} {} {} - Skipped: conditions not met",
+                                    colors::yellow("⏭️"),
+                                    name_str,
+                                    processed_request.method,
+                                    processed_request.url
+                                ));
 
-                        add_skipped_request_context(
-                            &mut request_contexts,
-                            processed_request,
-                            request_count,
-                        );
-                        skipped_count += 1;
-                        continue;
+                                add_skipped_request_context(
+                                    &mut request_contexts,
+                                    processed_request,
+                                    request_count,
+                                );
+                                skipped_count += 1;
+                                continue;
+                            }
+                        }
+                        Err(e) => {
+                            let name_str = format_request_name(&processed_request.name);
+
+                            log.writeln(&format!(
+                                "{} {} {} {} - Error evaluating conditions: {}",
+                                colors::red("❌"),
+                                name_str,
+                                processed_request.method,
+                                processed_request.url,
+                                e
+                            ));
+
+                            add_skipped_request_context(
+                                &mut request_contexts,
+                                processed_request,
+                                request_count,
+                            );
+                            skipped_count += 1;
+                            continue;
+                        }
                     }
                 }
             }
