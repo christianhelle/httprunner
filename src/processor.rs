@@ -118,45 +118,66 @@ pub fn process_http_files(
                         &request_contexts,
                     ) {
                         Ok((conditions_met, evaluation_results)) => {
-                            // Log condition evaluation details
-                            log.writeln(&format!("\n{} Evaluating Conditions:", colors::blue("ℹ")));
+                            // Log condition evaluation details in assertion-like format
+                            log.writeln(&format!("\n{} Condition Evaluation:", colors::blue("🔍")));
 
-                            for (i, eval_result) in evaluation_results.iter().enumerate() {
+                            for eval_result in evaluation_results.iter() {
                                 let directive = if eval_result.negated {
                                     "@if-not"
                                 } else {
                                     "@if"
                                 };
-                                let status_icon = if eval_result.condition_met {
-                                    colors::green("✓")
+                                let request_ref = processed_request
+                                    .name
+                                    .as_ref()
+                                    .map(|n| n.as_str())
+                                    .unwrap_or("<unnamed>");
+
+                                if eval_result.condition_met {
+                                    log.writeln(&format!(
+                                        "{}   ✅ {}: {}.response.{}",
+                                        colors::green(""),
+                                        directive,
+                                        request_ref,
+                                        eval_result.condition_type
+                                    ));
+                                    log.writeln(&format!(
+                                        "{}      Expected: {} \"{}\"",
+                                        colors::green(""),
+                                        if eval_result.negated { "!=" } else { "==" },
+                                        eval_result.expected_value
+                                    ));
+                                    log.writeln(&format!(
+                                        "{}      Actual: \"{}\"",
+                                        colors::green(""),
+                                        eval_result.actual_value.as_deref().unwrap_or("<unknown>")
+                                    ));
                                 } else {
-                                    colors::red("✗")
-                                };
-
-                                let actual =
-                                    eval_result.actual_value.as_deref().unwrap_or("<unknown>");
-                                let comparison = if eval_result.negated { "!=" } else { "==" };
-
-                                log.writeln(&format!(
-                                    "  {} Condition {}: {} {} {} {} \"{}\" (actual: \"{}\")",
-                                    status_icon,
-                                    i + 1,
-                                    directive,
-                                    processed_request
-                                        .name
-                                        .as_ref()
-                                        .unwrap_or(&"<unnamed>".to_string()),
-                                    eval_result.condition_type,
-                                    comparison,
-                                    eval_result.expected_value,
-                                    actual
-                                ));
+                                    log.writeln(&format!(
+                                        "{}   ❌ {}: {}.response.{}",
+                                        colors::red(""),
+                                        directive,
+                                        request_ref,
+                                        eval_result.condition_type
+                                    ));
+                                    log.writeln(&format!(
+                                        "{}      Expected: {} \"{}\"",
+                                        colors::yellow(""),
+                                        if eval_result.negated { "!=" } else { "==" },
+                                        eval_result.expected_value
+                                    ));
+                                    log.writeln(&format!(
+                                        "{}      Actual: \"{}\"",
+                                        colors::yellow(""),
+                                        eval_result.actual_value.as_deref().unwrap_or("<unknown>")
+                                    ));
+                                }
                             }
 
                             if !conditions_met {
                                 let name_str = format_request_name(&processed_request.name);
                                 log.writeln(&format!(
-                                    "{} {} {} {} - Skipped: conditions not met\n",
+                                    "\n{} {} {} {} - Skipped: conditions not met\n",
                                     colors::yellow("⏭️"),
                                     name_str,
                                     processed_request.method,
