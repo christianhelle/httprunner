@@ -76,35 +76,20 @@ pub fn evaluate_conditions_verbose(
 }
 
 /// Determine whether a single `Condition` is satisfied using the provided request contexts.
-
 ///
-
 /// This evaluates the condition against the available `RequestContext` entries and applies any negation (`@if-not`) specified by the condition.
-
 ///
-
 /// # Returns
-
 ///
-
 /// `true` if the condition is satisfied, `false` otherwise.
-
 ///
-
 /// # Examples
-
 ///
-
 /// ```no_run
-
 /// // Example usage (types and construction depend on your test helpers):
-
 /// // let condition = Condition::status_equals("request-name", "200");
-
 /// // let contexts: Vec<RequestContext> = ...;
-
 /// // assert!(evaluate_single_condition(&condition, &contexts).unwrap());
-
 /// ```
 fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) -> Result<bool> {
     let result = evaluate_single_condition_verbose(condition, context)?;
