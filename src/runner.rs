@@ -77,7 +77,12 @@ pub fn execute_http_request(
     let mut response_headers: Option<HashMap<String, String>> = None;
     let mut response_body: Option<String> = None;
 
-    if verbose || has_assertions {
+    // Collect response data if:
+    // - Verbose mode is enabled (for display)
+    // - Request has assertions (for assertion evaluation)
+    // - Request is named (might be referenced by conditions in subsequent requests)
+    let is_named = request.name.is_some();
+    if verbose || has_assertions || is_named {
         // Collect headers
         let mut headers = HashMap::new();
         for (name, value) in response.headers() {
