@@ -121,14 +121,19 @@ pub fn process_http_files(
                             // Log condition evaluation details in assertion-like format
                             log.writeln(&format!("\n{} Condition Evaluation:", colors::blue("🔍")));
 
-                            for eval_result in evaluation_results.iter() {
+                            for (condition, eval_result) in processed_request
+                                .conditions
+                                .iter()
+                                .zip(evaluation_results.iter())
+                            {
                                 let directive = if eval_result.negated {
                                     "@if-not"
                                 } else {
                                     "@if"
                                 };
-                                let request_ref = processed_request
-                                    .name.as_deref()
+                                let request_ref = condition
+                                    .request_name
+                                    .as_deref()
                                     .unwrap_or("<unnamed>");
 
                                 if eval_result.condition_met {
