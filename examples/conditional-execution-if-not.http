@@ -1,0 +1,152 @@
+# ========================================================================
+# Conditional Request Execution with @if-not Example
+# ========================================================================
+#
+# This file demonstrates how to use the @if-not directive for
+# conditional execution in HTTP files.
+#
+# FEATURES:
+# ---------
+# 1. @if-not directive (status check): Execute request only if condition does NOT match
+#    Syntax: # @if-not <request-name>.response.status <expected-status>
+#
+# 2. @if-not directive (JSONPath check): Execute request only if body value does NOT match
+#    Syntax: # @if-not <request-name>.response.body.$.<path> <expected-value>
+#
+# 3. Mixed conditions: Combine @if and @if-not directives for complex logic
+#
+# USE CASE:
+# ---------
+# The @if-not directive works as the opposite of @if:
+# - @if executes when condition matches
+# - @if-not executes when condition does NOT match
+#
+# This is useful for:
+# - Creating resources only if they don't already exist
+# - Executing fallback actions when something fails
+# - Handling error scenarios
+# - Conditional cleanup or rollback operations
+#
+# ========================================================================
+
+####
+# Variables
+@expected_user_name=testuser123
+
+###
+# Step 1: Check if resource exists
+# @name check-resource
+GET https://httpbin.org/status/404
+
+###
+# Step 2: Create resource only if check-resource did NOT return 200 (e.g., returned 404)
+# This executes because check-resource returns 404, not 200
+# @name create-resource
+# @if-not check-resource.response.status 200
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+    "username": "{{expected_user_name}}",
+    "action": "create_user"
+}
+
+###
+# Step 3: Success scenario - check a successful endpoint
+# @name successful-request
+GET https://httpbin.org/status/200
+
+###
+# Step 4: Only execute if successful-request did NOT return 404
+# This should execute because successful-request returns 200, not 404
+# @name handle-success
+# @if-not successful-request.response.status 404
+PUT https://httpbin.org/put
+Content-Type: application/json
+
+{
+    "message": "Resource exists, proceeding with update"
+}
+
+###
+# Step 5: Only execute if successful-request did NOT return 200
+# This should be skipped because successful-request returns 200
+# @name handle-not-found
+# @if-not successful-request.response.status 200
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+    "message": "Resource not found, creating new one"
+}
+
+###
+# Step 6: Test with body JSONPath - check for error field
+# @name api-call
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+    "username": "{{expected_user_name}}",
+    "status": "active"
+}
+
+###
+# Step 7: Execute only if api-call response does NOT contain error=true
+# This should execute because the response doesn't have error=true
+# @name process-success
+# @if api-call.response.status 200
+# @if-not api-call.response.body.$.json.error true
+PUT https://httpbin.org/put
+Content-Type: application/json
+
+{
+    "message": "No error detected, proceeding"
+}
+
+###
+# Step 8: Mixed @if and @if-not conditions for complex logic
+# Execute only if:
+# - api-call returned 200 (positive check)
+# - api-call username is testuser123 (positive check)
+# - api-call does NOT have error field set to true (negative check)
+# @name complex-condition
+# @if api-call.response.status 200
+# @if api-call.response.body.$.json.username testuser123
+# @if-not api-call.response.body.$.json.error true
+DELETE https://httpbin.org/delete
+Content-Type: application/json
+
+{
+    "username": "{{expected_user_name}}",
+    "action": "cleanup"
+}
+
+###
+# Step 9: Demonstrate error handling pattern
+# Try to access a resource that might not exist
+# @name try-access
+GET https://httpbin.org/status/500
+
+###
+# Step 10: Fallback action - execute if try-access did NOT return 200
+# @name fallback-action
+# @if-not try-access.response.status 200
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+    "message": "Primary access failed, executing fallback"
+}
+
+###
+# Step 11: Success action - execute only if try-access DID return 200
+# This should be skipped because try-access returns 500
+# @name success-action
+# @if try-access.response.status 200
+PUT https://httpbin.org/put
+Content-Type: application/json
+
+{
+    "message": "Primary access succeeded"
+}
