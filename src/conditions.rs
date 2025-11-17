@@ -11,7 +11,21 @@ pub struct ConditionEvaluationResult {
     pub negated: bool,
 }
 
-/// Evaluates if all conditions for a request are met
+/// Determines whether every condition in `conditions` is satisfied for the given request context.
+///
+/// # Returns
+///
+/// `true` if all conditions are met or if `conditions` is empty, `false` otherwise.
+///
+/// # Examples
+///
+/// ```
+/// # use crate::conditions::evaluate_conditions;
+/// # use crate::{Condition, RequestContext};
+/// let conditions: Vec<Condition> = vec![];
+/// let context: Vec<RequestContext> = vec![];
+/// assert!(evaluate_conditions(&conditions, &context).unwrap());
+/// ```
 pub fn evaluate_conditions(conditions: &[Condition], context: &[RequestContext]) -> Result<bool> {
     if conditions.is_empty() {
         return Ok(true);
@@ -26,7 +40,19 @@ pub fn evaluate_conditions(conditions: &[Condition], context: &[RequestContext])
     Ok(true)
 }
 
-/// Evaluates conditions with detailed results for verbose output
+/// Evaluates all provided conditions and returns whether every condition was met along with detailed per-condition results.
+///
+/// # Returns
+///
+/// `Ok((true, vec![]))` if `conditions` is empty. Otherwise `Ok((all_met, results))` where `all_met` is `true` only if every condition evaluated as met, and `results` is a `Vec<ConditionEvaluationResult>` with one entry per condition describing its outcome.
+///
+/// # Examples
+///
+/// ```
+/// let (all_met, results) = evaluate_conditions_verbose(&conditions, &context)?;
+/// // `all_met` is true only if every condition in `conditions` was satisfied
+/// // `results` contains detailed evaluation for each condition
+/// ```
 pub fn evaluate_conditions_verbose(
     conditions: &[Condition],
     context: &[RequestContext],
@@ -49,13 +75,69 @@ pub fn evaluate_conditions_verbose(
     Ok((all_met, results))
 }
 
-/// Evaluates a single condition
+/// Determine whether a single `Condition` is satisfied using the provided request contexts.
+
+///
+
+/// This evaluates the condition against the available `RequestContext` entries and applies any negation (`@if-not`) specified by the condition.
+
+///
+
+/// # Returns
+
+///
+
+/// `true` if the condition is satisfied, `false` otherwise.
+
+///
+
+/// # Examples
+
+///
+
+/// ```no_run
+
+/// // Example usage (types and construction depend on your test helpers):
+
+/// // let condition = Condition::status_equals("request-name", "200");
+
+/// // let contexts: Vec<RequestContext> = ...;
+
+/// // assert!(evaluate_single_condition(&condition, &contexts).unwrap());
+
+/// ```
 fn evaluate_single_condition(condition: &Condition, context: &[RequestContext]) -> Result<bool> {
     let result = evaluate_single_condition_verbose(condition, context)?;
     Ok(result.condition_met)
 }
 
-/// Evaluates a single condition with detailed result
+/// Evaluates a single condition against the provided request contexts and returns a detailed result.
+///
+/// If the referenced request is missing or has no result, the returned `ConditionEvaluationResult` has
+/// `condition_met = false` and `actual_value = None`. For `Status` conditions, `actual_value` is the
+/// response status code as a string. For `BodyJsonPath` conditions, `actual_value` is the extracted
+/// value when found, `"<not found>"` when the path yields no value, or `"<no body>"` when the response
+/// body is absent. The final `condition_met` in the result reflects `condition.negate` (i.e., it is
+/// inverted when `@if-not` is used).
+///
+/// # Examples
+///
+/// ```
+/// # use crate::{Condition, ConditionType, RequestContext, HttpResult};
+/// let cond = Condition {
+///     request_name: "login".into(),
+///     condition_type: ConditionType::Status,
+///     expected_value: "200".into(),
+///     negate: false,
+/// };
+/// let ctx = RequestContext {
+///     name: "login".into(),
+///     result: Some(HttpResult { status_code: 200, response_body: None }),
+/// };
+/// let res = evaluate_single_condition_verbose(&cond, &[ctx]).unwrap();
+/// assert!(res.condition_met);
+/// assert_eq!(res.actual_value, Some("200".to_string()));
+/// ```
 fn evaluate_single_condition_verbose(
     condition: &Condition,
     context: &[RequestContext],
@@ -130,6 +212,18 @@ fn evaluate_single_condition_verbose(
     })
 }
 
+/// Converts a `ConditionType` into a concise, human-readable string.
+///
+/// The returned string is `"status"` for `ConditionType::Status` or `"body.<path>"`
+/// for `ConditionType::BodyJsonPath(path)`.
+///
+/// # Examples
+///
+/// ```
+/// # use crate::ConditionType;
+/// assert_eq!(format_condition_type(&ConditionType::Status), "status");
+/// assert_eq!(format_condition_type(&ConditionType::BodyJsonPath("$.user.name".into())), "body.$.user.name");
+/// ```
 fn format_condition_type(condition_type: &ConditionType) -> String {
     match condition_type {
         ConditionType::Status => "status".to_string(),
