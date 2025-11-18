@@ -519,3 +519,97 @@ fn substitute_request_variables_in_request(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{Assertion, AssertionType, Header, HttpRequest, HttpResult, RequestContext};
+    use std::collections::HashMap;
+
+    fn sample_request(name: Option<&str>) -> HttpRequest {
+        HttpRequest {
+            name: name.map(|n| n.to_string()),
+            method: "GET".into(),
+            url: "https://example.com".into(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        }
+    }
+
+    fn sample_context() -> RequestContext {
+        let request = sample_request(Some("login"));
+
+        let mut headers = HashMap::new();
+        headers.insert("X-Auth".into(), "secret".into());
+
+        let result = HttpResult {
+            request_name: Some("login".into()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 20,
+            response_headers: Some(headers),
+            response_body: Some(r#"{"tenant":"acme","token":"abc123"}"#.into()),
+            assertion_results: vec![],
+        };
+
+        RequestContext {
+            name: "login".into(),
+            request,
+            result: Some(result),
+        }
+    }
+
+    #[test]
+    fn format_request_name_includes_suffix() {
+        assert_eq!(format_request_name(&Some("req".into())), "req: ");
+        assert_eq!(format_request_name(&None), "");
+    }
+
+    #[test]
+    fn add_skipped_request_context_assigns_default_name() {
+        let mut contexts = Vec::new();
+        add_skipped_request_context(&mut contexts, sample_request(None), 1);
+        assert_eq!(contexts.len(), 1);
+        assert_eq!(contexts[0].name, "request_1");
+        assert!(contexts[0].result.is_none());
+    }
+
+    #[test]
+    fn substitute_request_variables_updates_all_fields() {
+        let context = sample_context();
+        let mut request = HttpRequest {
+            name: Some("use-substitution".into()),
+            method: "POST".into(),
+            url: "https://api/{{login.response.body.$.tenant}}/users".into(),
+            headers: vec![Header {
+                name: "{{login.response.body.$.tenant}}-Header".into(),
+                value: "Bearer {{login.response.headers.X-Auth}}".into(),
+            }],
+            body: Some("{\"token\":\"{{login.response.body.$.token}}\"}".into()),
+            assertions: vec![Assertion {
+                assertion_type: AssertionType::Body,
+                expected_value: "{{login.response.body.$.token}}".into(),
+            }],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        substitute_request_variables_in_request(&mut request, &[context]).unwrap();
+
+        assert_eq!(request.url, "https://api/acme/users");
+        assert_eq!(request.headers[0].name, "acme-Header");
+        assert_eq!(request.headers[0].value, "Bearer secret");
+        assert_eq!(request.body.as_deref(), Some("{\"token\":\"abc123\"}"));
+        assert_eq!(request.assertions[0].expected_value, "abc123");
+    }
+}
