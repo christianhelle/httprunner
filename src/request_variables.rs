@@ -391,3 +391,139 @@ pub fn substitute_request_variables(input: &str, context: &[RequestContext]) -> 
 
     Ok(result)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{Header, HttpRequest, HttpResult, RequestContext, RequestVariable};
+    use std::collections::HashMap;
+
+    fn sample_context() -> RequestContext {
+        let request = HttpRequest {
+            name: Some("login".into()),
+            method: "POST".into(),
+            url: "https://example.com".into(),
+            headers: vec![Header {
+                name: "Authorization".into(),
+                value: "Basic abc".into(),
+            }],
+            body: Some("{\"username\":\"tester\"}".into()),
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let mut headers = HashMap::new();
+        headers.insert("X-Auth".into(), "secret".into());
+        headers.insert("Content-Type".into(), "application/json".into());
+
+        let result = HttpResult {
+            request_name: Some("login".into()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 50,
+            response_headers: Some(headers),
+            response_body: Some(
+                r#"{"token":"abc123","tenant":"acme","items":[{"token":"first"},{"token":"second"}]}"#
+                    .to_string(),
+            ),
+            assertion_results: vec![],
+        };
+
+        RequestContext {
+            name: "login".into(),
+            request,
+            result: Some(result),
+        }
+    }
+
+    #[test]
+    fn parse_request_variable_supports_response_body_paths() {
+        let var = parse_request_variable("{{login.response.body.$.token}}").unwrap();
+        assert_eq!(var.request_name, "login");
+        assert_eq!(var.source, RequestVariableSource::Response);
+        assert_eq!(var.target, RequestVariableTarget::Body);
+        assert_eq!(var.path, "$.token");
+    }
+
+    #[test]
+    fn parse_request_variable_rejects_short_references() {
+        assert!(parse_request_variable("{{missing}}").is_err());
+    }
+
+    #[test]
+    fn extract_request_header_variable_returns_value() {
+        let context = sample_context();
+        let request_var = RequestVariable {
+            reference: "{{login.request.headers.Authorization}}".into(),
+            request_name: "login".into(),
+            source: RequestVariableSource::Request,
+            target: RequestVariableTarget::Headers,
+            path: "Authorization".into(),
+        };
+        let value = extract_request_variable_value(&request_var, &[context]).unwrap();
+        assert_eq!(value.as_deref(), Some("Basic abc"));
+    }
+
+    #[test]
+    fn extract_response_body_variable_uses_jsonpath() {
+        let context = sample_context();
+        let request_var = RequestVariable {
+            reference: "{{login.response.body.$.token}}".into(),
+            request_name: "login".into(),
+            source: RequestVariableSource::Response,
+            target: RequestVariableTarget::Body,
+            path: "$.token".into(),
+        };
+        let value = extract_request_variable_value(&request_var, &[context]).unwrap();
+        assert_eq!(value.as_deref(), Some("abc123"));
+    }
+
+    #[test]
+    fn extract_response_header_variable_is_case_insensitive() {
+        let context = sample_context();
+        let request_var = RequestVariable {
+            reference: "{{login.response.headers.content-type}}".into(),
+            request_name: "login".into(),
+            source: RequestVariableSource::Response,
+            target: RequestVariableTarget::Headers,
+            path: "content-type".into(),
+        };
+        let value = extract_request_variable_value(&request_var, &[context]).unwrap();
+        assert_eq!(value.as_deref(), Some("application/json"));
+    }
+
+    #[test]
+    fn extract_json_property_handles_arrays() {
+        let json = r#"{"items":[{"token":"first"},{"token":"second"}]}"#;
+        let value = extract_json_property(json, "items[1].token").unwrap();
+        assert_eq!(value.as_deref(), Some("second"));
+    }
+
+    #[test]
+    fn extract_json_property_returns_error_for_invalid_index() {
+        let json = r#"{"items":[{"token":"first"}]}"#;
+        assert!(extract_json_property(json, "items[abc]").is_err());
+    }
+
+    #[test]
+    fn substitute_request_variables_replaces_known_references() {
+        let context = sample_context();
+        let input = "Bearer {{login.response.headers.X-Auth}} / {{login.response.body.$.tenant}}";
+        let output = substitute_request_variables(input, &[context]).unwrap();
+        assert!(output.contains("secret"));
+        assert!(output.contains("acme"));
+    }
+
+    #[test]
+    fn substitute_request_variables_leaves_unknowns_intact() {
+        let context = sample_context();
+        let input = "Value {{unknown.reference}}";
+        let output = substitute_request_variables(input, &[context]).unwrap();
+        assert_eq!(output, input);
+    }
+}
