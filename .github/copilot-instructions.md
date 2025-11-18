@@ -15,6 +15,22 @@ This is a Rust project. The original Zig implementation has been moved to a sepa
 - Ensure git is available for version generation
 - CRITICAL: This project requires internet access for HTTP testing - many validation scenarios will fail in offline environments
 
+### Git Commit Strategy (MANDATORY FOR CODING AGENTS)
+When implementing changes, ALWAYS commit your work to git in logical, atomic groups:
+
+1. **Commit After Each Logical Unit**: Break work into small, focused commits
+2. **Use Brief, Descriptive Messages**: Follow conventional commit format when appropriate
+   - Examples: "Add timeout support to runner", "Fix JSONPath array parsing", "Update CLI help text"
+3. **Commit Frequency**: Commit after completing each distinct change (e.g., after adding a feature, fixing a bug, updating documentation)
+4. **Git Commands**:
+   ```bash
+   git add <files>
+   git commit -m "Brief description of change"
+   ```
+5. **Benefits**: Creates detailed history, enables easy rollback, makes code review easier
+
+**IMPORTANT**: This applies to ALL coding agents working on this project. Commit early and often.
+
 ### Bootstrap and Build Process
 - `cargo build` -- NEVER CANCEL: Build takes 15-30 seconds typically. Set timeout to 2+ minutes.
 - `cargo test` -- NEVER CANCEL: Unit tests take 5-15 seconds. Set timeout to 2+ minutes.
