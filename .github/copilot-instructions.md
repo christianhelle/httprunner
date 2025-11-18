@@ -18,18 +18,28 @@ This is a Rust project. The original Zig implementation has been moved to a sepa
 ### Git Commit Strategy (MANDATORY FOR CODING AGENTS)
 When implementing changes, ALWAYS commit your work to git in logical, atomic groups:
 
-1. **Commit After Each Logical Unit**: Break work into small, focused commits
-2. **Use Brief, Descriptive Messages**: Follow conventional commit format when appropriate
+1. **NEVER Commit Directly to Main**: Before making any changes, check the current branch
+   - If on `main` branch, create a new feature branch: `git checkout -b <descriptive-branch-name>`
+   - Use descriptive branch names: `feature/timeout-support`, `fix/jsonpath-arrays`, `refactor/cli-parsing`
+2. **Commit After Each Logical Unit**: Break work into small, focused commits
+3. **Use Brief, Descriptive Messages**: Follow conventional commit format when appropriate
    - Examples: "Add timeout support to runner", "Fix JSONPath array parsing", "Update CLI help text"
-3. **Commit Frequency**: Commit after completing each distinct change (e.g., after adding a feature, fixing a bug, updating documentation)
-4. **Git Commands**:
+4. **Commit Frequency**: Commit after completing each distinct change (e.g., after adding a feature, fixing a bug, updating documentation)
+5. **Git Commands**:
    ```bash
+   # Check current branch first
+   git branch --show-current
+   
+   # If on main, create new branch
+   git checkout -b feature/your-feature-name
+   
+   # Make commits
    git add <files>
    git commit -m "Brief description of change"
    ```
-5. **Benefits**: Creates detailed history, enables easy rollback, makes code review easier
+6. **Benefits**: Creates detailed history, enables easy rollback, makes code review easier, protects main branch
 
-**IMPORTANT**: This applies to ALL coding agents working on this project. Commit early and often.
+**IMPORTANT**: This applies to ALL coding agents working on this project. Never work directly on main. Commit early and often.
 
 ### Bootstrap and Build Process
 - `cargo build` -- NEVER CANCEL: Build takes 15-30 seconds typically. Set timeout to 2+ minutes.
