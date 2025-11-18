@@ -19,7 +19,6 @@ pub fn blue(text: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use colored::Colorize;
 
     #[test]
     fn color_helpers_match_colored_output() {
