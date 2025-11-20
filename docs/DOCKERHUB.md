@@ -1,6 +1,28 @@
 # HTTP File Runner (Docker Image)
 
-Run portable HTTP/API test collections defined in `.http` files (same syntax as VS Code REST Client) directly via Docker. This README focuses on usage: request syntax, variables, chaining, assertions, conditional execution, environments, timeouts, and Docker-specific invocation.
+Run portable HTTP/API test collections defined in `.http` files (same syntax inspired by the JetBrains HTTP Client and the VS Code REST Client) directly via Docker. This README focuses on usage: request syntax, variables, chaining, assertions, conditional execution, environments, timeouts, and Docker-specific invocation.
+
+## Features
+
+- 🚀 Parse and execute HTTP requests from `.http` files
+- 📁 Support for multiple `.http` files in a single run
+- 🔍 `--discover` mode to recursively find and run all `.http` files
+- 📝 `--verbose` mode for detailed request and response information
+- 📋 `--log` mode to save all output to a file for analysis and reporting
+- ✅ Color-coded output (green for success, red for failure, yellow for skipped)
+- 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
+- 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- 📝 Custom headers support with full request header implementation
+- 🎯 Detailed error reporting with status codes
+- 🛡️ Robust error handling for network issues
+- 🔒 **Insecure HTTPS support** with `--insecure` flag for development environments
+- 🔍 Response assertions for status codes, body content, and headers
+- 🔧 Variables support with substitution in URLs, headers, and request bodies
+- 🔧 Request Variables for chaining requests and passing data between HTTP calls
+- 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
+- ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
+- 📋 Semantic versioning with git tag and commit information
+- 🔍 Build-time version generation with automatic git integration
 
 ## Pull & Run
 
