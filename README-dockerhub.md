@@ -252,10 +252,24 @@ EXPECTED_RESPONSE_STATUS 200
 ## Help Summary
 (Shown when run without args)
 ```
-httprunner <http-file> [more] [--verbose] [--log [file]] [--env <env>] [--insecure] [--no-banner]
-httprunner [flags] --discover
+HTTP File Runner - Execute HTTP requests from .http files
+
+Usage: httprunner [OPTIONS] [FILE]...
+
+Arguments:
+  [FILE]...  One or more .http files to process
+
+Options:
+  -v, --verbose            Show detailed HTTP request and response information
+      --log [<FILENAME>]   Log output to a file (defaults to 'log' if no filename is specified)
+      --env <ENVIRONMENT>  Specify environment name to load variables from http-client.env.json
+      --insecure           Allow insecure HTTPS connections (accept invalid certificates and hostnames)
+      --discover           Recursively discover and process all .http files from current directory
+      --upgrade            Update httprunner to the latest version
+      --no-banner          Do not show the donation banner
+  -h, --help               Print help
+  -V, --version            Print version
 ```
-Flags: --verbose, --log [file], --env <environment>, --insecure, --no-banner, --version, --upgrade, --help.
 
 ## Output Indicators
 - ✅ Success (2xx + assertions passed)
