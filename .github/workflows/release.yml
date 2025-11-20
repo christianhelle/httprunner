@@ -213,7 +213,9 @@ jobs:
     name: Publish to crates.io
     needs: build
     runs-on: ubuntu-latest
-
+    environment:
+      name: crates.io
+      url: https://crates.io/crates/httprunner/${{ env.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
