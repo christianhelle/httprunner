@@ -144,7 +144,9 @@ jobs:
     permissions:
       contents: read
       packages: write
-
+    environment:
+      name: hub.docker.com
+      url: https://hub.docker.com/repository/docker/christianhelle/httprunner/tags/${{ env.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
