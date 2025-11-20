@@ -146,7 +146,7 @@ jobs:
       packages: write
     environment:
       name: hub.docker.com
-      url: https://hub.docker.com/repository/docker/christianhelle/httprunner/tags/${{ env.VERSION }}
+      url: https://hub.docker.com/r/christianhelle/httprunner/tags
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
