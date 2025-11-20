@@ -1,0 +1,50 @@
+name: Snapcraft Pack
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-snap:
+    name: Build Snap Package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install Snapcraft
+        run: |
+          sudo apt-get update && sudo apt-get install -y snapd
+          sudo systemctl enable --now snapd.socket || true
+          sudo snap install core || true
+          sudo snap refresh core || true
+          sudo snap install snapcraft --classic
+
+      - name: Ensure runner is in lxd group
+        run: |
+          echo "Adding CI runner to 'lxd' group"
+          # Add the runner user to the lxd group (try both $USER and whoami)
+          sudo usermod -aG lxd "$USER" || sudo usermod -aG lxd "$(whoami)" || true
+          # Try to apply new group without a full re-login
+          newgrp lxd <<'EOF'
+          id -nG
+          EOF || true
+
+      - name: Snapcraft Pack
+        run: snapcraft pack --destructive-mode
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: snap-package
+          path: '*.snap'
