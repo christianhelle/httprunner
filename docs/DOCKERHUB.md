@@ -328,4 +328,5 @@ EXPECTED_RESPONSE_HEADERS "H: v"# Header contains substring
 - Variables resolve in URLs, headers, bodies, and assertion values.
 - Docker container has network view of host; ensure external services reachable.
 
+#
 Enjoy fast, declarative HTTP testing anywhere Docker runs. 🚀
