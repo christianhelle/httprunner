@@ -6,11 +6,13 @@
 
 **Implemented enhancements:**
 
+- Setup Docker Hub and Crates.io deployment environments [\#73](https://github.com/christianhelle/httprunner/pull/73) ([christianhelle](https://github.com/christianhelle))
 - Add comprehensive unit tests and dev tooling for coverage [\#72](https://github.com/christianhelle/httprunner/pull/72) ([christianhelle](https://github.com/christianhelle))
 - Introduce `@if-not` directive for negated conditions [\#69](https://github.com/christianhelle/httprunner/pull/69) ([christianhelle](https://github.com/christianhelle))
 
 **Merged pull requests:**
 
+- Update actions/checkout action to v6 [\#74](https://github.com/christianhelle/httprunner/pull/74) ([renovate[bot]](https://github.com/apps/renovate))
 - Add Git commit strategy guidelines for coding agents [\#71](https://github.com/christianhelle/httprunner/pull/71) ([christianhelle](https://github.com/christianhelle))
 
 ## [0.3.33](https://github.com/christianhelle/httprunner/tree/0.3.33) (2025-11-16)
