@@ -71,7 +71,11 @@ fn parse_environment_file(file_path: &Path) -> Result<HashMap<String, HashMap<St
                 for (var_name, var_value) in vars {
                     let value_str = match var_value {
                         Value::String(s) => s.clone(),
-                        _ => String::new(),
+                        Value::Number(n) => n.to_string(),
+                        Value::Bool(b) => b.to_string(),
+                        Value::Null => String::new(),
+                        // For objects and arrays, convert to JSON string
+                        _ => var_value.to_string(),
                     };
                     env_vars.insert(var_name.clone(), value_str);
                 }
@@ -116,8 +120,8 @@ mod tests {
         let map: std::collections::HashMap<_, _> =
             vars.into_iter().map(|v| (v.name, v.value)).collect();
         assert_eq!(map.get("TOKEN"), Some(&"abc".to_string()));
-        assert_eq!(map.get("COUNT"), Some(&String::new()));
-        assert_eq!(map.get("FLAG"), Some(&String::new()));
+        assert_eq!(map.get("COUNT"), Some(&"1".to_string()));
+        assert_eq!(map.get("FLAG"), Some(&"true".to_string()));
     }
 
     #[test]
@@ -142,7 +146,7 @@ mod tests {
         let parsed = parse_environment_file(&env_file).unwrap();
         let dev = parsed.get("dev").unwrap();
         assert_eq!(dev.get("TEXT").unwrap(), "value");
-        assert_eq!(dev.get("NUMBER").unwrap(), "");
-        assert_eq!(dev.get("OBJECT").unwrap(), "");
+        assert_eq!(dev.get("NUMBER").unwrap(), "123");
+        assert_eq!(dev.get("OBJECT").unwrap(), r#"{"foo":"bar"}"#);
     }
 }

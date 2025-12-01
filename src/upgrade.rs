@@ -38,7 +38,7 @@ pub fn run_upgrade() -> Result<()> {
 
     // Check if installed via snap
     let is_snap = Command::new("snap")
-        .args(&["list", "httprunner"])
+        .args(["list", "httprunner"])
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false);
@@ -51,7 +51,7 @@ pub fn run_upgrade() -> Result<()> {
         ("/bin/bash", vec!["-c", command])
     };
 
-    let output = Command::new(shell).args(&args).output()?;
+    let output = Command::new(shell).args(args).output()?;
 
     if output.status.success() {
         println!("{} Upgrade completed successfully!", colors::green("✅"));
@@ -76,7 +76,7 @@ pub fn run_upgrade() -> Result<()> {
     let command = "curl -fsSL https://christianhelle.com/httprunner/install | bash";
     println!("{} Running: {}", colors::yellow("📦"), command);
 
-    let output = Command::new("/bin/bash").args(&["-c", command]).output()?;
+    let output = Command::new("/bin/bash").args(["-c", command]).output()?;
 
     if output.status.success() {
         println!("{} Upgrade completed successfully!", colors::green("✅"));
