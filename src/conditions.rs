@@ -233,9 +233,9 @@ pub fn check_dependency(depends_on: &Option<String>, context: &[RequestContext])
         let target_context = context.iter().find(|ctx| ctx.name == *dep_name);
 
         if let Some(ctx) = target_context {
-            // Check if the request succeeded (returned HTTP 200)
+            // Check if the request succeeded (returned any 2xx status code)
             if let Some(ref result) = ctx.result {
-                return result.status_code == 200;
+                return result.success;
             }
         }
         // Dependency not found or not executed
@@ -415,6 +415,42 @@ mod tests {
         }];
 
         assert!(!check_dependency(&Some("request1".to_string()), &context));
+    }
+
+    #[test]
+    fn test_check_dependency_201_created() {
+        let request = HttpRequest {
+            name: Some("request1".to_string()),
+            method: "POST".to_string(),
+            url: "http://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        };
+
+        let result = HttpResult {
+            request_name: Some("request1".to_string()),
+            status_code: 201,
+            success: true, // 201 Created is a success
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(HashMap::new()),
+            response_body: Some(r#"{"id": 1}"#.to_string()),
+            assertion_results: vec![],
+        };
+
+        let context = vec![RequestContext {
+            name: "request1".to_string(),
+            request,
+            result: Some(result),
+        }];
+
+        assert!(check_dependency(&Some("request1".to_string()), &context));
     }
 
     #[test]

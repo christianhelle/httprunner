@@ -109,7 +109,7 @@ pub fn process_http_files(
                 let name_str = format_request_name(&processed_request.name);
 
                 log.writeln(&format!(
-                    "{} {} {} {} - Skipped: dependency '{}' not met (must return HTTP 200)",
+                    "{} {} {} {} - Skipped: dependency '{}' not met (must succeed with HTTP 2xx)",
                     colors::yellow("⏭️"),
                     name_str,
                     processed_request.method,
