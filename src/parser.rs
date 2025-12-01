@@ -59,6 +59,10 @@ pub fn parse_http_file(
         }
 
         if trimmed.is_empty() {
+            // Preserve empty lines within request bodies
+            if in_body {
+                body_content.push('\n');
+            }
             continue;
         }
 
@@ -269,6 +273,10 @@ fn is_http_request_line(line: &str) -> bool {
         || line.starts_with("PUT ")
         || line.starts_with("DELETE ")
         || line.starts_with("PATCH ")
+        || line.starts_with("HEAD ")
+        || line.starts_with("OPTIONS ")
+        || line.starts_with("TRACE ")
+        || line.starts_with("CONNECT ")
 }
 
 /// Substitutes `{{name}}` placeholders in a string with provided variable values.
@@ -742,6 +750,68 @@ POST https://example.com/api
         assert_eq!(requests[1].conditions.len(), 2);
         assert_eq!(requests[1].conditions[0].negate, false); // @if
         assert_eq!(requests[1].conditions[1].negate, true); // @if-not
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_with_all_http_methods() {
+        let content = r#"
+GET https://example.com/api
+POST https://example.com/api
+PUT https://example.com/api
+DELETE https://example.com/api
+PATCH https://example.com/api
+HEAD https://example.com/api
+OPTIONS https://example.com/api
+TRACE https://example.com/api
+CONNECT https://example.com/api
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_all_methods.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 9);
+        assert_eq!(requests[0].method, "GET");
+        assert_eq!(requests[1].method, "POST");
+        assert_eq!(requests[2].method, "PUT");
+        assert_eq!(requests[3].method, "DELETE");
+        assert_eq!(requests[4].method, "PATCH");
+        assert_eq!(requests[5].method, "HEAD");
+        assert_eq!(requests[6].method, "OPTIONS");
+        assert_eq!(requests[7].method, "TRACE");
+        assert_eq!(requests[8].method, "CONNECT");
+
+        std::fs::remove_file(&test_file).ok();
+    }
+
+    #[test]
+    fn test_parse_http_file_preserves_empty_lines_in_body() {
+        let content = r#"
+POST https://example.com/api
+Content-Type: application/json
+
+{
+  "name": "test",
+
+  "value": "with empty lines"
+}
+"#;
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_body_empty_lines.http");
+        std::fs::write(&test_file, content).unwrap();
+
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 1);
+        assert!(requests[0].body.is_some());
+        let body = requests[0].body.as_ref().unwrap();
+        // Check that the empty line is preserved
+        assert!(
+            body.contains("\n\n") || body.lines().count() > 3,
+            "Empty lines should be preserved in body: {}",
+            body
+        );
 
         std::fs::remove_file(&test_file).ok();
     }
