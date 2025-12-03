@@ -12,6 +12,7 @@
 
 **Merged pull requests:**
 
+- Fix multiple parser and runtime bugs [\#75](https://github.com/christianhelle/httprunner/pull/75) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update actions/checkout action to v6 [\#74](https://github.com/christianhelle/httprunner/pull/74) ([renovate[bot]](https://github.com/apps/renovate))
 - Add Git commit strategy guidelines for coding agents [\#71](https://github.com/christianhelle/httprunner/pull/71) ([christianhelle](https://github.com/christianhelle))
 
