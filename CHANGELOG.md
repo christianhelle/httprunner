@@ -6,7 +6,7 @@
 
 **Implemented enhancements:**
 
-- Add `--pretty-json` flag to format JSON payloads in verbose output [\#77](https://github.com/christianhelle/httprunner/pull/77) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Introduce --pretty-json CLI argument [\#76](https://github.com/christianhelle/httprunner/pull/76) ([christianhelle](https://github.com/christianhelle))
 - Setup Docker Hub and Crates.io deployment environments [\#73](https://github.com/christianhelle/httprunner/pull/73) ([christianhelle](https://github.com/christianhelle))
 - Add comprehensive unit tests and dev tooling for coverage [\#72](https://github.com/christianhelle/httprunner/pull/72) ([christianhelle](https://github.com/christianhelle))
 - Introduce `@if-not` directive for negated conditions [\#69](https://github.com/christianhelle/httprunner/pull/69) ([christianhelle](https://github.com/christianhelle))
