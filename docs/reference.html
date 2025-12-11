@@ -91,6 +91,11 @@ httprunner [OPTIONS] --discover</code>
                             <div class="param-desc">Show detailed HTTP request and response information</div>
                         </div>
                         <div class="param">
+                            <div class="param-name">--pretty-json</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Pretty-print JSON payloads in verbose output (requires --verbose)</div>
+                        </div>
+                        <div class="param">
                             <div class="param-name">--log [filename]</div>
                             <div class="param-type">string?</div>
                             <div class="param-desc">Log output to a file (defaults to 'log' if no filename specified)</div>
@@ -120,11 +125,14 @@ httprunner api-tests.http
 # Multiple files
 httprunner auth.http users.http posts.http
 
+# Verbose mode with pretty-printed JSON
+httprunner api-tests.http --verbose --pretty-json
+
 # Discovery mode with logging
 httprunner --discover --verbose --log test-results.log
 
-# Environment-specific testing
-httprunner api-tests.http --env production --log prod-test.log</code>
+# Environment-specific testing with formatted JSON output
+httprunner api-tests.http --env production --verbose --pretty-json --log prod-test.log</code>
                     </div>
                 </section>
 
