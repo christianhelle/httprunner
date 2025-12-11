@@ -50,6 +50,10 @@ pub struct Cli {
     /// Do not show the donation banner
     #[arg(long)]
     pub no_banner: bool,
+
+    /// Pretty-print JSON payloads in verbose output
+    #[arg(long)]
+    pub pretty_json: bool,
 }
 
 impl Cli {
@@ -87,6 +91,7 @@ mod tests {
             discover: false,
             upgrade: false,
             no_banner: false,
+            pretty_json: false,
         }
     }
 
