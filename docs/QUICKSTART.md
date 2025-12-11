@@ -176,7 +176,37 @@ Output includes:
 - Response headers
 - Response body
 
-### 8. File Logging
+### 8. Pretty-Print JSON
+
+Format JSON payloads in verbose output for better readability:
+
+```bash
+# Enable pretty-printed JSON (requires --verbose)
+httprunner example.http --verbose --pretty-json
+```
+
+This will automatically format any JSON content in request and response bodies:
+
+```http
+# Example: This POST request will show pretty-printed JSON in verbose mode
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "user": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "preferences": {
+      "theme": "dark",
+      "notifications": true
+    }
+  }
+}
+```
+
+With `--verbose --pretty-json`, the JSON will be displayed with proper indentation and formatting, making nested structures much easier to read and debug.
+
+### 9. File Logging
 
 Log all output to a file:
 
@@ -188,7 +218,7 @@ httprunner example.http --log
 httprunner example.http --log mytest
 ```
 
-### 9. Discovery Mode
+### 10. Discovery Mode
 
 Automatically find and run all .http files:
 
@@ -201,7 +231,7 @@ This will:
 - Display all found files
 - Execute them in sequence
 
-### 10. Multiple Files
+### 11. Multiple Files
 
 Process multiple files at once:
 
@@ -293,6 +323,7 @@ EXPECTED_RESPONSE_STATUS 500
 4. **Request Names**: Use `# @name requestName` to name requests for chaining
 5. **JSONPath**: Use `$.property.nested` for extracting JSON values
 6. **Headers**: Multiple headers can be specified, one per line after the request line
+7. **Pretty JSON**: Use `--verbose --pretty-json` to format JSON payloads for easier reading and debugging
 
 ## Troubleshooting
 
