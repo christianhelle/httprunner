@@ -7,6 +7,18 @@ use crate::runner;
 use crate::types::{AssertionType, HttpRequest, RequestContext};
 use anyhow::Result;
 
+/// Attempts to parse and pretty-print JSON. Returns the formatted JSON on success,
+/// or the original string if it's not valid JSON.
+fn format_json_if_valid(text: &str) -> String {
+    match serde_json::from_str::<serde_json::Value>(text) {
+        Ok(json) => match serde_json::to_string_pretty(&json) {
+            Ok(pretty) => pretty,
+            Err(_) => text.to_string(),
+        },
+        Err(_) => text.to_string(),
+    }
+}
+
 /// Helper function to format request name for logging
 fn format_request_name(name: &Option<String>) -> String {
     name.as_ref()
@@ -37,7 +49,8 @@ fn add_skipped_request_context(
 /// This function parses each provided HTTP file, evaluates request dependencies and conditions,
 /// substitutes request variables from prior results, executes requests, evaluates assertions,
 /// and records per-request contexts and summary logs. If `insecure` is `true`, TLS certificate
-/// verification is skipped for HTTP requests.
+/// verification is skipped for HTTP requests. If `pretty_json` is `true`, JSON payloads in
+/// verbose output will be formatted for better readability.
 ///
 /// # Returns
 ///
@@ -46,7 +59,7 @@ fn add_skipped_request_context(
 /// # Examples
 ///
 /// ```
-/// let ok = process_http_files(&[], false, None, None, false).unwrap();
+/// let ok = process_http_files(&[], false, None, None, false, false).unwrap();
 /// assert!(ok);
 /// ```
 pub fn process_http_files(
@@ -55,6 +68,7 @@ pub fn process_http_files(
     log_filename: Option<&str>,
     environment: Option<&str>,
     insecure: bool,
+    pretty_json: bool,
 ) -> Result<bool> {
     let mut log = Log::new(log_filename)?;
 
@@ -305,7 +319,12 @@ pub fn process_http_files(
                 }
 
                 if let Some(ref body) = processed_request.body {
-                    log.writeln(&format!("Body:\n{}", body));
+                    let formatted_body = if pretty_json {
+                        format_json_if_valid(body)
+                    } else {
+                        body.clone()
+                    };
+                    log.writeln(&format!("Body:\n{}", formatted_body));
                 }
                 log.writeln(&"-".repeat(30));
             }
@@ -412,7 +431,12 @@ pub fn process_http_files(
                 }
 
                 if let Some(ref body) = result.response_body {
-                    log.writeln(&format!("Body:\n{}", body));
+                    let formatted_body = if pretty_json {
+                        format_json_if_valid(body)
+                    } else {
+                        body.clone()
+                    };
+                    log.writeln(&format!("Body:\n{}", formatted_body));
                 }
                 log.writeln(&"-".repeat(30));
             }
