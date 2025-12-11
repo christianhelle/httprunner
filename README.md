@@ -16,6 +16,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📁 Support for multiple `.http` files in a single run
 - 🔍 `--discover` mode to recursively find and run all `.http` files
 - 📝 `--verbose` mode for detailed request and response information
+- 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
@@ -184,6 +185,9 @@ httprunner <http-file>
 # Run a single .http file with verbose output
 httprunner <http-file> --verbose
 
+# Run a single .http file with verbose output and pretty-printed JSON
+httprunner <http-file> --verbose --pretty-json
+
 # Run a single .http file with insecure HTTPS (accept invalid certificates)
 httprunner <http-file> --insecure
 
@@ -268,6 +272,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 # Run a single .http file with verbose output
 ./target/release/httprunner <http-file> --verbose
 
+# Run a single .http file with verbose output and pretty-printed JSON
+./target/release/httprunner <http-file> --verbose --pretty-json
+
 # Run a single .http file and save output to a log file
 ./target/release/httprunner <http-file> --log
 
@@ -304,6 +311,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 
 # Test basic functionality with verbose output
 ./target/release/httprunner examples/simple.http --verbose
+
+# Test basic functionality with verbose output and pretty-printed JSON
+./target/release/httprunner examples/simple.http --verbose --pretty-json
 
 # Test basic functionality and save output to log
 ./target/release/httprunner examples/simple.http --log
@@ -366,6 +376,9 @@ docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianh
 # Run with a single .http file with verbose output
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose
 
+# Run with a single .http file with verbose output and pretty-printed JSON
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose --pretty-json
+
 # Run with insecure HTTPS (accept invalid certificates)
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --insecure
 
@@ -397,6 +410,7 @@ docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianh
 alias httprunner='docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner'
 httprunner --discover
 httprunner examples/simple.http --verbose
+httprunner examples/simple.http --verbose --pretty-json
 httprunner examples/simple.http --log test.log
 httprunner examples/simple.http --verbose --log detailed_test.log
 httprunner examples/simple.http
@@ -1176,6 +1190,54 @@ The `--verbose` flag provides detailed information about HTTP requests and respo
 - 📥 **Response Details**: Status code, duration, response headers, and response body
 - ⏱️ **Timing Information**: Response times in milliseconds
 
+### Pretty-Print JSON Output
+
+The `--pretty-json` flag formats JSON payloads in verbose output for improved readability. This flag requires `--verbose` to be enabled.
+
+**Features:**
+
+- 🎨 **Auto-detection**: Automatically detects and formats valid JSON content
+- 📝 **Graceful fallback**: Non-JSON content is displayed unchanged
+- 📤 **Request bodies**: Pretty-prints JSON in request bodies
+- 📥 **Response bodies**: Pretty-prints JSON in response bodies
+- 🔍 **Better debugging**: Makes it easier to inspect nested JSON structures
+
+**Usage:**
+
+```bash
+# Enable pretty-printed JSON in verbose mode
+httprunner examples/apis.http --verbose --pretty-json
+
+# Works with logging too
+httprunner examples/apis.http --verbose --pretty-json --log results.txt
+
+# Discover mode with pretty JSON
+httprunner --discover --verbose --pretty-json
+```
+
+**Example output with --pretty-json:**
+
+Before (without --pretty-json):
+```
+Body:
+{"name":"John Doe","email":"john@example.com","address":{"city":"New York","zip":"10001"}}
+```
+
+After (with --pretty-json):
+```
+Body:
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "address": {
+    "city": "New York",
+    "zip": "10001"
+  }
+}
+```
+
+**Note:** The `--pretty-json` flag only affects output display when `--verbose` is enabled. It does not modify the actual HTTP requests or responses.
+
 ### Logging Mode
 
 The `--log` flag enables output logging to a file, which is essential for:
@@ -1209,8 +1271,8 @@ When running httprunner without any arguments, the following help text is displa
 ```text
 HTTP File Runner v0.1.9
 Usage:
-  httprunner <http-file> [http-file2] [...] [--verbose] [--log [filename]] [--env <environment>] [--insecure]
-  httprunner [--verbose] [--log [filename]] [--env <environment>] [--insecure] --discover
+  httprunner <http-file> [http-file2] [...] [--verbose] [--pretty-json] [--log [filename]] [--env <environment>] [--insecure]
+  httprunner [--verbose] [--pretty-json] [--log [filename]] [--env <environment>] [--insecure] --discover
   httprunner --version | -v
   httprunner --upgrade
   httprunner --help | -h
@@ -1219,6 +1281,7 @@ Arguments:
   <http-file>    One or more .http files to process
   --discover     Recursively discover and process all .http files from current directory
   --verbose      Show detailed HTTP request and response information
+  --pretty-json  Pretty-print JSON payloads in verbose output (requires --verbose)
   --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
   --env <env>    Specify environment name to load variables from http-client.env.json
   --insecure     Allow insecure HTTPS connections (accept invalid certificates and hostnames)
