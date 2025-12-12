@@ -1,11 +1,5 @@
 # HTTP File Runner
 
-[![Build Linux](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml)
-[![Build macOS](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml)
-[![Build Windows](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml)
-[![Rust Version](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 A simple command-line tool written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
 > **Note**: This project was originally written in Zig. The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now contains only the Rust implementation, which is actively maintained and recommended for all use cases.
@@ -212,11 +206,13 @@ Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
 ### Supported Extraction Patterns
 
 **For JSON bodies:**
+
 - `$.property_name` - Extract top-level properties
 - `$.nested.property` - Extract nested properties
 - `*` - Extract entire body
 
 **For headers:**
+
 - `header_name` - Extract specific header value (case-insensitive)
 
 ## Conditional Execution
