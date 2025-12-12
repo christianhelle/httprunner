@@ -164,14 +164,119 @@ cargo test              # Unit tests
 cargo build --release   # Release build
 ```
 
+## Documentation Requirements (CRITICAL)
+
+When implementing features or fixes that affect user-facing functionality, you MUST update ALL relevant documentation:
+
+### Documentation Files to Update
+
+1. **README.md** (Root Directory)
+   - Primary project documentation
+   - Contains comprehensive feature descriptions, installation options, usage examples
+   - Target audience: General users, developers, contributors
+   - Must be complete and detailed
+
+2. **src/README.md** (Source Directory)
+   - Used as the crates.io package description
+   - Must be concise and focused on cargo users
+   - Should NOT contain implementation details or source code structure
+   - Focus on features, usage, and crates.io-specific installation
+   - Keep in sync with README.md but more concise
+
+3. **docs/** (Static Website)
+   - GitHub Pages documentation site served at https://christianhelle.com/httprunner/
+   - Key files to update:
+     - `index.html` - Home page with features overview
+     - `guide.html` - User guide with examples
+     - `reference.html` - API reference and syntax documentation
+     - `install.html` - Installation instructions
+     - `cicd.html` - CI/CD integration guide
+     - `docker.html` - Docker usage guide
+   - Must reflect current features and functionality
+   - Update when adding/changing features
+   - Check for outdated content or examples
+   - Ensure navigation and links are correct
+
+### When to Update Documentation
+
+**ALWAYS update documentation when:**
+- Adding a new feature or command-line flag
+- Changing existing behavior or syntax
+- Adding/modifying .http file format support
+- Changing installation procedures
+- Updating version information or requirements
+- Adding/removing dependencies that affect users
+- Modifying environment variable behavior
+- Changing timeout defaults or configuration
+- Adding new assertion types or validation rules
+- Modifying request chaining or variable syntax
+
+### Documentation Update Checklist
+
+When making feature changes or fixes:
+
+- [ ] Update README.md with detailed explanation and examples
+- [ ] Update src/README.md with concise description (remember: crates.io audience)
+- [ ] Check docs/ folder for pages that need updates
+- [ ] Add examples to demonstrate new features
+- [ ] Update command-line help text if adding flags
+- [ ] Update .http file format examples if syntax changes
+- [ ] Verify all documentation examples still work
+- [ ] Check that version requirements are current
+- [ ] Ensure installation instructions are accurate
+
+### Documentation Sync Guidelines
+
+**README.md vs src/README.md:**
+- README.md: Comprehensive, includes all installation methods, detailed examples, CI/CD info, development setup
+- src/README.md: Focused on `cargo install` users, concise feature descriptions, essential usage only
+- Both should cover the same features but with different levels of detail
+- src/README.md should link to GitHub for complete documentation
+
+**docs/ folder:**
+- Keep static website content aligned with README.md
+- Update feature pages when adding/changing functionality
+- Ensure examples and screenshots are current
+- Remove outdated content promptly
+
+### Documentation Verification Steps
+
+Before committing documentation changes:
+
+1. **Syntax and Examples**
+   - Verify all code examples have correct syntax
+   - Test command-line examples actually work
+   - Ensure .http file examples are valid
+   - Check that all example files referenced exist
+
+2. **Consistency Check**
+   - Feature descriptions match across all docs
+   - Version numbers are consistent
+   - Installation commands are identical where appropriate
+   - Command-line flags documentation matches `--help` output
+
+3. **Completeness Check**
+   - All new features are documented
+   - Breaking changes are clearly noted
+   - Migration guides are provided when needed
+   - Examples demonstrate key functionality
+
+4. **Link Validation**
+   - Internal links work correctly
+   - External links are valid
+   - Example file paths are correct
+   - GitHub links point to correct locations
+
 ## Common Development Tasks
 
 ### Adding New Features
 1. Modify appropriate source files in `src/`
 2. Add/update tests in the same files (Rust convention)
-3. Update documentation if needed
-4. Test with example files
-5. Run formatting and build validation: `cargo fmt && cargo clippy && cargo test`
+3. **Update ALL relevant documentation** (README.md, src/README.md, docs/)
+4. Add example files to demonstrate the feature if applicable
+5. Test with example files
+6. Run formatting and build validation: `cargo fmt && cargo clippy && cargo test`
+7. Verify documentation examples work correctly
 
 ### HTTP File Format
 The application parses `.http` files with this structure:
