@@ -1,6 +1,14 @@
 # HTTP File Runner
 
-A command-line tool that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
+[![Build Linux](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml)
+[![Build macOS](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml)
+[![Build Windows](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml)
+[![Rust Version](https://img.shields.io/badge/rust-1.70+-orange.svg)](https://www.rust-lang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A simple command-line tool written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
+
+> **Note**: This project was originally written in Zig. The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now contains only the Rust implementation, which is actively maintained and recommended for all use cases.
 
 ## Features
 
@@ -8,44 +16,33 @@ A command-line tool that parses `.http` files and executes HTTP requests, provid
 - 📁 Support for multiple `.http` files in a single run
 - 🔍 `--discover` mode to recursively find and run all `.http` files
 - 📝 `--verbose` mode for detailed request and response information
+- 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
-- 📝 Custom headers support with full request header implementation
+- 📝 **Custom headers support** with full request header implementation
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
 - 🔒 **Insecure HTTPS support** with `--insecure` flag for development environments
-- 🔍 Response assertions for status codes, body content, and headers
-- 🔧 Variables support with substitution in URLs, headers, and request bodies
-- 🔧 Request Variables for chaining requests and passing data between HTTP calls
+- 🔍 **Response assertions** for status codes, body content, and headers
+- 🔧 **Variables support** with substitution in URLs, headers, and request bodies
+- 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
 - 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
-- 📋 Semantic versioning with git tag and commit information
-- 🔍 Build-time version generation with automatic git integration
+- 📋 **Semantic versioning** with git tag and commit information
+- 🔍 **Build-time version generation** with automatic git integration
 
-## Version Information
-
-The application includes comprehensive version information accessible via:
+## Installation
 
 ```bash
-httprunner --version
-# or
-httprunner -v
+# Install from crates.io
+cargo install httprunner
 ```
 
-This displays:
-
-- Application version (semantic versioning)
-- Git tag information
-- Git commit hash
-- Build timestamp
-
-The version information is automatically generated at build time using git repository data.
+For other installation options (including pre-built binaries for Linux, macOS, and Windows), see the [GitHub repository](https://github.com/christianhelle/httprunner).
 
 ## Usage
-
-### Basic Commands
 
 ```bash
 # Run a single .http file
@@ -54,23 +51,20 @@ httprunner <http-file>
 # Run with verbose output
 httprunner <http-file> --verbose
 
+# Run with verbose output and pretty-printed JSON
+httprunner <http-file> --verbose --pretty-json
+
 # Run with insecure HTTPS (accept invalid certificates)
 httprunner <http-file> --insecure
 
 # Run and save output to a log file
 httprunner <http-file> --log
 
-# Run with verbose output and save to a custom log file
-httprunner <http-file> --verbose --log results.txt
-
 # Run multiple .http files
 httprunner <http-file1> <http-file2> [...]
 
 # Discover and run all .http files recursively
 httprunner --discover
-
-# Discover with verbose output and logging
-httprunner --discover --verbose --log discovery.log
 
 # Show version information
 httprunner --version
@@ -177,18 +171,13 @@ httprunner myfile.http --env dev
 
 ## Insecure HTTPS
 
-For development and testing environments with self-signed certificates, use the `--insecure` flag to bypass certificate validation:
+For development and testing environments with self-signed certificates, use the `--insecure` flag:
 
 ```bash
-# Allow insecure HTTPS connections
 httprunner myfile.http --insecure
-
-# Combine with other flags
-httprunner myfile.http --insecure --verbose
-httprunner --discover --insecure --log results.txt
 ```
 
-⚠️ **Security Warning**: The `--insecure` flag disables SSL/TLS certificate verification. Use only in development/testing environments. Never use in production.
+⚠️ **Security Warning**: Only use in development/testing environments. Never use in production.
 
 ## Request Variables
 
@@ -232,183 +221,45 @@ Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
 
 ## Conditional Execution
 
-Execute requests conditionally based on previous request results using `@dependsOn`, `@if`, and `@if-not` directives.
-
-### `@dependsOn` Directive
-
-Execute only if dependency returns HTTP 200:
+Execute requests conditionally based on previous request results using `@dependsOn`, `@if`, and `@if-not` directives:
 
 ```http
 # @name check-user
 GET https://api.example.com/user/123
 
 ###
+# Execute only if check-user returns 200
 # @dependsOn check-user
 PUT https://api.example.com/user/123
-```
-
-### `@if` Directive - Status Check
-
-```http
-# @name check-user
-GET https://api.example.com/user/123
 
 ###
 # Create if not found (404)
 # @if check-user.response.status 404
 POST https://api.example.com/user
-```
-
-### `@if` Directive - JSONPath Check
-
-```http
-# @name create-user
-POST https://api.example.com/user
-
-###
-# Execute only if username matches
-# @if create-user.response.status 200
-# @if create-user.response.body.$.username testuser
-PUT https://api.example.com/user/activate
-```
-
-### `@if-not` Directive - Negated Conditions
-
-Execute only if condition does NOT match:
-
-```http
-# @name check-user
-GET https://api.example.com/user/123
 
 ###
 # Update if user exists (NOT 404)
 # @if-not check-user.response.status 404
 PUT https://api.example.com/user/123
-
-###
-# Execute only if no error occurred
-# @if create-user.response.status 200
-# @if-not create-user.response.body.$.error true
-PUT https://api.example.com/user/activate
 ```
-
-**Note:** Multiple `@if` and `@if-not` directives require ALL conditions to be met (AND logic).
 
 ## Timeout Configuration
 
-The HTTP File Runner allows you to customize request timeouts for better control over HTTP operations. You can set both connection timeouts (for establishing connections) and read timeouts (for waiting for responses).
-
-### Default Timeouts
-
-- **Connection timeout**: 30 seconds (time to establish a connection)
-- **Read timeout**: 60 seconds (time to wait for response data)
-
-### Timeout Directives
-
-Use comment directives before a request to customize timeouts:
-
-#### Read Timeout (`@timeout`)
-
-Sets the maximum time to wait for response data from an established connection:
+Customize request timeouts using comment directives:
 
 ```http
+# Read timeout (default: 60 seconds)
 # @timeout 600
 GET https://example.com/api/long-running
-```
 
-#### Connection Timeout (`@connection-timeout`)
-
-Sets the maximum time to establish a connection with the server:
-
-```http
+# Connection timeout (default: 30 seconds)
 // @connection-timeout 10
 GET https://example.com/api
-```
 
-### Time Units
-
-By default, timeout values are in **seconds**, but you can specify explicit units:
-
-- `ms` - milliseconds (supports sub-second precision like 999ms or 1500ms)
-- `s` - seconds
-- `m` - minutes
-
-#### Examples with Units
-
-```http
-# Timeout in seconds (default)
-# @timeout 30
-GET https://example.com/api
-
-###
-
-# Timeout in seconds (explicit)
-# @timeout 30 s
-GET https://example.com/api
-
-###
-
-# Timeout in minutes
+# Time units: ms (milliseconds), s (seconds), m (minutes)
 # @timeout 2 m
-GET https://example.com/api/slow
-
-###
-
-# Timeout in milliseconds (full precision supported)
 # @timeout 5000 ms
-GET https://example.com/api/fast
-
-###
-
-# Sub-second timeout (1.5 seconds)
-# @timeout 1500 ms
-GET https://example.com/api/quick
-
-###
-
-# Both timeouts customized
-# @timeout 120
-// @connection-timeout 10
-GET https://example.com/api/data
-```
-
-### Comment Style Support
-
-Both `#` and `//` comment styles are supported:
-
-```http
-# Using hash comments
-# @timeout 60
-// @connection-timeout 5
 GET https://example.com/api
-```
-
-### Practical Use Cases
-
-**Long-running operations:**
-```http
-# Wait up to 10 minutes for data processing
-# @timeout 600
-POST https://example.com/api/process
-Content-Type: application/json
-
-{"data": "large_dataset"}
-```
-
-**Quick health checks:**
-```http
-# Fast timeout for health check endpoints
-# @timeout 5
-// @connection-timeout 2
-GET https://example.com/health
-```
-
-**Slow network conditions:**
-```http
-# Allow more time in development environments
-# @timeout 2 m
-// @connection-timeout 30
-GET https://dev.example.com/api
 ```
 
 ## Response Assertions
@@ -468,59 +319,30 @@ File Summary: 3 Passed, 1 Failed, 0 Skipped
 
 ## Verbose Mode
 
-The `--verbose` flag provides detailed information about HTTP requests and responses:
+Use `--verbose` for detailed request and response information, including headers, body content, and timing. Add `--pretty-json` to format JSON payloads for improved readability.
 
-- 📤 **Request Details**: Method, URL, headers, and request body
-- 📥 **Response Details**: Status code, duration, response headers, and response body
-- ⏱️ **Timing Information**: Response times in milliseconds
+## Logging
 
-## Logging Mode
+Save output to a file with `--log`:
 
-The `--log` flag enables output logging to a file:
+```bash
+# Save to default 'log' file
+httprunner myfile.http --log
 
-- `--log` without filename: Saves to a file named 'log'
-- `--log filename.txt`: Saves to the specified filename
-- Works with all other flags: `--verbose --log`, `--discover --log`, etc.
-
-## Error Handling
-
-The tool handles various error conditions gracefully:
-
-- **File not found**: Clear error message with red indicator
-- **Invalid URLs**: Proper error reporting
-- **Network issues**: Connection timeouts, unknown hosts, etc.
-- **Invalid HTTP methods**: Validation and error reporting
-
-## Code Structure
-
-```text
-src/
-├── main.rs              # Main application entry point
-├── cli.rs               # Command-line interface parsing
-├── types.rs             # Data structures
-├── colors.rs            # Terminal color output
-├── parser.rs            # HTTP file parsing
-├── runner.rs            # HTTP request execution
-├── processor.rs         # Request processing
-├── discovery.rs         # Recursive file discovery
-├── assertions.rs        # Response assertion validation
-├── request_variables.rs # Request chaining
-├── conditions.rs        # Conditional execution logic
-├── environment.rs       # Environment variable handling
-├── log.rs               # Logging functionality
-└── upgrade.rs           # Self-update feature
+# Save to custom file
+httprunner myfile.http --log results.txt
 ```
+
+## Documentation
+
+For complete documentation, installation options, and more examples, visit the [GitHub repository](https://github.com/christianhelle/httprunner).
 
 ## License
 
-This project is open source and available under the MIT License.
-
-## Links
-
-- [GitHub Repository](https://github.com/christianhelle/httprunner)
-- [Documentation](https://github.com/christianhelle/httprunner)
-- [Issue Tracker](https://github.com/christianhelle/httprunner/issues)
+MIT License - See [LICENSE](https://github.com/christianhelle/httprunner/blob/main/LICENSE) for details.
 
 ---
 
-For more information and updates, visit [christianhelle.com](https://christianhelle.com)
+For more information, check out [christianhelle.com](https://christianhelle.com)
+
+If you find this useful, feel free to [buy me a coffee ☕](https://www.buymeacoffee.com/christianhelle)
