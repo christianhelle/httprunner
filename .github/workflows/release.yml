@@ -24,7 +24,7 @@ jobs:
         shell: pwsh
         run: |
           $content = Get-Content -Path snapcraft.yaml -Raw
-          $content = $content -replace 'version: v[\d\.]+', "version: v${{ env.VERSION }}"
+          $content = $content -replace 'version: v[\d\.]+', "version: ${{ env.VERSION }}"
           $content | Set-Content -Path snapcraft.yaml
 
       - name: Commit and push version update
