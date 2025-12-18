@@ -96,6 +96,7 @@ mod tests {
             upgrade: false,
             no_banner: false,
             pretty_json: false,
+            report: false,
         }
     }
 
