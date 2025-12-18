@@ -15,6 +15,8 @@ mod upgrade;
 
 use clap::{CommandFactory, Parser};
 
+use crate::report::generate_markdown;
+
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
 
@@ -59,7 +61,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     if cli_args.report {
-        match report::generate_markdown(results.clone()) {
+        match generate_markdown(results.clone()) {
             Ok(filename) => println!("{} Report generated: {}", colors::green("✅"), filename),
             Err(e) => eprintln!("{} Failed to generate report: {}", colors::red("❌"), e),
         }
