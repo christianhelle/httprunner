@@ -58,6 +58,13 @@ fn main() -> anyhow::Result<()> {
         );
     }
 
+    if cli_args.report {
+        match report::generate_markdown(results.clone()) {
+            Ok(filename) => println!("{} Report generated: {}", colors::green("✅"), filename),
+            Err(e) => eprintln!("{} Failed to generate report: {}", colors::red("❌"), e),
+        }
+    }
+
     if !cli_args.no_banner {
         cli::show_donation_banner();
     }

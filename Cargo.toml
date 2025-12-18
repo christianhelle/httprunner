@@ -24,6 +24,7 @@ colored = "3.0.0"
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"
 walkdir = "2.5"
+chrono = "0.4"
 
 [build-dependencies]
 chrono = "0.4"
