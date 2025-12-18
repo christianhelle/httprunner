@@ -54,6 +54,10 @@ pub struct Cli {
     /// Pretty-print JSON payloads in verbose output
     #[arg(long)]
     pub pretty_json: bool,
+
+    /// Generate summary report (in markdown format)
+    #[arg(long)]
+    pub report: bool,
 }
 
 impl Cli {
