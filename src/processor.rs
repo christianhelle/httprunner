@@ -4,7 +4,8 @@ use crate::log::Log;
 use crate::parser;
 use crate::request_variables;
 use crate::runner;
-use crate::types::{AssertionType, HttpRequest, RequestContext};
+use crate::types::HttpFileResults;
+use crate::types::{AssertionType, HttpRequest, ProcessorResults, RequestContext};
 use anyhow::Result;
 
 /// Attempts to parse and pretty-print JSON. Returns the formatted JSON on success,
@@ -69,8 +70,9 @@ pub fn process_http_files(
     environment: Option<&str>,
     insecure: bool,
     pretty_json: bool,
-) -> Result<bool> {
+) -> Result<ProcessorResults> {
     let mut log = Log::new(log_filename)?;
+    let mut http_file_results = Vec::<HttpFileResults>::new();
 
     let mut total_success_count = 0u32;
     let mut total_failed_count = 0u32;
@@ -499,6 +501,14 @@ pub fn process_http_files(
         total_success_count += success_count;
         total_failed_count += failed_count;
         total_skipped_count += skipped_count;
+
+        http_file_results.push(HttpFileResults {
+            filename: http_file.clone(),
+            success_count: success_count,
+            failed_count: failed_count,
+            skipepd_count: skipped_count,
+            result_contexts: request_contexts,
+        });
     }
 
     if files_processed > 1 {
@@ -512,7 +522,10 @@ pub fn process_http_files(
         ));
     }
 
-    Ok(total_failed_count == 0)
+    Ok(ProcessorResults {
+        success: total_failed_count == 0,
+        files: http_file_results,
+    })
 }
 
 fn substitute_request_variables_in_request(
@@ -641,7 +654,7 @@ mod tests {
     fn format_json_if_valid_formats_valid_json() {
         let compact_json = r#"{"name":"John","age":30,"active":true}"#;
         let result = format_json_if_valid(compact_json);
-        
+
         // Should be formatted with proper indentation
         assert!(result.contains("{\n"));
         assert!(result.contains("  \"name\": \"John\""));
@@ -653,7 +666,7 @@ mod tests {
     fn format_json_if_valid_handles_nested_objects() {
         let compact_json = r#"{"user":{"name":"Jane","address":{"city":"NYC"}}}"#;
         let result = format_json_if_valid(compact_json);
-        
+
         // Should format nested structures
         assert!(result.contains("{\n"));
         assert!(result.contains("  \"user\": {"));
@@ -666,7 +679,7 @@ mod tests {
     fn format_json_if_valid_handles_arrays() {
         let compact_json = r#"{"items":[1,2,3],"names":["Alice","Bob"]}"#;
         let result = format_json_if_valid(compact_json);
-        
+
         // Should format arrays
         assert!(result.contains("\"items\": ["));
         assert!(result.contains("\"names\": ["));
@@ -678,7 +691,7 @@ mod tests {
     fn format_json_if_valid_preserves_non_json() {
         let plain_text = "This is not JSON";
         let result = format_json_if_valid(plain_text);
-        
+
         // Should return original text unchanged
         assert_eq!(result, plain_text);
     }
@@ -687,7 +700,7 @@ mod tests {
     fn format_json_if_valid_handles_empty_object() {
         let empty_json = "{}";
         let result = format_json_if_valid(empty_json);
-        
+
         // Should handle empty objects
         assert_eq!(result, "{}");
     }
@@ -696,7 +709,7 @@ mod tests {
     fn format_json_if_valid_handles_empty_array() {
         let empty_array = "[]";
         let result = format_json_if_valid(empty_array);
-        
+
         // Should handle empty arrays
         assert_eq!(result, "[]");
     }
@@ -705,7 +718,7 @@ mod tests {
     fn format_json_if_valid_handles_malformed_json() {
         let malformed = r#"{"name":"John","age":}"#;
         let result = format_json_if_valid(malformed);
-        
+
         // Should return original text for malformed JSON
         assert_eq!(result, malformed);
     }
@@ -714,7 +727,7 @@ mod tests {
     fn format_json_if_valid_handles_json_with_special_chars() {
         let json_with_escapes = r#"{"message":"Line1\nLine2\tTabbed","quote":"He said \"Hello\""}"#;
         let result = format_json_if_valid(json_with_escapes);
-        
+
         // Should properly format JSON with escape sequences
         assert!(result.contains("\"message\": \"Line1\\nLine2\\tTabbed\""));
         assert!(result.contains("\"quote\": \"He said \\\"Hello\\\"\""));
@@ -724,7 +737,7 @@ mod tests {
     fn format_json_if_valid_handles_json_with_null() {
         let json_with_null = r#"{"name":"John","email":null}"#;
         let result = format_json_if_valid(json_with_null);
-        
+
         // Should handle null values
         assert!(result.contains("\"email\": null"));
     }
@@ -733,7 +746,7 @@ mod tests {
     fn format_json_if_valid_handles_already_formatted_json() {
         let formatted_json = "{\n  \"name\": \"John\",\n  \"age\": 30\n}";
         let result = format_json_if_valid(formatted_json);
-        
+
         // Should reformat already formatted JSON
         assert!(result.contains("\"name\": \"John\""));
         assert!(result.contains("\"age\": 30"));
@@ -743,7 +756,7 @@ mod tests {
     fn format_json_if_valid_handles_xml() {
         let xml = "<root><item>value</item></root>";
         let result = format_json_if_valid(xml);
-        
+
         // Should return XML unchanged as it's not JSON
         assert_eq!(result, xml);
     }
@@ -752,7 +765,7 @@ mod tests {
     fn format_json_if_valid_handles_html() {
         let html = "<html><body>Hello World</body></html>";
         let result = format_json_if_valid(html);
-        
+
         // Should return HTML unchanged as it's not JSON
         assert_eq!(result, html);
     }
