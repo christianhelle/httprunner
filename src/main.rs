@@ -7,6 +7,7 @@ mod environment;
 mod log;
 mod parser;
 mod processor;
+mod report;
 mod request_variables;
 mod runner;
 mod types;
@@ -36,7 +37,7 @@ fn main() -> anyhow::Result<()> {
         cli_args.files.clone()
     };
 
-    let result = processor::process_http_files(
+    let results = processor::process_http_files(
         &files,
         cli_args.verbose,
         cli_args.get_log_filename().as_deref(),
@@ -45,7 +46,7 @@ fn main() -> anyhow::Result<()> {
         cli_args.pretty_json,
     )?;
 
-    if result {
+    if results.success {
         println!(
             "{} All discovered files processed successfully",
             colors::green("✅")
@@ -61,7 +62,7 @@ fn main() -> anyhow::Result<()> {
         cli::show_donation_banner();
     }
 
-    if !result {
+    if !results.success {
         std::process::exit(1);
     }
 
