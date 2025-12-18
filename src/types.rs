@@ -77,7 +77,7 @@ pub enum ConditionType {
     BodyJsonPath(String), // Check JSONPath expression in response body
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AssertionResult {
     pub assertion: Assertion,
     pub passed: bool,
@@ -85,7 +85,7 @@ pub struct AssertionResult {
     pub error_message: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HttpResult {
     pub request_name: Option<String>,
     pub status_code: u16,
@@ -97,7 +97,7 @@ pub struct HttpResult {
     pub assertion_results: Vec<AssertionResult>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RequestContext {
     pub name: String,
     pub request: HttpRequest,
