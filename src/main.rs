@@ -8,10 +8,10 @@ mod log;
 mod parser;
 mod processor;
 mod report;
-mod request_variables;
 mod runner;
 mod types;
 mod upgrade;
+mod variables;
 
 use clap::{CommandFactory, Parser};
 
