@@ -55,10 +55,9 @@ pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::E
 
         // Process each request
         for context in &file_results.result_contexts {
-            let request_name = context.name.clone();
             report.push_str(&format!(
                 "### Request: {}\n\n",
-                escape_markdown(&request_name)
+                escape_markdown(&context.name)
             ));
 
             // Request details
@@ -94,7 +93,7 @@ pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::E
                         escape_markdown(&header.value)
                     ));
                 }
-                report.push_str("\n");
+                report.push('\n');
             }
 
             // Request body
@@ -119,7 +118,7 @@ pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::E
                         escape_markdown(&condition.expected_value)
                     ));
                 }
-                report.push_str("\n");
+                report.push('\n');
             }
 
             // Result details
@@ -138,20 +137,20 @@ pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::E
                 }
 
                 // Response headers
-                if let Some(ref headers) = result.response_headers {
-                    if !headers.is_empty() {
-                        report.push_str("\n**Response Headers:**\n\n");
-                        report.push_str("| Header | Value |\n");
-                        report.push_str("|--------|-------|\n");
-                        for (name, value) in headers {
-                            report.push_str(&format!(
-                                "| {} | {} |\n",
-                                escape_markdown(name),
-                                escape_markdown(value)
-                            ));
-                        }
-                        report.push_str("\n");
+                if let Some(ref headers) = result.response_headers
+                    && !headers.is_empty()
+                {
+                    report.push_str("\n**Response Headers:**\n\n");
+                    report.push_str("| Header | Value |\n");
+                    report.push_str("|--------|-------|\n");
+                    for (name, value) in headers {
+                        report.push_str(&format!(
+                            "| {} | {} |\n",
+                            escape_markdown(name),
+                            escape_markdown(value)
+                        ));
                     }
+                    report.push('\n');
                 }
 
                 // Response body
@@ -194,7 +193,7 @@ pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::E
                             result_icon
                         ));
                     }
-                    report.push_str("\n");
+                    report.push('\n');
                 }
             } else {
                 report.push_str("#### Response Details\n\n");
