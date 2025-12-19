@@ -3,6 +3,23 @@ use super::writer::write_report;
 use crate::types::{AssertionType, ProcessorResults};
 use chrono::Local;
 
+/// Generate a markdown test report from processor results
+///
+/// Creates a detailed markdown report containing overall summary statistics,
+/// individual file results, request details, response details, assertions,
+/// and conditions. The report is written to a file with timestamp in the filename.
+///
+/// # Arguments
+///
+/// * `results` - The processing results to generate a report from
+///
+/// # Returns
+///
+/// Returns the filename of the generated report
+///
+/// # Errors
+///
+/// Returns an error if the report file cannot be written
 pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::Error> {
     let mut report = String::new();
 
@@ -13,6 +30,7 @@ pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::
     write_report(report)
 }
 
+/// Append report header with title and generation timestamp
 fn append_header(report: &mut String) {
     report.push_str("# HTTP File Runner - Test Report\n\n");
     report.push_str(&format!(

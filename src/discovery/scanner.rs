@@ -2,6 +2,18 @@ use crate::colors;
 use anyhow::Result;
 use walkdir::WalkDir;
 
+/// Discover all .http files recursively in a directory
+///
+/// Walks the directory tree starting from the specified path and finds
+/// all files with the .http extension.
+///
+/// # Arguments
+///
+/// * `dir_path` - Starting directory path to search from
+///
+/// # Returns
+///
+/// Returns a vector of file paths to all discovered .http files
 pub(crate) fn discover_http_files(dir_path: &str) -> Result<Vec<String>> {
     let mut files = Vec::new();
 
@@ -21,6 +33,18 @@ pub(crate) fn discover_http_files(dir_path: &str) -> Result<Vec<String>> {
     Ok(files)
 }
 
+/// Run discovery mode to find and list all .http files in current directory
+///
+/// Recursively searches the current directory for .http files and prints
+/// the discovered files to stdout.
+///
+/// # Returns
+///
+/// Returns a vector of discovered file paths
+///
+/// # Errors
+///
+/// Returns an error if the directory cannot be traversed
 pub fn run_discovery_mode() -> Result<Vec<String>> {
     println!(
         "{} Discovering .http files recursively...",

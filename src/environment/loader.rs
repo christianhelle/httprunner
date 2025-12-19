@@ -39,6 +39,18 @@ pub fn load_environment_file(
     Ok(variables)
 }
 
+/// Find the http-client.env.json file by searching up the directory tree
+///
+/// Starts from the directory containing the HTTP file and searches upward
+/// until an http-client.env.json file is found or the root directory is reached.
+///
+/// # Arguments
+///
+/// * `http_file_path` - Path to the HTTP file to start searching from
+///
+/// # Returns
+///
+/// Returns `Some(PathBuf)` if the environment file is found, `None` otherwise
 pub(crate) fn find_environment_file(http_file_path: &str) -> Result<Option<PathBuf>> {
     let path = Path::new(http_file_path);
     let mut current_dir = path
@@ -62,6 +74,33 @@ pub(crate) fn find_environment_file(http_file_path: &str) -> Result<Option<PathB
     Ok(None)
 }
 
+/// Parse the http-client.env.json file
+///
+/// Parses a JSON file containing environment configurations with the format:
+/// ```json
+/// {
+///   "dev": {
+///     "api_url": "https://dev.api.example.com",
+///     "api_key": "dev-key"
+///   },
+///   "prod": {
+///     "api_url": "https://api.example.com",
+///     "api_key": "prod-key"
+///   }
+/// }
+/// ```
+///
+/// # Arguments
+///
+/// * `file_path` - Path to the environment JSON file
+///
+/// # Returns
+///
+/// Returns a HashMap mapping environment names to their variable maps
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be read or contains invalid JSON
 pub(crate) fn parse_environment_file(
     file_path: &Path,
 ) -> Result<HashMap<String, HashMap<String, String>>> {
