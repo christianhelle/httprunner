@@ -61,7 +61,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     if cli_args.report {
-        match generate_markdown(results.clone()) {
+        match generate_markdown(&results) {
             Ok(filename) => println!("{} Report generated: {}", colors::green("✅"), filename),
             Err(e) => eprintln!("{} Failed to generate report: {}", colors::red("❌"), e),
         }

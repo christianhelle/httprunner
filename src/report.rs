@@ -7,7 +7,7 @@ fn escape_markdown(s: &str) -> String {
     s.replace('|', "\\|")
 }
 
-pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::Error> {
+pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::Error> {
     let timestamp = Local::now().format("%Y%m%d-%H%M%S");
     let filename = format!("httprunner-report-{}.md", timestamp);
 
@@ -261,7 +261,7 @@ mod tests {
             files: vec![],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         assert!(filename.starts_with("httprunner-report-"));
         assert!(filename.ends_with(".md"));
 
@@ -296,7 +296,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("# HTTP File Runner - Test Report"));
@@ -338,7 +338,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("- **Total Requests:** 2"));
@@ -360,7 +360,7 @@ mod tests {
             }],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("- **Total Requests:** 0"));
@@ -402,7 +402,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("**Headers:**"));
@@ -437,7 +437,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("**Request Body:**"));
@@ -476,7 +476,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("#### Response Details"));
@@ -530,7 +530,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("#### Assertion Results"));
@@ -579,7 +579,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("| Response Body | success | error | ❌ |"));
@@ -610,7 +610,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("⏭️ **Request was skipped**"));
@@ -644,7 +644,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("- **Timeout:** 5000ms"));
@@ -677,7 +677,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("- **Depends On:** `login`"));
@@ -722,7 +722,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("**Conditions:**"));
@@ -777,7 +777,7 @@ mod tests {
             files: vec![file1, file2],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("- **Total Requests:** 4"));
@@ -815,7 +815,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("- **Status:** ❌ 500"));
@@ -878,7 +878,7 @@ mod tests {
             files: vec![file_results],
         };
 
-        let filename = generate_markdown(results).unwrap();
+        let filename = generate_markdown(&results).unwrap();
         let content = fs::read_to_string(&filename).unwrap();
 
         assert!(content.contains("| Status Code |"));
