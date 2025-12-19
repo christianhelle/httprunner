@@ -101,6 +101,11 @@ httprunner [OPTIONS] --discover</code>
                             <div class="param-desc">Log output to a file (defaults to 'log' if no filename specified)</div>
                         </div>
                         <div class="param">
+                            <div class="param-name">--report</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Generate summary report in markdown format with test results and statistics</div>
+                        </div>
+                        <div class="param">
                             <div class="param-name">--env &lt;environment&gt;</div>
                             <div class="param-type">string</div>
                             <div class="param-desc">Specify environment from http-client.env.json</div>
@@ -131,8 +136,11 @@ httprunner api-tests.http --verbose --pretty-json
 # Discovery mode with logging
 httprunner --discover --verbose --log test-results.log
 
-# Environment-specific testing with formatted JSON output
-httprunner api-tests.http --env production --verbose --pretty-json --log prod-test.log</code>
+# Generate markdown summary report
+httprunner api-tests.http --report
+
+# Environment-specific testing with formatted JSON output and report
+httprunner api-tests.http --env production --verbose --pretty-json --log prod-test.log --report</code>
                     </div>
                 </section>
 
@@ -543,6 +551,35 @@ Body:
 [{"id":1,"name":"John Doe","email":"john@example.com"}]
 ------------------------------</code>
                     </div>
+
+                    <h3>Report Format (--report)</h3>
+                    <p>The <code>--report</code> flag generates a timestamped markdown file with comprehensive test results:</p>
+                    <div class="code-block">
+                        <code># HTTP File Runner - Test Report
+
+**Generated:** 2025-12-19 09:34:12
+
+## Overall Summary
+
+- **Total Requests:** 15
+- **Passed:** ✅ 12
+- **Failed:** ❌ 2
+- **Skipped:** ⏭️ 1
+- **Success Rate:** 80.0%
+
+---
+
+## File: `api-tests.http`
+
+| Method | URL | Status | Duration | Result |
+|--------|-----|--------|----------|--------|
+| GET | https://api.example.com/users | 200 | 145ms | ✅ |
+| POST | https://api.example.com/users | 201 | 203ms | ✅ |
+| GET | https://api.example.com/missing | 404 | 98ms | ❌ |
+
+**File Summary:** 2 Passed, 1 Failed, 0 Skipped</code>
+                    </div>
+                    <p>Report files are named <code>httprunner-report-YYYYMMDD-HHMMSS-MICROSECONDS.md</code></p>
 
                     <h3>Discovery Mode Output</h3>
                     <div class="code-block">
