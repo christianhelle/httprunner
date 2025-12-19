@@ -8,7 +8,7 @@ fn escape_markdown(s: &str) -> String {
 }
 
 pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::Error> {
-    let timestamp = Local::now().format("%Y%m%d-%H%M%S-%f");
+    let timestamp = Local::now().format("%Y%m%d-%H%M%S");
     let filename = format!("httprunner-report-{}.md", timestamp);
 
     let mut report = String::new();
