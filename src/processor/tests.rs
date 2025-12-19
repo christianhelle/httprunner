@@ -1,5 +1,3 @@
-use super::*;
-
 #[test]
 fn test_process_http_files() {
     // Tests moved from original processor.rs
