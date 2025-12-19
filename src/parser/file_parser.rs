@@ -7,6 +7,144 @@ use crate::types::{Assertion, AssertionType, Condition, Header, HttpRequest, Var
 use anyhow::{Context, Result};
 use std::fs;
 
+/// State tracking for parser while processing .http files
+struct ParserState {
+    current_request: Option<HttpRequest>,
+    in_body: bool,
+    body_content: String,
+    pending_request_name: Option<String>,
+    pending_timeout: Option<u64>,
+    pending_connection_timeout: Option<u64>,
+    pending_depends_on: Option<String>,
+    pending_conditions: Vec<Condition>,
+    in_intellij_script: bool,
+}
+
+impl ParserState {
+    fn new() -> Self {
+        Self {
+            current_request: None,
+            in_body: false,
+            body_content: String::new(),
+            pending_request_name: None,
+            pending_timeout: None,
+            pending_connection_timeout: None,
+            pending_depends_on: None,
+            pending_conditions: Vec::new(),
+            in_intellij_script: false,
+        }
+    }
+
+    /// Finalize the current request and add it to the requests list
+    fn finalize_current_request(
+        &mut self,
+        requests: &mut Vec<HttpRequest>,
+        variables: &[Variable],
+    ) {
+        if let Some(mut req) = self.current_request.take() {
+            if !self.body_content.is_empty() {
+                req.body = Some(substitute_variables(&self.body_content, variables));
+            }
+            requests.push(req);
+            self.body_content.clear();
+        }
+    }
+
+    /// Create a new HTTP request from the parsed line
+    fn create_request(&mut self, method: String, url: String) {
+        self.current_request = Some(HttpRequest {
+            name: self.pending_request_name.take(),
+            method,
+            url,
+            headers: Vec::new(),
+            body: None,
+            assertions: Vec::new(),
+            variables: Vec::new(),
+            timeout: self.pending_timeout.take(),
+            connection_timeout: self.pending_connection_timeout.take(),
+            depends_on: self.pending_depends_on.take(),
+            conditions: std::mem::take(&mut self.pending_conditions),
+        });
+        self.in_body = false;
+    }
+}
+
+/// Extract a directive value from a line with comment prefix (# or //)
+fn extract_directive<'a>(line: &'a str, directive: &str) -> Option<&'a str> {
+    line.strip_prefix(&format!("# {}", directive))
+        .or_else(|| line.strip_prefix(&format!("// {}", directive)))
+        .map(|s| s.trim())
+}
+
+/// Remove surrounding quotes from a string if present
+fn strip_quotes(s: &str) -> &str {
+    if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
+        &s[1..s.len() - 1]
+    } else {
+        s
+    }
+}
+
+/// Parse and add an assertion to the current request
+fn parse_assertion(
+    current_request: &mut Option<HttpRequest>,
+    assertion_line: &str,
+    variables: &[Variable],
+) -> bool {
+    if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_STATUS ") {
+        if let Some(req) = current_request {
+            let status_str = stripped.trim();
+            req.assertions.push(Assertion {
+                assertion_type: AssertionType::Status,
+                expected_value: substitute_variables(status_str, variables),
+            });
+        }
+        return true;
+    }
+
+    if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_BODY ") {
+        if let Some(req) = current_request {
+            let body_value = strip_quotes(stripped.trim());
+            req.assertions.push(Assertion {
+                assertion_type: AssertionType::Body,
+                expected_value: substitute_variables(body_value, variables),
+            });
+        }
+        return true;
+    }
+
+    if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_HEADERS ") {
+        if let Some(req) = current_request {
+            let headers_value = strip_quotes(stripped.trim());
+            req.assertions.push(Assertion {
+                assertion_type: AssertionType::Headers,
+                expected_value: substitute_variables(headers_value, variables),
+            });
+        }
+        return true;
+    }
+
+    false
+}
+
+/// Process a variable assignment line (@variable = value)
+fn process_variable_assignment(line: &str, variables: &mut Vec<Variable>) {
+    if let Some(eq_pos) = line.find('=') {
+        let var_name = line[1..eq_pos].trim();
+        let var_value = line[eq_pos + 1..].trim();
+        let substituted_value = substitute_variables(var_value, variables);
+
+        if let Some(var) = variables.iter_mut().find(|v| v.name == var_name) {
+            var.value = substituted_value;
+        } else {
+            variables.push(Variable {
+                name: var_name.to_string(),
+                value: substituted_value,
+            });
+        }
+    }
+}
+
 pub fn parse_http_file(
     file_path: &str,
     environment_name: Option<&str>,
@@ -17,195 +155,108 @@ pub fn parse_http_file(
     let mut requests = Vec::new();
     let env_variables = environment::load_environment_file(file_path, environment_name)?;
     let mut variables = env_variables.clone();
+    let mut state = ParserState::new();
 
-    let lines: Vec<&str> = content.lines().collect();
-    let mut current_request: Option<HttpRequest> = None;
-    let mut in_body = false;
-    let mut body_content = String::new();
-    let mut pending_request_name: Option<String> = None;
-    let mut pending_timeout: Option<u64> = None;
-    let mut pending_connection_timeout: Option<u64> = None;
-    let mut pending_depends_on: Option<String> = None;
-    let mut pending_conditions: Vec<Condition> = Vec::new();
-    let mut in_intellij_script = false;
-
-    for line in lines {
+    for line in content.lines() {
         let trimmed = line.trim();
 
+        // Handle IntelliJ script blocks
         if line.trim_start().starts_with("> {%") {
-            in_intellij_script = true;
+            state.in_intellij_script = true;
             continue;
         }
-
-        if in_intellij_script {
+        if state.in_intellij_script {
             if trimmed == "%}" || trimmed.ends_with("%}") {
-                in_intellij_script = false;
+                state.in_intellij_script = false;
             }
             continue;
         }
 
+        // Handle empty lines
         if trimmed.is_empty() {
-            if in_body {
-                body_content.push('\n');
+            if state.in_body {
+                state.body_content.push('\n');
             }
             continue;
         }
 
+        // Parse @name directive
         if trimmed.starts_with("# @name ") || trimmed.starts_with("// @name ") {
             let name_start = if trimmed.starts_with("# @name ") {
                 8
             } else {
                 9
             };
-            pending_request_name = Some(trimmed[name_start..].trim().to_string());
+            state.pending_request_name = Some(trimmed[name_start..].trim().to_string());
             continue;
         }
 
-        let timeout_value = trimmed
-            .strip_prefix("# @timeout ")
-            .or_else(|| trimmed.strip_prefix("// @timeout "))
-            .map(|s| s.trim());
-        if let Some(value) = timeout_value {
-            pending_timeout = parse_timeout_value(value);
+        // Parse @timeout directive
+        if let Some(value) = extract_directive(trimmed, "@timeout") {
+            state.pending_timeout = parse_timeout_value(value);
             continue;
         }
 
-        let connection_timeout_value = trimmed
-            .strip_prefix("# @connection-timeout ")
-            .or_else(|| trimmed.strip_prefix("// @connection-timeout "))
-            .map(|s| s.trim());
-        if let Some(value) = connection_timeout_value {
-            pending_connection_timeout = parse_timeout_value(value);
+        // Parse @connection-timeout directive
+        if let Some(value) = extract_directive(trimmed, "@connection-timeout") {
+            state.pending_connection_timeout = parse_timeout_value(value);
             continue;
         }
 
-        let depends_on_value = trimmed
-            .strip_prefix("# @dependsOn ")
-            .or_else(|| trimmed.strip_prefix("// @dependsOn "))
-            .map(|s| s.trim());
-        if let Some(value) = depends_on_value {
-            pending_depends_on = Some(value.to_string());
+        // Parse @dependsOn directive
+        if let Some(value) = extract_directive(trimmed, "@dependsOn") {
+            state.pending_depends_on = Some(value.to_string());
             continue;
         }
 
-        let if_value = trimmed
-            .strip_prefix("# @if ")
-            .or_else(|| trimmed.strip_prefix("// @if "))
-            .map(|s| s.trim());
-        if let Some(value) = if_value {
+        // Parse @if directive
+        if let Some(value) = extract_directive(trimmed, "@if ") {
             match parse_condition(value, false) {
-                Some(condition) => pending_conditions.push(condition),
+                Some(condition) => state.pending_conditions.push(condition),
                 None => eprintln!("Warning: Invalid @if directive format: '{}'", value),
             }
             continue;
         }
 
-        let if_not_value = trimmed
-            .strip_prefix("# @if-not ")
-            .or_else(|| trimmed.strip_prefix("// @if-not "))
-            .map(|s| s.trim());
-        if let Some(value) = if_not_value {
+        // Parse @if-not directive
+        if let Some(value) = extract_directive(trimmed, "@if-not ") {
             match parse_condition(value, true) {
-                Some(condition) => pending_conditions.push(condition),
+                Some(condition) => state.pending_conditions.push(condition),
                 None => eprintln!("Warning: Invalid @if-not directive format: '{}'", value),
             }
             continue;
         }
 
+        // Skip comments
         if trimmed.starts_with('#') || trimmed.starts_with("//") {
             continue;
         }
 
+        // Process variable assignments
         if trimmed.starts_with('@') {
-            if let Some(eq_pos) = trimmed.find('=') {
-                let var_name = trimmed[1..eq_pos].trim();
-                let var_value = trimmed[eq_pos + 1..].trim();
-                let substituted_value = substitute_variables(var_value, &variables);
-
-                if let Some(var) = variables.iter_mut().find(|v| v.name == var_name) {
-                    var.value = substituted_value;
-                } else {
-                    variables.push(Variable {
-                        name: var_name.to_string(),
-                        value: substituted_value,
-                    });
-                }
-            }
+            process_variable_assignment(trimmed, &mut variables);
             continue;
         }
 
+        // Parse assertions
         let assertion_line = trimmed.strip_prefix("> ").unwrap_or(trimmed);
-
-        if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_STATUS ") {
-            if let Some(ref mut req) = current_request {
-                let status_str = stripped.trim();
-                req.assertions.push(Assertion {
-                    assertion_type: AssertionType::Status,
-                    expected_value: substitute_variables(status_str, &variables),
-                });
-            }
-            continue;
-        } else if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_BODY ") {
-            if let Some(ref mut req) = current_request {
-                let mut body_value = stripped.trim();
-                if body_value.starts_with('"') && body_value.ends_with('"') && body_value.len() >= 2
-                {
-                    body_value = &body_value[1..body_value.len() - 1];
-                }
-                req.assertions.push(Assertion {
-                    assertion_type: AssertionType::Body,
-                    expected_value: substitute_variables(body_value, &variables),
-                });
-            }
-            continue;
-        } else if let Some(stripped) = assertion_line.strip_prefix("EXPECTED_RESPONSE_HEADERS ") {
-            if let Some(ref mut req) = current_request {
-                let mut headers_value = stripped.trim();
-                if headers_value.starts_with('"')
-                    && headers_value.ends_with('"')
-                    && headers_value.len() >= 2
-                {
-                    headers_value = &headers_value[1..headers_value.len() - 1];
-                }
-                req.assertions.push(Assertion {
-                    assertion_type: AssertionType::Headers,
-                    expected_value: substitute_variables(headers_value, &variables),
-                });
-            }
+        if parse_assertion(&mut state.current_request, assertion_line, &variables) {
             continue;
         }
 
+        // Parse HTTP request line
         if is_http_request_line(trimmed) {
-            if let Some(mut req) = current_request.take() {
-                if !body_content.is_empty() {
-                    req.body = Some(substitute_variables(&body_content, &variables));
-                }
-                requests.push(req);
-                body_content.clear();
-            }
+            state.finalize_current_request(&mut requests, &variables);
 
             let parts: Vec<&str> = trimmed.split_whitespace().collect();
             if parts.len() >= 2 {
                 let method = substitute_variables(parts[0], &variables);
                 let url = substitute_variables(parts[1], &variables);
-
-                current_request = Some(HttpRequest {
-                    name: pending_request_name.take(),
-                    method,
-                    url,
-                    headers: Vec::new(),
-                    body: None,
-                    assertions: Vec::new(),
-                    variables: Vec::new(),
-                    timeout: pending_timeout.take(),
-                    connection_timeout: pending_connection_timeout.take(),
-                    depends_on: pending_depends_on.take(),
-                    conditions: std::mem::take(&mut pending_conditions),
-                });
-                in_body = false;
+                state.create_request(method, url);
             }
-        } else if trimmed.contains(':') && !in_body {
-            if let Some(ref mut req) = current_request
+        } else if trimmed.contains(':') && !state.in_body {
+            // Parse headers
+            if let Some(ref mut req) = state.current_request
                 && let Some(colon_pos) = trimmed.find(':')
             {
                 let name = trimmed[..colon_pos].trim();
@@ -217,20 +268,17 @@ pub fn parse_http_file(
                 });
             }
         } else {
-            in_body = true;
-            if !body_content.is_empty() {
-                body_content.push('\n');
+            // Parse body content
+            state.in_body = true;
+            if !state.body_content.is_empty() {
+                state.body_content.push('\n');
             }
-            body_content.push_str(trimmed);
+            state.body_content.push_str(trimmed);
         }
     }
 
-    if let Some(mut req) = current_request {
-        if !body_content.is_empty() {
-            req.body = Some(substitute_variables(&body_content, &variables));
-        }
-        requests.push(req);
-    }
+    // Finalize the last request
+    state.finalize_current_request(&mut requests, &variables);
 
     Ok(requests)
 }
