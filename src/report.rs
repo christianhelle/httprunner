@@ -23,7 +23,7 @@ pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::E
     // Overall summary
     let total_success: u32 = results.files.iter().map(|f| f.success_count).sum();
     let total_failed: u32 = results.files.iter().map(|f| f.failed_count).sum();
-    let total_skipped: u32 = results.files.iter().map(|f| f.skipepd_count).sum();
+    let total_skipped: u32 = results.files.iter().map(|f| f.skipped_count).sum();
     let total_requests = total_success + total_failed + total_skipped;
 
     report.push_str("## Overall Summary\n\n");
@@ -50,7 +50,7 @@ pub fn generate_markdown(results: ProcessorResults) -> Result<String, std::io::E
 
         report.push_str(&format!(
             "- **Passed:** {} | **Failed:** {} | **Skipped:** {}\n\n",
-            file_results.success_count, file_results.failed_count, file_results.skipepd_count
+            file_results.success_count, file_results.failed_count, file_results.skipped_count
         ));
 
         // Process each request
@@ -288,7 +288,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -330,7 +330,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 1,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: contexts,
         };
 
@@ -356,7 +356,7 @@ mod tests {
                 filename: "empty.http".to_string(),
                 success_count: 0,
                 failed_count: 0,
-                skipepd_count: 0,
+                skipped_count: 0,
                 result_contexts: vec![],
             }],
         };
@@ -394,7 +394,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -429,7 +429,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -468,7 +468,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -522,7 +522,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -571,7 +571,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 0,
             failed_count: 1,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -602,7 +602,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 0,
             failed_count: 0,
-            skipepd_count: 1,
+            skipped_count: 1,
             result_contexts: vec![context],
         };
 
@@ -636,7 +636,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -669,7 +669,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -714,7 +714,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -739,7 +739,7 @@ mod tests {
             filename: "test1.http".to_string(),
             success_count: 2,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![
                 RequestContext {
                     name: "req1".to_string(),
@@ -758,7 +758,7 @@ mod tests {
             filename: "test2.http".to_string(),
             success_count: 1,
             failed_count: 1,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![
                 RequestContext {
                     name: "req3".to_string(),
@@ -807,7 +807,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 0,
             failed_count: 1,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 
@@ -870,7 +870,7 @@ mod tests {
             filename: "test.http".to_string(),
             success_count: 1,
             failed_count: 0,
-            skipepd_count: 0,
+            skipped_count: 0,
             result_contexts: vec![context],
         };
 

@@ -109,7 +109,7 @@ pub struct HttpFileResults {
     pub filename: String,
     pub success_count: u32,
     pub failed_count: u32,
-    pub skipepd_count: u32,
+    pub skipped_count: u32,
     pub result_contexts: Vec<RequestContext>,
 }
 
