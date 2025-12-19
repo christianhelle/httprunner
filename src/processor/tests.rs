@@ -1,12 +1,12 @@
 use super::formatter::*;
 use super::substitution::*;
-use crate::types::{HttpRequest, RequestContext, HttpResult, Header};
+use crate::types::{Header, HttpRequest, HttpResult, RequestContext};
 
 #[test]
 fn test_format_json_if_valid_with_valid_json() {
     let json = r#"{"name":"John","age":30}"#;
     let result = format_json_if_valid(json);
-    
+
     assert!(result.contains("\"name\""));
     assert!(result.contains("\"John\""));
     assert!(result.contains('\n')); // Pretty-printed
@@ -16,7 +16,7 @@ fn test_format_json_if_valid_with_valid_json() {
 fn test_format_json_if_valid_with_invalid_json() {
     let invalid = "not json at all";
     let result = format_json_if_valid(invalid);
-    
+
     assert_eq!(result, invalid);
 }
 
@@ -24,7 +24,7 @@ fn test_format_json_if_valid_with_invalid_json() {
 fn test_format_json_if_valid_with_malformed_json() {
     let malformed = "{name: John}";
     let result = format_json_if_valid(malformed);
-    
+
     assert_eq!(result, malformed);
 }
 
@@ -32,7 +32,7 @@ fn test_format_json_if_valid_with_malformed_json() {
 fn test_format_request_name_with_name() {
     let name = Some("test_request".to_string());
     let result = format_request_name(&name);
-    
+
     assert_eq!(result, "test_request: ");
 }
 
@@ -40,7 +40,7 @@ fn test_format_request_name_with_name() {
 fn test_format_request_name_without_name() {
     let name = None;
     let result = format_request_name(&name);
-    
+
     assert_eq!(result, "");
 }
 
@@ -88,7 +88,7 @@ fn test_substitute_request_variables_in_url() {
     }];
 
     let result = substitute_request_variables_in_request(&mut request, &context);
-    
+
     assert!(result.is_ok());
     assert_eq!(request.url, "https://api.example.com/users/123");
 }
@@ -140,7 +140,7 @@ fn test_substitute_request_variables_in_headers() {
     }];
 
     let result = substitute_request_variables_in_request(&mut request, &context);
-    
+
     assert!(result.is_ok());
     assert_eq!(request.headers[0].value, "Bearer secret123");
 }
@@ -189,7 +189,7 @@ fn test_substitute_request_variables_in_body() {
     }];
 
     let result = substitute_request_variables_in_request(&mut request, &context);
-    
+
     assert!(result.is_ok());
     assert_eq!(request.body.unwrap(), r#"{"userId":"456"}"#);
 }
@@ -213,7 +213,7 @@ fn test_substitute_request_variables_with_no_context() {
     let context = vec![];
 
     let result = substitute_request_variables_in_request(&mut request, &context);
-    
+
     assert!(result.is_ok());
     // Should remain unchanged when context not found
     assert!(request.url.contains("{{login.response.body.$.id}}"));
@@ -224,7 +224,8 @@ fn test_substitute_multiple_variables() {
     let mut request = HttpRequest {
         name: Some("test".to_string()),
         method: "GET".to_string(),
-        url: "https://{{host.response.body.$.domain}}/users/{{user.response.body.$.id}}".to_string(),
+        url: "https://{{host.response.body.$.domain}}/users/{{user.response.body.$.id}}"
+            .to_string(),
         headers: vec![],
         body: None,
         assertions: vec![],
@@ -291,7 +292,7 @@ fn test_substitute_multiple_variables() {
     ];
 
     let result = substitute_request_variables_in_request(&mut request, &context);
-    
+
     assert!(result.is_ok());
     assert_eq!(request.url, "https://api.example.com/users/789");
 }

@@ -222,5 +222,3 @@ fn extract_simple_json_property(json_body: &str, property: &str) -> Result<Optio
 
     Ok(None)
 }
-
-

@@ -161,7 +161,10 @@ fn test_parse_if_condition_status() {
 
     assert_eq!(requests[0].conditions.len(), 1);
     assert_eq!(requests[0].conditions[0].request_name, "login");
-    assert!(matches!(requests[0].conditions[0].condition_type, ConditionType::Status));
+    assert!(matches!(
+        requests[0].conditions[0].condition_type,
+        ConditionType::Status
+    ));
     assert_eq!(requests[0].conditions[0].expected_value, "200");
     assert!(!requests[0].conditions[0].negate);
 }
@@ -202,9 +205,15 @@ fn test_parse_assertions() {
     let requests = parse_http_file(&file_path, None).unwrap();
 
     assert_eq!(requests[0].assertions.len(), 2);
-    assert!(matches!(requests[0].assertions[0].assertion_type, AssertionType::Status));
+    assert!(matches!(
+        requests[0].assertions[0].assertion_type,
+        AssertionType::Status
+    ));
     assert_eq!(requests[0].assertions[0].expected_value, "200");
-    assert!(matches!(requests[0].assertions[1].assertion_type, AssertionType::Body));
+    assert!(matches!(
+        requests[0].assertions[1].assertion_type,
+        AssertionType::Body
+    ));
     assert_eq!(requests[0].assertions[1].expected_value, "John");
 }
 
@@ -257,11 +266,11 @@ fn test_parse_ignores_comments() {
 fn test_parse_all_http_methods() {
     let temp_dir = TempDir::new().unwrap();
     let methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
-    
+
     for method in &methods {
         let content = format!("{} https://api.example.com/resource", method);
         let file_path = create_test_file(&temp_dir, &format!("{}.http", method), &content);
-        
+
         let requests = parse_http_file(&file_path, None).unwrap();
         assert_eq!(requests[0].method, *method);
     }

@@ -1,3 +1,5 @@
+use super::formatter::{format_json_if_valid, format_request_name};
+use super::substitution::substitute_request_variables_in_request;
 use crate::colors;
 use crate::conditions;
 use crate::log::Log;
@@ -5,8 +7,6 @@ use crate::parser;
 use crate::runner;
 use crate::types::{AssertionType, HttpFileResults, HttpRequest, ProcessorResults, RequestContext};
 use anyhow::Result;
-use super::formatter::{format_json_if_valid, format_request_name};
-use super::substitution::substitute_request_variables_in_request;
 
 fn add_skipped_request_context(
     request_contexts: &mut Vec<RequestContext>,
@@ -489,5 +489,3 @@ pub fn process_http_files(
         files: http_file_results,
     })
 }
-
-

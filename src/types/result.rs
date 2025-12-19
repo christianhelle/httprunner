@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use super::assertion::AssertionResult;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct HttpResult {

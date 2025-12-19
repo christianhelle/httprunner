@@ -1,7 +1,7 @@
 use super::*;
 use crate::types::{
-    Assertion, AssertionResult, AssertionType, Condition, ConditionType, Header,
-    HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
+    Assertion, AssertionResult, AssertionType, Condition, ConditionType, Header, HttpFileResults,
+    HttpRequest, HttpResult, ProcessorResults, RequestContext,
 };
 use std::collections::HashMap;
 use std::fs;

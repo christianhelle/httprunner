@@ -1,7 +1,7 @@
-use crate::types::{AssertionType, ProcessorResults};
-use chrono::Local;
 use super::formatter::escape_markdown;
 use super::writer::write_report;
+use crate::types::{AssertionType, ProcessorResults};
+use chrono::Local;
 
 pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::Error> {
     let mut report = String::new();

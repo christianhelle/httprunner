@@ -1,5 +1,7 @@
 use super::*;
-use crate::types::{HttpRequest, HttpResult, RequestContext, RequestVariableSource, RequestVariableTarget};
+use crate::types::{
+    HttpRequest, HttpResult, RequestContext, RequestVariableSource, RequestVariableTarget,
+};
 use std::collections::HashMap;
 
 #[test]
@@ -131,7 +133,7 @@ fn test_extract_json_property_array() {
 #[test]
 fn test_substitute_request_variables_simple() {
     let input = "Bearer {{login.response.body.$.token}}";
-    
+
     let context = vec![RequestContext {
         name: "login".to_string(),
         request: HttpRequest {
@@ -167,7 +169,7 @@ fn test_substitute_request_variables_simple() {
 #[test]
 fn test_substitute_request_variables_multiple() {
     let input = "https://{{config.response.body.$.host}}/users/{{user.response.body.$.id}}";
-    
+
     let context = vec![
         RequestContext {
             name: "config".to_string(),
@@ -242,10 +244,10 @@ fn test_substitute_request_variables_not_found() {
 #[test]
 fn test_substitute_request_variables_from_headers() {
     let input = "{{login.response.headers.Set-Cookie}}";
-    
+
     let mut headers = HashMap::new();
     headers.insert("Set-Cookie".to_string(), "session=abc123".to_string());
-    
+
     let context = vec![RequestContext {
         name: "login".to_string(),
         request: HttpRequest {
@@ -281,7 +283,7 @@ fn test_substitute_request_variables_from_headers() {
 #[test]
 fn test_substitute_request_variables_from_request_body() {
     let input = "{{createUser.request.body.*}}";
-    
+
     let context = vec![RequestContext {
         name: "createUser".to_string(),
         request: HttpRequest {
@@ -308,7 +310,7 @@ fn test_substitute_request_variables_from_request_body() {
 #[test]
 fn test_substitute_request_variables_nested_json() {
     let input = "{{getUser.response.body.$.profile.address.city}}";
-    
+
     let context = vec![RequestContext {
         name: "getUser".to_string(),
         request: HttpRequest {
@@ -331,7 +333,9 @@ fn test_substitute_request_variables_nested_json() {
             error_message: None,
             duration_ms: 100,
             response_headers: None,
-            response_body: Some(r#"{"profile":{"address":{"city":"New York","zip":"10001"}}}"#.to_string()),
+            response_body: Some(
+                r#"{"profile":{"address":{"city":"New York","zip":"10001"}}}"#.to_string(),
+            ),
             assertion_results: vec![],
         }),
     }];
