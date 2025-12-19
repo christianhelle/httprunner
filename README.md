@@ -18,6 +18,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📝 `--verbose` mode for detailed request and response information
 - 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
+- 📊 `--report` flag to generate markdown summary reports for test results
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
@@ -197,6 +198,9 @@ httprunner <http-file> --log
 # Run a single .http file with verbose output and save to a custom log file
 httprunner <http-file> --verbose --log results.txt
 
+# Run and generate a markdown summary report
+httprunner <http-file> --report
+
 # Run without the donation banner
 httprunner <http-file> --no-banner
 
@@ -241,6 +245,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 # Run with verbose output and save to a custom log file
 .\target\release\httprunner.exe <http-file> --verbose --log results.txt
 
+# Run and generate a markdown summary report
+.\target\release\httprunner.exe <http-file> --report
+
 # Run without the donation banner
 .\target\release\httprunner.exe <http-file> --no-banner
 
@@ -281,6 +288,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 # Run a single .http file with verbose output and save to a custom log file
 ./target/release/httprunner <http-file> --verbose --log results.txt
 
+# Run and generate a markdown summary report
+./target/release/httprunner <http-file> --report
+
 # Run without the donation banner
 ./target/release/httprunner <http-file> --no-banner
 
@@ -320,6 +330,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 
 # Test basic functionality with verbose output and custom log file
 ./target/release/httprunner examples/simple.http --verbose --log simple_test.log
+
+# Test basic functionality and generate markdown report
+./target/release/httprunner examples/simple.http --report
 
 # Test various APIs
 ./target/release/httprunner examples/apis.http
@@ -388,6 +401,9 @@ docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianh
 # Run with a single .http file with verbose output and custom log file
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose --log results.txt
 
+# Run and generate a markdown summary report
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --report
+
 # Run multiple .http files
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file1> <http-file2>
 
@@ -413,6 +429,7 @@ httprunner examples/simple.http --verbose
 httprunner examples/simple.http --verbose --pretty-json
 httprunner examples/simple.http --log test.log
 httprunner examples/simple.http --verbose --log detailed_test.log
+httprunner examples/simple.http --report
 httprunner examples/simple.http
 ```
 
@@ -1238,6 +1255,51 @@ Body:
 
 **Note:** The `--pretty-json` flag only affects output display when `--verbose` is enabled. It does not modify the actual HTTP requests or responses.
 
+### Report Generation
+
+The `--report` flag generates a markdown summary report of test execution results. This is particularly useful for:
+
+- **CI/CD Integration**: Generate structured test reports for build pipelines
+- **Test Documentation**: Create shareable markdown reports with detailed results
+- **Audit Trail**: Keep formatted records of test execution with timestamps
+- **Quick Analysis**: View test results at a glance with success rates and statistics
+
+**Key features:**
+
+- Generates timestamped markdown files (e.g., `httprunner-report-20251219-084508.md`)
+- Includes overall summary with total requests, pass/fail counts, and success rate
+- Per-file detailed results showing each request's status
+- Organized tables with request details, status codes, and assertion results
+- Works with all other flags: `--verbose`, `--discover`, `--env`, etc.
+
+**Usage:**
+
+```bash
+# Generate report for a single file
+httprunner api-tests.http --report
+
+# Generate report with verbose execution
+httprunner api-tests.http --verbose --report
+
+# Generate report for all discovered .http files
+httprunner --discover --report
+
+# Combine with environment-specific testing
+httprunner api-tests.http --env production --report
+
+# Generate both log file and report
+httprunner api-tests.http --log test.log --report
+```
+
+**Example report output:**
+
+The generated markdown report includes:
+- Execution timestamp
+- Overall statistics (total requests, passed, failed, skipped, success rate)
+- Per-file breakdown with request details
+- Table format showing method, URL, status, duration, and assertions
+- Visual indicators (✅ for passed, ❌ for failed, ⏭️ for skipped)
+
 ### Logging Mode
 
 The `--log` flag enables output logging to a file, which is essential for:
@@ -1271,8 +1333,8 @@ When running httprunner without any arguments, the following help text is displa
 ```text
 HTTP File Runner v0.1.9
 Usage:
-  httprunner <http-file> [http-file2] [...] [--verbose] [--pretty-json] [--log [filename]] [--env <environment>] [--insecure]
-  httprunner [--verbose] [--pretty-json] [--log [filename]] [--env <environment>] [--insecure] --discover
+  httprunner <http-file> [http-file2] [...] [--verbose] [--pretty-json] [--log [filename]] [--report] [--env <environment>] [--insecure]
+  httprunner [--verbose] [--pretty-json] [--log [filename]] [--report] [--env <environment>] [--insecure] --discover
   httprunner --version | -v
   httprunner --upgrade
   httprunner --help | -h
@@ -1283,6 +1345,7 @@ Arguments:
   --verbose      Show detailed HTTP request and response information
   --pretty-json  Pretty-print JSON payloads in verbose output (requires --verbose)
   --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
+  --report       Generate summary report in markdown format
   --env <env>    Specify environment name to load variables from http-client.env.json
   --insecure     Allow insecure HTTPS connections (accept invalid certificates and hostnames)
   --no-banner    Do not show the donation banner

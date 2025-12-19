@@ -10,6 +10,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📝 `--verbose` mode for detailed request and response information
 - 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
+- 📊 `--report` flag to generate markdown summary reports for test results
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
@@ -51,6 +52,9 @@ httprunner <http-file> --insecure
 
 # Run and save output to a log file
 httprunner <http-file> --log
+
+# Run and generate a markdown summary report
+httprunner <http-file> --report
 
 # Run multiple .http files
 httprunner <http-file1> <http-file2> [...]
@@ -314,6 +318,21 @@ File Summary: 3 Passed, 1 Failed, 0 Skipped
 ## Verbose Mode
 
 Use `--verbose` for detailed request and response information, including headers, body content, and timing. Add `--pretty-json` to format JSON payloads for improved readability.
+
+## Report Generation
+
+Generate markdown summary reports with `--report`:
+
+```bash
+# Generate timestamped markdown report
+httprunner myfile.http --report
+
+# Combine with other flags
+httprunner myfile.http --verbose --report
+httprunner --discover --report
+```
+
+The report includes overall statistics, per-file breakdowns, and detailed request results in an easy-to-read markdown format.
 
 ## Logging
 
