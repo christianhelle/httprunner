@@ -1,3 +1,4 @@
+use super::formatter::*;
 use super::*;
 use crate::types::{
     Assertion, AssertionResult, AssertionType, Condition, ConditionType, Header, HttpFileResults,
@@ -5,6 +6,13 @@ use crate::types::{
 };
 use std::collections::HashMap;
 use std::fs;
+
+#[test]
+fn escape_markdown_escapes_pipe_character() {
+    assert_eq!(escape_markdown("hello|world"), "hello\\|world");
+    assert_eq!(escape_markdown("no pipes here"), "no pipes here");
+    assert_eq!(escape_markdown("|||"), "\\|\\|\\|");
+}
 
 fn sample_request(name: &str, method: &str, url: &str) -> HttpRequest {
     HttpRequest {
