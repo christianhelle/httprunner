@@ -69,7 +69,7 @@ fn main() -> anyhow::Result<()> {
             Ok(filename) => println!("{} Report generated: {}", colors::green("✅"), filename),
             Err(e) => {
                 eprintln!("{} Failed to generate report: {}", colors::red("❌"), e);
-                std::process::exit(1);
+                std::process::exit(2);
             }
         }
     }
