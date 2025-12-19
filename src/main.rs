@@ -60,15 +60,18 @@ fn main() -> anyhow::Result<()> {
         );
     }
 
+    if !cli_args.no_banner {
+        cli::show_donation_banner();
+    }
+
     if cli_args.report {
         match generate_markdown(&results) {
             Ok(filename) => println!("{} Report generated: {}", colors::green("✅"), filename),
-            Err(e) => eprintln!("{} Failed to generate report: {}", colors::red("❌"), e),
+            Err(e) => {
+                eprintln!("{} Failed to generate report: {}", colors::red("❌"), e);
+                std::process::exit(1);
+            }
         }
-    }
-
-    if !cli_args.no_banner {
-        cli::show_donation_banner();
     }
 
     if !results.success {
