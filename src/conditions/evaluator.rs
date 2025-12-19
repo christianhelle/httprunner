@@ -3,6 +3,7 @@ use super::json_extractor::extract_json_value;
 use crate::types::{Condition, ConditionType, RequestContext};
 use anyhow::Result;
 
+/// Result of evaluating a single condition
 #[derive(Debug)]
 pub struct ConditionEvaluationResult {
     pub condition_met: bool,
@@ -12,6 +13,23 @@ pub struct ConditionEvaluationResult {
     pub negated: bool,
 }
 
+/// Evaluate all conditions against the request context
+///
+/// Returns true if all conditions are met (AND logic), false otherwise.
+/// An empty conditions list is considered as all conditions met.
+///
+/// # Arguments
+///
+/// * `conditions` - List of conditions to evaluate
+/// * `context` - Request execution context containing results from previous requests
+///
+/// # Returns
+///
+/// Returns `Ok(true)` if all conditions pass, `Ok(false)` if any fail
+///
+/// # Errors
+///
+/// Returns an error if condition evaluation encounters an unexpected error
 pub fn evaluate_conditions(conditions: &[Condition], context: &[RequestContext]) -> Result<bool> {
     if conditions.is_empty() {
         return Ok(true);
@@ -26,6 +44,19 @@ pub fn evaluate_conditions(conditions: &[Condition], context: &[RequestContext])
     Ok(true)
 }
 
+/// Evaluate all conditions and return detailed results for each
+///
+/// Similar to `evaluate_conditions` but returns detailed information about
+/// each condition evaluation for debugging and reporting purposes.
+///
+/// # Arguments
+///
+/// * `conditions` - List of conditions to evaluate
+/// * `context` - Request execution context
+///
+/// # Returns
+///
+/// Returns a tuple of (all_met: bool, results: Vec<ConditionEvaluationResult>)
 pub fn evaluate_conditions_verbose(
     conditions: &[Condition],
     context: &[RequestContext],

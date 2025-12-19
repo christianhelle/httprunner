@@ -11,18 +11,23 @@ pub fn load_environment_file(
 ) -> Result<Vec<Variable>> {
     let mut variables = Vec::new();
 
-    if environment_name.is_none() {
-        return Ok(variables);
-    }
+    // Early return if no environment name is provided
+    let env_name = match environment_name {
+        Some(name) => name,
+        None => return Ok(variables),
+    };
 
-    let env_file_path = find_environment_file(http_file_path)?;
-    if env_file_path.is_none() {
-        return Ok(variables);
-    }
+    // Find the environment file
+    let env_file_path = match find_environment_file(http_file_path)? {
+        Some(path) => path,
+        None => return Ok(variables),
+    };
 
-    let env_config = parse_environment_file(&env_file_path.unwrap())?;
+    // Parse the environment configuration
+    let env_config = parse_environment_file(&env_file_path)?;
 
-    if let Some(env_vars) = env_config.get(environment_name.unwrap()) {
+    // Load variables for the specified environment
+    if let Some(env_vars) = env_config.get(env_name) {
         for (name, value) in env_vars {
             variables.push(Variable {
                 name: name.clone(),

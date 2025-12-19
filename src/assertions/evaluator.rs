@@ -1,5 +1,19 @@
 use crate::types::{Assertion, AssertionResult, AssertionType, HttpResult};
 
+/// Evaluate all assertions against an HTTP result
+///
+/// Takes a list of assertions and evaluates each one against the provided
+/// HTTP result, returning a list of assertion results indicating pass/fail
+/// status and detailed error messages.
+///
+/// # Arguments
+///
+/// * `assertions` - List of assertions to evaluate
+/// * `result` - The HTTP result to evaluate assertions against
+///
+/// # Returns
+///
+/// A vector of `AssertionResult` containing the outcome of each assertion
 pub fn evaluate_assertions(assertions: &[Assertion], result: &HttpResult) -> Vec<AssertionResult> {
     assertions
         .iter()
@@ -7,6 +21,19 @@ pub fn evaluate_assertions(assertions: &[Assertion], result: &HttpResult) -> Vec
         .collect()
 }
 
+/// Evaluate a single assertion against an HTTP result
+///
+/// Checks if the assertion condition is met based on the assertion type
+/// (status code, response body, or response headers).
+///
+/// # Arguments
+///
+/// * `assertion` - The assertion to evaluate
+/// * `result` - The HTTP result to check against
+///
+/// # Returns
+///
+/// An `AssertionResult` indicating whether the assertion passed and details
 pub(crate) fn evaluate_assertion(assertion: &Assertion, result: &HttpResult) -> AssertionResult {
     match assertion.assertion_type {
         AssertionType::Status => {

@@ -145,6 +145,46 @@ fn process_variable_assignment(line: &str, variables: &mut Vec<Variable>) {
     }
 }
 
+/// Parse an HTTP file and extract HTTP requests
+///
+/// Parses a .http file format and extracts HTTP requests with their headers,
+/// body, assertions, conditions, timeouts, and other metadata. Supports
+/// environment variables from http-client.env.json files.
+///
+/// # Format
+///
+/// The parser supports:
+/// - HTTP request lines (METHOD URL)
+/// - Headers (Name: Value)
+/// - Request body (JSON, XML, plain text, etc.)
+/// - Request names (# @name or // @name)
+/// - Timeouts (# @timeout, // @timeout)
+/// - Connection timeouts (# @connection-timeout)
+/// - Dependencies (# @dependsOn)
+/// - Conditions (# @if, # @if-not)
+/// - Variable assignments (@variable = value)
+/// - Assertions (> EXPECTED_RESPONSE_STATUS, > EXPECTED_RESPONSE_BODY, etc.)
+/// - IntelliJ script blocks (> {% ... %})
+/// - Comments (# or //)
+///
+/// # Arguments
+///
+/// * `file_path` - Path to the .http file to parse
+/// * `environment_name` - Optional environment name to load variables from
+///
+/// # Returns
+///
+/// Returns a vector of `HttpRequest` objects parsed from the file
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be read or contains invalid syntax
+///
+/// # Example
+///
+/// ```ignore
+/// let requests = parse_http_file("requests.http", Some("dev"))?;
+/// ```
 pub fn parse_http_file(
     file_path: &str,
     environment_name: Option<&str>,
