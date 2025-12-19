@@ -14,11 +14,7 @@
 
 ## [0.4.34](https://github.com/christianhelle/httprunner/tree/0.4.34) (2025-12-11)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.4.34...0.4.34)
-
-## [v0.4.34](https://github.com/christianhelle/httprunner/tree/v0.4.34) (2025-12-11)
-
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.33...v0.4.34)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.3.33...0.4.34)
 
 **Implemented enhancements:**
 
