@@ -169,19 +169,20 @@ fn append_response_headers(
     headers: &Option<std::collections::HashMap<String, String>>,
 ) {
     if let Some(headers) = headers
-        && !headers.is_empty() {
-            report.push_str("\n**Response Headers:**\n\n");
-            report.push_str("| Header | Value |\n");
-            report.push_str("|--------|-------|\n");
-            for (name, value) in headers {
-                report.push_str(&format!(
-                    "| {} | {} |\n",
-                    escape_markdown(name),
-                    escape_markdown(value)
-                ));
-            }
-            report.push('\n');
+        && !headers.is_empty()
+    {
+        report.push_str("\n**Response Headers:**\n\n");
+        report.push_str("| Header | Value |\n");
+        report.push_str("|--------|-------|\n");
+        for (name, value) in headers {
+            report.push_str(&format!(
+                "| {} | {} |\n",
+                escape_markdown(name),
+                escape_markdown(value)
+            ));
         }
+        report.push('\n');
+    }
 }
 
 fn append_response_body(report: &mut String, body: &Option<String>) {

@@ -57,7 +57,9 @@ pub(crate) fn find_environment_file(http_file_path: &str) -> Result<Option<PathB
     Ok(None)
 }
 
-pub(crate) fn parse_environment_file(file_path: &Path) -> Result<HashMap<String, HashMap<String, String>>> {
+pub(crate) fn parse_environment_file(
+    file_path: &Path,
+) -> Result<HashMap<String, HashMap<String, String>>> {
     let content = fs::read_to_string(file_path)?;
     let json: Value = serde_json::from_str(&content)?;
 

@@ -206,15 +206,16 @@ pub fn parse_http_file(
             }
         } else if trimmed.contains(':') && !in_body {
             if let Some(ref mut req) = current_request
-                && let Some(colon_pos) = trimmed.find(':') {
-                    let name = trimmed[..colon_pos].trim();
-                    let value = trimmed[colon_pos + 1..].trim();
+                && let Some(colon_pos) = trimmed.find(':')
+            {
+                let name = trimmed[..colon_pos].trim();
+                let value = trimmed[colon_pos + 1..].trim();
 
-                    req.headers.push(Header {
-                        name: substitute_variables(name, &variables),
-                        value: substitute_variables(value, &variables),
-                    });
-                }
+                req.headers.push(Header {
+                    name: substitute_variables(name, &variables),
+                    value: substitute_variables(value, &variables),
+                });
+            }
         } else {
             in_body = true;
             if !body_content.is_empty() {
