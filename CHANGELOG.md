@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.4.34...HEAD)
+
+**Implemented enhancements:**
+
+- Generate report in markdown format using --report [\#81](https://github.com/christianhelle/httprunner/pull/81) ([christianhelle](https://github.com/christianhelle))
+
+**Merged pull requests:**
+
+- Update GitHub Artifact Actions \(major\) [\#79](https://github.com/christianhelle/httprunner/pull/79) ([renovate[bot]](https://github.com/apps/renovate))
+
 ## [0.4.34](https://github.com/christianhelle/httprunner/tree/0.4.34) (2025-12-11)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/v0.4.34...0.4.34)
