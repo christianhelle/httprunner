@@ -205,8 +205,8 @@ pub fn parse_http_file(
                 in_body = false;
             }
         } else if trimmed.contains(':') && !in_body {
-            if let Some(ref mut req) = current_request {
-                if let Some(colon_pos) = trimmed.find(':') {
+            if let Some(ref mut req) = current_request
+                && let Some(colon_pos) = trimmed.find(':') {
                     let name = trimmed[..colon_pos].trim();
                     let value = trimmed[colon_pos + 1..].trim();
 
@@ -215,7 +215,6 @@ pub fn parse_http_file(
                         value: substitute_variables(value, &variables),
                     });
                 }
-            }
         } else {
             in_body = true;
             if !body_content.is_empty() {

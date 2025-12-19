@@ -168,8 +168,8 @@ fn append_response_headers(
     report: &mut String,
     headers: &Option<std::collections::HashMap<String, String>>,
 ) {
-    if let Some(headers) = headers {
-        if !headers.is_empty() {
+    if let Some(headers) = headers
+        && !headers.is_empty() {
             report.push_str("\n**Response Headers:**\n\n");
             report.push_str("| Header | Value |\n");
             report.push_str("|--------|-------|\n");
@@ -182,7 +182,6 @@ fn append_response_headers(
             }
             report.push('\n');
         }
-    }
 }
 
 fn append_response_body(report: &mut String, body: &Option<String>) {
