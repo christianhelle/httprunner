@@ -504,9 +504,9 @@ pub fn process_http_files(
 
         http_file_results.push(HttpFileResults {
             filename: http_file.clone(),
-            success_count: success_count,
-            failed_count: failed_count,
-            skipped_count: skipped_count,
+            success_count,
+            failed_count,
+            skipped_count,
             result_contexts: request_contexts,
         });
     }
