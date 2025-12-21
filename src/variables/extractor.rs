@@ -10,11 +10,10 @@ pub fn extract_request_variable_value(
         .iter()
         .find(|ctx| ctx.name == request_var.request_name);
 
-    if target_context.is_none() {
-        return Ok(None);
-    }
-
-    let ctx = target_context.unwrap();
+    let ctx = match target_context {
+        Some(ctx) => ctx,
+        None => return Ok(None),
+    };
 
     match request_var.source {
         RequestVariableSource::Request => extract_from_request(request_var, &ctx.request),

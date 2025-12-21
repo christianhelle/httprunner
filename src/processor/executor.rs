@@ -8,6 +8,7 @@ use crate::runner;
 use crate::types::{AssertionType, HttpFileResults, HttpRequest, ProcessorResults, RequestContext};
 use anyhow::Result;
 
+/// Add a skipped request to the context for dependency tracking
 fn add_skipped_request_context(
     request_contexts: &mut Vec<RequestContext>,
     processed_request: HttpRequest,
@@ -25,6 +26,29 @@ fn add_skipped_request_context(
     });
 }
 
+/// Process multiple HTTP files and execute their requests
+///
+/// This is the main entry point for processing HTTP files. It parses each file,
+/// executes the requests, evaluates assertions and conditions, and returns a summary
+/// of the results.
+///
+/// # Arguments
+///
+/// * `files` - List of HTTP file paths to process
+/// * `verbose` - Whether to include detailed output including response headers and body
+/// * `log_filename` - Optional log file path to write execution logs
+/// * `environment` - Optional environment name to load variables from http-client.env.json
+/// * `insecure` - Whether to accept invalid TLS certificates
+/// * `pretty_json` - Whether to format JSON responses for readability
+///
+/// # Returns
+///
+/// Returns a `ProcessorResults` containing success/failure counts and detailed results
+/// for each file and request
+///
+/// # Errors
+///
+/// Returns an error if file parsing or logging fails
 pub fn process_http_files(
     files: &[String],
     verbose: bool,
