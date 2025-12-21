@@ -157,11 +157,11 @@ fn process_variable_assignment(line: &str, variables: &mut Vec<Variable>) {
 /// - HTTP request lines (METHOD URL)
 /// - Headers (Name: Value)
 /// - Request body (JSON, XML, plain text, etc.)
-/// - Request names (# @name or // @name)
+/// - Request names (# @name, // @name)
 /// - Timeouts (# @timeout, // @timeout)
-/// - Connection timeouts (# @connection-timeout)
-/// - Dependencies (# @dependsOn)
-/// - Conditions (# @if, # @if-not)
+/// - Connection timeouts (# @connection-timeout, // @connection-timeout)
+/// - Dependencies (# @dependsOn, // @dependsOn)
+/// - Conditions (# @if, // @if, # @if-not, // @if-not)
 /// - Variable assignments (@variable = value)
 /// - Assertions (> EXPECTED_RESPONSE_STATUS, > EXPECTED_RESPONSE_BODY, etc.)
 /// - IntelliJ script blocks (> {% ... %})
@@ -221,13 +221,8 @@ pub fn parse_http_file(
         }
 
         // Parse @name directive
-        if trimmed.starts_with("# @name ") || trimmed.starts_with("// @name ") {
-            let name_start = if trimmed.starts_with("# @name ") {
-                8
-            } else {
-                9
-            };
-            state.pending_request_name = Some(trimmed[name_start..].trim().to_string());
+        if let Some(value) = extract_directive(trimmed, "@name") {
+            state.pending_request_name = Some(value.to_string());
             continue;
         }
 
