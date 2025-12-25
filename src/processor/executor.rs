@@ -2,7 +2,7 @@ use super::formatter::{format_json_if_valid, format_request_name};
 use super::substitution::substitute_request_variables_in_request;
 use crate::colors;
 use crate::conditions;
-use crate::log::Log;
+use crate::logging::Log;
 use crate::parser;
 use crate::runner;
 use crate::types::{AssertionType, HttpFileResults, HttpRequest, ProcessorResults, RequestContext};

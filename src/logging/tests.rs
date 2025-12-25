@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::log::Log;
+    use crate::logging::Log;
 
     use std::fs;
     use tempfile::tempdir;

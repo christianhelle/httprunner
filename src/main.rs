@@ -4,7 +4,7 @@ mod colors;
 mod conditions;
 mod discovery;
 mod environment;
-mod log;
+mod logging;
 mod parser;
 mod processor;
 mod report;
