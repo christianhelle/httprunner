@@ -10,6 +10,8 @@
 
 **Merged pull requests:**
 
+- Update Rust crate reqwest to 0.13 [\#84](https://github.com/christianhelle/httprunner/pull/84) ([renovate[bot]](https://github.com/apps/renovate))
+- Update dependency ruby to v4 - autoclosed [\#83](https://github.com/christianhelle/httprunner/pull/83) ([renovate[bot]](https://github.com/apps/renovate))
 - Update GitHub Artifact Actions \(major\) [\#79](https://github.com/christianhelle/httprunner/pull/79) ([renovate[bot]](https://github.com/apps/renovate))
 
 ## [0.4.34](https://github.com/christianhelle/httprunner/tree/0.4.34) (2025-12-11)
