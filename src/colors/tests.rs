@@ -1,10 +1,9 @@
 use super::*;
-use colored::Colorize;
 
 #[test]
-fn color_helpers_match_colored_output() {
-    assert_eq!(red("hello"), "hello".red().to_string());
-    assert_eq!(green("world"), "world".green().to_string());
-    assert_eq!(yellow("warn"), "warn".yellow().to_string());
-    assert_eq!(blue("info"), "info".blue().to_string());
+fn color_helpers_return_ansi_codes() {
+    assert_eq!(red("hello"), "\x1b[31mhello\x1b[0m");
+    assert_eq!(green("world"), "\x1b[32mworld\x1b[0m");
+    assert_eq!(yellow("warn"), "\x1b[33mwarn\x1b[0m");
+    assert_eq!(blue("info"), "\x1b[34minfo\x1b[0m");
 }
