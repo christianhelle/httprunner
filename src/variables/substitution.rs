@@ -1,7 +1,7 @@
 use super::extractor::extract_request_variable_value;
 use super::parser::parse_request_variable;
 use crate::types::RequestContext;
-use anyhow::Result;
+use crate::error::Result;
 
 pub fn substitute_request_variables(input: &str, context: &[RequestContext]) -> Result<String> {
     let mut result = String::new();

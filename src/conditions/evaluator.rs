@@ -1,7 +1,7 @@
 use super::formatter::format_condition_type;
 use super::json_extractor::extract_json_value;
 use crate::types::{Condition, ConditionType, RequestContext};
-use anyhow::Result;
+use crate::error::Result;
 
 #[derive(Debug)]
 pub struct ConditionEvaluationResult {
