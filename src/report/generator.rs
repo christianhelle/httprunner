@@ -1,7 +1,6 @@
 use super::formatter::escape_markdown;
 use super::writer::write_report;
 use crate::types::{AssertionType, ProcessorResults};
-use chrono::Local;
 
 pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::Error> {
     let mut report = String::new();
@@ -17,8 +16,61 @@ fn append_header(report: &mut String) {
     report.push_str("# HTTP File Runner - Test Report\n\n");
     report.push_str(&format!(
         "**Generated:** {}\n\n",
-        Local::now().format("%Y-%m-%d %H:%M:%S")
+        format_local_datetime()
     ));
+}
+
+fn format_local_datetime() -> String {
+    use std::time::SystemTime;
+    let now = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("System time before UNIX EPOCH");
+    
+    let secs = now.as_secs();
+    let days = secs / 86400;
+    let hours = (secs % 86400) / 3600;
+    let minutes = (secs % 3600) / 60;
+    let seconds = secs % 60;
+    
+    let (year, month, day) = days_to_ymd(days);
+    
+    format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}", 
+            year, month, day, hours, minutes, seconds)
+}
+
+fn days_to_ymd(days: u64) -> (u64, u64, u64) {
+    let mut year = 1970;
+    let mut remaining_days = days;
+    
+    loop {
+        let days_in_year = if is_leap_year(year) { 366 } else { 365 };
+        if remaining_days < days_in_year {
+            break;
+        }
+        remaining_days -= days_in_year;
+        year += 1;
+    }
+    
+    let days_in_months = if is_leap_year(year) {
+        [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    } else {
+        [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    };
+    
+    let mut month = 1;
+    for &days_in_month in &days_in_months {
+        if remaining_days < days_in_month as u64 {
+            break;
+        }
+        remaining_days -= days_in_month as u64;
+        month += 1;
+    }
+    
+    (year, month, remaining_days + 1)
+}
+
+fn is_leap_year(year: u64) -> bool {
+    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }
 
 fn append_overall_summary(report: &mut String, results: &ProcessorResults) {
