@@ -1,6 +1,6 @@
 use crate::types::{HttpRequest, RequestContext};
 use crate::variables;
-use anyhow::Result;
+use crate::error::Result;
 
 pub fn substitute_request_variables_in_request(
     request: &mut HttpRequest,

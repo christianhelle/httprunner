@@ -4,7 +4,7 @@ use super::utils::is_http_request_line;
 use super::variable_substitution::substitute_variables;
 use crate::environment;
 use crate::types::{Assertion, AssertionType, Condition, Header, HttpRequest, Variable};
-use anyhow::{Context, Result};
+use crate::error::{Result, Context};
 use std::fs;
 
 pub fn parse_http_file(
@@ -12,7 +12,7 @@ pub fn parse_http_file(
     environment_name: Option<&str>,
 ) -> Result<Vec<HttpRequest>> {
     let content = fs::read_to_string(file_path)
-        .with_context(|| format!("Failed to read file: {}", file_path))?;
+        .context(format!("Failed to read file: {}", file_path))?;
 
     let mut requests = Vec::new();
     let env_variables = environment::load_environment_file(file_path, environment_name)?;

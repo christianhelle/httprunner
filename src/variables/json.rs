@@ -1,4 +1,5 @@
-use anyhow::{Result, anyhow};
+use crate::err;
+use crate::error::Result;
 
 pub fn extract_json_property(json_body: &str, property: &str) -> Result<Option<String>> {
     // Handle nested properties like "json.token" and array indexing like "data[0].version"
@@ -24,7 +25,7 @@ pub fn extract_json_property(json_body: &str, property: &str) -> Result<Option<S
                             Err(e) => return Err(e),
                         }
                     } else {
-                        return Err(anyhow!("Invalid array index: {}", index_part));
+                        return Err(err!("Invalid array index: {}", index_part));
                     }
                 }
                 Ok(None) => return Ok(None),
@@ -56,7 +57,7 @@ fn extract_array_element(json_body: &str, index: usize) -> Result<Option<String>
     let trimmed = json_body.trim();
 
     if !trimmed.starts_with('[') {
-        return Err(anyhow!("Expected array but got: {}", trimmed));
+        return Err(err!("Expected array but got: {}", trimmed));
     }
 
     let chars: Vec<char> = trimmed.chars().collect();

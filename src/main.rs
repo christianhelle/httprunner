@@ -4,6 +4,7 @@ mod colors;
 mod conditions;
 mod discovery;
 mod environment;
+mod error;
 mod logging;
 mod parser;
 mod processor;
@@ -17,7 +18,7 @@ use clap::{CommandFactory, Parser};
 
 use crate::report::generate_markdown;
 
-fn main() -> anyhow::Result<()> {
+fn main() -> error::Result<()> {
     let cli_args = cli::Cli::parse();
 
     if cli_args.upgrade {

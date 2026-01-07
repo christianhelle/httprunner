@@ -6,7 +6,7 @@ use crate::logging::Log;
 use crate::parser;
 use crate::runner;
 use crate::types::{AssertionType, HttpFileResults, HttpRequest, ProcessorResults, RequestContext};
-use anyhow::Result;
+use crate::error::Result;
 
 fn add_skipped_request_context(
     request_contexts: &mut Vec<RequestContext>,
