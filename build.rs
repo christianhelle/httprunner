@@ -1,4 +1,3 @@
-use chrono::Utc;
 use std::process::Command;
 
 fn main() {
@@ -31,8 +30,26 @@ fn main() {
     let git_tag_display = git_tag.unwrap_or_else(|| format!("v{}", cargo_version));
     let git_commit_display = git_commit.unwrap_or_else(|| "unknown".to_string());
 
-    // Get current timestamp
-    let build_date = Utc::now().format("%Y-%m-%d %H:%M:%S UTC").to_string();
+    // Get current timestamp in UTC
+    let build_date = {
+        use std::time::SystemTime;
+        let now = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("System time before UNIX EPOCH");
+        
+        // Simple UTC formatting (YYYY-MM-DD HH:MM:SS UTC)
+        let secs = now.as_secs();
+        let days = secs / 86400;
+        let hours = (secs % 86400) / 3600;
+        let minutes = (secs % 3600) / 60;
+        let seconds = secs % 60;
+        
+        // Days since 1970-01-01
+        let (year, month, day) = days_to_ymd(days);
+        
+        format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02} UTC", 
+                year, month, day, hours, minutes, seconds)
+    };
 
     // Set environment variables for build
     println!("cargo:rustc-env=VERSION={}", version);
@@ -60,4 +77,40 @@ fn get_git_output(args: &[&str]) -> Option<String> {
                 None
             }
         })
+}
+
+// Convert days since UNIX epoch to (year, month, day)
+fn days_to_ymd(days: u64) -> (u64, u64, u64) {
+    let mut year = 1970;
+    let mut remaining_days = days;
+    
+    loop {
+        let days_in_year = if is_leap_year(year) { 366 } else { 365 };
+        if remaining_days < days_in_year {
+            break;
+        }
+        remaining_days -= days_in_year;
+        year += 1;
+    }
+    
+    let days_in_months = if is_leap_year(year) {
+        [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    } else {
+        [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    };
+    
+    let mut month = 1;
+    for &days_in_month in &days_in_months {
+        if remaining_days < days_in_month as u64 {
+            break;
+        }
+        remaining_days -= days_in_month as u64;
+        month += 1;
+    }
+    
+    (year, month, remaining_days + 1)
+}
+
+fn is_leap_year(year: u64) -> bool {
+    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }
