@@ -8,5 +8,7 @@ Content-Type: application/json
   "string": "string()",
   "STRING": "STRING()",
   "number": "number()",
-  "NUMBER": "NUMBER()"
+  "NUMBER": "NUMBER()",
+  "to_base64": "base64_encode('Hello, World!')",
+  "TO_BASE64": "BASE64_ENCODE('Hello, World!')"
 }
