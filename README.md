@@ -29,6 +29,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`)
 - 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
@@ -513,6 +514,91 @@ Content-Type: application/json
 {
   "name": "test",
   "value": 123
+}
+```
+
+## Built-in Functions
+
+The HTTP File Runner provides built-in functions for dynamic value generation in your `.http` files. Functions are case-insensitive and automatically generate values when the request is executed.
+
+### Available Functions
+
+#### `guid()` - Generate UUID
+Generates a new UUID v4 (Universally Unique Identifier) in simple format (32 hex characters without dashes).
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "id": "guid()",
+  "requestId": "GUID()"
+}
+```
+
+#### `string()` - Generate Random String
+Generates a random alphanumeric string of 10 characters.
+
+```http
+POST https://api.example.com/test
+Content-Type: application/json
+
+{
+  "sessionKey": "string()",
+  "token": "STRING()"
+}
+```
+
+#### `number()` - Generate Random Number
+Generates a random number between 0 and 100 (inclusive).
+
+```http
+POST https://api.example.com/data
+Content-Type: application/json
+
+{
+  "randomValue": "number()",
+  "percentage": "NUMBER()"
+}
+```
+
+#### `base64_encode()` - Base64 Encoding
+Encodes a string to Base64 format. The string must be enclosed in single quotes.
+
+```http
+POST https://api.example.com/auth
+Content-Type: application/json
+
+{
+  "credentials": "base64_encode('username:password')",
+  "token": "BASE64_ENCODE('Hello, World!')"
+}
+```
+
+### Function Features
+
+- ✅ **Case-insensitive**: `guid()`, `GUID()`, and `Guid()` all work identically
+- ✅ **Dynamic generation**: Values are generated fresh for each request execution
+- ✅ **Works everywhere**: Use in URLs, headers, and request bodies
+- ✅ **Combine with variables**: Functions can be used alongside variables
+
+### Example Usage
+
+See `examples/functions.http` for a complete demonstration:
+
+```http
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "guid": "guid()",
+  "GUID": "GUID()",
+  "string": "string()",
+  "STRING": "STRING()",
+  "number": "number()",
+  "NUMBER": "NUMBER()",
+  "to_base64": "base64_encode('Hello, World!')",
+  "TO_BASE64": "BASE64_ENCODE('Hello, World!')"
 }
 ```
 
@@ -1167,6 +1253,7 @@ The `examples/` directory contains several sample `.http` files:
 - **`status-codes.http`** - Tests different HTTP status codes (15 requests)
 - **`request-variables.http`** - Demonstrates request chaining with variables (5 requests)
 - **`variables.http`** - Shows variable usage and environment files
+- **`functions.http`** - Demonstrates built-in functions (`guid()`, `string()`, `number()`, `base64_encode()`)
 - **`asserts.http`** - Response assertion examples
 - **`assertion-variables.http`** - Variable substitution in assertions
 - **`pagination-variables.http`** - Pagination scenarios with variable assertions
