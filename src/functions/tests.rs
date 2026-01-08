@@ -39,14 +39,11 @@ fn test_generate_number() {
         .parse()
         .expect("Generated number string could not be parsed as i32");
     assert!(
-        number >= 0 && number <= 100,
+        (0..=100).contains(&number),
         "Generated number {} is not within range 0..=100",
         number
     );
-    assert_ne!(
-        number, -1,
-        "Generated number should not be -1"
-    );
+    assert_ne!(number, -1, "Generated number should not be -1");
 }
 
 #[test]
