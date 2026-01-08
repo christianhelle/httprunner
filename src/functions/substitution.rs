@@ -6,11 +6,11 @@ pub trait FunctionSubstitutor {
     fn get_regex(&self) -> &str;
     fn generate(&self) -> String;
     fn replace(&self, input: &String) -> String {
-        RegexBuilder::new(&self.get_regex())
+        RegexBuilder::new(self.get_regex())
             .case_insensitive(true)
             .build()
             .unwrap()
-            .replace_all(&input, &self.generate())
+            .replace_all(input, &self.generate())
             .to_string()
     }
 }
