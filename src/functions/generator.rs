@@ -57,7 +57,7 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
         panic!("Base64Substitutor.generate should not be called directly");
     }
 
-    fn replace(&self, input: &String) -> String {
+    fn replace(&self, input: &str) -> String {
         use base64::Engine;
         use base64::engine::general_purpose;
 
