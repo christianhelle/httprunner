@@ -1,5 +1,5 @@
-use crate::variables;
 use crate::error::Result;
+use crate::variables;
 
 pub fn extract_json_value(json_body: &str, json_path: &str) -> Result<Option<String>> {
     if let Some(property) = json_path.strip_prefix("$.") {

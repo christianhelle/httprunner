@@ -36,19 +36,21 @@ fn main() {
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("System time before UNIX EPOCH");
-        
+
         // Simple UTC formatting (YYYY-MM-DD HH:MM:SS UTC)
         let secs = now.as_secs();
         let days = secs / 86400;
         let hours = (secs % 86400) / 3600;
         let minutes = (secs % 3600) / 60;
         let seconds = secs % 60;
-        
+
         // Days since 1970-01-01
         let (year, month, day) = days_to_ymd(days);
-        
-        format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02} UTC", 
-                year, month, day, hours, minutes, seconds)
+
+        format!(
+            "{:04}-{:02}-{:02} {:02}:{:02}:{:02} UTC",
+            year, month, day, hours, minutes, seconds
+        )
     };
 
     // Set environment variables for build
@@ -83,7 +85,7 @@ fn get_git_output(args: &[&str]) -> Option<String> {
 fn days_to_ymd(days: u64) -> (u64, u64, u64) {
     let mut year = 1970;
     let mut remaining_days = days;
-    
+
     loop {
         let days_in_year = if is_leap_year(year) { 366 } else { 365 };
         if remaining_days < days_in_year {
@@ -92,13 +94,13 @@ fn days_to_ymd(days: u64) -> (u64, u64, u64) {
         remaining_days -= days_in_year;
         year += 1;
     }
-    
+
     let days_in_months = if is_leap_year(year) {
         [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     } else {
         [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     };
-    
+
     let mut month = 1;
     for &days_in_month in &days_in_months {
         if remaining_days < days_in_month as u64 {
@@ -107,7 +109,7 @@ fn days_to_ymd(days: u64) -> (u64, u64, u64) {
         remaining_days -= days_in_month as u64;
         month += 1;
     }
-    
+
     (year, month, remaining_days + 1)
 }
 
