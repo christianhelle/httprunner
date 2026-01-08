@@ -7,7 +7,7 @@ use regex::RegexBuilder;
 pub trait FunctionSubstitutor {
     fn get_regex(&self) -> &str;
     fn generate(&self) -> String;
-    fn replace(&self, input: &String) -> String {
+    fn replace(&self, input: &str) -> String {
         RegexBuilder::new(self.get_regex())
             .case_insensitive(true)
             .build()
@@ -22,7 +22,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &GuidSubstitutor {},
         &StringSubstitutor {},
         &NumberSubstitutor {},
-        &Base64EncodeSubstitutor {}
+        &Base64EncodeSubstitutor {},
     ];
 
     let result = substitutors
