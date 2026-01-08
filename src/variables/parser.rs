@@ -1,6 +1,6 @@
-use crate::types::{RequestVariable, RequestVariableSource, RequestVariableTarget};
 use crate::err;
 use crate::error::Result;
+use crate::types::{RequestVariable, RequestVariableSource, RequestVariableTarget};
 
 pub fn parse_request_variable(reference: &str) -> Result<RequestVariable> {
     let mut cleaned = reference;

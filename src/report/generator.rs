@@ -14,10 +14,7 @@ pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::
 
 fn append_header(report: &mut String) {
     report.push_str("# HTTP File Runner - Test Report\n\n");
-    report.push_str(&format!(
-        "**Generated:** {}\n\n",
-        format_local_datetime()
-    ));
+    report.push_str(&format!("**Generated:** {}\n\n", format_local_datetime()));
 }
 
 fn format_local_datetime() -> String {
@@ -25,23 +22,25 @@ fn format_local_datetime() -> String {
     let now = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("System time before UNIX EPOCH");
-    
+
     let secs = now.as_secs();
     let days = secs / 86400;
     let hours = (secs % 86400) / 3600;
     let minutes = (secs % 3600) / 60;
     let seconds = secs % 60;
-    
+
     let (year, month, day) = days_to_ymd(days);
-    
-    format!("{:04}-{:02}-{:02} {:02}:{:02}:{:02}", 
-            year, month, day, hours, minutes, seconds)
+
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+        year, month, day, hours, minutes, seconds
+    )
 }
 
 fn days_to_ymd(days: u64) -> (u64, u64, u64) {
     let mut year = 1970;
     let mut remaining_days = days;
-    
+
     loop {
         let days_in_year = if is_leap_year(year) { 366 } else { 365 };
         if remaining_days < days_in_year {
@@ -50,13 +49,13 @@ fn days_to_ymd(days: u64) -> (u64, u64, u64) {
         remaining_days -= days_in_year;
         year += 1;
     }
-    
+
     let days_in_months = if is_leap_year(year) {
         [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     } else {
         [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     };
-    
+
     let mut month = 1;
     for &days_in_month in &days_in_months {
         if remaining_days < days_in_month as u64 {
@@ -65,7 +64,7 @@ fn days_to_ymd(days: u64) -> (u64, u64, u64) {
         remaining_days -= days_in_month as u64;
         month += 1;
     }
-    
+
     (year, month, remaining_days + 1)
 }
 
@@ -221,19 +220,20 @@ fn append_response_headers(
     headers: &Option<std::collections::HashMap<String, String>>,
 ) {
     if let Some(headers) = headers
-        && !headers.is_empty() {
-            report.push_str("\n**Response Headers:**\n\n");
-            report.push_str("| Header | Value |\n");
-            report.push_str("|--------|-------|\n");
-            for (name, value) in headers {
-                report.push_str(&format!(
-                    "| {} | {} |\n",
-                    escape_markdown(name),
-                    escape_markdown(value)
-                ));
-            }
-            report.push('\n');
+        && !headers.is_empty()
+    {
+        report.push_str("\n**Response Headers:**\n\n");
+        report.push_str("| Header | Value |\n");
+        report.push_str("|--------|-------|\n");
+        for (name, value) in headers {
+            report.push_str(&format!(
+                "| {} | {} |\n",
+                escape_markdown(name),
+                escape_markdown(value)
+            ));
         }
+        report.push('\n');
+    }
 }
 
 fn append_response_body(report: &mut String, body: &Option<String>) {
