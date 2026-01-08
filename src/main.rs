@@ -5,6 +5,7 @@ mod conditions;
 mod discovery;
 mod environment;
 mod error;
+mod functions;
 mod logging;
 mod parser;
 mod processor;
