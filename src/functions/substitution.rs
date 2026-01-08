@@ -14,16 +14,17 @@ pub trait FunctionSubstitutor {
 }
 
 pub fn substitute_functions(input: &str) -> Result<String> {
-    let vec: Vec<Box<dyn FunctionSubstitutor>> = vec![
-        Box::new(GuidSubstitutor {}),
-        Box::new(StringSubstitutor {}),
-        Box::new(NumberSubstitutor {}),
+    let substitutors: &[&dyn FunctionSubstitutor] = &[
+        &GuidSubstitutor {},
+        &StringSubstitutor {},
+        &NumberSubstitutor {},
     ];
 
-    let mut result = input.to_string();
-    for substitutor in vec {
-        result = substitutor.replace(&result);
-    }
+    let result = substitutors
+        .iter()
+        .fold(input.to_string(), |acc, substitutor| {
+            substitutor.replace(&acc)
+        });
 
     Ok(result)
 }
