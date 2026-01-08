@@ -8,11 +8,11 @@ pub trait FunctionSubstitutor {
     fn get_regex(&self) -> &str;
     fn generate(&self) -> String;
     fn replace(&self, input: &str) -> String {
-        RegexBuilder::new(self.get_regex())
+        let re = RegexBuilder::new(self.get_regex())
             .case_insensitive(true)
             .build()
-            .unwrap()
-            .replace_all(input, &self.generate())
+            .unwrap();
+        re.replace_all(input, |_: &regex::Captures| self.generate())
             .to_string()
     }
 }
