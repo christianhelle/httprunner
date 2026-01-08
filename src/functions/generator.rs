@@ -65,7 +65,7 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
             .case_insensitive(true)
             .build()
             .unwrap();
-        re.replace_all(&input, |caps: &regex::Captures| {
+        re.replace_all(input, |caps: &regex::Captures| {
             let to_encode = &caps[1];
             general_purpose::STANDARD.encode(to_encode)
         })
