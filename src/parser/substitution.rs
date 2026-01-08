@@ -48,4 +48,3 @@ pub fn substitute_variables(input: &str, variables: &[Variable]) -> String {
 
     result
 }
-

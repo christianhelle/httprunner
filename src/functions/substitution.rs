@@ -1,5 +1,7 @@
 use crate::error::Result;
-use crate::functions::generator::{Base64EncodeSubstitutor, GuidSubstitutor, NumberSubstitutor, StringSubstitutor};
+use crate::functions::generator::{
+    Base64EncodeSubstitutor, GuidSubstitutor, NumberSubstitutor, StringSubstitutor,
+};
 use regex::RegexBuilder;
 
 pub trait FunctionSubstitutor {
