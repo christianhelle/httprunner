@@ -1,14 +1,34 @@
+###
 # POST request with body (fully supported)
+# @name request1
 POST https://httpbin.org/post
 Content-Type: application/json
 
 {
-  "guid": "guid()",
-  "GUID": "GUID()",
-  "string": "string()",
-  "STRING": "STRING()",
-  "number": "number()",
-  "NUMBER": "NUMBER()",
-  "to_base64": "base64_encode('Hello, World!')",
-  "TO_BASE64": "BASE64_ENCODE('Hello, World!')"
+    "guid": "guid()",
+    "GUID": "GUID()",
+    "string": "string()",
+    "STRING": "STRING()",
+    "number": "number()",
+    "NUMBER": "NUMBER()",
+    "to_base64": "base64_encode('Hello, World!')",
+    "TO_BASE64": "BASE64_ENCODE('Hello, World!')"
+}
+
+###
+# POST request with body (fully supported)
+# @name request2
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+    "first_request_guid": "{{request1.response.body.$.json.guid}}",
+    "guid": "guid()",
+    "GUID": "GUID()",
+    "string": "string()",
+    "STRING": "STRING()",
+    "number": "number()",
+    "NUMBER": "NUMBER()",
+    "to_base64": "base64_encode('{{request1.response.body.$.json.guid}}')",
+    "TO_BASE64": "BASE64_ENCODE('{{request1.response.body.$.json.guid}}')"
 }
