@@ -48,8 +48,8 @@ fn test_generate_number() {
 
 #[test]
 fn test_base64_encode() {
-    assert_eq!(
-        Base64EncodeSubstitutor {}.replace(&String::from("base64_encode('Hello, World!')")),
-        "SGVsbG8sIFdvcmxkIQ=="
-    );
+    let result =
+        Base64EncodeSubstitutor {}.replace(&String::from("base64_encode('Hello, World!')"));
+    assert!(result.is_ok(), "Expected Ok result, got {:?}", result);
+    assert_eq!(result.unwrap(), "SGVsbG8sIFdvcmxkIQ==");
 }
