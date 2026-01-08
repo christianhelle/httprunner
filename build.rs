@@ -81,6 +81,9 @@ fn get_git_output(args: &[&str]) -> Option<String> {
         })
 }
 
+// NOTE: The following time utility functions are duplicated from src/time_utils.rs
+// because build.rs cannot import modules from src/. Keep these implementations in sync.
+
 // Convert days since UNIX epoch to (year, month, day)
 fn days_to_ymd(days: u64) -> (u64, u64, u64) {
     let mut year = 1970;

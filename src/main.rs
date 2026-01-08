@@ -11,6 +11,7 @@ mod parser;
 mod processor;
 mod report;
 mod runner;
+mod time_utils;
 mod types;
 mod upgrade;
 mod variables;
