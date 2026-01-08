@@ -50,11 +50,11 @@ impl FunctionSubstitutor for NumberSubstitutor {
 pub struct Base64EncodeSubstitutor {}
 impl FunctionSubstitutor for Base64EncodeSubstitutor {
     fn get_regex(&self) -> &str {
-        panic!("Base64Substitutor.get_regex should not be called directly");
+        r"(?!)"
     }
 
     fn generate(&self) -> String {
-        panic!("Base64Substitutor.generate should not be called directly");
+        String::new()
     }
 
     fn replace(&self, input: &str) -> String {
