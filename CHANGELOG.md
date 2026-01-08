@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Add Built-in Functions Support [\#88](https://github.com/christianhelle/httprunner/pull/88) ([christianhelle](https://github.com/christianhelle))
 - Generate report in markdown format using --report [\#81](https://github.com/christianhelle/httprunner/pull/81) ([christianhelle](https://github.com/christianhelle))
 
 **Merged pull requests:**
