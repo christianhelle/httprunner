@@ -32,7 +32,7 @@ fn format_local_datetime() -> String {
     let (year, month, day) = days_to_ymd(days);
 
     format!(
-        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02} UTC",
         year, month, day, hours, minutes, seconds
     )
 }
