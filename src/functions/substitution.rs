@@ -1,12 +1,14 @@
 use crate::error::Result;
 use crate::functions::generator::{GuidSubstitutor, NumberSubstitutor, StringSubstitutor};
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 
 pub trait FunctionSubstitutor {
     fn get_regex(&self) -> String;
     fn generate(&self) -> String;
     fn replace(&self, input: &String) -> String {
-        Regex::new(&self.get_regex())
+        RegexBuilder::new(&self.get_regex())
+            .case_insensitive(true)
+            .build()
             .unwrap()
             .replace_all(&input, &self.generate())
             .to_string()
