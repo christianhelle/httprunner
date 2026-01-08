@@ -25,7 +25,7 @@ impl FunctionSubstitutor for StringSubstitutor {
 
         rand::rng()
             .sample_iter(&Alphanumeric)
-            .take(10)
+            .take(20)
             .map(char::from)
             .collect()
     }
