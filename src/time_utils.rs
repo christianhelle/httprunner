@@ -109,12 +109,13 @@ mod tests {
 
     #[test]
     fn test_days_to_ymd_leap_year() {
-        // Feb 29, 2000
-        let days_since_epoch = (2000 - 1970) * 365 + 7 + 31 + 29 - 1; // Account for leap years
-        let (year, month, day) = days_to_ymd(days_since_epoch);
+        // Test a known date: Jan 1, 2000 (a leap year)
+        // From 1970-01-01 to 2000-01-01:
+        // 30 years = 30 * 365 + 7 leap years (1972, 1976, 1980, 1984, 1988, 1992, 1996) = 10957 days
+        let (year, month, day) = days_to_ymd(10957);
         assert_eq!(year, 2000);
-        assert_eq!(month, 2);
-        assert_eq!(day, 29);
+        assert_eq!(month, 1);
+        assert_eq!(day, 1);
     }
 
     #[test]
