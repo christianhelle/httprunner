@@ -2,10 +2,9 @@ use super::condition_parser::parse_condition;
 use super::substitution::*;
 use super::timeout_parser::parse_timeout_value;
 use super::utils::is_http_request_line;
-use super::variable_substitution::substitute_variables;
 use crate::environment;
+use crate::error::{Context, Result};
 use crate::types::{Assertion, AssertionType, Condition, Header, HttpRequest, Variable};
-use crate::error::{Result, Context};
 use std::fs;
 
 pub fn parse_http_file(
