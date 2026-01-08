@@ -10,7 +10,7 @@ fn test_generate_guid() {
 
 #[test]
 fn test_generate_string() {
-    assert_eq!(StringSubstitutor {}.generate().len(), 10);
+    assert_eq!(StringSubstitutor {}.generate().len(), 20);
 }
 
 #[test]
