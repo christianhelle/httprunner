@@ -17,6 +17,7 @@ impl FunctionSubstitutor for StringSubstitutor {
     fn get_regex(&self) -> String {
         r"\bstring\(\)".to_string()
     }
+
     fn generate(&self) -> String {
         use rand::Rng;
         use rand::distr::Alphanumeric;
