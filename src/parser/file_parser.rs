@@ -229,7 +229,6 @@ pub fn parse_http_file(
         if !body_content.is_empty() {
             req.body = Some(substitute_variables(&body_content, &variables));
         }
-        substitute_functions_in_request(&mut req)?;
         requests.push(req);
     }
 
