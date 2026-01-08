@@ -1,0 +1,8 @@
+# POST request with body (fully supported)
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "guid": "guid()",
+  "string": "string()"
+}
