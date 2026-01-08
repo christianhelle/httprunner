@@ -44,6 +44,7 @@
                         <li><a href="#getting-started">Getting Started</a></li>
                         <li><a href="#http-file-format">HTTP File Format</a></li>
                         <li><a href="#variables">Variables</a></li>
+                        <li><a href="#built-in-functions">Built-in Functions</a></li>
                         <li><a href="#request-variables">Request Variables</a></li>
                         <li><a href="#conditional-execution">Conditional Execution</a></li>
                         <li><a href="#environment-files">Environment Files</a></li>
@@ -166,6 +167,69 @@ Content-Type: application/json
 
 GET {{baseUrl}}/status</code>
                     </div>
+                </section>
+
+                <section id="built-in-functions" class="guide-section">
+                    <h2>Built-in Functions</h2>
+                    <p>HTTP File Runner provides built-in functions for dynamic value generation. Functions are case-insensitive and work in URLs, headers, and request bodies.</p>
+
+                    <h3>Available Functions</h3>
+                    
+                    <h4>guid() - Generate UUID</h4>
+                    <p>Generates a new UUID v4 (32 hex characters without dashes).</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "id": "guid()",
+  "requestId": "GUID()"
+}</code>
+                    </div>
+
+                    <h4>string() - Generate Random String</h4>
+                    <p>Generates a random alphanumeric string of 10 characters.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/test
+Content-Type: application/json
+
+{
+  "sessionKey": "string()",
+  "token": "STRING()"
+}</code>
+                    </div>
+
+                    <h4>number() - Generate Random Number</h4>
+                    <p>Generates a random number between 0 and 100 (inclusive).</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/data
+Content-Type: application/json
+
+{
+  "randomValue": "number()",
+  "percentage": "NUMBER()"
+}</code>
+                    </div>
+
+                    <h4>base64_encode() - Base64 Encoding</h4>
+                    <p>Encodes a string to Base64 format. The string must be enclosed in single quotes.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/auth
+Content-Type: application/json
+
+{
+  "credentials": "base64_encode('username:password')",
+  "token": "BASE64_ENCODE('Hello, World!')"
+}</code>
+                    </div>
+
+                    <h3>Function Features</h3>
+                    <ul>
+                        <li><strong>Case-insensitive</strong>: guid(), GUID(), and Guid() all work identically</li>
+                        <li><strong>Dynamic generation</strong>: Values are generated fresh for each request</li>
+                        <li><strong>Works everywhere</strong>: Use in URLs, headers, and request bodies</li>
+                        <li><strong>Combine with variables</strong>: Functions can be used alongside variables</li>
+                    </ul>
                 </section>
 
                 <section id="request-variables" class="guide-section">
