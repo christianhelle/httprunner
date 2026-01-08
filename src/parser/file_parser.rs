@@ -1,4 +1,5 @@
 use super::condition_parser::parse_condition;
+use super::substitution::*;
 use super::timeout_parser::parse_timeout_value;
 use super::utils::is_http_request_line;
 use super::variable_substitution::substitute_variables;
@@ -228,6 +229,7 @@ pub fn parse_http_file(
         if !body_content.is_empty() {
             req.body = Some(substitute_variables(&body_content, &variables));
         }
+        substitute_functions_in_request(&mut req)?;
         requests.push(req);
     }
 
