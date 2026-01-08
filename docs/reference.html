@@ -44,6 +44,7 @@
                         <li><a href="#command-line">Command Line</a></li>
                         <li><a href="#http-syntax">HTTP File Syntax</a></li>
                         <li><a href="#variables-syntax">Variables</a></li>
+                        <li><a href="#built-in-functions-syntax">Built-in Functions</a></li>
                         <li><a href="#request-variables-syntax">Request Variables</a></li>
                         <li><a href="#environment-format">Environment Files</a></li>
                         <li><a href="#assertions-reference">Assertions</a></li>
@@ -281,6 +282,65 @@ GET {{baseUrl}}/users</code>
                         <li>Request body content</li>
                         <li>Other variable definitions</li>
                     </ul>
+                </section>
+
+                <section id="built-in-functions-syntax" class="guide-section">
+                    <h2>Built-in Functions</h2>
+                    
+                    <h3>Function List</h3>
+                    <table class="reference-table">
+                        <thead>
+                            <tr>
+                                <th>Function</th>
+                                <th>Description</th>
+                                <th>Example Output</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>guid()</code></td>
+                                <td>Generate UUID v4 (32 hex chars)</td>
+                                <td>a1b2c3d4e5f67890a1b2c3d4e5f67890</td>
+                            </tr>
+                            <tr>
+                                <td><code>string()</code></td>
+                                <td>Random alphanumeric string (10 chars)</td>
+                                <td>aB3xK9mP2q</td>
+                            </tr>
+                            <tr>
+                                <td><code>number()</code></td>
+                                <td>Random number (0-100)</td>
+                                <td>42</td>
+                            </tr>
+                            <tr>
+                                <td><code>base64_encode('text')</code></td>
+                                <td>Base64 encode a string</td>
+                                <td>dGV4dA==</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Usage Notes</h3>
+                    <ul>
+                        <li>All functions are case-insensitive</li>
+                        <li>Can be used in URLs, headers, and request bodies</li>
+                        <li>Values are generated dynamically for each request</li>
+                        <li>Can be combined with variables</li>
+                        <li><code>base64_encode()</code> requires single-quoted string argument</li>
+                    </ul>
+
+                    <h3>Example</h3>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/test
+Content-Type: application/json
+
+{
+  "id": "guid()",
+  "key": "string()",
+  "value": "number()",
+  "auth": "base64_encode('user:pass')"
+}</code>
+                    </div>
                 </section>
 
                 <section id="request-variables-syntax" class="guide-section">

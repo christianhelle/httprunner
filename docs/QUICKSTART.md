@@ -140,7 +140,32 @@ EXPECTED_RESPONSE_BODY "slideshow"
 EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
 ```
 
-### 6. Chain Requests with Variables
+### 6. Use Built-in Functions
+
+Create `functions-demo.http`:
+
+```http
+# Generate dynamic values
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "id": "guid()",
+  "sessionKey": "string()",
+  "randomValue": "number()",
+  "credentials": "base64_encode('username:password')"
+}
+```
+
+Available functions:
+- `guid()` - Generate UUID v4 (32 hex characters)
+- `string()` - Generate random alphanumeric string (10 chars)
+- `number()` - Generate random number (0-100)
+- `base64_encode('text')` - Encode string to Base64
+
+All functions are case-insensitive and can be used in URLs, headers, and request bodies.
+
+### 7. Chain Requests with Variables
 
 Create `chained-requests.http`:
 
@@ -161,7 +186,7 @@ GET https://httpbin.org/get
 Authorization: Bearer {{login.response.body.$.token}}
 ```
 
-### 7. Verbose Mode
+### 8. Verbose Mode
 
 See detailed request and response information:
 
@@ -231,7 +256,7 @@ This will:
 - Display all found files
 - Execute them in sequence
 
-### 11. Multiple Files
+### 12. Multiple Files
 
 Process multiple files at once:
 
@@ -324,6 +349,7 @@ EXPECTED_RESPONSE_STATUS 500
 5. **JSONPath**: Use `$.property.nested` for extracting JSON values
 6. **Headers**: Multiple headers can be specified, one per line after the request line
 7. **Pretty JSON**: Use `--verbose --pretty-json` to format JSON payloads for easier reading and debugging
+8. **Built-in Functions**: Use `guid()`, `string()`, `number()`, and `base64_encode()` for dynamic values
 
 ## Troubleshooting
 
