@@ -21,19 +21,11 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`)
 - 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
 - 🔍 **Build-time version generation** with automatic git integration
-
-## Installation
-
-```bash
-# Install from crates.io
-cargo install httprunner
-```
-
-For other installation options (including pre-built binaries for Linux, macOS, and Windows), see the [GitHub repository](https://github.com/christianhelle/httprunner).
 
 ## Usage
 
@@ -55,6 +47,9 @@ httprunner <http-file> --log
 
 # Run and generate a markdown summary report
 httprunner <http-file> --report
+
+# Run without the donation banner
+httprunner <http-file> --no-banner
 
 # Run multiple .http files
 httprunner <http-file1> <http-file2> [...]
@@ -94,9 +89,94 @@ Content-Type: application/json
 }
 ```
 
+## Built-in Functions
+
+The HTTP File Runner provides built-in functions for dynamic value generation in your `.http` files. Functions are case-insensitive and automatically generate values when the request is executed.
+
+### Available Functions
+
+#### `guid()` - Generate UUID
+Generates a new UUID v4 (Universally Unique Identifier) in simple format (32 hex characters without dashes).
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "id": "guid()",
+  "requestId": "GUID()"
+}
+```
+
+#### `string()` - Generate Random String
+Generates a random alphanumeric string of 10 characters.
+
+```http
+POST https://api.example.com/test
+Content-Type: application/json
+
+{
+  "sessionKey": "string()",
+  "token": "STRING()"
+}
+```
+
+#### `number()` - Generate Random Number
+Generates a random number between 0 and 100 (inclusive).
+
+```http
+POST https://api.example.com/data
+Content-Type: application/json
+
+{
+  "randomValue": "number()",
+  "percentage": "NUMBER()"
+}
+```
+
+#### `base64_encode()` - Base64 Encoding
+Encodes a string to Base64 format. The string must be enclosed in single quotes.
+
+```http
+POST https://api.example.com/auth
+Content-Type: application/json
+
+{
+  "credentials": "base64_encode('username:password')",
+  "token": "BASE64_ENCODE('Hello, World!')"
+}
+```
+
+### Function Features
+
+- ✅ **Case-insensitive**: `guid()`, `GUID()`, and `Guid()` all work identically
+- ✅ **Dynamic generation**: Values are generated fresh for each request execution
+- ✅ **Works everywhere**: Use in URLs, headers, and request bodies
+- ✅ **Combine with variables**: Functions can be used alongside variables
+
+### Example Usage
+
+See `examples/functions.http` for a complete demonstration:
+
+```http
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "guid": "guid()",
+  "GUID": "GUID()",
+  "string": "string()",
+  "STRING": "STRING()",
+  "number": "number()",
+  "NUMBER": "NUMBER()",
+  "to_base64": "base64_encode('Hello, World!')",
+  "TO_BASE64": "BASE64_ENCODE('Hello, World!')"
+}
+```
+
 ## Variables
 
-Variables are defined using the `@` syntax and can be referenced using double curly braces `{{variable_name}}`.
+The HTTP File Runner supports variables to make your .http files more flexible and reusable. Variables are defined using the `@` syntax and can be referenced using double curly braces `{{variable_name}}`.
 
 ### Variable Definition
 
@@ -167,13 +247,42 @@ httprunner myfile.http --env dev
 
 ## Insecure HTTPS
 
-For development and testing environments with self-signed certificates, use the `--insecure` flag:
+By default, httprunner validates SSL/TLS certificates and hostnames for secure HTTPS connections. For development environments with self-signed certificates or testing scenarios, you can use the `--insecure` flag to bypass certificate validation.
+
+### Using the --insecure Flag
 
 ```bash
-httprunner myfile.http --insecure
+# Accept self-signed certificates
+httprunner https-endpoints.http --insecure
+
+# Combine with other flags
+httprunner https-endpoints.http --insecure --verbose
+httprunner https-endpoints.http --insecure --log test.log
 ```
 
-⚠️ **Security Warning**: Only use in development/testing environments. Never use in production.
+### What --insecure Does
+
+When the `--insecure` flag is enabled:
+- ✅ Accepts invalid SSL/TLS certificates
+- ✅ Accepts invalid hostnames
+- ✅ Allows connections to servers with self-signed certificates
+- ⚠️ **Warning**: Only use in development/testing environments
+
+### Example
+
+```http
+# This will fail without --insecure if the certificate is self-signed
+GET https://localhost:44320/api/users
+Authorization: Bearer {{token}}
+```
+
+Run with:
+
+```bash
+httprunner api-test.http --insecure
+```
+
+⚠️ **Security Warning**: The `--insecure` flag disables certificate validation, making your connection vulnerable to man-in-the-middle attacks. Only use in controlled development or testing environments. Never use in production.
 
 ## Request Variables
 
@@ -217,7 +326,7 @@ Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
 
 - `header_name` - Extract specific header value (case-insensitive)
 
-## Conditional Execution
+## Conditional Request Execution
 
 Execute requests conditionally based on previous request results using `@dependsOn`, `@if`, and `@if-not` directives:
 
