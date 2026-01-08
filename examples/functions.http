@@ -4,5 +4,6 @@ Content-Type: application/json
 
 {
   "guid": "guid()",
-  "string": "string()"
+  "string": "string()",
+  "number": "number()"
 }

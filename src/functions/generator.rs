@@ -29,3 +29,19 @@ impl FunctionSubstitutor for StringSubstitutor {
             .collect()
     }
 }
+
+pub struct NumberSubstitutor {}
+impl FunctionSubstitutor for NumberSubstitutor {
+    fn get_regex(&self) -> String {
+        r"\bnumber\(\)".to_string()
+    }
+
+    fn generate(&self) -> String {
+        use rand::Rng;
+        use rand::distr::Uniform;
+
+        rand::rng()
+            .sample(Uniform::new_inclusive(0, 100).unwrap())
+            .to_string()
+    }
+}

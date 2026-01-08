@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::functions::generator::{GuidSubstitutor, StringSubstitutor};
+use crate::functions::generator::{GuidSubstitutor, NumberSubstitutor, StringSubstitutor};
 use regex::Regex;
 
 pub trait FunctionSubstitutor {
@@ -14,8 +14,11 @@ pub trait FunctionSubstitutor {
 }
 
 pub fn substitute_functions(input: &str) -> Result<String> {
-    let vec: Vec<Box<dyn FunctionSubstitutor>> =
-        vec![Box::new(GuidSubstitutor {}), Box::new(StringSubstitutor {})];
+    let vec: Vec<Box<dyn FunctionSubstitutor>> = vec![
+        Box::new(GuidSubstitutor {}),
+        Box::new(StringSubstitutor {}),
+        Box::new(NumberSubstitutor {}),
+    ];
 
     let mut result = input.to_string();
     for substitutor in vec {
