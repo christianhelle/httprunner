@@ -1,5 +1,7 @@
 use super::formatter::{format_json_if_valid, format_request_name};
-use super::substitution::{substitute_functions_in_request, substitute_request_variables_in_request};
+use super::substitution::{
+    substitute_functions_in_request, substitute_request_variables_in_request,
+};
 use crate::colors;
 use crate::conditions;
 use crate::error::Result;
@@ -267,7 +269,7 @@ pub fn process_http_files(
             // Substitute request variables and built-in functions
             substitute_request_variables_in_request(&mut processed_request, &request_contexts)?;
             substitute_functions_in_request(&mut processed_request)?;
-            
+
             if verbose {
                 log.writeln(&format!("\n{} Request Details:", colors::blue("📤")));
                 if let Some(ref name) = processed_request.name {
