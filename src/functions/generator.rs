@@ -39,10 +39,9 @@ impl FunctionSubstitutor for NumberSubstitutor {
 
     fn generate(&self) -> String {
         use rand::Rng;
-        use rand::distr::Uniform;
 
         rand::rng()
-            .sample(Uniform::new_inclusive(0, 100).unwrap())
+            .random_range(0..=100)
             .to_string()
     }
 }
