@@ -59,7 +59,7 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
         use base64::engine::general_purpose;
         use regex::RegexBuilder;
 
-        let re = RegexBuilder::new(r"\bbase64_encode\(\s*'([^']*)'\s*\)")
+        let re = RegexBuilder::new(r"\bbase64_encode\(\s*'((?:[^'\\]|\\.)*)'\s*\)")
             .case_insensitive(true)
             .build()?;
         Ok(re
