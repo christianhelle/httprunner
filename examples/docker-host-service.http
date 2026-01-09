@@ -19,6 +19,7 @@
 # - 192.168.x.x: your host's actual IP address (works everywhere)
 @hostname=host.docker.internal
 @port=8080
+@token=dev-token-12345
 
 ###
 
@@ -31,6 +32,7 @@ EXPECTED_RESPONSE_STATUS 200
 ###
 
 # Example 2: POST request with authentication
+# The token variable can be defined above or loaded from docker-host-service.env.json
 # @name create_user
 POST http://{{hostname}}:{{port}}/api/users
 Content-Type: application/json
