@@ -72,3 +72,4 @@ src/httprunner.rc
 .run
 artifacts
 httprunner-report-*.md
+httprunner-report-*.html
