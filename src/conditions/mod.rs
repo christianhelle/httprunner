@@ -14,3 +14,6 @@ mod tests;
 
 #[cfg(test)]
 mod json_extractor_tests;
+
+#[cfg(test)]
+mod formatter_tests;
