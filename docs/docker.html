@@ -49,6 +49,8 @@
                         <li><a href="#secrets">Required Secrets</a></li>
                         <li><a href="#tags">Container Tags</a></li>
                         <li><a href="#usage">Usage</a></li>
+                        <li><a href="#networking">Networking</a></li>
+                        <li><a href="#troubleshooting">Troubleshooting</a></li>
                         <li><a href="#workflow">Workflow Trigger</a></li>
                     </ul>
                 </nav>
@@ -82,7 +84,7 @@
 docker pull ghcr.io/christianhelle/httprunner:latest
 
 # Run with GitHub Container Registry image
-docker run --rm -v ${PWD}:/workspace ghcr.io/christianhelle/httprunner:latest *.http</code>
+docker run --rm -v ${PWD}:/app ghcr.io/christianhelle/httprunner:latest *.http</code>
                     </div>
 
                     <h3>DockerHub</h3>
@@ -91,7 +93,7 @@ docker run --rm -v ${PWD}:/workspace ghcr.io/christianhelle/httprunner:latest *.
 docker pull christianhelle/httprunner:latest
 
 # Run with DockerHub image
-docker run --rm -v ${PWD}:/workspace christianhelle/httprunner:latest *.http</code>
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest *.http</code>
                     </div>
 
                     <h3>Registry Features</h3>
@@ -175,25 +177,25 @@ docker run --rm -v ${PWD}:/workspace christianhelle/httprunner:latest *.http</co
                     <h3>Basic Usage</h3>
                     <div class="code-block">
                         <code># Run single HTTP file
-docker run --rm -v ${PWD}:/workspace httprunner:latest requests.http
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest requests.http
 
 # Run with verbose output
-docker run --rm -v ${PWD}:/workspace httprunner:latest --verbose requests.http
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest --verbose requests.http
 
 # Discover and run all HTTP files
-docker run --rm -v ${PWD}:/workspace httprunner:latest --discover</code>
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest --discover</code>
                     </div>
 
                     <h3>Advanced Usage</h3>
                     <div class="code-block">
                         <code># Use specific environment
-docker run --rm -v ${PWD}:/workspace httprunner:latest --env production api-tests.http
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest --env production api-tests.http
 
 # Save logs to file
-docker run --rm -v ${PWD}:/workspace httprunner:latest --log test-results.log --discover
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest --log test-results.log --discover
 
 # Custom working directory
-docker run --rm -v ${PWD}/tests:/workspace httprunner:latest *.http</code>
+docker run --rm -v ${PWD}/tests:/app christianhelle/httprunner:latest *.http</code>
                     </div>
 
                     <h3>CI/CD Integration</h3>
@@ -201,7 +203,7 @@ docker run --rm -v ${PWD}/tests:/workspace httprunner:latest *.http</code>
                         <code># GitHub Actions example
 - name: Run HTTP tests
   run: |
-    docker run --rm -v ${{ github.workspace }}:/workspace \
+    docker run --rm -v ${{ github.workspace }}:/app \
       ghcr.io/christianhelle/httprunner:latest \
       --discover --log results.log
 
@@ -211,9 +213,175 @@ services:
   api-tests:
     image: christianhelle/httprunner:latest
     volumes:
-      - ./tests:/workspace
+      - ./tests:/app
     command: ["--discover", "--verbose"]</code>
                     </div>
+                </section>
+
+                <section id="networking" class="guide-section">
+                    <h2>Docker Networking</h2>
+                    <p>When running httprunner in a Docker container, understanding networking is crucial for accessing services on your host machine.</p>
+
+                    <h3>The Localhost Problem</h3>
+                    <div class="workflow-note">
+                        <p><strong>Important:</strong> <code>localhost</code> inside a Docker container refers to the container itself, not your host machine. Requests to <code>http://localhost:8080</code> will fail with connection refused errors.</p>
+                    </div>
+
+                    <h3>Solutions by Platform</h3>
+                    
+                    <h4>macOS and Windows (Docker Desktop)</h4>
+                    <p>Use the special hostname <code>host.docker.internal</code> to access host services:</p>
+                    <div class="code-block">
+                        <code># In your .http file
+GET http://host.docker.internal:8080/api/users
+
+# Run with Docker
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest test.http</code>
+                    </div>
+
+                    <h4>Linux - Option 1: Host Networking (Simplest)</h4>
+                    <p>Use <code>--network=host</code> to share the host's network stack:</p>
+                    <div class="code-block">
+                        <code># In your .http file - use localhost normally
+GET http://localhost:8080/api/users
+
+# Run with host networking
+docker run --rm --network=host \
+  -v ${PWD}:/app christianhelle/httprunner:latest test.http</code>
+                    </div>
+
+                    <h4>Linux - Option 2: Host Gateway (Docker 20.10+)</h4>
+                    <p>Add <code>host.docker.internal</code> using the host gateway:</p>
+                    <div class="code-block">
+                        <code># In your .http file
+GET http://host.docker.internal:8080/api/users
+
+# Run with host gateway
+docker run --rm --add-host=host.docker.internal:host-gateway \
+  -v ${PWD}:/app christianhelle/httprunner:latest test.http</code>
+                    </div>
+
+                    <h4>Linux - Option 3: Direct IP Address</h4>
+                    <p>Use your host's actual IP address (e.g., 192.168.1.100):</p>
+                    <div class="code-block">
+                        <code># Find your IP
+hostname -I | awk '{print $1}'
+
+# In your .http file
+GET http://192.168.1.100:8080/api/users</code>
+                    </div>
+
+                    <h3>Cross-Platform Best Practice</h3>
+                    <p>Use environment variables for portability across different platforms:</p>
+                    <div class="code-block">
+                        <code># In your .http file
+@hostname=localhost
+
+GET http://{{hostname}}:8080/api/users</code>
+                    </div>
+                    
+                    <p>Create an environment file <code>http-client.env.json</code>:</p>
+                    <div class="code-block">
+                        <code>{
+  "local": {
+    "hostname": "localhost"
+  },
+  "docker-mac": {
+    "hostname": "host.docker.internal"
+  },
+  "docker-linux": {
+    "hostname": "host.docker.internal"
+  }
+}</code>
+                    </div>
+
+                    <p>Run with the appropriate environment:</p>
+                    <div class="code-block">
+                        <code># On host machine
+httprunner test.http --env local
+
+# In Docker on macOS/Windows
+docker run --rm -v ${PWD}:/app \
+  christianhelle/httprunner:latest test.http --env docker-mac
+
+# In Docker on Linux (with host gateway)
+docker run --rm --add-host=host.docker.internal:host-gateway \
+  -v ${PWD}:/app christianhelle/httprunner:latest test.http --env docker-linux</code>
+                    </div>
+
+                    <h3>Quick Reference</h3>
+                    <div class="method-table">
+                        <div class="method">
+                            <div class="method-name">macOS/Windows</div>
+                            <div class="method-desc">Use <code>host.docker.internal</code></div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">Linux (simplest)</div>
+                            <div class="method-desc">Use <code>--network=host</code> flag</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">Linux (isolated)</div>
+                            <div class="method-desc">Use <code>--add-host=host.docker.internal:host-gateway</code></div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">Cross-platform</div>
+                            <div class="method-desc">Use environment variables with different configs</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="troubleshooting" class="guide-section">
+                    <h2>Troubleshooting</h2>
+                    <p>Common issues and solutions when using Docker containers.</p>
+
+                    <h3>Connection Refused Errors</h3>
+                    <p>If you see connection refused errors when accessing localhost:</p>
+                    <ul>
+                        <li>Verify your service is running on the host machine</li>
+                        <li>Use <code>host.docker.internal</code> instead of <code>localhost</code> (macOS/Windows)</li>
+                        <li>Use <code>--network=host</code> on Linux</li>
+                        <li>Check firewall settings aren't blocking container access</li>
+                    </ul>
+
+                    <h3>File Not Found Errors</h3>
+                    <p>If your .http files aren't found:</p>
+                    <ul>
+                        <li>Ensure files are in the mounted directory</li>
+                        <li>Use absolute paths in the container: <code>/app/yourfile.http</code></li>
+                        <li>Verify the mount point matches: <code>-v ${PWD}:/app</code></li>
+                    </ul>
+
+                    <h3>Permission Denied When Writing Logs</h3>
+                    <p>To enable log file writing, mount without readonly flag:</p>
+                    <div class="code-block">
+                        <code># Remove readonly to allow log writing
+docker run --rm -v ${PWD}:/app \
+  christianhelle/httprunner:latest test.http --log results.log</code>
+                    </div>
+
+                    <h3>Testing Network Connectivity</h3>
+                    <p>Verify Docker networking is working:</p>
+                    <div class="code-block">
+                        <code># Start a test server on your host
+python3 -m http.server 8080
+
+# Create a test file
+echo "GET http://host.docker.internal:8080/" > test.http
+
+# Test from Docker (macOS/Windows)
+docker run --rm -v ${PWD}:/app christianhelle/httprunner:latest test.http
+
+# Test from Docker (Linux)
+docker run --rm --network=host -v ${PWD}:/app \
+  christianhelle/httprunner:latest test.http</code>
+                    </div>
+
+                    <h3>Additional Resources</h3>
+                    <ul>
+                        <li><a href="https://docs.docker.com/network/" target="_blank">Docker Networking Documentation</a></li>
+                        <li><a href="https://docs.docker.com/desktop/networking/" target="_blank">Docker Desktop Networking</a></li>
+                        <li><a href="https://github.com/christianhelle/httprunner/blob/main/docs/DOCKER-TROUBLESHOOTING.md" target="_blank">Comprehensive Troubleshooting Guide</a></li>
+                    </ul>
                 </section>
 
                 <section id="workflow" class="guide-section">
