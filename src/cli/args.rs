@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 const LONG_VERSION: &str = concat!(
     env!("VERSION"),
@@ -9,6 +9,12 @@ const LONG_VERSION: &str = concat!(
     "\nbuild date: ",
     env!("BUILD_DATE")
 );
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum ReportFormat {
+    Markdown,
+    Html,
+}
 
 #[derive(Parser)]
 #[command(name = "httprunner")]
@@ -55,9 +61,9 @@ pub struct Cli {
     #[arg(long)]
     pub pretty_json: bool,
 
-    /// Generate summary report (in markdown format)
-    #[arg(long)]
-    pub report: bool,
+    /// Generate summary report (markdown or html). Defaults to markdown if no format specified.
+    #[arg(long, value_name = "FORMAT", num_args = 0..=1, default_missing_value = "markdown")]
+    pub report: Option<ReportFormat>,
 }
 
 impl Cli {
