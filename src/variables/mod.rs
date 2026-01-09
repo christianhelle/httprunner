@@ -12,3 +12,6 @@ pub use substitution::substitute_request_variables;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod extractor_tests;
