@@ -1,10 +1,10 @@
 mod formatter;
-mod generator;
-mod html_generator;
+mod markdown;
+mod html;
 mod writer;
 
-pub use generator::generate_markdown;
-pub use html_generator::generate_html;
+pub use markdown::generate_markdown;
+pub use html::generate_html;
 
 #[cfg(test)]
 mod tests;
