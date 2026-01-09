@@ -172,27 +172,39 @@ python3 -m http.server 8080
 npx http-server -p 8080
 ```
 
-2. **Create a test file:**
+2. **Create a test file for macOS/Windows:**
 
 ```http
-# test-docker-network.http
+# test-docker-network-mac.http
 GET http://host.docker.internal:8080/
 ```
 
-3. **Run from Docker:**
+3. **Create a test file for Linux:**
+
+```http
+# test-docker-network-linux.http
+GET http://localhost:8080/
+```
+
+4. **Run from Docker:**
 
 ```bash
 # macOS/Windows
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" \
-  christianhelle/httprunner test-docker-network.http
+  christianhelle/httprunner test-docker-network-mac.http
 
-# Linux
+# Linux with host networking
 docker run -it --network=host \
   --mount "type=bind,source=${PWD},target=/app,readonly" \
-  christianhelle/httprunner test-docker-network.http
+  christianhelle/httprunner test-docker-network-linux.http
+
+# Linux with host gateway (alternative)
+docker run -it --add-host=host.docker.internal:host-gateway \
+  --mount "type=bind,source=${PWD},target=/app,readonly" \
+  christianhelle/httprunner test-docker-network-mac.http
 ```
 
-If you see `✅ GET http://host.docker.internal:8080/ - Status: 200`, networking is working!
+If you see `✅ GET http://localhost:8080/ - Status: 200` or `✅ GET http://host.docker.internal:8080/ - Status: 200`, networking is working!
 
 ## File Access Issues
 
