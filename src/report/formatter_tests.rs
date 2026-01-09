@@ -27,7 +27,10 @@ fn test_escape_markdown_only_pipe() {
 
 #[test]
 fn test_escape_markdown_pipes_at_boundaries() {
-    assert_eq!(escape_markdown("|start|middle|end|"), "\\|start\\|middle\\|end\\|");
+    assert_eq!(
+        escape_markdown("|start|middle|end|"),
+        "\\|start\\|middle\\|end\\|"
+    );
 }
 
 #[test]

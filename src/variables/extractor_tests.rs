@@ -16,12 +16,10 @@ fn create_test_context() -> Vec<RequestContext> {
             name: Some("login".to_string()),
             method: "POST".to_string(),
             url: "https://api.example.com/login".to_string(),
-            headers: vec![
-                crate::types::Header {
-                    name: "Content-Type".to_string(),
-                    value: "application/json".to_string(),
-                },
-            ],
+            headers: vec![crate::types::Header {
+                name: "Content-Type".to_string(),
+                value: "application/json".to_string(),
+            }],
             body: Some(r#"{"username":"admin","password":"secret"}"#.to_string()),
             assertions: vec![],
             variables: vec![],

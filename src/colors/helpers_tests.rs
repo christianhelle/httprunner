@@ -75,7 +75,7 @@ fn test_blue_with_url() {
 #[test]
 fn test_color_functions_preserve_content() {
     let original = "test content";
-    
+
     assert!(red(original).contains(original));
     assert!(green(original).contains(original));
     assert!(yellow(original).contains(original));

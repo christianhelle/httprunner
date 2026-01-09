@@ -20,13 +20,17 @@ fn test_is_http_request_line_with_put() {
 
 #[test]
 fn test_is_http_request_line_with_delete() {
-    assert!(is_http_request_line("DELETE https://api.example.com/users/1"));
+    assert!(is_http_request_line(
+        "DELETE https://api.example.com/users/1"
+    ));
     assert!(is_http_request_line("DELETE /users/1"));
 }
 
 #[test]
 fn test_is_http_request_line_with_patch() {
-    assert!(is_http_request_line("PATCH https://api.example.com/users/1"));
+    assert!(is_http_request_line(
+        "PATCH https://api.example.com/users/1"
+    ));
     assert!(is_http_request_line("PATCH /users/1"));
 }
 

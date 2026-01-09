@@ -1,7 +1,7 @@
-use anyhow::Result;
 use crate::functions::generator::{
     Base64EncodeSubstitutor, GuidSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
+use anyhow::Result;
 use regex::RegexBuilder;
 
 pub trait FunctionSubstitutor {

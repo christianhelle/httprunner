@@ -4,7 +4,7 @@ use crate::types::ConditionType;
 #[test]
 fn test_parse_condition_status() {
     let result = parse_condition("login.response.status 200", false).unwrap();
-    
+
     assert_eq!(result.request_name, "login");
     assert!(matches!(result.condition_type, ConditionType::Status));
     assert_eq!(result.expected_value, "200");
@@ -14,7 +14,7 @@ fn test_parse_condition_status() {
 #[test]
 fn test_parse_condition_status_negated() {
     let result = parse_condition("login.response.status 404", true).unwrap();
-    
+
     assert_eq!(result.request_name, "login");
     assert!(matches!(result.condition_type, ConditionType::Status));
     assert_eq!(result.expected_value, "404");
@@ -24,7 +24,7 @@ fn test_parse_condition_status_negated() {
 #[test]
 fn test_parse_condition_body_jsonpath() {
     let result = parse_condition("login.response.body.$.token secret123", false).unwrap();
-    
+
     assert_eq!(result.request_name, "login");
     match &result.condition_type {
         ConditionType::BodyJsonPath(path) => {
@@ -37,8 +37,9 @@ fn test_parse_condition_body_jsonpath() {
 
 #[test]
 fn test_parse_condition_body_jsonpath_nested() {
-    let result = parse_condition("user.response.body.$.profile.email test@example.com", false).unwrap();
-    
+    let result =
+        parse_condition("user.response.body.$.profile.email test@example.com", false).unwrap();
+
     assert_eq!(result.request_name, "user");
     match &result.condition_type {
         ConditionType::BodyJsonPath(path) => {
@@ -52,7 +53,7 @@ fn test_parse_condition_body_jsonpath_nested() {
 #[test]
 fn test_parse_condition_expected_value_with_spaces() {
     let result = parse_condition("req.response.status 200 OK", false).unwrap();
-    
+
     assert_eq!(result.expected_value, "200 OK");
 }
 
@@ -77,21 +78,21 @@ fn test_parse_condition_invalid_reference_format() {
 #[test]
 fn test_parse_condition_complex_request_name() {
     let result = parse_condition("createUser.response.status 201", false).unwrap();
-    
+
     assert_eq!(result.request_name, "createUser");
 }
 
 #[test]
 fn test_parse_condition_numeric_expected_value() {
     let result = parse_condition("api.response.body.$.count 42", false).unwrap();
-    
+
     assert_eq!(result.expected_value, "42");
 }
 
 #[test]
 fn test_parse_condition_boolean_expected_value() {
     let result = parse_condition("check.response.body.$.active true", false).unwrap();
-    
+
     assert_eq!(result.expected_value, "true");
 }
 
@@ -110,7 +111,7 @@ fn test_parse_condition_only_whitespace() {
 #[test]
 fn test_parse_condition_array_jsonpath() {
     let result = parse_condition("list.response.body.$.items[0].id 123", false).unwrap();
-    
+
     match &result.condition_type {
         ConditionType::BodyJsonPath(path) => {
             assert_eq!(path, "$.items[0].id");
@@ -122,7 +123,7 @@ fn test_parse_condition_array_jsonpath() {
 #[test]
 fn test_parse_condition_multiple_spaces_in_value() {
     let result = parse_condition("req.response.status   200   OK  ", false).unwrap();
-    
+
     // split_whitespace() normalizes multiple spaces
     assert_eq!(result.expected_value, "200 OK");
 }
@@ -130,7 +131,7 @@ fn test_parse_condition_multiple_spaces_in_value() {
 #[test]
 fn test_parse_condition_special_chars_in_value() {
     let result = parse_condition("req.response.body.$.msg Hello, World!", false).unwrap();
-    
+
     assert_eq!(result.expected_value, "Hello, World!");
 }
 
@@ -143,7 +144,7 @@ fn test_parse_condition_invalid_source() {
 
 #[test]
 fn test_parse_condition_invalid_target() {
-    // Using "headers" instead of "status" or "body" should fail  
+    // Using "headers" instead of "status" or "body" should fail
     let result = parse_condition("login.response.headers 200", false);
     assert!(result.is_none());
 }

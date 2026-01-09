@@ -7,7 +7,7 @@ fn test_substitute_variables_simple() {
         name: "host".to_string(),
         value: "api.example.com".to_string(),
     }];
-    
+
     let result = substitute_variables("https://{{host}}/users", &variables);
     assert_eq!(result, "https://api.example.com/users");
 }
@@ -24,7 +24,7 @@ fn test_substitute_variables_multiple() {
             value: "8080".to_string(),
         },
     ];
-    
+
     let result = substitute_variables("https://{{host}}:{{port}}/api", &variables);
     assert_eq!(result, "https://api.example.com:8080/api");
 }
@@ -35,7 +35,7 @@ fn test_substitute_variables_not_found() {
         name: "host".to_string(),
         value: "api.example.com".to_string(),
     }];
-    
+
     let result = substitute_variables("https://{{unknown}}/users", &variables);
     assert_eq!(result, "https://{{unknown}}/users");
 }
@@ -43,7 +43,7 @@ fn test_substitute_variables_not_found() {
 #[test]
 fn test_substitute_variables_no_variables() {
     let variables = vec![];
-    
+
     let result = substitute_variables("https://{{host}}/users", &variables);
     assert_eq!(result, "https://{{host}}/users");
 }
@@ -54,7 +54,7 @@ fn test_substitute_variables_empty_string() {
         name: "host".to_string(),
         value: "api.example.com".to_string(),
     }];
-    
+
     let result = substitute_variables("", &variables);
     assert_eq!(result, "");
 }
@@ -65,7 +65,7 @@ fn test_substitute_variables_no_placeholders() {
         name: "host".to_string(),
         value: "api.example.com".to_string(),
     }];
-    
+
     let result = substitute_variables("https://example.com/users", &variables);
     assert_eq!(result, "https://example.com/users");
 }
@@ -76,7 +76,7 @@ fn test_substitute_variables_incomplete_braces() {
         name: "host".to_string(),
         value: "api.example.com".to_string(),
     }];
-    
+
     let result = substitute_variables("https://{{host/users", &variables);
     assert_eq!(result, "https://{{host/users");
 }
@@ -87,7 +87,7 @@ fn test_substitute_variables_single_braces() {
         name: "host".to_string(),
         value: "api.example.com".to_string(),
     }];
-    
+
     let result = substitute_variables("https://{host}/users", &variables);
     assert_eq!(result, "https://{host}/users");
 }
@@ -98,7 +98,7 @@ fn test_substitute_variables_empty_placeholder() {
         name: "".to_string(),
         value: "value".to_string(),
     }];
-    
+
     // Empty placeholder matches empty variable name
     let result = substitute_variables("test {{}}", &variables);
     assert_eq!(result, "test value");
@@ -110,7 +110,7 @@ fn test_substitute_variables_same_name_multiple_times() {
         name: "x".to_string(),
         value: "5".to_string(),
     }];
-    
+
     let result = substitute_variables("{{x}} + {{x}} = 10", &variables);
     assert_eq!(result, "5 + 5 = 10");
 }
@@ -127,11 +127,8 @@ fn test_substitute_variables_in_json() {
             value: "john@example.com".to_string(),
         },
     ];
-    
-    let result = substitute_variables(
-        r#"{"user":"{{username}}","email":"{{email}}"}"#,
-        &variables,
-    );
+
+    let result = substitute_variables(r#"{"user":"{{username}}","email":"{{email}}"}"#, &variables);
     assert_eq!(result, r#"{"user":"john","email":"john@example.com"}"#);
 }
 
@@ -147,7 +144,7 @@ fn test_substitute_variables_adjacent_placeholders() {
             value: "World".to_string(),
         },
     ];
-    
+
     let result = substitute_variables("{{first}}{{second}}", &variables);
     assert_eq!(result, "HelloWorld");
 }
@@ -158,7 +155,7 @@ fn test_substitute_variables_with_special_chars_in_value() {
         name: "password".to_string(),
         value: "p@$$w0rd!".to_string(),
     }];
-    
+
     let result = substitute_variables("Password: {{password}}", &variables);
     assert_eq!(result, "Password: p@$$w0rd!");
 }
@@ -169,7 +166,7 @@ fn test_substitute_variables_nested_braces_in_name() {
         name: "var".to_string(),
         value: "value".to_string(),
     }];
-    
+
     // Should handle braces inside the variable name section
     let result = substitute_variables("{{v}ar}}", &variables);
     // This should not match and preserve the original
@@ -182,7 +179,7 @@ fn test_substitute_variables_whitespace_in_name() {
         name: "my var".to_string(),
         value: "value".to_string(),
     }];
-    
+
     let result = substitute_variables("{{my var}}", &variables);
     assert_eq!(result, "value");
 }
@@ -199,7 +196,7 @@ fn test_substitute_variables_case_sensitive() {
             value: "lower".to_string(),
         },
     ];
-    
+
     let result = substitute_variables("{{Host}} vs {{host}}", &variables);
     assert_eq!(result, "UPPER vs lower");
 }
@@ -216,7 +213,7 @@ fn test_substitute_variables_numeric_values() {
             value: "30000".to_string(),
         },
     ];
-    
+
     let result = substitute_variables("Port: {{port}}, Timeout: {{timeout}}ms", &variables);
     assert_eq!(result, "Port: 8080, Timeout: 30000ms");
 }
