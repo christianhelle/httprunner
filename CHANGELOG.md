@@ -4,6 +4,10 @@
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.35...HEAD)
 
+**Implemented enhancements:**
+
+- Add HTML report format support with `--report html` option
+
 **Fixed bugs:**
 
 - Cannot connect to Docker container from localhost [\#90](https://github.com/christianhelle/httprunner/issues/90)
