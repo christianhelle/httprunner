@@ -11,3 +11,6 @@ pub use evaluator::ConditionEvaluationResult;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod json_extractor_tests;
