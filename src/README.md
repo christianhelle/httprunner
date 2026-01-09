@@ -8,7 +8,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📝 `--verbose` mode for detailed request and response information
 - 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
-- 📊 `--report` flag to generate markdown summary reports for test results
+- 📊 `--report` flag to generate summary reports in markdown or html format for test results
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
@@ -43,8 +43,14 @@ httprunner <http-file> --insecure
 # Run and save output to a log file
 httprunner <http-file> --log
 
-# Run and generate a markdown summary report
+# Run and generate a summary report (defaults to markdown)
 httprunner <http-file> --report
+
+# Run and generate an HTML summary report
+httprunner <http-file> --report html
+
+# Run and generate a markdown summary report (explicit)
+httprunner <http-file> --report markdown
 
 # Run without the donation banner
 httprunner <http-file> --no-banner
@@ -428,18 +434,24 @@ Use `--verbose` for detailed request and response information, including headers
 
 ## Report Generation
 
-Generate markdown summary reports with `--report`:
+Generate summary reports in markdown or HTML format with `--report`:
 
 ```bash
-# Generate timestamped markdown report
+# Generate report (defaults to markdown)
 httprunner myfile.http --report
 
+# Generate markdown report (explicit)
+httprunner myfile.http --report markdown
+
+# Generate HTML report
+httprunner myfile.http --report html
+
 # Combine with other flags
-httprunner myfile.http --verbose --report
-httprunner --discover --report
+httprunner myfile.http --verbose --report html
+httprunner --discover --report markdown
 ```
 
-The report includes overall statistics, per-file breakdowns, and detailed request results in an easy-to-read markdown format.
+Reports include overall statistics, per-file breakdowns, and detailed request results. HTML reports feature responsive design with automatic light/dark mode support.
 
 ## Logging
 
