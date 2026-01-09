@@ -8,3 +8,6 @@ pub use file_parser::parse_http_file;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod timeout_parser_tests;
