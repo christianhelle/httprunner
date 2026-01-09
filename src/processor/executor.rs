@@ -38,10 +38,10 @@ pub fn process_http_files(
     let mut log = Log::new(log_filename)?;
     let mut http_file_results = Vec::<HttpFileResults>::new();
 
-    let mut total_success_count = 0u32;
-    let mut total_failed_count = 0u32;
-    let mut total_skipped_count = 0u32;
-    let mut files_processed = 0u32;
+    let mut total_success_count = 0;
+    let mut total_failed_count = 0;
+    let mut total_skipped_count = 0;
+    let mut files_processed = 0;
 
     for http_file in files {
         log.writeln(&format!(
@@ -70,10 +70,10 @@ pub fn process_http_files(
         log.writeln(&format!("Found {} HTTP request(s)\n", requests.len()));
         files_processed += 1;
 
-        let mut success_count = 0u32;
-        let mut failed_count = 0u32;
-        let mut skipped_count = 0u32;
-        let mut request_count = 0u32;
+        let mut success_count = 0;
+        let mut failed_count = 0;
+        let mut skipped_count = 0;
+        let mut request_count = 0;
         let mut request_contexts: Vec<RequestContext> = Vec::new();
 
         for request in requests {
