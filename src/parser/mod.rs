@@ -17,3 +17,6 @@ mod utils_tests;
 
 #[cfg(test)]
 mod condition_parser_tests;
+
+#[cfg(test)]
+mod substitution_tests;
