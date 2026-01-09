@@ -18,7 +18,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📝 `--verbose` mode for detailed request and response information
 - 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
-- 📊 `--report` flag to generate markdown summary reports for test results
+- 📊 `--report` flag to generate summary reports in markdown or html format for test results
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
@@ -199,8 +199,14 @@ httprunner <http-file> --log
 # Run a single .http file with verbose output and save to a custom log file
 httprunner <http-file> --verbose --log results.txt
 
-# Run and generate a markdown summary report
+# Run and generate a summary report (defaults to markdown)
 httprunner <http-file> --report
+
+# Run and generate an HTML summary report
+httprunner <http-file> --report html
+
+# Run and generate a markdown summary report (explicit)
+httprunner <http-file> --report markdown
 
 # Run without the donation banner
 httprunner <http-file> --no-banner
@@ -246,8 +252,14 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 # Run with verbose output and save to a custom log file
 .\target\release\httprunner.exe <http-file> --verbose --log results.txt
 
-# Run and generate a markdown summary report
+# Run and generate a summary report (defaults to markdown)
 .\target\release\httprunner.exe <http-file> --report
+
+# Run and generate an HTML summary report
+.\target\release\httprunner.exe <http-file> --report html
+
+# Run and generate a markdown summary report (explicit)
+.\target\release\httprunner.exe <http-file> --report markdown
 
 # Run without the donation banner
 .\target\release\httprunner.exe <http-file> --no-banner
@@ -289,8 +301,14 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 # Run a single .http file with verbose output and save to a custom log file
 ./target/release/httprunner <http-file> --verbose --log results.txt
 
-# Run and generate a markdown summary report
+# Run and generate a summary report (defaults to markdown)
 ./target/release/httprunner <http-file> --report
+
+# Run and generate an HTML summary report
+./target/release/httprunner <http-file> --report html
+
+# Run and generate a markdown summary report (explicit)
+./target/release/httprunner <http-file> --report markdown
 
 # Run without the donation banner
 ./target/release/httprunner <http-file> --no-banner
@@ -334,6 +352,9 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 
 # Test basic functionality and generate markdown report
 ./target/release/httprunner examples/simple.http --report
+
+# Test basic functionality and generate HTML report
+./target/release/httprunner examples/simple.http --report html
 
 # Test various APIs
 ./target/release/httprunner examples/apis.http
@@ -402,8 +423,14 @@ docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianh
 # Run with a single .http file with verbose output and custom log file
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose --log results.txt
 
-# Run and generate a markdown summary report
+# Run and generate a summary report (defaults to markdown)
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --report
+
+# Run and generate an HTML summary report
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --report html
+
+# Run and generate a markdown summary report (explicit)
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --report markdown
 
 # Run multiple .http files
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file1> <http-file2>
@@ -1468,48 +1495,66 @@ Body:
 
 ### Report Generation
 
-The `--report` flag generates a markdown summary report of test execution results. This is particularly useful for:
+The `--report` flag generates summary reports of test execution results in either markdown or HTML format. This is particularly useful for:
 
 - **CI/CD Integration**: Generate structured test reports for build pipelines
-- **Test Documentation**: Create shareable markdown reports with detailed results
+- **Test Documentation**: Create shareable reports with detailed results
 - **Audit Trail**: Keep formatted records of test execution with timestamps
 - **Quick Analysis**: View test results at a glance with success rates and statistics
 
 **Key features:**
 
-- Generates timestamped markdown files (e.g., `httprunner-report-20251219-084508.md`)
+- Generates timestamped report files (e.g., `httprunner-report-20251219-084508.md` or `.html`)
+- Supports both markdown and HTML output formats
+- Defaults to markdown when no format is specified
 - Includes overall summary with total requests, pass/fail counts, and success rate
 - Per-file detailed results showing each request's status
 - Organized tables with request details, status codes, and assertion results
+- HTML reports include responsive styling with light/dark mode support
 - Works with all other flags: `--verbose`, `--discover`, `--env`, etc.
 
 **Usage:**
 
 ```bash
-# Generate report for a single file
+# Generate report for a single file (defaults to markdown)
 httprunner api-tests.http --report
 
+# Generate markdown report (explicit)
+httprunner api-tests.http --report markdown
+
+# Generate HTML report
+httprunner api-tests.http --report html
+
 # Generate report with verbose execution
-httprunner api-tests.http --verbose --report
+httprunner api-tests.http --verbose --report html
 
 # Generate report for all discovered .http files
-httprunner --discover --report
+httprunner --discover --report markdown
 
-# Combine with environment-specific testing
+# Combine with environment-specific testing (markdown)
 httprunner api-tests.http --env production --report
 
+# Combine with environment-specific testing (HTML)
+httprunner api-tests.http --env production --report html
+
 # Generate both log file and report
-httprunner api-tests.http --log test.log --report
+httprunner api-tests.http --log test.log --report html
 ```
 
 **Example report output:**
 
-The generated markdown report includes:
+Both markdown and HTML reports include:
 - Execution timestamp
 - Overall statistics (total requests, passed, failed, skipped, success rate)
 - Per-file breakdown with request details
 - Table format showing method, URL, status, duration, and assertions
 - Visual indicators (✅ for passed, ❌ for failed, ⏭️ for skipped)
+
+HTML reports additionally feature:
+- Responsive design for mobile and desktop viewing
+- Automatic light/dark mode support based on system preferences
+- Color-coded statistics cards and status indicators
+- Clean, modern styling with syntax highlighting
 
 ### Logging Mode
 
@@ -1544,25 +1589,25 @@ When running httprunner without any arguments, the following help text is displa
 ```text
 HTTP File Runner v0.1.9
 Usage:
-  httprunner <http-file> [http-file2] [...] [--verbose] [--pretty-json] [--log [filename]] [--report] [--env <environment>] [--insecure]
-  httprunner [--verbose] [--pretty-json] [--log [filename]] [--report] [--env <environment>] [--insecure] --discover
+  httprunner <http-file> [http-file2] [...] [--verbose] [--pretty-json] [--log [filename]] [--report [FORMAT]] [--env <environment>] [--insecure]
+  httprunner [--verbose] [--pretty-json] [--log [filename]] [--report [FORMAT]] [--env <environment>] [--insecure] --discover
   httprunner --version | -v
   httprunner --upgrade
   httprunner --help | -h
 
 Arguments:
-  <http-file>    One or more .http files to process
-  --discover     Recursively discover and process all .http files from current directory
-  --verbose      Show detailed HTTP request and response information
-  --pretty-json  Pretty-print JSON payloads in verbose output (requires --verbose)
-  --log [file]   Log output to a file (defaults to 'log' if no filename is specified)
-  --report       Generate summary report in markdown format
-  --env <env>    Specify environment name to load variables from http-client.env.json
-  --insecure     Allow insecure HTTPS connections (accept invalid certificates and hostnames)
-  --no-banner    Do not show the donation banner
-  --version, -v  Show version information
-  --upgrade      Update httprunner to the latest version
-  --help, -h     Show this help message
+  <http-file>      One or more .http files to process
+  --discover       Recursively discover and process all .http files from current directory
+  --verbose        Show detailed HTTP request and response information
+  --pretty-json    Pretty-print JSON payloads in verbose output (requires --verbose)
+  --log [file]     Log output to a file (defaults to 'log' if no filename is specified)
+  --report [FORMAT] Generate summary report (markdown or html). Defaults to markdown if no format specified
+  --env <env>      Specify environment name to load variables from http-client.env.json
+  --insecure       Allow insecure HTTPS connections (accept invalid certificates and hostnames)
+  --no-banner      Do not show the donation banner
+  --version, -v    Show version information
+  --upgrade        Update httprunner to the latest version
+  --help, -h       Show this help message
 ```
 
 ### Practical Logging Examples
