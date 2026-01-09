@@ -1,5 +1,3 @@
-# HTTP File Runner
-
 A simple command-line tool written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
 ## Features
