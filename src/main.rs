@@ -16,7 +16,8 @@ mod variables;
 
 use clap::{CommandFactory, Parser};
 
-use crate::report::generate_markdown;
+use crate::cli::ReportFormat;
+use crate::report::{generate_html, generate_markdown};
 
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
@@ -65,8 +66,13 @@ fn main() -> anyhow::Result<()> {
         cli::show_donation_banner();
     }
 
-    if cli_args.report {
-        match generate_markdown(&results) {
+    if let Some(format) = cli_args.report {
+        let result = match format {
+            ReportFormat::Markdown => generate_markdown(&results),
+            ReportFormat::Html => generate_html(&results),
+        };
+
+        match result {
             Ok(filename) => println!("{} Report generated: {}", colors::green("✅"), filename),
             Err(e) => {
                 eprintln!("{} Failed to generate report: {}", colors::red("❌"), e);
