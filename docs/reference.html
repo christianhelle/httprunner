@@ -102,9 +102,9 @@ httprunner [OPTIONS] --discover</code>
                             <div class="param-desc">Log output to a file (defaults to 'log' if no filename specified)</div>
                         </div>
                         <div class="param">
-                            <div class="param-name">--report</div>
-                            <div class="param-type">flag</div>
-                            <div class="param-desc">Generate summary report in markdown format with test results and statistics</div>
+                            <div class="param-name">--report [format]</div>
+                            <div class="param-type">string?</div>
+                            <div class="param-desc">Generate summary report in markdown or html format. Defaults to markdown if no format specified</div>
                         </div>
                         <div class="param">
                             <div class="param-name">--env &lt;environment&gt;</div>
@@ -137,11 +137,17 @@ httprunner api-tests.http --verbose --pretty-json
 # Discovery mode with logging
 httprunner --discover --verbose --log test-results.log
 
-# Generate markdown summary report
+# Generate summary report (defaults to markdown)
 httprunner api-tests.http --report
 
-# Environment-specific testing with formatted JSON output and report
-httprunner api-tests.http --env production --verbose --pretty-json --log prod-test.log --report</code>
+# Generate HTML summary report
+httprunner api-tests.http --report html
+
+# Generate markdown summary report (explicit)
+httprunner api-tests.http --report markdown
+
+# Environment-specific testing with formatted JSON output and HTML report
+httprunner api-tests.http --env production --verbose --pretty-json --log prod-test.log --report html</code>
                     </div>
                 </section>
 
@@ -612,8 +618,10 @@ Body:
 ------------------------------</code>
                     </div>
 
-                    <h3>Report Format (--report)</h3>
-                    <p>The <code>--report</code> flag generates a timestamped markdown file with comprehensive test results:</p>
+                    <h3>Report Formats (--report)</h3>
+                    <p>The <code>--report</code> flag generates timestamped reports in either markdown or HTML format. Defaults to markdown if no format is specified.</p>
+                    
+                    <h4>Markdown Report Example</h4>
                     <div class="code-block">
                         <code># HTTP File Runner - Test Report
 
@@ -639,7 +647,22 @@ Body:
 
 **File Summary:** 2 Passed, 1 Failed, 0 Skipped</code>
                     </div>
-                    <p>Report files are named <code>httprunner-report-YYYYMMDD-HHMMSS-MICROSECONDS.md</code></p>
+
+                    <h4>HTML Report Features</h4>
+                    <p>HTML reports (<code>--report html</code>) include all the same information with additional features:</p>
+                    <ul>
+                        <li><strong>Responsive Design:</strong> Works on mobile and desktop devices</li>
+                        <li><strong>Light/Dark Mode:</strong> Automatic theme switching based on system preferences</li>
+                        <li><strong>Color-Coded Statistics:</strong> Visual cards showing pass/fail/skip counts</li>
+                        <li><strong>Modern Styling:</strong> Clean, professional UI with proper spacing</li>
+                        <li><strong>Syntax Highlighting:</strong> Formatted code blocks for request/response bodies</li>
+                    </ul>
+
+                    <p>Report files are named:</p>
+                    <ul>
+                        <li>Markdown: <code>httprunner-report-YYYYMMDD-HHMMSS.md</code></li>
+                        <li>HTML: <code>httprunner-report-YYYYMMDD-HHMMSS.html</code></li>
+                    </ul>
 
                     <h3>Discovery Mode Output</h3>
                     <div class="code-block">
