@@ -11,7 +11,7 @@ fn cli_with_log(log: Option<Option<&str>>) -> Cli {
         upgrade: false,
         no_banner: false,
         pretty_json: false,
-        report: false,
+        report: None,
     }
 }
 
