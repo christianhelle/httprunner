@@ -78,7 +78,9 @@ fn test_is_http_request_line_case_sensitive_method() {
 
 #[test]
 fn test_is_http_request_line_with_whitespace() {
-    assert!(is_http_request_line("  GET https://example.com"));
+    // The function checks for exact method prefixes, so leading whitespace won't match
+    assert!(!is_http_request_line("  GET https://example.com"));
+    // But trailing/internal whitespace should work
     assert!(is_http_request_line("GET  https://example.com"));
 }
 

@@ -11,3 +11,6 @@ mod tests;
 
 #[cfg(test)]
 mod timeout_parser_tests;
+
+#[cfg(test)]
+mod utils_tests;
