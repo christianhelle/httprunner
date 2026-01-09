@@ -61,6 +61,44 @@ docker pull christianhelle/httprunner:latest
 docker run --rm -v $(pwd):/app christianhelle/httprunner:latest /app/examples/basic.http
 ```
 
+## Networking Considerations
+
+### Accessing Services on the Host Machine
+
+When running httprunner in a Docker container, `localhost` refers to the container itself, not the host machine. To access services running on your host:
+
+**macOS/Windows (Docker Desktop):**
+```bash
+# Use host.docker.internal in your .http files
+# GET http://host.docker.internal:8080/api
+docker run --rm -v $(pwd):/app christianhelle/httprunner:latest /app/test.http
+```
+
+**Linux:**
+
+Option 1 - Use host networking:
+```bash
+docker run --rm --network=host -v $(pwd):/app christianhelle/httprunner:latest /app/test.http
+```
+
+Option 2 - Use host gateway (Docker 20.10+):
+```bash
+docker run --rm --add-host=host.docker.internal:host-gateway \
+  -v $(pwd):/app christianhelle/httprunner:latest /app/test.http
+```
+
+### Example .http File for Host Services
+
+```http
+# For cross-platform compatibility, use variables
+@hostname=host.docker.internal
+@port=8080
+
+GET http://{{hostname}}:{{port}}/api/users
+```
+
+For more networking details, see the main README.
+
 ## Workflow Trigger
 
 Container publishing is triggered by:

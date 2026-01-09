@@ -436,6 +436,130 @@ httprunner examples/simple.http
 
 **Note**: The Docker container mounts your current directory as `/app` in read-only mode to access your `.http` files. Make sure your `.http` files are in the current directory or subdirectories.
 
+### Docker Networking: Accessing Host Services
+
+When running httprunner in a Docker container, there's an important networking consideration: **`localhost` inside the container refers to the container itself, not your host machine**. If you need to test services running on your host machine, you'll need to use special hostnames or network configurations.
+
+#### The Problem
+
+```http
+# This will fail when run from a Docker container
+# It tries to connect to the container's localhost, not the host
+GET http://localhost:8080/api/users
+```
+
+If you have a service running on your host machine at `http://localhost:8080`, this request will fail with a connection refused error when executed from inside the container.
+
+#### Solutions by Platform
+
+**macOS and Windows (Docker Desktop):**
+
+Use `host.docker.internal` to refer to the host machine:
+
+```http
+# This works on macOS and Windows with Docker Desktop
+GET http://host.docker.internal:8080/api/users
+```
+
+```bash
+# Run the .http file with host.docker.internal
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner test.http
+```
+
+**Linux:**
+
+Linux requires additional network configuration. You have several options:
+
+**Option 1: Use host networking mode (simplest)**
+
+```bash
+# Run with --network=host to use the host's network stack
+docker run -it --network=host \
+  --mount "type=bind,source=${PWD},target=/app,readonly" \
+  christianhelle/httprunner test.http
+```
+
+With host networking, `localhost` in your `.http` files will correctly refer to the host machine.
+
+**Option 2: Use host gateway (Docker 20.10+)**
+
+```bash
+# Add host.docker.internal on Linux
+docker run -it --add-host=host.docker.internal:host-gateway \
+  --mount "type=bind,source=${PWD},target=/app,readonly" \
+  christianhelle/httprunner test.http
+```
+
+Then use `host.docker.internal` in your `.http` files:
+
+```http
+GET http://host.docker.internal:8080/api/users
+```
+
+**Option 3: Use the host's IP address**
+
+Find your host's IP address (e.g., `192.168.1.100`) and use it directly:
+
+```http
+GET http://192.168.1.100:8080/api/users
+```
+
+#### Recommended Approach
+
+For cross-platform compatibility, we recommend:
+
+1. **Use environment variables** in your `.http` files:
+
+```http
+# In your .http file
+@hostname=localhost
+
+GET http://{{hostname}}:8080/api/users
+```
+
+2. **Create an environment file** (`http-client.env.json`):
+
+```json
+{
+  "local": {
+    "hostname": "localhost"
+  },
+  "docker-mac": {
+    "hostname": "host.docker.internal"
+  },
+  "docker-linux": {
+    "hostname": "host.docker.internal"
+  }
+}
+```
+
+3. **Run with the appropriate environment**:
+
+```bash
+# On host machine
+httprunner test.http --env local
+
+# In Docker on macOS/Windows
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" \
+  christianhelle/httprunner test.http --env docker-mac
+
+# In Docker on Linux (with host gateway)
+docker run -it --add-host=host.docker.internal:host-gateway \
+  --mount "type=bind,source=${PWD},target=/app,readonly" \
+  christianhelle/httprunner test.http --env docker-linux
+```
+
+#### Quick Reference
+
+| Scenario | Solution |
+|----------|----------|
+| macOS/Windows Docker Desktop | Use `host.docker.internal` |
+| Linux Docker (simplest) | Use `--network=host` flag |
+| Linux Docker (isolated) | Use `--add-host=host.docker.internal:host-gateway` |
+| Cross-platform | Use environment variables with different configs |
+
+For more details on Docker networking, see the [Docker networking documentation](https://docs.docker.com/network/).
+
 ## Insecure HTTPS
 
 By default, httprunner validates SSL/TLS certificates and hostnames for secure HTTPS connections. For development environments with self-signed certificates or testing scenarios, you can use the `--insecure` flag to bypass certificate validation.
