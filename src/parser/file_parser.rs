@@ -3,16 +3,16 @@ use super::substitution::*;
 use super::timeout_parser::parse_timeout_value;
 use super::utils::is_http_request_line;
 use crate::environment;
-use crate::error::{Context, Result};
 use crate::types::{Assertion, AssertionType, Condition, Header, HttpRequest, Variable};
+use anyhow::{Context, Result};
 use std::fs;
 
 pub fn parse_http_file(
     file_path: &str,
     environment_name: Option<&str>,
 ) -> Result<Vec<HttpRequest>> {
-    let content =
-        fs::read_to_string(file_path).context(format!("Failed to read file: {}", file_path))?;
+    let content = fs::read_to_string(file_path)
+        .with_context(|| format!("Failed to read file: {}", file_path))?;
 
     let mut requests = Vec::new();
     let env_variables = environment::load_environment_file(file_path, environment_name)?;

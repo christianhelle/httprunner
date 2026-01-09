@@ -1,6 +1,6 @@
 use crate::assertions;
-use crate::error::Result;
 use crate::types::{HttpRequest, HttpResult};
+use anyhow::Result;
 use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::time::Instant;

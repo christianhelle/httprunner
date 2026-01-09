@@ -1,5 +1,5 @@
 use crate::colors;
-use crate::error::Result;
+use anyhow::Result;
 use std::process::Command;
 
 pub fn run_upgrade() -> Result<()> {

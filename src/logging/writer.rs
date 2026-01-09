@@ -1,4 +1,4 @@
-use crate::error::Result;
+use anyhow::Result;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};

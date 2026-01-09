@@ -1,6 +1,6 @@
 use super::json::extract_json_property;
-use crate::error::Result;
 use crate::types::{RequestContext, RequestVariable, RequestVariableSource, RequestVariableTarget};
+use anyhow::Result;
 
 pub fn extract_request_variable_value(
     request_var: &RequestVariable,

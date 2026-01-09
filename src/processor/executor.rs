@@ -4,11 +4,11 @@ use super::substitution::{
 };
 use crate::colors;
 use crate::conditions;
-use crate::error::Result;
 use crate::logging::Log;
 use crate::parser;
 use crate::runner;
 use crate::types::{AssertionType, HttpFileResults, HttpRequest, ProcessorResults, RequestContext};
+use anyhow::Result;
 
 fn add_skipped_request_context(
     request_contexts: &mut Vec<RequestContext>,

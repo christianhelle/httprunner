@@ -1,5 +1,5 @@
 use crate::colors;
-use crate::error::Result;
+use anyhow::Result;
 
 pub fn run_upgrade() -> Result<()> {
     println!(

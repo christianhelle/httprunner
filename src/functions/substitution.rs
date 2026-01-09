@@ -1,4 +1,4 @@
-use crate::error::Result;
+use anyhow::Result;
 use crate::functions::generator::{
     Base64EncodeSubstitutor, GuidSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
@@ -27,9 +27,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
 
     let mut result = input.to_string();
     for substitutor in substitutors {
-        result = substitutor
-            .replace(&result)
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+        result = substitutor.replace(&result)?;
     }
 
     Ok(result)

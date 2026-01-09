@@ -1,5 +1,5 @@
 use crate::colors;
-use crate::error::Result;
+use anyhow::Result;
 use walkdir::WalkDir;
 
 pub(crate) fn discover_http_files(dir_path: &str) -> Result<Vec<String>> {
