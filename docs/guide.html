@@ -83,7 +83,7 @@ httprunner --discover</code>
                         <li><strong>Default:</strong> Shows request results with colored status indicators</li>
                         <li><strong>Verbose (<code>--verbose</code>):</strong> Shows detailed request/response information</li>
                         <li><strong>Logging (<code>--log</code>):</strong> Saves output to a file for analysis</li>
-                        <li><strong>Report (<code>--report</code>):</strong> Generates markdown summary report with test results and statistics</li>
+                        <li><strong>Report (<code>--report [format]</code>):</strong> Generates summary report in markdown or html format. Defaults to markdown if no format specified</li>
                     </ul>
                 </section>
 
@@ -588,8 +588,8 @@ EXPECTED_RESPONSE_HEADERS "Cache-Control: no-cache"</code>
                             <div class="option-desc">Save output to specified file</div>
                         </div>
                         <div class="option">
-                            <div class="option-name"><code>--report</code></div>
-                            <div class="option-desc">Generate timestamped markdown summary report with test results and statistics</div>
+                            <div class="option-name"><code>--report [format]</code></div>
+                            <div class="option-desc">Generate timestamped summary report in markdown or html format. Defaults to markdown if no format specified</div>
                         </div>
                     </div>
 
@@ -716,7 +716,7 @@ EXPECTED_RESPONSE_STATUS 200</code>
                         <li>Always include assertions for critical responses</li>
                         <li>Test both success and error scenarios</li>
                         <li>Use the <code>--verbose</code> flag when debugging</li>
-                        <li>Generate reports with <code>--report</code> for test documentation and CI/CD integration</li>
+                        <li>Generate reports with <code>--report markdown</code> or <code>--report html</code> for test documentation and CI/CD integration</li>
                         <li>Save logs for CI/CD integration with <code>--log</code></li>
                     </ul>
 
@@ -725,8 +725,8 @@ EXPECTED_RESPONSE_STATUS 200</code>
                         <code># Example GitHub Actions step
 - name: Run API Tests
   run: |
-    httprunner --discover --env staging --log test-results.log --report
-    # Process test results and markdown report...</code>
+    httprunner --discover --env staging --log test-results.log --report html
+    # Process test results and HTML report...</code>
                     </div>
 
                     <h3>Performance Considerations</h3>
