@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.35...HEAD)
+
+**Fixed bugs:**
+
+- Cannot connect to Docker container from localhost [\#90](https://github.com/christianhelle/httprunner/issues/90)
+
+**Merged pull requests:**
+
+- Document Docker localhost networking for host service access [\#91](https://github.com/christianhelle/httprunner/pull/91) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [0.5.35](https://github.com/christianhelle/httprunner/tree/0.5.35) (2026-01-09)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.4.34...0.5.35)
