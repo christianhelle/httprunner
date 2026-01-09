@@ -159,7 +159,7 @@ Content-Type: application/json
 
 Available functions:
 - `guid()` - Generate UUID v4 (32 hex characters)
-- `string()` - Generate random alphanumeric string (10 chars)
+- `string()` - Generate random alphanumeric string (20 chars)
 - `number()` - Generate random number (0-100)
 - `base64_encode('text')` - Encode string to Base64
 

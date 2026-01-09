@@ -537,7 +537,7 @@ Content-Type: application/json
 ```
 
 #### `string()` - Generate Random String
-Generates a random alphanumeric string of 10 characters.
+Generates a random alphanumeric string of 20 characters.
 
 ```http
 POST https://api.example.com/test
