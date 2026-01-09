@@ -1,0 +1,88 @@
+# Docker Host Service Access Example
+#
+# This example demonstrates how to access services running on your host machine
+# when executing httprunner from within a Docker container.
+#
+# The Problem:
+# - `localhost` inside a container refers to the container itself
+# - Services running on your host are not accessible via `localhost`
+#
+# The Solution:
+# - Use variables to make your .http files portable
+# - Use different values based on where you're running (host vs container)
+
+# Define the hostname variable
+# Change this based on your environment:
+# - localhost: when running httprunner directly on your host
+# - host.docker.internal: when running in Docker on macOS/Windows
+# - host.docker.internal: when running in Docker on Linux with --add-host flag
+# - 192.168.x.x: your host's actual IP address (works everywhere)
+@hostname=host.docker.internal
+@port=8080
+
+###
+
+# Example 1: Simple GET request to host service
+# @name check_health
+GET http://{{hostname}}:{{port}}/health
+
+EXPECTED_RESPONSE_STATUS 200
+
+###
+
+# Example 2: POST request with authentication
+# @name create_user
+POST http://{{hostname}}:{{port}}/api/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "username": "testuser",
+  "email": "test@example.com"
+}
+
+###
+
+# Example 3: Using request variables for chaining
+# @name get_user_data
+# @dependsOn create_user
+GET http://{{hostname}}:{{port}}/api/users/{{create_user.response.body.$.id}}
+Authorization: Bearer {{token}}
+
+EXPECTED_RESPONSE_STATUS 200
+
+###
+
+# USAGE INSTRUCTIONS:
+#
+# 1. Start a service on your host machine (e.g., on port 8080)
+#
+# 2. Running on host machine:
+#    - Set @hostname=localhost
+#    - Run: httprunner examples/docker-host-service.http
+#
+# 3. Running in Docker on macOS/Windows:
+#    - Set @hostname=host.docker.internal
+#    - Run: docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" \
+#           christianhelle/httprunner examples/docker-host-service.http
+#
+# 4. Running in Docker on Linux (Option 1 - host network):
+#    - Set @hostname=localhost
+#    - Run: docker run -it --network=host \
+#           --mount "type=bind,source=${PWD},target=/app,readonly" \
+#           christianhelle/httprunner examples/docker-host-service.http
+#
+# 5. Running in Docker on Linux (Option 2 - host gateway):
+#    - Set @hostname=host.docker.internal
+#    - Run: docker run -it --add-host=host.docker.internal:host-gateway \
+#           --mount "type=bind,source=${PWD},target=/app,readonly" \
+#           christianhelle/httprunner examples/docker-host-service.http
+#
+# 6. Best Practice - Use environment files:
+#    Create http-client.env.json with different environments:
+#    {
+#      "local": { "hostname": "localhost", "port": "8080", "token": "dev-token" },
+#      "docker": { "hostname": "host.docker.internal", "port": "8080", "token": "dev-token" }
+#    }
+#    Then run: httprunner examples/docker-host-service.http --env local
+#           or: httprunner examples/docker-host-service.http --env docker
