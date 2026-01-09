@@ -6,7 +6,7 @@
 
 **Implemented enhancements:**
 
-- Add HTML report format support with `--report html` option
+- Add HTML report format support with comprehensive tests [\#92](https://github.com/christianhelle/httprunner/pull/92) ([christianhelle](https://github.com/christianhelle))
 
 **Fixed bugs:**
 
