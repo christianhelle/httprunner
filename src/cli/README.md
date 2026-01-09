@@ -32,7 +32,7 @@ println!("Files: {:?}", cli.files);
 - `--pretty-json`: Pretty print JSON responses
 - `--no-color`: Disable colored output
 - `--discovery`: Discovery mode - scan for .http files
-- `--generate-report`: Generate Markdown report
+- `--report [FORMAT]`: Generate report (markdown or html, defaults to markdown)
 
 ### Version and Help
 - `--version`: Display version information
