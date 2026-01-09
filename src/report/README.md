@@ -5,9 +5,9 @@ This module handles the generation of test reports for HTTP File Runner in both 
 ## Structure
 
 - `mod.rs` - Module entry point and public API
-- `generator.rs` - Markdown report generation logic and content assembly
-- `html_generator.rs` - HTML report generation logic and content assembly
-- `formatter.rs` - Markdown formatting utilities (escaping special characters)
+- `markdown.rs` - Markdown report generation logic and content assembly
+- `html.rs` - HTML report generation logic and content assembly
+- `formatter.rs` - Shared formatting utilities (datetime formatting, markdown escaping)
 - `report_style.css` - Embedded CSS styles for HTML reports
 - `writer.rs` - File writing operations with timestamped filenames
 - `tests.rs` - Comprehensive test suite
