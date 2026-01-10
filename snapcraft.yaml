@@ -1,6 +1,6 @@
 name: httprunner
 base: core24
-version: v0.5.35
+version: v0.5.36
 summary: Execute HTTP requests from .http files with colored output
 description: |
   HTTP File Runner is a command-line tool written in Rust for parsing and 
