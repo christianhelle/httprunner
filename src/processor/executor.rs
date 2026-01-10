@@ -6,7 +6,7 @@ use crate::colors;
 use crate::conditions;
 use crate::logging::Log;
 use crate::parser;
-use crate::runner;
+use crate::runner::{DefaultHttpExecutor, HttpExecutor};
 use crate::types::{
     AssertionType, HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
 };
@@ -44,7 +44,7 @@ pub fn process_http_files(
         environment,
         insecure,
         pretty_json,
-        &|request, verbose, insecure| runner::execute_http_request(request, verbose, insecure),
+        &|request, verbose, insecure| DefaultHttpExecutor {}.execute(request, verbose, insecure),
     )
 }
 
