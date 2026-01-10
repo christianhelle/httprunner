@@ -568,3 +568,163 @@ fn test_evaluate_body_jsonpath_condition_negated_failure() {
 
     assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
 }
+
+#[test]
+fn test_evaluate_conditions_verbose_empty() {
+    let conditions = vec![];
+    let context = vec![];
+    let (all_met, results) = evaluate_conditions_verbose(&conditions, &context).unwrap();
+    assert!(all_met);
+    assert!(results.is_empty());
+}
+
+#[test]
+fn test_evaluate_conditions_verbose_request_not_found() {
+    let condition = Condition {
+        request_name: "nonexistent".to_string(),
+        condition_type: ConditionType::Status,
+        expected_value: "200".to_string(),
+        negate: false,
+    };
+
+    let context = vec![];
+    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    
+    assert!(!all_met);
+    assert_eq!(results.len(), 1);
+    assert!(!results[0].condition_met);
+    assert_eq!(results[0].actual_value, None);
+}
+
+#[test]
+fn test_evaluate_conditions_verbose_result_is_none() {
+    let condition = Condition {
+        request_name: "request1".to_string(),
+        condition_type: ConditionType::Status,
+        expected_value: "200".to_string(),
+        negate: false,
+    };
+
+    let request = HttpRequest {
+        name: Some("request1".to_string()),
+        method: "GET".to_string(),
+        url: "http://example.com".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "request1".to_string(),
+        request,
+        result: None,
+    }];
+
+    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    
+    assert!(!all_met);
+    assert_eq!(results.len(), 1);
+    assert!(!results[0].condition_met);
+    assert_eq!(results[0].actual_value, None);
+}
+
+#[test]
+fn test_evaluate_conditions_verbose_no_response_body() {
+    let condition = Condition {
+        request_name: "request1".to_string(),
+        condition_type: ConditionType::BodyJsonPath("$.test".to_string()),
+        expected_value: "value".to_string(),
+        negate: false,
+    };
+
+    let request = HttpRequest {
+        name: Some("request1".to_string()),
+        method: "GET".to_string(),
+        url: "http://example.com".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let result = HttpResult {
+        request_name: Some("request1".to_string()),
+        status_code: 200,
+        success: true,
+        error_message: None,
+        duration_ms: 100,
+        response_headers: Some(HashMap::new()),
+        response_body: None,
+        assertion_results: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "request1".to_string(),
+        request,
+        result: Some(result),
+    }];
+
+    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    
+    assert!(!all_met);
+    assert_eq!(results.len(), 1);
+    assert!(!results[0].condition_met);
+    assert_eq!(results[0].actual_value, Some("<no body>".to_string()));
+}
+
+#[test]
+fn test_evaluate_conditions_verbose_json_path_not_found() {
+    let condition = Condition {
+        request_name: "request1".to_string(),
+        condition_type: ConditionType::BodyJsonPath("$.nonexistent".to_string()),
+        expected_value: "value".to_string(),
+        negate: false,
+    };
+
+    let request = HttpRequest {
+        name: Some("request1".to_string()),
+        method: "GET".to_string(),
+        url: "http://example.com".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let result = HttpResult {
+        request_name: Some("request1".to_string()),
+        status_code: 200,
+        success: true,
+        error_message: None,
+        duration_ms: 100,
+        response_headers: Some(HashMap::new()),
+        response_body: Some(r#"{"test": "data"}"#.to_string()),
+        assertion_results: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "request1".to_string(),
+        request,
+        result: Some(result),
+    }];
+
+    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    
+    assert!(!all_met);
+    assert_eq!(results.len(), 1);
+    assert!(!results[0].condition_met);
+    assert_eq!(results[0].actual_value, Some("<not found>".to_string()));
+}

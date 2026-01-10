@@ -29,3 +29,30 @@ fn discover_http_files_returns_empty_when_none_found() {
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert!(files.is_empty());
 }
+
+#[test]
+fn run_discovery_mode_returns_empty_list_when_no_files() {
+    let temp = tempdir().unwrap();
+    let orig_dir = std::env::current_dir().unwrap();
+    std::env::set_current_dir(&temp).unwrap();
+
+    let files = run_discovery_mode().unwrap();
+    assert!(files.is_empty());
+
+    std::env::set_current_dir(orig_dir).unwrap();
+}
+
+#[test]
+fn run_discovery_mode_finds_files_in_current_dir() {
+    let temp = tempdir().unwrap();
+    let orig_dir = std::env::current_dir().unwrap();
+    
+    fs::write(temp.path().join("test.http"), "GET http://example.com").unwrap();
+    std::env::set_current_dir(&temp).unwrap();
+
+    let files = run_discovery_mode().unwrap();
+    assert_eq!(files.len(), 1);
+    assert!(files[0].ends_with("test.http"));
+
+    std::env::set_current_dir(orig_dir).unwrap();
+}

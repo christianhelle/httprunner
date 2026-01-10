@@ -364,3 +364,66 @@ fn test_substitute_handles_incomplete_braces() {
 
     assert_eq!(result, "{{incomplete");
 }
+
+#[test]
+fn test_extract_json_property_invalid_array_index() {
+    let json = r#"{"data": [1, 2, 3]}"#;
+    let result = extract_json_property(json, "data[abc]");
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_extract_json_property_array_not_array() {
+    let json = r#"{"data": "not an array"}"#;
+    let result = extract_json_property(json, "data[0]");
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_extract_json_property_array_out_of_bounds() {
+    let json = r#"{"data": [1, 2]}"#;
+    let result = extract_json_property(json, "data[10]").unwrap();
+    assert_eq!(result, None);
+}
+
+#[test]
+fn test_extract_json_property_nested_arrays() {
+    let json = r#"{"data": [{"items": [1, 2, 3]}, {"items": [4, 5, 6]}]}"#;
+    let result = extract_json_property(json, "data[1].items[2]").unwrap();
+    assert_eq!(result, Some("6".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_string_value() {
+    let json = r#"{"name": "test"}"#;
+    let result = extract_json_property(json, "name").unwrap();
+    assert_eq!(result, Some("test".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_null_value() {
+    let json = r#"{"value": null}"#;
+    let result = extract_json_property(json, "value").unwrap();
+    assert_eq!(result, Some("null".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_nested_object() {
+    let json = r#"{"user": {"profile": {"name": "John"}}}"#;
+    let result = extract_json_property(json, "user.profile.name").unwrap();
+    assert_eq!(result, Some("John".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_array_of_strings() {
+    let json = r#"{"tags": ["rust", "testing", "code"]}"#;
+    let result = extract_json_property(json, "tags[1]").unwrap();
+    assert_eq!(result, Some("\"testing\"".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_complex_nested() {
+    let json = r#"{"levels": {"l1": {"l2": {"l3": "deep"}}}}"#;
+    let result = extract_json_property(json, "levels.l1.l2.l3").unwrap();
+    assert_eq!(result, Some("deep".to_string()));
+}
