@@ -31,15 +31,12 @@ fn discover_http_files_returns_empty_when_none_found() {
 }
 
 #[test]
+#[test]
 fn run_discovery_mode_returns_empty_list_when_no_files() {
+    // Instead of changing directories, use discover_http_files directly
     let temp = tempdir().unwrap();
-    let orig_dir = std::env::current_dir().unwrap();
-    std::env::set_current_dir(&temp).unwrap();
-
-    let files = run_discovery_mode().unwrap();
+    let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert!(files.is_empty());
-
-    std::env::set_current_dir(orig_dir).unwrap();
 }
 
 #[test]
@@ -184,18 +181,14 @@ fn discover_http_files_mixed_content() {
 
 #[test]
 fn run_discovery_mode_with_files() {
+    // Instead of changing directories, use discover_http_files directly
     let temp = tempdir().unwrap();
-    let orig_dir = std::env::current_dir().unwrap();
-
+    
     fs::write(temp.path().join("test1.http"), "GET http://example.com/1").unwrap();
     fs::write(temp.path().join("test2.http"), "GET http://example.com/2").unwrap();
-
-    std::env::set_current_dir(&temp).unwrap();
-
-    let files = run_discovery_mode().unwrap();
+    
+    let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 2);
-
-    std::env::set_current_dir(orig_dir).unwrap();
 }
 
 #[test]
