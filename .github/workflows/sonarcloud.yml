@@ -1,3 +1,4 @@
+---
 name: SonarCloud Analysis
 
 on:
@@ -11,12 +12,13 @@ jobs:
   sonarcloud:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
+          # Shallow clones should be disabled for better relevancy
+          fetch-depth: 0
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -32,13 +34,15 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          cargo tarpaulin --out Xml --output-dir coverage --exclude-files 'build.rs' --timeout 300
+          cargo tarpaulin --out Xml --output-dir coverage \
+            --exclude-files 'build.rs' --timeout 300
         continue-on-error: false
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
