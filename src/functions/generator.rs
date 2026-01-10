@@ -18,7 +18,9 @@ impl FunctionSubstitutor for GuidSubstitutor {
             u16::from_be_bytes([bytes[4], bytes[5]]),
             (u16::from_be_bytes([bytes[6], bytes[7]]) & 0x0fff) | 0x4000, // Version 4
             (u16::from_be_bytes([bytes[8], bytes[9]]) & 0x3fff) | 0x8000, // Variant
-            u64::from_be_bytes([0, 0, bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]]) & 0xffffffffffff
+            u64::from_be_bytes([
+                0, 0, bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+            ]) & 0xffffffffffff
         )
     }
 }
