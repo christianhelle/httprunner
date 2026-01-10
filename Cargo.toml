@@ -38,8 +38,3 @@ lto = "fat"           # Enable aggressive Link Time Optimization
 codegen-units = 1     # Reduce parallel code generation for smaller binary
 panic = "abort"       # Abort on panic instead of unwinding
 strip = true          # Strip symbols from binary
-
-# Additional size optimizations
-[profile.release.build-override]
-opt-level = "z"
-codegen-units = 1
