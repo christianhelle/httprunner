@@ -446,3 +446,9 @@ fn test_substitute_functions_and_variables_together() {
         "Body should have variable substituted"
     );
 }
+
+#[test]
+fn test_format_json_if_valid_with_empty_string() {
+    let result = format_json_if_valid("");
+    assert_eq!(result, "");
+}
