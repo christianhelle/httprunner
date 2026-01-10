@@ -73,3 +73,4 @@ src/httprunner.rc
 artifacts
 httprunner-report-*.md
 httprunner-report-*.html
+coverage/html
