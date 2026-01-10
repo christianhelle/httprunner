@@ -514,7 +514,7 @@ GET https://api.example.com/test
 
     #[test]
     fn test_request_with_assertions() {
-        use crate::types::{Assertion, AssertionType, AssertionResult};
+        use crate::types::{Assertion, AssertionResult, AssertionType};
 
         let file_content = r#"
 GET https://api.example.com/test
@@ -573,9 +573,8 @@ GET https://api.example.com/user
         let temp_file = create_temp_http_file(file_content);
         let file_path = temp_file.path().to_str().unwrap().to_string();
 
-        let mock = MockHttpExecutor::new(vec![create_success_response(Some(
-            "getUser".to_string(),
-        ))]);
+        let mock =
+            MockHttpExecutor::new(vec![create_success_response(Some("getUser".to_string()))]);
 
         let result = process_http_files_with_executor(
             &[file_path],
@@ -687,27 +686,25 @@ Content-Type: application/json
         );
 
         assert!(result.is_ok());
-        
+
         // Find the generated log file (it has a timestamp suffix)
         let entries = fs::read_dir(".").unwrap();
         let log_files: Vec<_> = entries
             .filter_map(|e| e.ok())
             .filter(|e| {
-                e.file_name()
-                    .to_string_lossy()
-                    .starts_with(log_base)
+                e.file_name().to_string_lossy().starts_with(log_base)
                     && e.file_name().to_string_lossy().ends_with(".log")
             })
             .collect();
 
         assert!(!log_files.is_empty(), "Log file should be created");
-        
+
         // Read and verify the log content
         let log_path = log_files[0].path();
         let log_content = fs::read_to_string(&log_path).unwrap();
         assert!(!log_content.is_empty());
         assert!(log_content.contains("https://api.example.com/test"));
-        
+
         // Clean up
         let _ = fs::remove_file(&log_path);
     }
@@ -879,12 +876,14 @@ GET https://api.example.com/third
 
         assert!(result.is_ok());
         let res = result.unwrap();
-        assert!(res.files[0].result_contexts[0]
-            .result
-            .as_ref()
-            .unwrap()
-            .response_headers
-            .is_some());
+        assert!(
+            res.files[0].result_contexts[0]
+                .result
+                .as_ref()
+                .unwrap()
+                .response_headers
+                .is_some()
+        );
     }
 
     #[test]
@@ -993,7 +992,7 @@ Content-Type: application/json
 
     #[test]
     fn test_verbose_mode_with_assertions_passed() {
-        use crate::types::{Assertion, AssertionType, AssertionResult};
+        use crate::types::{Assertion, AssertionResult, AssertionType};
 
         let file_content = r#"
 GET https://api.example.com/test
@@ -1030,7 +1029,7 @@ GET https://api.example.com/test
 
     #[test]
     fn test_verbose_mode_with_assertions_failed() {
-        use crate::types::{Assertion, AssertionType, AssertionResult};
+        use crate::types::{Assertion, AssertionResult, AssertionType};
 
         let file_content = r#"
 GET https://api.example.com/test
@@ -1039,7 +1038,7 @@ GET https://api.example.com/test
         let temp_file = create_temp_http_file(file_content);
         let file_path = temp_file.path().to_str().unwrap().to_string();
 
-        let mut response = HttpResult {
+        let response = HttpResult {
             request_name: None,
             status_code: 404,
             success: false,
@@ -1118,9 +1117,7 @@ GET https://api.example.com/data
         let temp_file = create_temp_http_file(file_content);
         let file_path = temp_file.path().to_str().unwrap().to_string();
 
-        let mock = MockHttpExecutor::new(vec![create_success_response(Some(
-            "setup".to_string(),
-        ))]);
+        let mock = MockHttpExecutor::new(vec![create_success_response(Some("setup".to_string()))]);
 
         let result = process_http_files_with_executor(
             &[file_path],
@@ -1176,12 +1173,18 @@ GET https://api.example.com/data
         let file_path = temp_file.path().to_str().unwrap().to_string();
 
         // Executor that always fails
-        let failing_executor = |_req: &HttpRequest, _v: bool, _i: bool| {
-            Err(anyhow::anyhow!("Network error"))
-        };
+        let failing_executor =
+            |_req: &HttpRequest, _v: bool, _i: bool| Err(anyhow::anyhow!("Network error"));
 
-        let result =
-            process_http_files_with_executor(&[file_path], false, None, None, false, false, &failing_executor);
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &failing_executor,
+        );
 
         assert!(result.is_ok());
         let res = result.unwrap();
@@ -1410,9 +1413,8 @@ Content-Type: application/json
         let temp_file = create_temp_http_file(file_content);
         let file_path = temp_file.path().to_str().unwrap().to_string();
 
-        let mock = MockHttpExecutor::new(vec![create_success_response(Some(
-            "myRequest".to_string(),
-        ))]);
+        let mock =
+            MockHttpExecutor::new(vec![create_success_response(Some("myRequest".to_string()))]);
 
         let result = process_http_files_with_executor(
             &[file_path],

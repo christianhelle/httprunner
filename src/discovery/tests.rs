@@ -48,14 +48,14 @@ fn discover_http_files_multiple_nested_levels() {
     let level1 = temp.path().join("level1");
     let level2 = level1.join("level2");
     let level3 = level2.join("level3");
-    
+
     fs::create_dir_all(&level3).unwrap();
 
     let file1 = temp.path().join("root.http");
     let file2 = level1.join("l1.http");
     let file3 = level2.join("l2.http");
     let file4 = level3.join("l3.http");
-    
+
     fs::write(&file1, "GET http://example.com/root").unwrap();
     fs::write(&file2, "GET http://example.com/l1").unwrap();
     fs::write(&file3, "GET http://example.com/l2").unwrap();
@@ -68,7 +68,7 @@ fn discover_http_files_multiple_nested_levels() {
 #[test]
 fn discover_http_files_ignores_non_http_extensions() {
     let temp = tempdir().unwrap();
-    
+
     fs::write(temp.path().join("test.http"), "GET http://example.com").unwrap();
     fs::write(temp.path().join("test.txt"), "Some text").unwrap();
     fs::write(temp.path().join("test.json"), "{}").unwrap();
@@ -82,7 +82,7 @@ fn discover_http_files_ignores_non_http_extensions() {
 #[test]
 fn discover_http_files_finds_multiple_in_same_directory() {
     let temp = tempdir().unwrap();
-    
+
     fs::write(temp.path().join("api1.http"), "GET http://example.com/1").unwrap();
     fs::write(temp.path().join("api2.http"), "GET http://example.com/2").unwrap();
     fs::write(temp.path().join("api3.http"), "GET http://example.com/3").unwrap();
@@ -126,7 +126,7 @@ fn discover_http_files_with_hidden_directories() {
     let temp = tempdir().unwrap();
     let hidden = temp.path().join(".hidden");
     fs::create_dir(&hidden).unwrap();
-    
+
     fs::write(temp.path().join("visible.http"), "GET http://example.com").unwrap();
     fs::write(hidden.join("hidden.http"), "GET http://example.com").unwrap();
 
@@ -138,7 +138,7 @@ fn discover_http_files_with_hidden_directories() {
 #[test]
 fn discover_http_files_case_sensitive_extension() {
     let temp = tempdir().unwrap();
-    
+
     fs::write(temp.path().join("lowercase.http"), "GET http://example.com").unwrap();
     fs::write(temp.path().join("uppercase.HTTP"), "GET http://example.com").unwrap();
     fs::write(temp.path().join("mixed.Http"), "GET http://example.com").unwrap();
@@ -151,7 +151,7 @@ fn discover_http_files_case_sensitive_extension() {
 #[test]
 fn discover_http_files_with_special_chars_in_filename() {
     let temp = tempdir().unwrap();
-    
+
     fs::write(temp.path().join("test-api.http"), "GET http://example.com").unwrap();
     fs::write(temp.path().join("test_api.http"), "GET http://example.com").unwrap();
     fs::write(temp.path().join("test.api.http"), "GET http://example.com").unwrap();
@@ -171,7 +171,11 @@ fn discover_http_files_mixed_content() {
     fs::write(temp.path().join("root.http"), "GET http://example.com").unwrap();
     fs::write(nested1.join("users.http"), "GET http://example.com/users").unwrap();
     fs::write(nested1.join("README.md"), "# API Tests").unwrap();
-    fs::write(nested2.join("integration.http"), "GET http://example.com/test").unwrap();
+    fs::write(
+        nested2.join("integration.http"),
+        "GET http://example.com/test",
+    )
+    .unwrap();
     fs::write(nested2.join("config.json"), "{}").unwrap();
 
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
@@ -182,10 +186,10 @@ fn discover_http_files_mixed_content() {
 fn run_discovery_mode_with_files() {
     let temp = tempdir().unwrap();
     let orig_dir = std::env::current_dir().unwrap();
-    
+
     fs::write(temp.path().join("test1.http"), "GET http://example.com/1").unwrap();
     fs::write(temp.path().join("test2.http"), "GET http://example.com/2").unwrap();
-    
+
     std::env::set_current_dir(&temp).unwrap();
 
     let files = run_discovery_mode().unwrap();
@@ -206,8 +210,12 @@ fn discover_http_files_preserves_paths() {
     fs::write(&file2, "POST http://example.com").unwrap();
 
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
-    
+
     // Verify paths are preserved correctly
     assert!(files.iter().any(|f| f.ends_with("root.http")));
-    assert!(files.iter().any(|f| f.contains("nested") && f.ends_with("nested.http")));
+    assert!(
+        files
+            .iter()
+            .any(|f| f.contains("nested") && f.ends_with("nested.http"))
+    );
 }

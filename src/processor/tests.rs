@@ -695,7 +695,10 @@ fn test_substitute_request_variables_with_complex_jsonpath() {
             error_message: None,
             duration_ms: 100,
             response_headers: None,
-            response_body: Some(r#"{"users":[{"id":"user1","name":"John"},{"id":"user2","name":"Jane"}]}"#.to_string()),
+            response_body: Some(
+                r#"{"users":[{"id":"user1","name":"John"},{"id":"user2","name":"Jane"}]}"#
+                    .to_string(),
+            ),
             assertion_results: vec![],
         }),
     }];
@@ -709,7 +712,7 @@ fn test_substitute_request_variables_with_complex_jsonpath() {
 fn test_format_json_if_valid_with_nested_json() {
     let json = r#"{"user":{"name":"John","address":{"city":"NYC","zip":"10001"}}}"#;
     let result = format_json_if_valid(json);
-    
+
     assert!(result.contains("\"user\""));
     assert!(result.contains("\"name\""));
     assert!(result.contains("\"address\""));
@@ -721,7 +724,7 @@ fn test_format_json_if_valid_with_nested_json() {
 fn test_format_json_if_valid_with_array() {
     let json = r#"[{"id":1,"name":"Item 1"},{"id":2,"name":"Item 2"}]"#;
     let result = format_json_if_valid(json);
-    
+
     assert!(result.contains("\"id\""));
     assert!(result.contains("\"name\""));
     assert!(result.contains('\n'));
@@ -874,7 +877,7 @@ fn test_substitute_request_variables_preserve_unmatched_patterns() {
 
     let context = vec![];
     let result = substitute_request_variables_in_request(&mut request, &context);
-    
+
     assert!(result.is_ok());
     // Unknown variables should be preserved
     assert!(request.url.contains("{{unknown.var}}"));
