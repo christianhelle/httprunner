@@ -7,7 +7,7 @@ use crate::conditions;
 use crate::logging::Log;
 use crate::parser;
 use crate::runner;
-use crate::types::{AssertionType, HttpFileResults, HttpRequest, ProcessorResults, RequestContext};
+use crate::types::{AssertionType, HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext};
 use anyhow::Result;
 
 fn add_skipped_request_context(
@@ -35,6 +35,29 @@ pub fn process_http_files(
     insecure: bool,
     pretty_json: bool,
 ) -> Result<ProcessorResults> {
+    process_http_files_with_executor(
+        files,
+        verbose,
+        log_filename,
+        environment,
+        insecure,
+        pretty_json,
+        &|request, verbose, insecure| runner::execute_http_request(request, verbose, insecure),
+    )
+}
+
+pub fn process_http_files_with_executor<F>(
+    files: &[String],
+    verbose: bool,
+    log_filename: Option<&str>,
+    environment: Option<&str>,
+    insecure: bool,
+    pretty_json: bool,
+    executor: &F,
+) -> Result<ProcessorResults>
+where
+    F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
+{
     let mut log = Log::new(log_filename)?;
     let mut http_file_results = Vec::<HttpFileResults>::new();
 
@@ -296,7 +319,7 @@ pub fn process_http_files(
                 log.writeln(&"-".repeat(30));
             }
 
-            let result = match runner::execute_http_request(&processed_request, verbose, insecure) {
+            let result = match executor(&processed_request, verbose, insecure) {
                 Ok(res) => res,
                 Err(e) => {
                     log.writeln(&format!(
