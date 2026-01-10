@@ -276,7 +276,6 @@ fn test_parse_all_http_methods() {
     }
 }
 
-
 #[test]
 fn test_parse_request_with_empty_body_lines() {
     let temp_dir = TempDir::new().unwrap();
@@ -309,7 +308,10 @@ fn test_parse_quoted_assertion_headers() {
     let requests = parse_http_file(&file_path, None).unwrap();
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].assertions.len(), 1);
-    assert_eq!(requests[0].assertions[0].expected_value, "Content-Type: application/json");
+    assert_eq!(
+        requests[0].assertions[0].expected_value,
+        "Content-Type: application/json"
+    );
 }
 
 #[test]

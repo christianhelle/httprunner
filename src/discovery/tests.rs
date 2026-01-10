@@ -41,4 +41,3 @@ fn run_discovery_mode_returns_empty_list_when_no_files() {
 
     std::env::set_current_dir(orig_dir).unwrap();
 }
-

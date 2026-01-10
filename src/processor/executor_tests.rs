@@ -1,9 +1,9 @@
 use crate::runner::HttpExecutor;
 use crate::types::{HttpRequest, HttpResult};
 use anyhow::Result;
+use std::io::Write;
 use std::sync::{Arc, Mutex};
 use tempfile::NamedTempFile;
-use std::io::Write;
 
 /// Mock HTTP executor for testing the processor
 struct MockHttpExecutor {
@@ -32,14 +32,16 @@ impl MockHttpExecutor {
 }
 
 impl HttpExecutor for MockHttpExecutor {
-    fn execute(&self, request: &HttpRequest, _verbose: bool, _insecure: bool) -> Result<HttpResult> {
+    fn execute(
+        &self,
+        request: &HttpRequest,
+        _verbose: bool,
+        _insecure: bool,
+    ) -> Result<HttpResult> {
         let mut count = self.call_count.lock().unwrap();
         *count += 1;
 
-        self.executed_requests
-            .lock()
-            .unwrap()
-            .push(request.clone());
+        self.executed_requests.lock().unwrap().push(request.clone());
 
         let mut responses = self.responses.lock().unwrap();
         if responses.is_empty() {
@@ -61,8 +63,8 @@ impl HttpExecutor for MockHttpExecutor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::executor::process_http_files_with_executor;
+    use super::*;
 
     fn create_success_response(name: Option<String>) -> HttpResult {
         HttpResult {
@@ -186,7 +188,8 @@ GET https://api.example.com/named
         let temp_file = create_temp_http_file(file_content);
         let file_path = temp_file.path().to_str().unwrap().to_string();
 
-        let mock = MockHttpExecutor::new(vec![create_success_response(Some("testReq".to_string()))]);
+        let mock =
+            MockHttpExecutor::new(vec![create_success_response(Some("testReq".to_string()))]);
 
         let result = process_http_files_with_executor(
             &[file_path],
@@ -270,7 +273,7 @@ GET https://api.example.com/named
     fn test_multiple_files() {
         let file1 = create_temp_http_file("GET https://api.example.com/1\n");
         let file2 = create_temp_http_file("GET https://api.example.com/2\n");
-        
+
         let path1 = file1.path().to_str().unwrap().to_string();
         let path2 = file2.path().to_str().unwrap().to_string();
 
