@@ -8,8 +8,18 @@ impl FunctionSubstitutor for GuidSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use uuid::Uuid;
-        Uuid::new_v4().as_simple().to_string()
+        use rand::Rng;
+        // Generate a UUID v4-like string without the uuid crate
+        let mut rng = rand::rng();
+        let bytes: [u8; 16] = rng.random();
+        format!(
+            "{:08x}{:04x}{:04x}{:04x}{:012x}",
+            u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
+            u16::from_be_bytes([bytes[4], bytes[5]]),
+            (u16::from_be_bytes([bytes[6], bytes[7]]) & 0x0fff) | 0x4000, // Version 4
+            (u16::from_be_bytes([bytes[8], bytes[9]]) & 0x3fff) | 0x8000, // Variant
+            u64::from_be_bytes([0, 0, bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]]) & 0xffffffffffff
+        )
     }
 }
 
