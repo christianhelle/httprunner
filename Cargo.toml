@@ -34,7 +34,7 @@ winres = "0.1"
 
 [profile.release]
 opt-level = "z"       # Optimize for size
-lto = true            # Enable Link Time Optimization
+lto = "fat"           # Enable aggressive Link Time Optimization
 codegen-units = 1     # Reduce parallel code generation for smaller binary
 panic = "abort"       # Abort on panic instead of unwinding
 strip = true          # Strip symbols from binary
