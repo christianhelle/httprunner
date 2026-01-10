@@ -31,7 +31,6 @@ fn discover_http_files_returns_empty_when_none_found() {
 }
 
 #[test]
-#[test]
 fn run_discovery_mode_returns_empty_list_when_no_files() {
     // Instead of changing directories, use discover_http_files directly
     let temp = tempdir().unwrap();
