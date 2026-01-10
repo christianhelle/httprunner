@@ -452,3 +452,430 @@ fn test_format_json_if_valid_with_empty_string() {
     let result = format_json_if_valid("");
     assert_eq!(result, "");
 }
+
+#[test]
+fn test_substitute_request_variables_with_missing_result() {
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "GET".to_string(),
+        url: "https://api.example.com/users/{{login.response.body.$.id}}".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "login".to_string(),
+        request: HttpRequest {
+            name: Some("login".to_string()),
+            method: "POST".to_string(),
+            url: "https://api.example.com/login".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        },
+        result: None,
+    }];
+
+    let result = substitute_request_variables_in_request(&mut request, &context);
+
+    assert!(result.is_ok());
+    // URL should remain unchanged when result is None
+    assert!(request.url.contains("{{login.response.body.$.id}}"));
+}
+
+#[test]
+fn test_substitute_request_variables_in_assertions() {
+    use crate::types::{Assertion, AssertionType};
+
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "GET".to_string(),
+        url: "https://api.example.com/verify".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![Assertion {
+            assertion_type: AssertionType::Status,
+            expected_value: "{{setup.response.body.$.expected_status}}".to_string(),
+        }],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "setup".to_string(),
+        request: HttpRequest {
+            name: Some("setup".to_string()),
+            method: "GET".to_string(),
+            url: "https://api.example.com/setup".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        },
+        result: Some(HttpResult {
+            request_name: Some("setup".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: None,
+            response_body: Some(r#"{"expected_status":"200"}"#.to_string()),
+            assertion_results: vec![],
+        }),
+    }];
+
+    let result = substitute_request_variables_in_request(&mut request, &context);
+
+    assert!(result.is_ok());
+    assert_eq!(request.assertions[0].expected_value, "200");
+}
+
+#[test]
+fn test_substitute_functions_with_url() {
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "POST".to_string(),
+        url: "https://api.example.com/track?id=guid()".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let result = substitute_functions_in_request(&mut request);
+    assert!(result.is_ok());
+    assert!(!request.url.contains("guid()"));
+    assert!(request.url.starts_with("https://api.example.com/track?id="));
+}
+
+#[test]
+fn test_substitute_functions_with_multiple_functions() {
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "POST".to_string(),
+        url: "https://api.example.com".to_string(),
+        headers: vec![
+            Header {
+                name: "X-Request-ID".to_string(),
+                value: "guid()".to_string(),
+            },
+            Header {
+                name: "X-Random".to_string(),
+                value: "string()".to_string(),
+            },
+        ],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let result = substitute_functions_in_request(&mut request);
+    assert!(result.is_ok());
+    assert!(!request.headers[0].value.contains("guid()"));
+    assert!(!request.headers[1].value.contains("string()"));
+    assert_eq!(request.headers[0].value.len(), 32); // GUID is 32 hex chars
+    assert_eq!(request.headers[1].value.len(), 20); // string() generates 20 char string
+}
+
+#[test]
+fn test_substitute_request_variables_with_header_reference() {
+    let mut response_headers = HashMap::new();
+    response_headers.insert("X-Auth-Token".to_string(), "secret-token-123".to_string());
+
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "GET".to_string(),
+        url: "https://api.example.com/data".to_string(),
+        headers: vec![Header {
+            name: "Authorization".to_string(),
+            value: "Bearer {{login.response.headers.X-Auth-Token}}".to_string(),
+        }],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "login".to_string(),
+        request: HttpRequest {
+            name: Some("login".to_string()),
+            method: "POST".to_string(),
+            url: "https://api.example.com/login".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        },
+        result: Some(HttpResult {
+            request_name: Some("login".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: Some(response_headers),
+            response_body: None,
+            assertion_results: vec![],
+        }),
+    }];
+
+    let result = substitute_request_variables_in_request(&mut request, &context);
+    assert!(result.is_ok());
+    assert_eq!(request.headers[0].value, "Bearer secret-token-123");
+}
+
+#[test]
+fn test_substitute_request_variables_with_complex_jsonpath() {
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "GET".to_string(),
+        url: "https://api.example.com/items/{{data.response.body.$.users[0].id}}".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "data".to_string(),
+        request: HttpRequest {
+            name: Some("data".to_string()),
+            method: "GET".to_string(),
+            url: "https://api.example.com/users".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        },
+        result: Some(HttpResult {
+            request_name: Some("data".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: None,
+            response_body: Some(r#"{"users":[{"id":"user1","name":"John"},{"id":"user2","name":"Jane"}]}"#.to_string()),
+            assertion_results: vec![],
+        }),
+    }];
+
+    let result = substitute_request_variables_in_request(&mut request, &context);
+    assert!(result.is_ok());
+    assert_eq!(request.url, "https://api.example.com/items/user1");
+}
+
+#[test]
+fn test_format_json_if_valid_with_nested_json() {
+    let json = r#"{"user":{"name":"John","address":{"city":"NYC","zip":"10001"}}}"#;
+    let result = format_json_if_valid(json);
+    
+    assert!(result.contains("\"user\""));
+    assert!(result.contains("\"name\""));
+    assert!(result.contains("\"address\""));
+    assert!(result.contains("\"city\""));
+    assert!(result.contains('\n'));
+}
+
+#[test]
+fn test_format_json_if_valid_with_array() {
+    let json = r#"[{"id":1,"name":"Item 1"},{"id":2,"name":"Item 2"}]"#;
+    let result = format_json_if_valid(json);
+    
+    assert!(result.contains("\"id\""));
+    assert!(result.contains("\"name\""));
+    assert!(result.contains('\n'));
+}
+
+#[test]
+fn test_substitute_request_variables_empty_body() {
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "GET".to_string(),
+        url: "https://api.example.com/users/{{login.response.body.$.id}}".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "login".to_string(),
+        request: HttpRequest {
+            name: Some("login".to_string()),
+            method: "POST".to_string(),
+            url: "https://api.example.com/login".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        },
+        result: Some(HttpResult {
+            request_name: Some("login".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: None,
+            response_body: None,
+            assertion_results: vec![],
+        }),
+    }];
+
+    let result = substitute_request_variables_in_request(&mut request, &context);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_substitute_request_variables_with_special_chars_in_json() {
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "POST".to_string(),
+        url: "https://api.example.com".to_string(),
+        headers: vec![],
+        body: Some(r#"{"message":"{{prev.response.body.$.text}}"}"#.to_string()),
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "prev".to_string(),
+        request: HttpRequest {
+            name: Some("prev".to_string()),
+            method: "GET".to_string(),
+            url: "https://api.example.com/message".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+        },
+        result: Some(HttpResult {
+            request_name: Some("prev".to_string()),
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 100,
+            response_headers: None,
+            response_body: Some(r#"{"text":"Hello, World!"}"#.to_string()),
+            assertion_results: vec![],
+        }),
+    }];
+
+    let result = substitute_request_variables_in_request(&mut request, &context);
+    assert!(result.is_ok());
+    assert_eq!(request.body.unwrap(), r#"{"message":"Hello, World!"}"#);
+}
+
+#[test]
+fn test_substitute_functions_in_assertions() {
+    use crate::types::{Assertion, AssertionType};
+
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "GET".to_string(),
+        url: "https://api.example.com".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![Assertion {
+            assertion_type: AssertionType::Body,
+            expected_value: "guid()".to_string(),
+        }],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let result = substitute_functions_in_request(&mut request);
+    assert!(result.is_ok());
+    assert!(!request.assertions[0].expected_value.contains("guid()"));
+    assert_eq!(request.assertions[0].expected_value.len(), 32);
+}
+
+#[test]
+fn test_format_request_name_with_empty_name() {
+    let name = Some("".to_string());
+    let result = format_request_name(&name);
+    assert_eq!(result, ": ");
+}
+
+#[test]
+fn test_substitute_request_variables_preserve_unmatched_patterns() {
+    let mut request = HttpRequest {
+        name: Some("test".to_string()),
+        method: "GET".to_string(),
+        url: "https://api.example.com/{{unknown.var}}".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![];
+    let result = substitute_request_variables_in_request(&mut request, &context);
+    
+    assert!(result.is_ok());
+    // Unknown variables should be preserved
+    assert!(request.url.contains("{{unknown.var}}"));
+}

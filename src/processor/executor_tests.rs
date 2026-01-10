@@ -459,4 +459,431 @@ GET https://api.example.com/data
         assert_eq!(mock.get_call_count(), 1);
         assert_eq!(res.files[0].skipped_count, 1);
     }
+
+    #[test]
+    fn test_request_with_timeout() {
+        let file_content = r#"
+# @timeout 5000ms
+GET https://api.example.com/slow
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let executed = mock.get_executed_requests();
+        assert_eq!(executed[0].timeout, Some(5000));
+    }
+
+    #[test]
+    fn test_request_with_connection_timeout() {
+        let file_content = r#"
+# @connection-timeout 3000ms
+GET https://api.example.com/test
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let executed = mock.get_executed_requests();
+        assert_eq!(executed[0].connection_timeout, Some(3000));
+    }
+
+    #[test]
+    fn test_request_with_assertions() {
+        use crate::types::{Assertion, AssertionType, AssertionResult};
+
+        let file_content = r#"
+GET https://api.example.com/test
+> EXPECTED_RESPONSE_STATUS 200
+> EXPECTED_RESPONSE_BODY "ok"
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mut result_with_assertions = create_success_response(None);
+        result_with_assertions.assertion_results = vec![
+            AssertionResult {
+                assertion: Assertion {
+                    assertion_type: AssertionType::Status,
+                    expected_value: "200".to_string(),
+                },
+                passed: true,
+                actual_value: Some("200".to_string()),
+                error_message: None,
+            },
+            AssertionResult {
+                assertion: Assertion {
+                    assertion_type: AssertionType::Body,
+                    expected_value: "ok".to_string(),
+                },
+                passed: true,
+                actual_value: Some("ok".to_string()),
+                error_message: None,
+            },
+        ];
+
+        let mock = MockHttpExecutor::new(vec![result_with_assertions]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let executed = mock.get_executed_requests();
+        // Parser creates assertions based on EXPECTED_RESPONSE_* directives
+        assert!(executed[0].assertions.len() >= 1);
+    }
+
+    #[test]
+    fn test_request_parsing_complex() {
+        let file_content = r#"
+# @name getUser
+GET https://api.example.com/user
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(Some(
+            "getUser".to_string(),
+        ))]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let executed = mock.get_executed_requests();
+        assert_eq!(executed[0].name, Some("getUser".to_string()));
+    }
+
+    #[test]
+    fn test_mixed_success_and_failure() {
+        let file_content = r#"
+GET https://api.example.com/success
+###
+GET https://api.example.com/fail
+###
+GET https://api.example.com/success2
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![
+            create_success_response(None),
+            HttpResult {
+                request_name: None,
+                status_code: 404,
+                success: false,
+                error_message: Some("Not Found".to_string()),
+                duration_ms: 1,
+                response_headers: None,
+                response_body: None,
+                assertion_results: Vec::new(),
+            },
+            create_success_response(None),
+        ]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        assert_eq!(res.files[0].success_count, 2);
+        assert_eq!(res.files[0].failed_count, 1);
+        assert_eq!(mock.get_call_count(), 3);
+    }
+
+    #[test]
+    fn test_pretty_json_mode() {
+        let file_content = r#"
+POST https://api.example.com/data
+Content-Type: application/json
+
+{"key":"value"}
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            true,
+            None,
+            None,
+            false,
+            true,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_log_file_creation() {
+        use std::fs;
+
+        let file_content = "GET https://api.example.com/test\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+
+        // Use a unique base name for the log file
+        let log_base = "test_log_executor";
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            Some(log_base),
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        
+        // Find the generated log file (it has a timestamp suffix)
+        let entries = fs::read_dir(".").unwrap();
+        let log_files: Vec<_> = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .starts_with(log_base)
+                    && e.file_name().to_string_lossy().ends_with(".log")
+            })
+            .collect();
+
+        assert!(!log_files.is_empty(), "Log file should be created");
+        
+        // Read and verify the log content
+        let log_path = log_files[0].path();
+        let log_content = fs::read_to_string(&log_path).unwrap();
+        assert!(!log_content.is_empty());
+        assert!(log_content.contains("https://api.example.com/test"));
+        
+        // Clean up
+        let _ = fs::remove_file(&log_path);
+    }
+
+    #[test]
+    fn test_environment_parameter() {
+        let file_content = r#"
+GET https://api.example.com/test
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            Some("production"),
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_chain_of_dependencies() {
+        let file_content = r#"
+# @name first
+GET https://api.example.com/first
+###
+# @name second
+# @dependsOn first
+GET https://api.example.com/second
+###
+# @dependsOn second
+GET https://api.example.com/third
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![
+            create_success_response(Some("first".to_string())),
+            create_success_response(Some("second".to_string())),
+            create_success_response(None),
+        ]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert_eq!(mock.get_call_count(), 3);
+        assert_eq!(res.files[0].success_count, 3);
+    }
+
+    #[test]
+    fn test_failed_dependency_in_chain() {
+        let file_content = r#"
+# @name first
+GET https://api.example.com/first
+###
+# @name second
+# @dependsOn first
+GET https://api.example.com/second
+###
+# @dependsOn second
+GET https://api.example.com/third
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![
+            create_success_response(Some("first".to_string())),
+            HttpResult {
+                request_name: Some("second".to_string()),
+                status_code: 500,
+                success: false,
+                error_message: None,
+                duration_ms: 1,
+                response_headers: None,
+                response_body: None,
+                assertion_results: Vec::new(),
+            },
+        ]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert_eq!(mock.get_call_count(), 2);
+        assert_eq!(res.files[0].skipped_count, 1);
+    }
+
+    #[test]
+    fn test_invalid_http_file() {
+        let file_content = "This is not a valid HTTP request format";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        // Should handle parse errors gracefully
+        assert!(result.is_ok());
+        assert_eq!(mock.get_call_count(), 0);
+    }
+
+    #[test]
+    fn test_request_with_response_headers() {
+        use std::collections::HashMap;
+
+        let file_content = "GET https://api.example.com/test\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mut headers = HashMap::new();
+        headers.insert("Content-Type".to_string(), "application/json".to_string());
+        headers.insert("X-Custom-Header".to_string(), "custom-value".to_string());
+
+        let response = HttpResult {
+            request_name: None,
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 1,
+            response_headers: Some(headers),
+            response_body: Some(r#"{"status":"ok"}"#.to_string()),
+            assertion_results: Vec::new(),
+        };
+
+        let mock = MockHttpExecutor::new(vec![response]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            true,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(res.files[0].result_contexts[0]
+            .result
+            .as_ref()
+            .unwrap()
+            .response_headers
+            .is_some());
+    }
 }
