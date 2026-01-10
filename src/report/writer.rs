@@ -1,6 +1,8 @@
 use std::fs;
 use std::io::Write;
 
+use super::time_utils::{is_leap_year, day_of_year_to_month_day};
+
 #[cfg(test)]
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -40,7 +42,8 @@ fn format_local_timestamp() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
     
     let now = SystemTime::now();
-    let duration = now.duration_since(UNIX_EPOCH).unwrap();
+    let duration = now.duration_since(UNIX_EPOCH)
+        .expect("System clock is set before Unix epoch (1970-01-01)");
     let secs = duration.as_secs();
     
     // Calculate time components
@@ -75,25 +78,4 @@ fn format_local_timestamp() -> String {
     
     format!("{:04}{:02}{:02}-{:02}{:02}{:02}",
         year, month, day, hours, minutes, seconds)
-}
-
-fn is_leap_year(year: u64) -> bool {
-    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
-}
-
-fn day_of_year_to_month_day(day_of_year: u32, is_leap: bool) -> (u32, u32) {
-    let days_in_months = if is_leap {
-        [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    } else {
-        [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    };
-    
-    let mut remaining_days = day_of_year + 1; // Convert 0-indexed to 1-indexed
-    for (i, &days) in days_in_months.iter().enumerate() {
-        if remaining_days <= days {
-            return ((i + 1) as u32, remaining_days);
-        }
-        remaining_days -= days;
-    }
-    (12, 31) // Fallback
 }
