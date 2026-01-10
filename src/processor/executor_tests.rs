@@ -1,4 +1,3 @@
-use crate::runner::HttpExecutor;
 use crate::types::{HttpRequest, HttpResult};
 use anyhow::Result;
 use std::io::Write;
@@ -6,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use tempfile::NamedTempFile;
 
 /// Mock HTTP executor for testing the processor
+/// Useful for tracking calls and providing predefined responses
 struct MockHttpExecutor {
     responses: Arc<Mutex<Vec<HttpResult>>>,
     call_count: Arc<Mutex<usize>>,
@@ -29,9 +29,8 @@ impl MockHttpExecutor {
     fn get_executed_requests(&self) -> Vec<HttpRequest> {
         self.executed_requests.lock().unwrap().clone()
     }
-}
 
-impl HttpExecutor for MockHttpExecutor {
+    /// Execute function that can be passed as a closure
     fn execute(
         &self,
         request: &HttpRequest,

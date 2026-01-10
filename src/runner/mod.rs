@@ -1,7 +1,3 @@
 mod executor;
-mod traits;
 
-pub use traits::HttpExecutor;
-
-#[allow(unused_imports)]
-pub use executor::DefaultHttpExecutor;
+pub use executor::execute_http_request;
