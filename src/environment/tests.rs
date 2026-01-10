@@ -57,3 +57,37 @@ fn parse_environment_file_handles_non_string_values() {
     assert_eq!(dev.get("NUMBER").unwrap(), "123");
     assert_eq!(dev.get("OBJECT").unwrap(), r#"{"foo":"bar"}"#);
 }
+
+#[test]
+fn find_environment_file_finds_file_in_parent_directory() {
+    let temp = tempdir().unwrap();
+    let nested = temp.path().join("nested");
+    fs::create_dir(&nested).unwrap();
+    
+    let env_file = temp.path().join("http-client.env.json");
+    fs::write(&env_file, r#"{"dev":{"KEY":"value"}}"#).unwrap();
+    
+    let http_file = nested.join("request.http");
+    fs::write(&http_file, "GET http://example.com").unwrap();
+    
+    let found = find_environment_file(http_file.to_str().unwrap()).unwrap();
+    assert!(found.is_some());
+    assert_eq!(found.unwrap(), env_file.to_string_lossy().to_string());
+}
+
+#[test]
+fn load_environment_file_handles_missing_environment_name() {
+    let temp = tempdir().unwrap();
+    let env_file = temp.path().join("http-client.env.json");
+    fs::write(
+        &env_file,
+        r#"{"prod":{"KEY":"value"}}"#,
+    )
+    .unwrap();
+    
+    let http_file = temp.path().join("request.http");
+    fs::write(&http_file, "GET http://example.com").unwrap();
+    
+    let vars = load_environment_file(http_file.to_str().unwrap(), Some("dev")).unwrap();
+    assert!(vars.is_empty());
+}

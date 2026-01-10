@@ -275,3 +275,132 @@ fn test_parse_all_http_methods() {
         assert_eq!(requests[0].method, *method);
     }
 }
+
+
+#[test]
+fn test_parse_request_with_empty_body_lines() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "POST http://example.com\nContent-Type: application/json\n\n\n{}\n\n### Next request\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 2);
+    assert!(requests[0].body.is_some());
+    assert!(requests[0].body.as_ref().unwrap().contains("{}"));
+}
+
+#[test]
+fn test_parse_quoted_assertion_body() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = r#"GET http://example.com
+> EXPECTED_RESPONSE_BODY "quoted value""#;
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].assertions.len(), 1);
+    assert_eq!(requests[0].assertions[0].expected_value, "quoted value");
+}
+
+#[test]
+fn test_parse_quoted_assertion_headers() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = r#"GET http://example.com
+> EXPECTED_RESPONSE_HEADERS "Content-Type: application/json""#;
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].assertions.len(), 1);
+    assert_eq!(requests[0].assertions[0].expected_value, "Content-Type: application/json");
+}
+
+#[test]
+fn test_parse_variable_update() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "@var1 = initial\n@var1 = updated\nGET http://example.com/{{var1}}";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert!(requests[0].url.contains("updated"));
+}
+
+#[test]
+fn test_parse_invalid_if_directive() {
+    // This test ensures invalid @if directive doesn't crash the parser
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @if invalid_format\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].conditions.len(), 0);
+}
+
+#[test]
+fn test_parse_invalid_if_not_directive() {
+    // This test ensures invalid @if-not directive doesn't crash the parser
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @if-not invalid_format\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].conditions.len(), 0);
+}
+
+#[test]
+fn test_parse_name_with_double_slash_comment() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "// @name test_request\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].name, Some("test_request".to_string()));
+}
+
+#[test]
+fn test_parse_timeout_with_double_slash_comment() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "// @timeout 5000ms\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].timeout, Some(5000));
+}
+
+#[test]
+fn test_parse_connection_timeout_with_double_slash_comment() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "// @connection-timeout 3000ms\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].connection_timeout, Some(3000));
+}
+
+#[test]
+fn test_parse_depends_on_with_double_slash_comment() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "// @dependsOn login\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].depends_on, Some("login".to_string()));
+}
+
+#[test]
+fn test_parse_if_condition_with_double_slash_comment() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "// @if login.response.status == 200\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].conditions.len(), 1);
+}
+
+#[test]
+fn test_parse_if_not_condition_with_double_slash_comment() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "// @if-not login.response.status == 404\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].conditions.len(), 1);
+    assert!(requests[0].conditions[0].negate);
+}

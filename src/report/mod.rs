@@ -15,3 +15,6 @@ mod formatter_tests;
 
 #[cfg(test)]
 mod html_tests;
+
+#[cfg(test)]
+mod time_utils_tests;

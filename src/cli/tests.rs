@@ -32,3 +32,12 @@ fn get_log_filename_none_when_flag_missing() {
     let cli = cli_with_log(None);
     assert!(cli.get_log_filename().is_none());
 }
+
+#[test]
+fn show_donation_banner_outputs_message() {
+    // This test simply ensures show_donation_banner runs without panic
+    // We can't easily capture stdout without more complex testing infrastructure,
+    // but we can at least ensure the function executes
+    use super::banner::show_donation_banner;
+    show_donation_banner();
+}
