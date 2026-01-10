@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+## [0.5.36](https://github.com/christianhelle/httprunner/tree/0.5.36) (2026-01-10)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.35...HEAD)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.35...0.5.36)
 
 **Implemented enhancements:**
 
