@@ -427,3 +427,75 @@ fn test_extract_json_property_complex_nested() {
     let result = extract_json_property(json, "levels.l1.l2.l3").unwrap();
     assert_eq!(result, Some("deep".to_string()));
 }
+
+#[test]
+fn test_extract_json_property_with_escape_sequences() {
+    let json = r#"{"message": "Hello \"World\""}"#;
+    let result = extract_json_property(json, "message").unwrap();
+    assert_eq!(result, Some(r#"Hello \"World\""#.to_string()));
+}
+
+#[test]
+fn test_extract_json_property_empty_string() {
+    let json = r#"{"value": ""}"#;
+    let result = extract_json_property(json, "value").unwrap();
+    assert_eq!(result, Some("".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_array_with_nested_objects() {
+    let json = r#"{"items": [{"id": 1, "name": "first"}, {"id": 2, "name": "second"}]}"#;
+    let result = extract_json_property(json, "items[1].id").unwrap();
+    assert_eq!(result, Some("2".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_deeply_nested_path() {
+    let json = r#"{"a": {"b": {"c": {"d": {"e": "value"}}}}}"#;
+    let result = extract_json_property(json, "a.b.c.d.e").unwrap();
+    assert_eq!(result, Some("value".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_array_with_comma_in_string() {
+    let json = r#"{"items": ["first,value", "second,value"]}"#;
+    let result = extract_json_property(json, "items[0]").unwrap();
+    assert_eq!(result, Some("\"first,value\"".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_boolean_false() {
+    let json = r#"{"enabled": false}"#;
+    let result = extract_json_property(json, "enabled").unwrap();
+    assert_eq!(result, Some("false".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_number_float() {
+    let json = r#"{"price": 19.99}"#;
+    let result = extract_json_property(json, "price").unwrap();
+    assert_eq!(result, Some("19.99".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_empty_array() {
+    let json = r#"{"items": []}"#;
+    let result = extract_json_property(json, "items[0]").unwrap();
+    assert_eq!(result, None);
+}
+
+#[test]
+fn test_substitute_request_variables_invalid_format() {
+    let context = vec![];
+    // This has 3+ dots but is invalid format (missing parts)
+    let result = substitute_request_variables("{{invalid.format.with.dots}}", &context).unwrap();
+    assert_eq!(result, "{{invalid.format.with.dots}}");
+}
+
+#[test]
+fn test_substitute_request_variables_extraction_error() {
+    let context = vec![];
+    // Valid format but request not found - should preserve the placeholder
+    let result = substitute_request_variables("{{req.response.body.$.data}}", &context).unwrap();
+    assert_eq!(result, "{{req.response.body.$.data}}");
+}

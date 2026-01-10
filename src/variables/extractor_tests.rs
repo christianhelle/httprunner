@@ -1,6 +1,6 @@
 use super::extractor::*;
 use crate::types::{
-    HttpRequest, HttpResult, RequestContext, RequestVariable, RequestVariableSource,
+    Header, HttpRequest, HttpResult, RequestContext, RequestVariable, RequestVariableSource,
     RequestVariableTarget,
 };
 use std::collections::HashMap;
@@ -300,4 +300,90 @@ fn test_extract_request_variable_value_nested_json_path() {
 
     let result = extract_request_variable_value(&request_var, &context).unwrap();
     assert_eq!(result, Some("42".to_string()));
+}
+
+#[test]
+fn test_extract_request_variable_value_request_header_not_found() {
+    let request = HttpRequest {
+        name: Some("request1".to_string()),
+        method: "POST".to_string(),
+        url: "http://example.com".to_string(),
+        headers: vec![Header {
+            name: "Content-Type".to_string(),
+            value: "application/json".to_string(),
+        }],
+        body: Some(r#"{"data": "test"}"#.to_string()),
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "request1".to_string(),
+        request,
+        result: None,
+    }];
+
+    let request_var = RequestVariable {
+        reference: "{{request1.request.headers.Authorization}}".to_string(),
+        request_name: "request1".to_string(),
+        source: RequestVariableSource::Request,
+        target: RequestVariableTarget::Headers,
+        path: "Authorization".to_string(),
+    };
+
+    let result = extract_request_variable_value(&request_var, &context);
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), None);
+}
+
+#[test]
+fn test_extract_request_variable_value_response_body_no_jsonpath() {
+    let request = HttpRequest {
+        name: Some("request1".to_string()),
+        method: "GET".to_string(),
+        url: "http://example.com".to_string(),
+        headers: vec![],
+        body: None,
+        assertions: vec![],
+        variables: vec![],
+        timeout: None,
+        connection_timeout: None,
+        depends_on: None,
+        conditions: vec![],
+    };
+
+    let result_data = HttpResult {
+        request_name: Some("request1".to_string()),
+        status_code: 200,
+        success: true,
+        error_message: None,
+        duration_ms: 100,
+        response_headers: Some(HashMap::new()),
+        response_body: Some("plain text response".to_string()),
+        assertion_results: vec![],
+    };
+
+    let context = vec![RequestContext {
+        name: "request1".to_string(),
+        request,
+        result: Some(result_data),
+    }];
+
+    let request_var = RequestVariable {
+        reference: "{{request1.response.body.simple}}".to_string(),
+        request_name: "request1".to_string(),
+        source: RequestVariableSource::Response,
+        target: RequestVariableTarget::Body,
+        path: "simple".to_string(),
+    };
+
+    let extracted = extract_request_variable_value(&request_var, &context);
+
+    assert!(extracted.is_ok());
+    assert_eq!(extracted.unwrap(), Some("plain text response".to_string()));
 }
