@@ -61,7 +61,7 @@ pub struct Cli {
     #[arg(long)]
     pub pretty_json: bool,
 
-    /// Generate summary report (markdown or html). Defaults to markdown if no format specified.
+    /// Generate summary report (default=markdown)
     #[arg(long, value_name = "FORMAT", num_args = 0..=1, default_missing_value = "markdown")]
     pub report: Option<ReportFormat>,
 }
