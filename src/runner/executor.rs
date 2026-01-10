@@ -1,4 +1,5 @@
 use crate::assertions;
+use crate::runner::HttpExecutor;
 use crate::types::{HttpRequest, HttpResult};
 use anyhow::Result;
 use reqwest::blocking::Client;
@@ -170,4 +171,14 @@ pub fn execute_http_request(
         response_body,
         assertion_results,
     })
+}
+
+/// Default implementation of HttpExecutor using reqwest
+#[allow(dead_code)]
+pub struct DefaultHttpExecutor;
+
+impl HttpExecutor for DefaultHttpExecutor {
+    fn execute(&self, request: &HttpRequest, verbose: bool, insecure: bool) -> Result<HttpResult> {
+        execute_http_request(request, verbose, insecure)
+    }
 }
