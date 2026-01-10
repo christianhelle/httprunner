@@ -73,4 +73,9 @@ src/httprunner.rc
 artifacts
 httprunner-report-*.md
 httprunner-report-*.html
+
+# Code coverage
+lcov.info
+*.profraw
+*.profdata
 coverage/html
