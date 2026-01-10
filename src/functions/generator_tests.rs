@@ -86,7 +86,7 @@ fn test_number_substitutor_generates_in_range() {
     for _ in 0..100 {
         let num_str = sub.generate();
         let num: i32 = num_str.parse().unwrap();
-        assert!(num >= 0 && num <= 100);
+        assert!((0..=100).contains(&num));
     }
 }
 
