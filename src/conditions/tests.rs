@@ -589,7 +589,7 @@ fn test_evaluate_conditions_verbose_request_not_found() {
 
     let context = vec![];
     let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
-    
+
     assert!(!all_met);
     assert_eq!(results.len(), 1);
     assert!(!results[0].condition_met);
@@ -626,7 +626,7 @@ fn test_evaluate_conditions_verbose_result_is_none() {
     }];
 
     let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
-    
+
     assert!(!all_met);
     assert_eq!(results.len(), 1);
     assert!(!results[0].condition_met);
@@ -674,7 +674,7 @@ fn test_evaluate_conditions_verbose_no_response_body() {
     }];
 
     let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
-    
+
     assert!(!all_met);
     assert_eq!(results.len(), 1);
     assert!(!results[0].condition_met);
@@ -722,7 +722,7 @@ fn test_evaluate_conditions_verbose_json_path_not_found() {
     }];
 
     let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
-    
+
     assert!(!all_met);
     assert_eq!(results.len(), 1);
     assert!(!results[0].condition_met);

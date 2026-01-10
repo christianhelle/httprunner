@@ -106,7 +106,7 @@ fn test_evaluate_assertions_multiple() {
             expected_value: "ok".into(),
         },
     ];
-    
+
     let results = evaluate_assertions(&assertions, &build_result());
     assert_eq!(results.len(), 2);
     assert!(results[0].passed);
@@ -140,10 +140,10 @@ fn test_headers_assertion_missing_headers() {
         assertion_type: AssertionType::Headers,
         expected_value: "X-Custom: value".into(),
     };
-    
+
     let mut result = build_result();
     result.response_headers = None;
-    
+
     let eval = evaluate_assertion(&assertion, &result);
     assert!(!eval.passed);
     assert_eq!(
@@ -158,13 +158,13 @@ fn test_headers_assertion_header_not_found() {
         assertion_type: AssertionType::Headers,
         expected_value: "X-Custom: value".into(),
     };
-    
+
     let mut headers = HashMap::new();
     headers.insert("Content-Type".into(), "application/json".into());
-    
+
     let mut result = build_result();
     result.response_headers = Some(headers);
-    
+
     let eval = evaluate_assertion(&assertion, &result);
     assert!(!eval.passed);
     assert!(eval.error_message.is_some());
@@ -179,5 +179,10 @@ fn test_status_assertion_failure() {
     let result = evaluate_assertion(&assertion, &build_result());
     assert!(!result.passed);
     assert!(result.error_message.is_some());
-    assert!(result.error_message.unwrap().contains("Expected status 404, got 200"));
+    assert!(
+        result
+            .error_message
+            .unwrap()
+            .contains("Expected status 404, got 200")
+    );
 }
