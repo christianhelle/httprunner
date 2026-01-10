@@ -14,6 +14,7 @@
 
 **Merged pull requests:**
 
+- Optimize binary size: remove uuid/chrono, minimize dependency features [\#94](https://github.com/christianhelle/httprunner/pull/94) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Document Docker localhost networking for host service access [\#91](https://github.com/christianhelle/httprunner/pull/91) ([Copilot](https://github.com/apps/copilot-swe-agent))
 
 ## [0.5.35](https://github.com/christianhelle/httprunner/tree/0.5.35) (2026-01-09)
