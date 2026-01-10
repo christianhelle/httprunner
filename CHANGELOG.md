@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.36...HEAD)
+
+**Merged pull requests:**
+
+- Add unit tests to increase code coverage from 69.7% to 74.93% [\#98](https://github.com/christianhelle/httprunner/pull/98) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Update codecov/codecov-action action to v5 [\#97](https://github.com/christianhelle/httprunner/pull/97) ([renovate[bot]](https://github.com/apps/renovate))
+- Add code coverage workflow with Codecov integration [\#95](https://github.com/christianhelle/httprunner/pull/95) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [0.5.36](https://github.com/christianhelle/httprunner/tree/0.5.36) (2026-01-10)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.35...0.5.36)
