@@ -41,7 +41,7 @@ jobs:
           cache: true
 
       - name: Build CLI release binary
-        run: cargo build --release --target x86_64-unknown-linux-gnu -p httprunner-cli
+        run: cargo build --release --target x86_64-unknown-linux-gnu -p httprunner
 
       - name: Prepare binary
         run: |
