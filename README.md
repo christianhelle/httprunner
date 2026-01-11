@@ -7,9 +7,18 @@
 [![Rust Version](https://img.shields.io/badge/rust-1.92-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A simple command-line tool written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
+A powerful command-line tool and native GUI application written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
 > **Note**: This project was originally written in Zig. The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now contains only the Rust implementation, which is actively maintained and recommended for all use cases.
+
+## Interfaces
+
+HTTP Runner is available in two interfaces:
+
+- **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
+- **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
+
+See [GUI README](src/gui/README.md) for GUI-specific documentation.
 
 ## Features
 
@@ -119,6 +128,8 @@ sudo snap install httprunner
 
 Make sure you have Rust installed (version 1.70 or later).
 
+#### CLI Version
+
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
 cd httprunner
@@ -126,6 +137,27 @@ cargo build --release
 ```
 
 The binary will be at `target/release/httprunner` (or `httprunner.exe` on Windows).
+
+#### GUI Version
+
+The GUI version requires additional system dependencies on Linux. See [GUI README](src/gui/README.md) for details.
+
+```bash
+git clone https://github.com/christianhelle/httprunner.git
+cd httprunner
+
+# Linux: Install dependencies first
+# Ubuntu/Debian:
+sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+    libxkbcommon-dev libwayland-dev
+
+# Build GUI (all platforms)
+cargo build --bin httprunner-gui --features gui --release
+```
+
+The GUI binary will be at `target/release/httprunner-gui` (or `httprunner-gui.exe` on Windows).
+
+**Note**: macOS and Windows don't require additional dependencies for the GUI.
 
 ### Option 6: Use Docker
 
