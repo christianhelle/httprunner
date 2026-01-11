@@ -28,7 +28,7 @@ The project is organized as a Cargo workspace with the following structure:
 httprunner/
 ├── src/
 │   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
-│   ├── cli/         # CLI application (httprunner-cli) - builds httprunner binary
+│   ├── cli/         # CLI application (httprunner) - builds httprunner binary
 │   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary
 ├── examples/
 ├── docs/
@@ -37,7 +37,7 @@ httprunner/
 
 **Building:**
 - `cargo build --release` - Build both CLI and GUI (default)
-- `cargo build --release -p httprunner-cli` - Build CLI only
+- `cargo build --release -p httprunner` - Build CLI only
 - `cargo build --release -p httprunner-gui` - Build GUI only
 
 ## Features
@@ -153,7 +153,7 @@ Make sure you have Rust installed (version 1.70 or later).
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
 cd httprunner
-cargo build --release -p httprunner-cli
+cargo build --release -p httprunner
 ```
 
 The binary will be at `target/release/httprunner` (or `httprunner.exe` on Windows).

@@ -1,5 +1,5 @@
 [package]
-name = "httprunner-cli"
+name = "httprunner"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
