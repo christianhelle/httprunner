@@ -18,7 +18,7 @@ HTTP Runner is available in two interfaces:
 - **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
 - **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
 
-See [GUI README](httprunner-gui/README.md) for GUI-specific documentation.
+See [GUI README](src/gui/README.md) for GUI-specific documentation.
 
 ## Project Structure
 
@@ -26,10 +26,14 @@ The project is organized as a Cargo workspace with the following structure:
 
 ```
 httprunner/
-├── httprunner-lib/      # Core library - HTTP processing logic
-├── httprunner-cli/      # CLI application
-├── httprunner-gui/      # GUI application
-└── httprunner/          # Meta-package for feature-based builds
+├── src/
+│   ├── lib/         # Core library - HTTP processing logic
+│   ├── cli/         # CLI application
+│   ├── gui/         # GUI application
+│   └── httprunner/  # Meta-package for feature-based builds
+├── examples/
+├── docs/
+└── ...
 ```
 
 **Building:**
@@ -157,7 +161,7 @@ The binary will be at `target/release/httprunner` (or `httprunner.exe` on Window
 
 #### GUI Version
 
-The GUI version requires additional system dependencies on Linux. See [GUI README](httprunner-gui/README.md) for details.
+The GUI version requires additional system dependencies on Linux. See [GUI README](src/gui/README.md) for details.
 
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
