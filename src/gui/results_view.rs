@@ -39,7 +39,7 @@ impl ResultsView {
         let env = environment.map(|s| s.to_string());
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
-        
+
         // Clear previous results
         if let Ok(mut r) = results.lock() {
             r.clear();
@@ -47,15 +47,16 @@ impl ResultsView {
                 message: format!("Running all requests from {}...", path.display()),
             });
         }
-        
+
         if let Ok(mut running) = is_running.lock() {
             *running = true;
         }
-        
+
         thread::spawn(move || {
             // Parse the file
             if let Some(path_str) = path.to_str() {
-                if let Ok(requests) = httprunner::parser::parse_http_file(path_str, env.as_deref()) {
+                if let Ok(requests) = httprunner::parser::parse_http_file(path_str, env.as_deref())
+                {
                     // Execute requests
                     for request in requests {
                         let result = execute_request(request);
@@ -79,7 +80,7 @@ impl ResultsView {
                     error: "Failed to convert path to string".to_string(),
                 });
             }
-            
+
             if let Ok(mut running) = is_running.lock() {
                 *running = false;
             }
@@ -91,7 +92,7 @@ impl ResultsView {
         let env = environment.map(|s| s.to_string());
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
-        
+
         // Clear previous results
         if let Ok(mut r) = results.lock() {
             r.clear();
@@ -99,15 +100,16 @@ impl ResultsView {
                 message: format!("Running request {} from {}...", index + 1, path.display()),
             });
         }
-        
+
         if let Ok(mut running) = is_running.lock() {
             *running = true;
         }
-        
+
         thread::spawn(move || {
             // Parse the file
             if let Some(path_str) = path.to_str() {
-                if let Ok(requests) = httprunner::parser::parse_http_file(path_str, env.as_deref()) {
+                if let Ok(requests) = httprunner::parser::parse_http_file(path_str, env.as_deref())
+                {
                     if let Some(request) = requests.get(index) {
                         let result = execute_request(request.clone());
                         if let Ok(mut r) = results.lock() {
@@ -138,7 +140,7 @@ impl ResultsView {
                     error: "Invalid file path".to_string(),
                 });
             }
-            
+
             if let Ok(mut running) = is_running.lock() {
                 *running = false;
             }
@@ -151,22 +153,28 @@ impl ResultsView {
                 ui.spinner();
             }
         }
-        
+
         egui::ScrollArea::vertical().show(ui, |ui| {
             if let Ok(results) = self.results.lock() {
                 if results.is_empty() {
                     ui.label("No results yet. Select and run a request.");
                     return;
                 }
-                
+
                 for result in results.iter() {
                     match result {
-                        ExecutionResult::Success { method, url, status, duration_ms, response_body } => {
+                        ExecutionResult::Success {
+                            method,
+                            url,
+                            status,
+                            duration_ms,
+                            response_body,
+                        } => {
                             ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
                             ui.monospace(format!("{} {}", method, url));
                             ui.label(format!("Status: {}", status));
                             ui.label(format!("Duration: {} ms", duration_ms));
-                            
+
                             ui.separator();
                             ui.label("Response:");
                             egui::ScrollArea::vertical()
@@ -194,18 +202,16 @@ impl ResultsView {
     }
 }
 
-fn execute_request(
-    request: httprunner::HttpRequest,
-) -> ExecutionResult {
+fn execute_request(request: httprunner::HttpRequest) -> ExecutionResult {
     use std::time::Instant;
-    
+
     let start = Instant::now();
-    
+
     // Execute the request using the runner
     match httprunner::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;
-            
+
             if result.success {
                 ExecutionResult::Success {
                     method: request.method,
@@ -218,7 +224,9 @@ fn execute_request(
                 ExecutionResult::Failure {
                     method: request.method,
                     url: request.url,
-                    error: result.error_message.unwrap_or_else(|| "Unknown error".to_string()),
+                    error: result
+                        .error_message
+                        .unwrap_or_else(|| "Unknown error".to_string()),
                 }
             }
         }

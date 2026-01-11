@@ -16,7 +16,7 @@ impl HttpRunnerApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         // Start with current directory
         let root_directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-        
+
         Self {
             file_tree: FileTree::new(root_directory.clone()),
             request_view: RequestView::new(),
@@ -42,9 +42,9 @@ impl HttpRunnerApp {
                         }
                         ui.close_menu();
                     }
-                    
+
                     ui.separator();
-                    
+
                     if ui.button("Quit").clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
@@ -64,11 +64,7 @@ impl HttpRunnerApp {
                         ui.selectable_value(&mut self.selected_environment, None, "None");
                         for env in &self.environments {
                             let env_clone = Some(env.clone());
-                            ui.selectable_value(
-                                &mut self.selected_environment,
-                                env_clone,
-                                env,
-                            );
+                            ui.selectable_value(&mut self.selected_environment, env_clone, env);
                         }
                     });
             });
@@ -78,7 +74,10 @@ impl HttpRunnerApp {
     fn show_bottom_panel(&self, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label(format!("Working Directory: {}", self.root_directory.display()));
+                ui.label(format!(
+                    "Working Directory: {}",
+                    self.root_directory.display()
+                ));
                 ui.separator();
                 if let Some(file) = &self.selected_file {
                     ui.label(format!("Selected: {}", file.display()));
@@ -116,14 +115,14 @@ impl eframe::App for HttpRunnerApp {
             .show(ctx, |ui| {
                 ui.heading("HTTP Files");
                 ui.separator();
-                
+
                 if let Some(selected) = self.file_tree.show(ui) {
                     self.selected_file = Some(selected.clone());
                     self.selected_request_index = None;
-                    
+
                     // Load environments for this file
                     self.load_environments(&selected);
-                    
+
                     // Update request view
                     self.request_view.load_file(&selected);
                 }
@@ -133,27 +132,41 @@ impl eframe::App for HttpRunnerApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Request Details");
             ui.separator();
-            
+
             if let Some(selected_idx) = self.request_view.show(ui, &self.selected_file) {
                 self.selected_request_index = Some(selected_idx);
             }
-            
+
             ui.separator();
-            
+
             // Run button
             ui.horizontal(|ui| {
                 let run_all_enabled = self.selected_file.is_some();
-                let run_one_enabled = self.selected_file.is_some() && self.selected_request_index.is_some();
-                
-                if ui.add_enabled(run_all_enabled, egui::Button::new("▶ Run All Requests")).clicked() {
+                let run_one_enabled =
+                    self.selected_file.is_some() && self.selected_request_index.is_some();
+
+                if ui
+                    .add_enabled(run_all_enabled, egui::Button::new("▶ Run All Requests"))
+                    .clicked()
+                {
                     if let Some(file) = &self.selected_file {
-                        self.results_view.run_file(file, self.selected_environment.as_deref());
+                        self.results_view
+                            .run_file(file, self.selected_environment.as_deref());
                     }
                 }
-                
-                if ui.add_enabled(run_one_enabled, egui::Button::new("▶ Run Selected Request")).clicked() {
-                    if let (Some(file), Some(idx)) = (&self.selected_file, self.selected_request_index) {
-                        self.results_view.run_single_request(file, idx, self.selected_environment.as_deref());
+
+                if ui
+                    .add_enabled(run_one_enabled, egui::Button::new("▶ Run Selected Request"))
+                    .clicked()
+                {
+                    if let (Some(file), Some(idx)) =
+                        (&self.selected_file, self.selected_request_index)
+                    {
+                        self.results_view.run_single_request(
+                            file,
+                            idx,
+                            self.selected_environment.as_deref(),
+                        );
                     }
                 }
             });
