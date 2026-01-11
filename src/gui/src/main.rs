@@ -16,7 +16,7 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "HTTP Runner",
+        "HTTP File Runner",
         native_options,
         Box::new(|cc| Ok(Box::new(HttpRunnerApp::new(cc)))),
     )
