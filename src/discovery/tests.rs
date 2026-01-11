@@ -182,10 +182,10 @@ fn discover_http_files_mixed_content() {
 fn run_discovery_mode_with_files() {
     // Instead of changing directories, use discover_http_files directly
     let temp = tempdir().unwrap();
-    
+
     fs::write(temp.path().join("test1.http"), "GET http://example.com/1").unwrap();
     fs::write(temp.path().join("test2.http"), "GET http://example.com/2").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 2);
 }
