@@ -1,6 +1,6 @@
 [workspace]
-members = ["src/lib", "src/cli", "src/gui", "src/httprunner"]
-default-members = ["src/httprunner"]
+members = ["src/lib", "src/cli", "src/gui"]
+default-members = ["src/cli", "src/gui"]
 resolver = "2"
 
 [workspace.package]
