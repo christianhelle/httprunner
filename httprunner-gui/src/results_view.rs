@@ -55,7 +55,7 @@ impl ResultsView {
         thread::spawn(move || {
             // Parse the file
             if let Some(path_str) = path.to_str() {
-                if let Ok(requests) = httprunner::parser::parse_http_file(path_str, env.as_deref())
+                if let Ok(requests) = httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
                 {
                     // Execute requests
                     for request in requests {
@@ -108,7 +108,7 @@ impl ResultsView {
         thread::spawn(move || {
             // Parse the file
             if let Some(path_str) = path.to_str() {
-                if let Ok(requests) = httprunner::parser::parse_http_file(path_str, env.as_deref())
+                if let Ok(requests) = httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
                 {
                     if let Some(request) = requests.get(index) {
                         let result = execute_request(request.clone());
@@ -202,13 +202,13 @@ impl ResultsView {
     }
 }
 
-fn execute_request(request: httprunner::HttpRequest) -> ExecutionResult {
+fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
     use std::time::Instant;
 
     let start = Instant::now();
 
     // Execute the request using the runner
-    match httprunner::runner::execute_http_request(&request, false, false) {
+    match httprunner_lib::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;
 

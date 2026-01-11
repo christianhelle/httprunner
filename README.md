@@ -18,7 +18,24 @@ HTTP Runner is available in two interfaces:
 - **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
 - **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
 
-See [GUI README](src/gui/README.md) for GUI-specific documentation.
+See [GUI README](httprunner-gui/README.md) for GUI-specific documentation.
+
+## Project Structure
+
+The project is organized as a Cargo workspace with the following structure:
+
+```
+httprunner/
+├── httprunner-lib/      # Core library - HTTP processing logic
+├── httprunner-cli/      # CLI application
+├── httprunner-gui/      # GUI application
+└── httprunner/          # Meta-package for feature-based builds
+```
+
+**Building:**
+- `cargo build --release` - Build both CLI and GUI (default)
+- `cargo build --release --no-default-features --features=cli` - Build CLI only
+- `cargo build --release --no-default-features --features=gui` - Build GUI only
 
 ## Features
 
@@ -133,14 +150,14 @@ Make sure you have Rust installed (version 1.70 or later).
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
 cd httprunner
-cargo build --release
+cargo build --release --no-default-features --features=cli
 ```
 
 The binary will be at `target/release/httprunner` (or `httprunner.exe` on Windows).
 
 #### GUI Version
 
-The GUI version requires additional system dependencies on Linux. See [GUI README](src/gui/README.md) for details.
+The GUI version requires additional system dependencies on Linux. See [GUI README](httprunner-gui/README.md) for details.
 
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
@@ -152,12 +169,22 @@ sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
     libxkbcommon-dev libwayland-dev
 
 # Build GUI (all platforms)
-cargo build --bin httprunner-gui --features gui --release
+cargo build --release --no-default-features --features=gui
 ```
 
 The GUI binary will be at `target/release/httprunner-gui` (or `httprunner-gui.exe` on Windows).
 
 **Note**: macOS and Windows don't require additional dependencies for the GUI.
+
+#### Build Both (Default)
+
+To build both CLI and GUI in one command:
+
+```bash
+cargo build --release
+```
+
+This builds both binaries at once.
 
 ### Option 6: Use Docker
 
