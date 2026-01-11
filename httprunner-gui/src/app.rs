@@ -89,8 +89,8 @@ impl HttpRunnerApp {
     fn load_environments(&mut self, file: &PathBuf) {
         // Try to find and parse http-client.env.json
         if let Some(file_str) = file.to_str() {
-            if let Ok(Some(env_file)) = httprunner::environment::find_environment_file(file_str) {
-                if let Ok(env_config) = httprunner::environment::parse_environment_file(&env_file) {
+            if let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str) {
+                if let Ok(env_config) = httprunner_lib::environment::parse_environment_file(&env_file) {
                     // Extract environment names from the config
                     self.environments = env_config.keys().cloned().collect();
                     self.environments.sort(); // Sort alphabetically for consistent UI
