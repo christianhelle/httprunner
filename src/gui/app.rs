@@ -87,9 +87,19 @@ impl HttpRunnerApp {
         });
     }
 
-    fn load_environments(&mut self, _file: &PathBuf) {
-        // Environment loading is handled in parse_http_file
-        // For now, we'll leave this empty as environment selection is passed when running
+    fn load_environments(&mut self, file: &PathBuf) {
+        // Try to find and parse http-client.env.json
+        if let Some(file_str) = file.to_str() {
+            if let Ok(Some(env_file)) = httprunner::environment::find_environment_file(file_str) {
+                if let Ok(env_config) = httprunner::environment::parse_environment_file(&env_file) {
+                    // Extract environment names from the config
+                    self.environments = env_config.keys().cloned().collect();
+                    self.environments.sort(); // Sort alphabetically for consistent UI
+                    return;
+                }
+            }
+        }
+        // No environments found or error occurred
         self.environments = Vec::new();
     }
 }

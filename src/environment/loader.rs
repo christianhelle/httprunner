@@ -34,7 +34,7 @@ pub fn load_environment_file(
     Ok(variables)
 }
 
-pub(crate) fn find_environment_file(http_file_path: &str) -> Result<Option<PathBuf>> {
+pub fn find_environment_file(http_file_path: &str) -> Result<Option<PathBuf>> {
     let path = Path::new(http_file_path);
     let mut current_dir = path
         .parent()
@@ -57,7 +57,7 @@ pub(crate) fn find_environment_file(http_file_path: &str) -> Result<Option<PathB
     Ok(None)
 }
 
-pub(crate) fn parse_environment_file(
+pub fn parse_environment_file(
     file_path: &Path,
 ) -> Result<HashMap<String, HashMap<String, String>>> {
     let content = fs::read_to_string(file_path)?;
