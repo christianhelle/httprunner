@@ -1,5 +1,5 @@
 [package]
-name = "httprunner-gui"
+name = "httprunner-cli"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,27 +7,24 @@ license.workspace = true
 repository.workspace = true
 homepage.workspace = true
 documentation.workspace = true
-description = "HTTP File Runner - GUI application for executing HTTP requests from .http files"
+description = "HTTP File Runner - CLI tool for executing HTTP requests from .http files"
 readme = "README.md"
-keywords = ["http", "rest", "api", "testing", "gui"]
+keywords = ["http", "rest", "api", "testing", "cli"]
 categories = [
-  "gui",
+  "command-line-utilities",
   "development-tools",
   "web-programming::http-client",
 ]
 
 [[bin]]
-name = "httprunner-gui"
+name = "httprunner"
 path = "src/main.rs"
 
 [dependencies]
-httprunner-lib = { path = "../httprunner-lib" }
-eframe = { workspace = true }
-egui = { workspace = true }
-rfd = { workspace = true }
-env_logger = { workspace = true }
+httprunner-lib = { path = "../lib" }
+clap = { workspace = true }
 anyhow = { workspace = true }
-walkdir = { workspace = true }
+reqwest = { workspace = true }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

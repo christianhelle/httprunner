@@ -19,18 +19,18 @@ categories = [
 # CLI binary
 [[bin]]
 name = "httprunner"
-path = "../httprunner-cli/src/main.rs"
+path = "../cli/src/main.rs"
 required-features = ["cli"]
 
 # GUI binary
 [[bin]]
 name = "httprunner-gui"
-path = "../httprunner-gui/src/main.rs"
+path = "../gui/src/main.rs"
 required-features = ["gui"]
 
 [dependencies]
 # Library is always included
-httprunner-lib = { path = "../httprunner-lib" }
+httprunner-lib = { path = "../lib" }
 
 # CLI dependencies (optional)
 clap = { workspace = true, optional = true }
