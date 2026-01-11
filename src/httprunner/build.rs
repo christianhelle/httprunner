@@ -4,10 +4,14 @@ fn main() {
     // Embed Windows icon
     #[cfg(windows)]
     {
+        let icon_path = "../../images/icon.ico";
+        eprintln!("Attempting to embed icon from: {}", icon_path);
+        
         let mut res = winres::WindowsResource::new();
-        res.set_icon("../../images/icon.ico");
-        if let Err(e) = res.compile() {
-            eprintln!("Warning: Failed to embed icon: {}", e);
+        res.set_icon(icon_path);
+        match res.compile() {
+            Ok(_) => eprintln!("Successfully embedded icon from {}", icon_path),
+            Err(e) => eprintln!("Warning: Failed to embed icon: {}", e),
         }
     }
 
