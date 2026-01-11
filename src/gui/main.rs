@@ -1,0 +1,27 @@
+mod app;
+mod file_tree;
+mod request_view;
+mod results_view;
+
+use app::HttpRunnerApp;
+
+fn main() -> eframe::Result<()> {
+    env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([1200.0, 800.0])
+            .with_min_inner_size([800.0, 600.0])
+            .with_icon(
+                // Load icon if available
+                eframe::icon_data::from_png_bytes(&[]).unwrap_or_default(),
+            ),
+        ..Default::default()
+    };
+
+    eframe::run_native(
+        "HTTP Runner",
+        native_options,
+        Box::new(|cc| Ok(Box::new(HttpRunnerApp::new(cc)))),
+    )
+}
