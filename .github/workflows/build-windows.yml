@@ -34,7 +34,7 @@ jobs:
       run: cargo build
 
     - name: Build GUI
-      run: cargo build --features=gui
+      run: cargo build --package httprunner-gui
 
     - name: Run tests
       run: cargo test
@@ -43,7 +43,7 @@ jobs:
       run: cargo build --release
 
     - name: Build GUI release
-      run: cargo build --features=gui --release
+      run: cargo build --package httprunner-gui --release
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6
