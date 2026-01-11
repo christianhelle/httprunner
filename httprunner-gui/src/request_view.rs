@@ -28,7 +28,7 @@ impl RequestView {
         // Parse the .http file
         if let Some(path_str) = path.to_str() {
             let parsed_requests =
-                httprunner::parser::parse_http_file(path_str, None).unwrap_or_default();
+                httprunner_lib::parser::parse_http_file(path_str, None).unwrap_or_default();
 
             for req in parsed_requests {
                 let request_info = RequestInfo {
