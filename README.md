@@ -18,7 +18,7 @@ HTTP Runner is available in two interfaces:
 - **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
 - **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
 
-See [GUI README](src/gui/README.md) for GUI-specific documentation.
+See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
 
 ## Project Structure
 
@@ -27,10 +27,9 @@ The project is organized as a Cargo workspace with the following structure:
 ```
 httprunner/
 ├── src/
-│   ├── lib/         # Core library - HTTP processing logic
-│   ├── cli/         # CLI application
-│   ├── gui/         # GUI application
-│   └── httprunner/  # Meta-package for feature-based builds
+│   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
+│   ├── cli/         # CLI application (httprunner-cli) - builds httprunner binary
+│   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary
 ├── examples/
 ├── docs/
 └── ...
@@ -38,8 +37,8 @@ httprunner/
 
 **Building:**
 - `cargo build --release` - Build both CLI and GUI (default)
-- `cargo build --release --no-default-features --features=cli` - Build CLI only
-- `cargo build --release --no-default-features --features=gui` - Build GUI only
+- `cargo build --release -p httprunner-cli` - Build CLI only
+- `cargo build --release -p httprunner-gui` - Build GUI only
 
 ## Features
 
@@ -154,14 +153,14 @@ Make sure you have Rust installed (version 1.70 or later).
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
 cd httprunner
-cargo build --release --no-default-features --features=cli
+cargo build --release -p httprunner-cli
 ```
 
 The binary will be at `target/release/httprunner` (or `httprunner.exe` on Windows).
 
 #### GUI Version
 
-The GUI version requires additional system dependencies on Linux. See [GUI README](src/gui/README.md) for details.
+The GUI version requires additional system dependencies on Linux. See [GUI README](src/gui/src/README.md) for details.
 
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
@@ -173,7 +172,7 @@ sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
     libxkbcommon-dev libwayland-dev
 
 # Build GUI (all platforms)
-cargo build --release --no-default-features --features=gui
+cargo build --release -p httprunner-gui
 ```
 
 The GUI binary will be at `target/release/httprunner-gui` (or `httprunner-gui.exe` on Windows).
