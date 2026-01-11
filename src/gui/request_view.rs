@@ -60,8 +60,6 @@ impl RequestView {
         
         egui::ScrollArea::vertical().show(ui, |ui| {
             for (idx, request) in self.requests.iter().enumerate() {
-                let is_selected = self.selected_index == Some(idx);
-                
                 let header_text = if let Some(name) = &request.name {
                     format!("{} - {} {}", idx + 1, request.method, name)
                 } else {
@@ -106,10 +104,6 @@ impl RequestView {
                             self.selected_index = Some(idx);
                         }
                     });
-                
-                if ui.selectable_label(is_selected, "").clicked() {
-                    self.selected_index = Some(idx);
-                }
             }
         });
         
