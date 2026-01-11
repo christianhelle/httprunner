@@ -1,5 +1,7 @@
 # HTTP Runner GUI
 
+> **⚠️ Experimental**: This GUI application is currently in an experimental phase. Features and interface may change as development continues. For production use, we recommend the stable [CLI version](../../cli/).
+
 A native cross-platform graphical user interface for HTTP Runner built with Rust and egui.
 
 ## Features

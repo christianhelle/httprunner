@@ -20,6 +20,8 @@ HTTP Runner is available in two interfaces:
 
 ### GUI Application
 
+> **⚠️ Experimental**: The GUI application is currently in an experimental phase. Features and interface may change. For production use, we recommend the stable CLI version.
+
 ![HTTP Runner GUI](images/gui.png)
 
 The GUI provides a visual interface for:
