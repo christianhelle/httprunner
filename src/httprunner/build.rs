@@ -10,7 +10,11 @@ fn main() {
         let mut res = winres::WindowsResource::new();
         res.set_icon(icon_path);
         match res.compile() {
-            Ok(_) => eprintln!("Successfully embedded icon from {}", icon_path),
+            Ok(_) => {
+                eprintln!("Successfully embedded icon from {}", icon_path);
+                // Ensure the resource is linked for all binaries
+                println!("cargo:rustc-link-lib=dylib=resource");
+            }
             Err(e) => eprintln!("Warning: Failed to embed icon: {}", e),
         }
     }
