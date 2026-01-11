@@ -81,8 +81,9 @@ jobs:
       - name: Update Version
         shell: pwsh
         run: |
-          $version = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
-          $version | Set-Content -Path Cargo.toml
+          # Update workspace version
+          $rootToml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $rootToml | Set-Content -Path Cargo.toml
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -91,11 +92,8 @@ jobs:
           target: ${{ matrix.target }}
           cache: true
 
-      - name: Build release binaries
-        run: cargo build --release --target ${{ matrix.target }}
-
-      - name: Build GUI release binaries
-        run: cargo build --release --target ${{ matrix.target }} --features=gui
+      - name: Build CLI release binary
+        run: cargo build --release --target ${{ matrix.target }} -p httprunner-cli
 
       - name: Create archive (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -244,15 +242,16 @@ jobs:
       - name: Update Version
         shell: pwsh
         run: |
-          $version = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
-          $version | Set-Content -Path Cargo.toml
+          # Update workspace version
+          $rootToml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $rootToml | Set-Content -Path Cargo.toml
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
 
-      - name: Publish to crates.io
-        run: cargo publish --allow-dirty --token ${{ secrets.CRATES_TOKEN }}
+      - name: Publish CLI to crates.io
+        run: cargo publish --allow-dirty --token ${{ secrets.CRATES_TOKEN }} -p httprunner-cli
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_TOKEN }}
