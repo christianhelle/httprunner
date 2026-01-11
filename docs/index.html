@@ -16,6 +16,7 @@
                 <span class="brand-text">HTTP File Runner</span>
             </div>            <ul class="nav-menu">
                 <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#gui" class="nav-link">GUI</a></li>
                 <li><a href="#features" class="nav-link">Features</a></li>
                 <li><a href="install.html" class="nav-link">Installation</a></li>
                 <li><a href="#usage" class="nav-link">Usage</a></li>
@@ -41,7 +42,7 @@
                         HTTP File Runner
                     </h1>
                     <p class="hero-subtitle">
-                        A simple command-line tool written in Rust that parses .http files and executes HTTP requests, providing colored output with emojis to indicate success, failure, or skipped requests
+                        A powerful tool for executing HTTP requests from .http files, available as both a command-line interface and a native GUI application. Features colored output with emojis to indicate success, failure, or skipped requests.
                     </p>
                     <p class="hero-note" style="font-size: 0.9em; margin-top: 1em; margin-bottom: 2em; opacity: 0.9;">
                         <em>Originally written in Zig, ported to Rust due to limitations in Zig's standard library HTTP client APIs for configuring insecure HTTPS connections.</em>
@@ -92,6 +93,50 @@
                                 File Summary: <span style="color: #4ade80;">3</span> Passed, <span style="color: #f87171;">1</span> Failed, <span style="color: #facc15;">0</span> Skipped
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gui" class="gui-section" style="padding: 4rem 0; background: var(--bg-secondary);">
+            <div class="container">
+                <h2 class="section-title">Graphical User Interface</h2>
+                <p style="text-align: center; max-width: 800px; margin: 0 auto 2rem; color: var(--text-secondary);">
+                    HTTP Runner is available in two interfaces: a powerful CLI for automation and scripting, 
+                    and a native GUI application for visual workflow and interactive testing.
+                </p>
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    <img src="../images/gui.png" alt="HTTP Runner GUI" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                </div>
+                <div style="margin-top: 2rem; text-align: center;">
+                    <h3 style="margin-bottom: 1rem;">GUI Features</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; max-width: 900px; margin: 0 auto;">
+                        <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗂️</div>
+                            <strong>File Browser</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">Browse and select .http files from a directory tree</p>
+                        </div>
+                        <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
+                            <strong>Request View</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">View and execute individual requests interactively</p>
+                        </div>
+                        <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                            <strong>Results Panel</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">View response status, headers, and formatted body</p>
+                        </div>
+                        <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌐</div>
+                            <strong>Environment Support</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">Automatically detect and use environment files</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 2rem;">
+                        <a href="https://github.com/christianhelle/httprunner/releases" class="btn btn-primary">Download GUI</a>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                            Available for Windows, macOS, and Linux
+                        </p>
                     </div>
                 </div>
             </div>

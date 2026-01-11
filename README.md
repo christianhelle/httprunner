@@ -18,6 +18,17 @@ HTTP Runner is available in two interfaces:
 - **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
 - **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
 
+### GUI Application
+
+![HTTP Runner GUI](images/gui.png)
+
+The GUI provides a visual interface for:
+- Browsing and selecting `.http` files from a directory tree
+- Viewing request details and executing individual requests
+- Running all requests in a file
+- Viewing response status, headers, and body
+- Automatically detecting environment files
+
 See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
 
 ## Project Structure
