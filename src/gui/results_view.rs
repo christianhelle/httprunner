@@ -122,7 +122,21 @@ impl ResultsView {
                             error: format!("Request index {} not found", index),
                         });
                     }
+                } else if let Ok(mut r) = results.lock() {
+                    r.clear();
+                    r.push(ExecutionResult::Failure {
+                        method: "PARSE".to_string(),
+                        url: path.display().to_string(),
+                        error: "Failed to parse .http file".to_string(),
+                    });
                 }
+            } else if let Ok(mut r) = results.lock() {
+                r.clear();
+                r.push(ExecutionResult::Failure {
+                    method: "PATH".to_string(),
+                    url: path.display().to_string(),
+                    error: "Invalid file path".to_string(),
+                });
             }
             
             if let Ok(mut running) = is_running.lock() {
