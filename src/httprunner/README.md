@@ -24,10 +24,10 @@ This builds only the GUI application (`httprunner-gui`).
 
 ## Project Structure
 
-- `httprunner-lib/` - Core library with all HTTP processing logic
-- `httprunner-cli/` - Command-line interface application
-- `httprunner-gui/` - Graphical user interface application
-- `httprunner/` - Meta-package for feature-based build control (this package)
+- `src/lib/` - Core library with all HTTP processing logic
+- `src/cli/` - Command-line interface application
+- `src/gui/` - Graphical user interface application
+- `src/httprunner/` - Meta-package for feature-based build control (this package)
 
 ## Features
 
