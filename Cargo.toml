@@ -26,7 +26,7 @@ base64 = { version = "0.22.1", default-features = false, features = ["std"] }
 clap = { version = "4.5", features = ["derive", "std", "help", "usage", "error-context"], default-features = false }
 
 # GUI dependencies
-eframe = "0.29"
+eframe = "0.33"
 egui = "0.29"
 rfd = "0.17"
 env_logger = "0.11"
