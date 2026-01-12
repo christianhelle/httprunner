@@ -4,6 +4,10 @@
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.36...HEAD)
 
+**Implemented enhancements:**
+
+- Add Native Rust GUI Application [\#101](https://github.com/christianhelle/httprunner/pull/101) ([christianhelle](https://github.com/christianhelle))
+
 **Merged pull requests:**
 
 - Add comprehensive processor executor tests with idiomatic Rust patterns [\#99](https://github.com/christianhelle/httprunner/pull/99) ([christianhelle](https://github.com/christianhelle))
