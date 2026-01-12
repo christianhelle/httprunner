@@ -11,48 +11,6 @@ A powerful command-line tool and native GUI application written in Rust that par
 
 > **Note**: This project was originally written in Zig. The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now contains only the Rust implementation, which is actively maintained and recommended for all use cases.
 
-## Interfaces
-
-HTTP Runner is available in two interfaces:
-
-- **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
-- **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
-
-### GUI Application
-
-> **⚠️ Experimental**: The GUI application is currently in an experimental phase. Features and interface may change. For production use, we recommend the stable CLI version.
-
-![HTTP Runner GUI](images/gui.png)
-
-The GUI provides a visual interface for:
-- Browsing and selecting `.http` files from a directory tree
-- Viewing request details and executing individual requests
-- Running all requests in a file
-- Viewing response status, headers, and body
-- Automatically detecting environment files
-
-See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
-
-## Project Structure
-
-The project is organized as a Cargo workspace with the following structure:
-
-```
-httprunner/
-├── src/
-│   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
-│   ├── cli/         # CLI application (httprunner) - builds httprunner binary
-│   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary
-├── examples/
-├── docs/
-└── ...
-```
-
-**Building:**
-- `cargo build --release` - Build both CLI and GUI (default)
-- `cargo build --release -p httprunner` - Build CLI only
-- `cargo build --release -p httprunner-gui` - Build GUI only
-
 ## Features
 
 - 🚀 Parse and execute HTTP requests from `.http` files
@@ -159,7 +117,7 @@ sudo snap install httprunner
 
 ### Option 5: Build from Source
 
-Make sure you have Rust installed (version 1.70 or later).
+Make sure you have Rust installed (version 1.92 or later).
 
 #### CLI Version
 
@@ -1974,7 +1932,7 @@ The project includes installer scripts for easy deployment:
 
 ### Prerequisites
 
-- Rust 1.70 or later (https://rustup.rs/)
+- Rust 1.92 or later (https://rustup.rs/)
 - Git (for version generation)
 
 ### Building
@@ -2049,6 +2007,48 @@ cargo test -- --nocapture
 # Run specific test
 cargo test test_name
 ```
+
+## Interfaces
+
+HTTP Runner is available in two interfaces:
+
+- **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
+- **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
+
+### GUI Application
+
+> **⚠️ Experimental**: The GUI application is currently in an experimental phase. Features and interface may change. For production use, we recommend the stable CLI version.
+
+![HTTP Runner GUI](images/gui.png)
+
+The GUI provides a visual interface for:
+- Browsing and selecting `.http` files from a directory tree
+- Viewing request details and executing individual requests
+- Running all requests in a file
+- Viewing response status, headers, and body
+- Automatically detecting environment files
+
+See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
+
+## Project Structure
+
+The project is organized as a Cargo workspace with the following structure:
+
+```
+httprunner/
+├── src/
+│   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
+│   ├── cli/         # CLI application (httprunner) - builds httprunner binary
+│   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary
+├── examples/
+├── docs/
+└── ...
+```
+
+**Building:**
+- `cargo build --release` - Build both CLI and GUI (default)
+- `cargo build --release -p httprunner` - Build CLI only
+- `cargo build --release -p httprunner-gui` - Build GUI only
 
 ## Legacy Zig Implementation
 

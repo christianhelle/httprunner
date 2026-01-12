@@ -11,7 +11,7 @@ This is a Rust project. The original Zig implementation has been moved to a sepa
 ## Working Effectively
 
 ### Prerequisites and Setup
-- Install Rust 1.70 or later from https://rustup.rs/
+- Install Rust 1.92 or later from https://rustup.rs/
 - Ensure git is available for version generation
 - CRITICAL: This project requires internet access for HTTP testing - many validation scenarios will fail in offline environments
 

@@ -19,7 +19,7 @@ A native cross-platform graphical user interface for HTTP Runner built with Rust
 
 ### Prerequisites
 
-- Rust 1.70 or later
+- Rust 1.92 or later
 - Development libraries for your platform:
   - **Linux**: `libxcb`, `libxkbcommon`, `libwayland-client`, `libwayland-cursor`
   - **macOS**: Xcode command-line tools
