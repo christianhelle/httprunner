@@ -53,24 +53,54 @@ impl ResultsView {
         }
 
         thread::spawn(move || {
-            // Parse the file
             if let Some(path_str) = path.to_str() {
-                if let Ok(requests) = httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
-                {
-                    // Execute requests
-                    for request in requests {
-                        let result = execute_request(request);
+                // Use processor::process_http_files for consistent behavior with CLI
+                let files = vec![path_str.to_string()];
+                match httprunner_lib::processor::process_http_files(
+                    &files,
+                    false, // verbose
+                    None,  // log_filename
+                    env.as_deref(),
+                    false, // insecure
+                    false, // pretty_json
+                ) {
+                    Ok(processor_results) => {
                         if let Ok(mut r) = results.lock() {
-                            r.push(result);
+                            r.clear();
+                            // Convert ProcessorResults to ExecutionResults
+                            for file_result in processor_results.files {
+                                for request_context in file_result.result_contexts {
+                                    if let Some(http_result) = request_context.result {
+                                        if http_result.success {
+                                            r.push(ExecutionResult::Success {
+                                                method: request_context.request.method,
+                                                url: request_context.request.url,
+                                                status: http_result.status_code,
+                                                duration_ms: http_result.duration_ms,
+                                                response_body: http_result.response_body.unwrap_or_default(),
+                                            });
+                                        } else {
+                                            r.push(ExecutionResult::Failure {
+                                                method: request_context.request.method,
+                                                url: request_context.request.url,
+                                                error: http_result.error_message.unwrap_or_else(|| "Unknown error".to_string()),
+                                            });
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                } else if let Ok(mut r) = results.lock() {
-                    r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "PARSE".to_string(),
-                        url: path.display().to_string(),
-                        error: "Failed to parse .http file".to_string(),
-                    });
+                    Err(e) => {
+                        if let Ok(mut r) = results.lock() {
+                            r.clear();
+                            r.push(ExecutionResult::Failure {
+                                method: "PROCESS".to_string(),
+                                url: path.display().to_string(),
+                                error: e.to_string(),
+                            });
+                        }
+                    }
                 }
             } else if let Ok(mut r) = results.lock() {
                 r.clear();
