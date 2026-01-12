@@ -77,13 +77,17 @@ impl ResultsView {
                                                 url: request_context.request.url,
                                                 status: http_result.status_code,
                                                 duration_ms: http_result.duration_ms,
-                                                response_body: http_result.response_body.unwrap_or_default(),
+                                                response_body: http_result
+                                                    .response_body
+                                                    .unwrap_or_default(),
                                             });
                                         } else {
                                             r.push(ExecutionResult::Failure {
                                                 method: request_context.request.method,
                                                 url: request_context.request.url,
-                                                error: http_result.error_message.unwrap_or_else(|| "Unknown error".to_string()),
+                                                error: http_result
+                                                    .error_message
+                                                    .unwrap_or_else(|| "Unknown error".to_string()),
                                             });
                                         }
                                     }
@@ -138,7 +142,8 @@ impl ResultsView {
         thread::spawn(move || {
             // Parse the file
             if let Some(path_str) = path.to_str() {
-                if let Ok(requests) = httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
+                if let Ok(requests) =
+                    httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
                 {
                     if let Some(request) = requests.get(index) {
                         let result = execute_request(request.clone());

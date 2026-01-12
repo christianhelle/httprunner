@@ -38,34 +38,48 @@ impl HttpRunnerApp {
 
     fn update_font_size(&mut self, ctx: &egui::Context) {
         let mut style = (*ctx.style()).clone();
-        
+
         // Update all text styles with the new font size
         let base_size = self.font_size;
         style.text_styles = [
-            (egui::TextStyle::Small, egui::FontId::proportional(base_size * 0.857)),
+            (
+                egui::TextStyle::Small,
+                egui::FontId::proportional(base_size * 0.857),
+            ),
             (egui::TextStyle::Body, egui::FontId::proportional(base_size)),
-            (egui::TextStyle::Button, egui::FontId::proportional(base_size)),
-            (egui::TextStyle::Heading, egui::FontId::proportional(base_size * 1.286)),
-            (egui::TextStyle::Monospace, egui::FontId::monospace(base_size)),
+            (
+                egui::TextStyle::Button,
+                egui::FontId::proportional(base_size),
+            ),
+            (
+                egui::TextStyle::Heading,
+                egui::FontId::proportional(base_size * 1.286),
+            ),
+            (
+                egui::TextStyle::Monospace,
+                egui::FontId::monospace(base_size),
+            ),
         ]
         .into();
-        
+
         ctx.set_style(style);
     }
 
     fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) {
         // Check for Ctrl + Plus (zoom in)
-        if ctx.input(|i| i.modifiers.ctrl && (i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals))) {
+        if ctx.input(|i| {
+            i.modifiers.ctrl && (i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals))
+        }) {
             self.font_size = (self.font_size + Self::FONT_SIZE_STEP).min(Self::MAX_FONT_SIZE);
             self.update_font_size(ctx);
         }
-        
+
         // Check for Ctrl + Minus (zoom out)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Minus)) {
             self.font_size = (self.font_size - Self::FONT_SIZE_STEP).max(Self::MIN_FONT_SIZE);
             self.update_font_size(ctx);
         }
-        
+
         // Check for Ctrl + 0 (reset to default)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Num0)) {
             self.font_size = Self::DEFAULT_FONT_SIZE;
@@ -133,8 +147,11 @@ impl HttpRunnerApp {
     fn load_environments(&mut self, file: &PathBuf) {
         // Try to find and parse http-client.env.json
         if let Some(file_str) = file.to_str() {
-            if let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str) {
-                if let Ok(env_config) = httprunner_lib::environment::parse_environment_file(&env_file) {
+            if let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
+            {
+                if let Ok(env_config) =
+                    httprunner_lib::environment::parse_environment_file(&env_file)
+                {
                     // Extract environment names from the config
                     self.environments = env_config.keys().cloned().collect();
                     self.environments.sort(); // Sort alphabetically for consistent UI
@@ -187,14 +204,16 @@ impl eframe::App for HttpRunnerApp {
 
                         // Use available space minus the button area
                         let available_height = ui.available_height() - 40.0; // Reserve space for buttons
-                        
+
                         // Wrap the request view in a scroll area with fixed height
                         egui::ScrollArea::vertical()
                             .id_salt("request_details_scroll")
                             .max_height(available_height)
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
-                                if let Some(selected_idx) = self.request_view.show(ui, &self.selected_file) {
+                                if let Some(selected_idx) =
+                                    self.request_view.show(ui, &self.selected_file)
+                                {
                                     self.selected_request_index = Some(selected_idx);
                                 }
                             });
@@ -204,11 +223,14 @@ impl eframe::App for HttpRunnerApp {
                         // Run buttons - always visible at bottom
                         ui.horizontal(|ui| {
                             let run_all_enabled = self.selected_file.is_some();
-                            let run_one_enabled =
-                                self.selected_file.is_some() && self.selected_request_index.is_some();
+                            let run_one_enabled = self.selected_file.is_some()
+                                && self.selected_request_index.is_some();
 
                             if ui
-                                .add_enabled(run_all_enabled, egui::Button::new("▶ Run All Requests"))
+                                .add_enabled(
+                                    run_all_enabled,
+                                    egui::Button::new("▶ Run All Requests"),
+                                )
                                 .clicked()
                             {
                                 if let Some(file) = &self.selected_file {
@@ -218,7 +240,10 @@ impl eframe::App for HttpRunnerApp {
                             }
 
                             if ui
-                                .add_enabled(run_one_enabled, egui::Button::new("▶ Run Selected Request"))
+                                .add_enabled(
+                                    run_one_enabled,
+                                    egui::Button::new("▶ Run Selected Request"),
+                                )
                                 .clicked()
                             {
                                 if let (Some(file), Some(idx)) =
@@ -240,10 +265,10 @@ impl eframe::App for HttpRunnerApp {
                 ui.vertical(|ui| {
                     ui.heading("Results");
                     ui.separator();
-                    
+
                     // Reserve all remaining space for results scroll area
                     let available_height = ui.available_height();
-                    
+
                     // Wrap results in a scroll area with explicit height
                     egui::ScrollArea::vertical()
                         .id_salt("results_scroll")
