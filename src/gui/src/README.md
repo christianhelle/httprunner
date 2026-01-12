@@ -1,6 +1,6 @@
 # HTTP Runner GUI
 
-> **⚠️ Experimental**: This GUI application is currently in an experimental phase. Features and interface may change as development continues. For production use, we recommend the stable [CLI version](../../cli/).
+> **⚠️ Experimental**: This GUI application is currently in an experimental phase. Features and interface may change as development continues. 
 
 A native cross-platform graphical user interface for HTTP Runner built with Rust and egui.
 
@@ -29,8 +29,7 @@ A native cross-platform graphical user interface for HTTP Runner built with Rust
 
 ```bash
 # Install dependencies
-sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
-    libxkbcommon-dev libssl-dev libfontconfig1-dev libwayland-dev
+sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev libfontconfig1-dev libwayland-dev
 
 # Build the GUI
 cargo build --bin httprunner-gui --features gui --release
@@ -86,22 +85,22 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 ## UI Layout
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ File | Environment: [None ▾]                            │
+┌───────────────────────────────────────────────────────────┐
+│ File | Environment: [None ▾]                              │
 ├──────────┬──────────────────────┬─────────────────────────┤
 │          │                      │                         │
-│  📁 Dir  │  Request Details     │  Results                │
-│  📄 File │                      │                         │
-│  📄 File │  [Request 1]         │  ✅ SUCCESS             │
+│ Dir      │  Request Details     │  Results                │
+│  File    │                      │                         │
+│  File    │  [Request 1]         │  SUCCESS                │
 │          │  [Request 2]         │  GET https://...        │
 │          │                      │  Status: 200            │
-│          │  ▶ Run All           │  Duration: 123 ms       │
-│          │  ▶ Run Selected      │                         │
+│          │  Run All             │  Duration: 123 ms       │
+│          │  Run Selected        │                         │
 │          │                      │  Response:              │
 │          │                      │  { "data": "..." }      │
 └──────────┴──────────────────────┴─────────────────────────┘
-│ Working Directory: /path/to/files                        │
-└─────────────────────────────────────────────────────────┘
+│ Working Directory: /path/to/files                         │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ## Keyboard Shortcuts
