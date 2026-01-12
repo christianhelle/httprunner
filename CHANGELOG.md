@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Add keyboard shortcuts for font size adjustment in GUI [\#105](https://github.com/christianhelle/httprunner/pull/105) ([christianhelle](https://github.com/christianhelle))
 - Add Native Rust GUI Application [\#101](https://github.com/christianhelle/httprunner/pull/101) ([christianhelle](https://github.com/christianhelle))
 
 **Merged pull requests:**
