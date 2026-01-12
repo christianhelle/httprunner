@@ -17,13 +17,11 @@ impl FileTree {
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            if entry.file_type().is_file() {
-                if let Some(ext) = entry.path().extension() {
-                    if ext == "http" {
+            if entry.file_type().is_file()
+                && let Some(ext) = entry.path().extension()
+                    && ext == "http" {
                         http_files.push(entry.path().to_path_buf());
                     }
-                }
-            }
         }
 
         // Sort files by path

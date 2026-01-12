@@ -183,11 +183,10 @@ impl ResultsView {
     }
 
     pub fn show(&self, ui: &mut egui::Ui) {
-        if let Ok(is_running) = self.is_running.lock() {
-            if *is_running {
+        if let Ok(is_running) = self.is_running.lock()
+            && *is_running {
                 ui.spinner();
             }
-        }
 
         if let Ok(results) = self.results.lock() {
             if results.is_empty() {

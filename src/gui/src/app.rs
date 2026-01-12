@@ -113,9 +113,7 @@ impl HttpRunnerApp {
                 ui.label("Environment:");
                 egui::ComboBox::from_id_salt("env_selector")
                     .selected_text(
-                        self.selected_environment
-                            .as_ref()
-                            .map(|s| s.as_str())
+                        self.selected_environment.as_deref()
                             .unwrap_or("None"),
                     )
                     .show_ui(ui, |ui| {
@@ -146,10 +144,9 @@ impl HttpRunnerApp {
 
     fn load_environments(&mut self, file: &PathBuf) {
         // Try to find and parse http-client.env.json
-        if let Some(file_str) = file.to_str() {
-            if let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
-            {
-                if let Ok(env_config) =
+        if let Some(file_str) = file.to_str()
+            && let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
+                && let Ok(env_config) =
                     httprunner_lib::environment::parse_environment_file(&env_file)
                 {
                     // Extract environment names from the config
@@ -157,8 +154,6 @@ impl HttpRunnerApp {
                     self.environments.sort(); // Sort alphabetically for consistent UI
                     return;
                 }
-            }
-        }
         // No environments found or error occurred
         self.environments = Vec::new();
     }
@@ -232,12 +227,10 @@ impl eframe::App for HttpRunnerApp {
                                     egui::Button::new("▶ Run All Requests"),
                                 )
                                 .clicked()
-                            {
-                                if let Some(file) = &self.selected_file {
+                                && let Some(file) = &self.selected_file {
                                     self.results_view
                                         .run_file(file, self.selected_environment.as_deref());
                                 }
-                            }
 
                             if ui
                                 .add_enabled(
@@ -245,8 +238,7 @@ impl eframe::App for HttpRunnerApp {
                                     egui::Button::new("▶ Run Selected Request"),
                                 )
                                 .clicked()
-                            {
-                                if let (Some(file), Some(idx)) =
+                                && let (Some(file), Some(idx)) =
                                     (&self.selected_file, self.selected_request_index)
                                 {
                                     self.results_view.run_single_request(
@@ -255,7 +247,6 @@ impl eframe::App for HttpRunnerApp {
                                         self.selected_environment.as_deref(),
                                     );
                                 }
-                            }
                         });
                     });
                 });
