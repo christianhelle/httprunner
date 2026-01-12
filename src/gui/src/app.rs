@@ -75,7 +75,7 @@ impl HttpRunnerApp {
 
     fn show_top_panel(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
+            egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Open Directory...").clicked() {
                         if let Some(path) = rfd::FileDialog::new().pick_folder() {
@@ -84,7 +84,7 @@ impl HttpRunnerApp {
                             self.selected_file = None;
                             self.selected_request_index = None;
                         }
-                        ui.close_menu();
+                        ui.close();
                     }
 
                     ui.separator();
