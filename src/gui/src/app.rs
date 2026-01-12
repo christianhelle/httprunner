@@ -173,58 +173,87 @@ impl eframe::App for HttpRunnerApp {
                 }
             });
 
-        // Center panel - Request details
+        // Center panel - Request details and Results
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Request Details");
-            ui.separator();
+            // Top section - Request Details
+            egui::TopBottomPanel::top("request_details_panel")
+                .resizable(true)
+                .default_height(400.0)
+                .min_height(200.0)
+                .show_inside(ui, |ui| {
+                    ui.vertical(|ui| {
+                        ui.heading("Request Details");
+                        ui.separator();
 
-            if let Some(selected_idx) = self.request_view.show(ui, &self.selected_file) {
-                self.selected_request_index = Some(selected_idx);
-            }
+                        // Use available space minus the button area
+                        let available_height = ui.available_height() - 40.0; // Reserve space for buttons
+                        
+                        // Wrap the request view in a scroll area with fixed height
+                        egui::ScrollArea::vertical()
+                            .id_salt("request_details_scroll")
+                            .max_height(available_height)
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                if let Some(selected_idx) = self.request_view.show(ui, &self.selected_file) {
+                                    self.selected_request_index = Some(selected_idx);
+                                }
+                            });
 
-            ui.separator();
+                        ui.separator();
 
-            // Run button
-            ui.horizontal(|ui| {
-                let run_all_enabled = self.selected_file.is_some();
-                let run_one_enabled =
-                    self.selected_file.is_some() && self.selected_request_index.is_some();
+                        // Run buttons - always visible at bottom
+                        ui.horizontal(|ui| {
+                            let run_all_enabled = self.selected_file.is_some();
+                            let run_one_enabled =
+                                self.selected_file.is_some() && self.selected_request_index.is_some();
 
-                if ui
-                    .add_enabled(run_all_enabled, egui::Button::new("▶ Run All Requests"))
-                    .clicked()
-                {
-                    if let Some(file) = &self.selected_file {
-                        self.results_view
-                            .run_file(file, self.selected_environment.as_deref());
-                    }
-                }
+                            if ui
+                                .add_enabled(run_all_enabled, egui::Button::new("▶ Run All Requests"))
+                                .clicked()
+                            {
+                                if let Some(file) = &self.selected_file {
+                                    self.results_view
+                                        .run_file(file, self.selected_environment.as_deref());
+                                }
+                            }
 
-                if ui
-                    .add_enabled(run_one_enabled, egui::Button::new("▶ Run Selected Request"))
-                    .clicked()
-                {
-                    if let (Some(file), Some(idx)) =
-                        (&self.selected_file, self.selected_request_index)
-                    {
-                        self.results_view.run_single_request(
-                            file,
-                            idx,
-                            self.selected_environment.as_deref(),
-                        );
-                    }
-                }
+                            if ui
+                                .add_enabled(run_one_enabled, egui::Button::new("▶ Run Selected Request"))
+                                .clicked()
+                            {
+                                if let (Some(file), Some(idx)) =
+                                    (&self.selected_file, self.selected_request_index)
+                                {
+                                    self.results_view.run_single_request(
+                                        file,
+                                        idx,
+                                        self.selected_environment.as_deref(),
+                                    );
+                                }
+                            }
+                        });
+                    });
+                });
+
+            // Bottom section - Results
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                ui.vertical(|ui| {
+                    ui.heading("Results");
+                    ui.separator();
+                    
+                    // Reserve all remaining space for results scroll area
+                    let available_height = ui.available_height();
+                    
+                    // Wrap results in a scroll area with explicit height
+                    egui::ScrollArea::vertical()
+                        .id_salt("results_scroll")
+                        .max_height(available_height)
+                        .auto_shrink([false, false])
+                        .show(ui, |ui| {
+                            self.results_view.show(ui);
+                        });
+                });
             });
         });
-
-        // Right panel - Results
-        egui::SidePanel::right("results_panel")
-            .resizable(true)
-            .default_width(400.0)
-            .show(ctx, |ui| {
-                ui.heading("Results");
-                ui.separator();
-                self.results_view.show(ui);
-            });
     }
 }
