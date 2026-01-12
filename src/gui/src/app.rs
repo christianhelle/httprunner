@@ -10,9 +10,15 @@ pub struct HttpRunnerApp {
     environments: Vec<String>,
     selected_environment: Option<String>,
     root_directory: PathBuf,
+    font_size: f32,
 }
 
 impl HttpRunnerApp {
+    const DEFAULT_FONT_SIZE: f32 = 14.0;
+    const MIN_FONT_SIZE: f32 = 8.0;
+    const MAX_FONT_SIZE: f32 = 32.0;
+    const FONT_SIZE_STEP: f32 = 1.0;
+
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         // Start with current directory
         let root_directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -26,6 +32,44 @@ impl HttpRunnerApp {
             environments: Vec::new(),
             selected_environment: None,
             root_directory,
+            font_size: Self::DEFAULT_FONT_SIZE,
+        }
+    }
+
+    fn update_font_size(&mut self, ctx: &egui::Context) {
+        let mut style = (*ctx.style()).clone();
+        
+        // Update all text styles with the new font size
+        let base_size = self.font_size;
+        style.text_styles = [
+            (egui::TextStyle::Small, egui::FontId::proportional(base_size * 0.857)),
+            (egui::TextStyle::Body, egui::FontId::proportional(base_size)),
+            (egui::TextStyle::Button, egui::FontId::proportional(base_size)),
+            (egui::TextStyle::Heading, egui::FontId::proportional(base_size * 1.286)),
+            (egui::TextStyle::Monospace, egui::FontId::monospace(base_size)),
+        ]
+        .into();
+        
+        ctx.set_style(style);
+    }
+
+    fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) {
+        // Check for Ctrl + Plus (zoom in)
+        if ctx.input(|i| i.modifiers.ctrl && (i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals))) {
+            self.font_size = (self.font_size + Self::FONT_SIZE_STEP).min(Self::MAX_FONT_SIZE);
+            self.update_font_size(ctx);
+        }
+        
+        // Check for Ctrl + Minus (zoom out)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Minus)) {
+            self.font_size = (self.font_size - Self::FONT_SIZE_STEP).max(Self::MIN_FONT_SIZE);
+            self.update_font_size(ctx);
+        }
+        
+        // Check for Ctrl + 0 (reset to default)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Num0)) {
+            self.font_size = Self::DEFAULT_FONT_SIZE;
+            self.update_font_size(ctx);
         }
     }
 
@@ -105,6 +149,7 @@ impl HttpRunnerApp {
 
 impl eframe::App for HttpRunnerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.handle_keyboard_shortcuts(ctx);
         self.show_top_panel(ctx);
         self.show_bottom_panel(ctx);
 
