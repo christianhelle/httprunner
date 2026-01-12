@@ -28,7 +28,7 @@ clap = { version = "4.5", features = ["derive", "std", "help", "usage", "error-c
 # GUI dependencies
 eframe = "0.29"
 egui = "0.29"
-rfd = "0.14"
+rfd = "0.17"
 env_logger = "0.11"
 
 # Dev dependencies
