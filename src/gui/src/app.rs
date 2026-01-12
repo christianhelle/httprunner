@@ -173,7 +173,7 @@ impl eframe::App for HttpRunnerApp {
                 }
             });
 
-        // Center panel - Request details and Results
+        // Center panel - Split into Request Details (top, resizable) and Results (bottom)
         egui::CentralPanel::default().show(ctx, |ui| {
             // Top section - Request Details
             egui::TopBottomPanel::top("request_details_panel")
