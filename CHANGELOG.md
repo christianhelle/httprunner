@@ -14,6 +14,7 @@
 **Merged pull requests:**
 
 - Exclude GUI package from code coverage [\#106](https://github.com/christianhelle/httprunner/pull/106) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Update Rust crate rfd to 0.17 [\#104](https://github.com/christianhelle/httprunner/pull/104) ([renovate[bot]](https://github.com/apps/renovate))
 - Add comprehensive processor executor tests with idiomatic Rust patterns [\#99](https://github.com/christianhelle/httprunner/pull/99) ([christianhelle](https://github.com/christianhelle))
 - Add unit tests to increase code coverage from 69.7% to 74.93% [\#98](https://github.com/christianhelle/httprunner/pull/98) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update codecov/codecov-action action to v5 [\#97](https://github.com/christianhelle/httprunner/pull/97) ([renovate[bot]](https://github.com/apps/renovate))
