@@ -6,11 +6,13 @@
 
 **Implemented enhancements:**
 
+- Update GUI layout to have Results below Request Details [\#107](https://github.com/christianhelle/httprunner/pull/107) ([christianhelle](https://github.com/christianhelle))
 - Add keyboard shortcuts for font size adjustment in GUI [\#105](https://github.com/christianhelle/httprunner/pull/105) ([christianhelle](https://github.com/christianhelle))
 - Add Native Rust GUI Application [\#101](https://github.com/christianhelle/httprunner/pull/101) ([christianhelle](https://github.com/christianhelle))
 
 **Merged pull requests:**
 
+- Exclude GUI package from code coverage [\#106](https://github.com/christianhelle/httprunner/pull/106) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add comprehensive processor executor tests with idiomatic Rust patterns [\#99](https://github.com/christianhelle/httprunner/pull/99) ([christianhelle](https://github.com/christianhelle))
 - Add unit tests to increase code coverage from 69.7% to 74.93% [\#98](https://github.com/christianhelle/httprunner/pull/98) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update codecov/codecov-action action to v5 [\#97](https://github.com/christianhelle/httprunner/pull/97) ([renovate[bot]](https://github.com/apps/renovate))
