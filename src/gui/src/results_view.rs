@@ -154,51 +154,50 @@ impl ResultsView {
             }
         }
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            if let Ok(results) = self.results.lock() {
-                if results.is_empty() {
-                    ui.label("No results yet. Select and run a request.");
-                    return;
-                }
+        if let Ok(results) = self.results.lock() {
+            if results.is_empty() {
+                ui.label("No results yet. Select and run a request.");
+                return;
+            }
 
-                for result in results.iter() {
-                    match result {
-                        ExecutionResult::Success {
-                            method,
-                            url,
-                            status,
-                            duration_ms,
-                            response_body,
-                        } => {
-                            ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
-                            ui.monospace(format!("{} {}", method, url));
-                            ui.label(format!("Status: {}", status));
-                            ui.label(format!("Duration: {} ms", duration_ms));
+            for (result_idx, result) in results.iter().enumerate() {
+                match result {
+                    ExecutionResult::Success {
+                        method,
+                        url,
+                        status,
+                        duration_ms,
+                        response_body,
+                    } => {
+                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
+                        ui.monospace(format!("{} {}", method, url));
+                        ui.label(format!("Status: {}", status));
+                        ui.label(format!("Duration: {} ms", duration_ms));
 
-                            ui.separator();
-                            ui.label("Response:");
-                            egui::ScrollArea::vertical()
-                                .max_height(300.0)
-                                .show(ui, |ui| {
-                                    ui.monospace(response_body);
-                                });
-                            ui.separator();
-                        }
-                        ExecutionResult::Failure { method, url, error } => {
-                            ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌ FAILED");
-                            ui.monospace(format!("{} {}", method, url));
-                            ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
-                            ui.separator();
-                        }
-                        ExecutionResult::Running { message } => {
-                            ui.colored_label(egui::Color32::from_rgb(0, 100, 200), "⏳ RUNNING");
-                            ui.label(message);
-                            ui.separator();
-                        }
+                        ui.separator();
+                        ui.label("Response:");
+                        egui::ScrollArea::vertical()
+                            .id_salt(format!("response_body_{}", result_idx))
+                            .max_height(300.0)
+                            .show(ui, |ui| {
+                                ui.monospace(response_body);
+                            });
+                        ui.separator();
+                    }
+                    ExecutionResult::Failure { method, url, error } => {
+                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌ FAILED");
+                        ui.monospace(format!("{} {}", method, url));
+                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
+                        ui.separator();
+                    }
+                    ExecutionResult::Running { message } => {
+                        ui.colored_label(egui::Color32::from_rgb(0, 100, 200), "⏳ RUNNING");
+                        ui.label(message);
+                        ui.separator();
                     }
                 }
             }
-        });
+        }
     }
 }
 

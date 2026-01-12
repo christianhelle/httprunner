@@ -60,54 +60,53 @@ impl RequestView {
             return None;
         }
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            for (idx, request) in self.requests.iter().enumerate() {
-                let header_text = if let Some(name) = &request.name {
-                    format!("{} - {} {}", idx + 1, request.method, name)
-                } else {
-                    format!("{} - {} {}", idx + 1, request.method, request.url)
-                };
+        for (idx, request) in self.requests.iter().enumerate() {
+            let header_text = if let Some(name) = &request.name {
+                format!("{} - {} {}", idx + 1, request.method, name)
+            } else {
+                format!("{} - {} {}", idx + 1, request.method, request.url)
+            };
 
-                egui::CollapsingHeader::new(header_text)
-                    .default_open(false)
-                    .show(ui, |ui| {
-                        ui.horizontal(|ui| {
-                            ui.label("Method:");
-                            ui.monospace(&request.method);
-                        });
-
-                        ui.horizontal(|ui| {
-                            ui.label("URL:");
-                            ui.monospace(&request.url);
-                        });
-
-                        if !request.headers.is_empty() {
-                            ui.label("Headers:");
-                            ui.indent("headers", |ui| {
-                                for header in &request.headers {
-                                    ui.monospace(header);
-                                }
-                            });
-                        }
-
-                        if let Some(body) = &request.body {
-                            ui.label("Body:");
-                            ui.separator();
-                            egui::ScrollArea::vertical()
-                                .max_height(200.0)
-                                .show(ui, |ui| {
-                                    ui.monospace(body);
-                                });
-                        }
-
-                        ui.separator();
-                        if ui.button("▶ Run this request").clicked() {
-                            clicked_index = Some(idx);
-                            self.selected_index = Some(idx);
-                        }
+            egui::CollapsingHeader::new(header_text)
+                .default_open(false)
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Method:");
+                        ui.monospace(&request.method);
                     });
-            }
-        });
+
+                    ui.horizontal(|ui| {
+                        ui.label("URL:");
+                        ui.monospace(&request.url);
+                    });
+
+                    if !request.headers.is_empty() {
+                        ui.label("Headers:");
+                        ui.indent("headers", |ui| {
+                            for header in &request.headers {
+                                ui.monospace(header);
+                            }
+                        });
+                    }
+
+                    if let Some(body) = &request.body {
+                        ui.label("Body:");
+                        ui.separator();
+                        egui::ScrollArea::vertical()
+                            .id_salt(format!("request_body_{}", idx))
+                            .max_height(200.0)
+                            .show(ui, |ui| {
+                                ui.monospace(body);
+                            });
+                    }
+
+                    ui.separator();
+                    if ui.button("▶ Run this request").clicked() {
+                        clicked_index = Some(idx);
+                        self.selected_index = Some(idx);
+                    }
+                });
+        }
 
         clicked_index
     }
