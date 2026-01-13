@@ -1,5 +1,5 @@
 use super::{file_tree::FileTree, request_view::RequestView, results_view::ResultsView};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct HttpRunnerApp {
     file_tree: FileTree,
@@ -139,7 +139,7 @@ impl HttpRunnerApp {
         });
     }
 
-    fn load_environments(&mut self, file: &PathBuf) {
+    fn load_environments(&mut self, file: &Path) {
         // Try to find and parse http-client.env.json
         if let Some(file_str) = file.to_str()
             && let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)

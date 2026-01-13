@@ -561,7 +561,7 @@ GET https://api.example.com/test
         assert!(result.is_ok());
         let executed = mock.get_executed_requests();
         // Parser creates assertions based on EXPECTED_RESPONSE_* directives
-        assert!(executed[0].assertions.len() >= 1);
+        assert!(!executed[0].assertions.is_empty());
     }
 
     #[test]

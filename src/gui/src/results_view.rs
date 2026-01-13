@@ -1,5 +1,5 @@
 use httprunner_lib::types::AssertionResult;
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -36,8 +36,8 @@ impl ResultsView {
         }
     }
 
-    pub fn run_file(&mut self, path: &PathBuf, environment: Option<&str>) {
-        let path = path.clone();
+    pub fn run_file(&mut self, path: &Path, environment: Option<&str>) {
+        let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
@@ -126,8 +126,8 @@ impl ResultsView {
         });
     }
 
-    pub fn run_single_request(&mut self, path: &PathBuf, index: usize, environment: Option<&str>) {
-        let path = path.clone();
+    pub fn run_single_request(&mut self, path: &Path, index: usize, environment: Option<&str>) {
+        let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);

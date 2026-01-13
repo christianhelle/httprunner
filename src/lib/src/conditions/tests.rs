@@ -49,7 +49,7 @@ fn test_evaluate_status_condition_success() {
         result: Some(result),
     }];
 
-    assert!(evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn test_evaluate_status_condition_failure() {
         result: Some(result),
     }];
 
-    assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(!evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -249,7 +249,7 @@ fn test_evaluate_body_jsonpath_condition_success() {
         result: Some(result),
     }];
 
-    assert!(evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -292,7 +292,7 @@ fn test_evaluate_body_jsonpath_condition_failure() {
         result: Some(result),
     }];
 
-    assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(!evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -437,7 +437,7 @@ fn test_evaluate_status_condition_negated_success() {
         result: Some(result),
     }];
 
-    assert!(evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -480,7 +480,7 @@ fn test_evaluate_status_condition_negated_failure() {
         result: Some(result),
     }];
 
-    assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(!evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -523,7 +523,7 @@ fn test_evaluate_body_jsonpath_condition_negated_success() {
         result: Some(result),
     }];
 
-    assert!(evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -566,7 +566,7 @@ fn test_evaluate_body_jsonpath_condition_negated_failure() {
         result: Some(result),
     }];
 
-    assert!(!evaluate_conditions(&vec![condition], &context).unwrap());
+    assert!(!evaluate_conditions(&[condition], &context).unwrap());
 }
 
 #[test]
@@ -588,7 +588,7 @@ fn test_evaluate_conditions_verbose_request_not_found() {
     };
 
     let context = vec![];
-    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    let (all_met, results) = evaluate_conditions_verbose(&[condition], &context).unwrap();
 
     assert!(!all_met);
     assert_eq!(results.len(), 1);
@@ -625,7 +625,7 @@ fn test_evaluate_conditions_verbose_result_is_none() {
         result: None,
     }];
 
-    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    let (all_met, results) = evaluate_conditions_verbose(&[condition], &context).unwrap();
 
     assert!(!all_met);
     assert_eq!(results.len(), 1);
@@ -673,7 +673,7 @@ fn test_evaluate_conditions_verbose_no_response_body() {
         result: Some(result),
     }];
 
-    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    let (all_met, results) = evaluate_conditions_verbose(&[condition], &context).unwrap();
 
     assert!(!all_met);
     assert_eq!(results.len(), 1);
@@ -721,7 +721,7 @@ fn test_evaluate_conditions_verbose_json_path_not_found() {
         result: Some(result),
     }];
 
-    let (all_met, results) = evaluate_conditions_verbose(&vec![condition], &context).unwrap();
+    let (all_met, results) = evaluate_conditions_verbose(&[condition], &context).unwrap();
 
     assert!(!all_met);
     assert_eq!(results.len(), 1);

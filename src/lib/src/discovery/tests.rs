@@ -128,7 +128,7 @@ fn discover_http_files_with_hidden_directories() {
 
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     // Should find both visible and hidden files
-    assert!(files.len() >= 1);
+    assert!(!files.is_empty());
 }
 
 #[test]
