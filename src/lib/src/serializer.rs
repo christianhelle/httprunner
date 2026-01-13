@@ -205,11 +205,12 @@ Authorization: Bearer token123
 }
 "#;
         
-        let test_file = "/tmp/test_roundtrip_integration.http";
-        fs::write(test_file, test_content).unwrap();
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_roundtrip_integration.http");
+        fs::write(&test_file, test_content).unwrap();
         
         // Parse
-        let requests = parse_http_file(test_file, None).unwrap();
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 2);
         
         // First request
@@ -233,10 +234,10 @@ Authorization: Bearer token123
         assert!(serialized.contains("Content-Type: application/json"));
         
         // Write and re-parse
-        let output_file = "/tmp/test_roundtrip_output.http";
-        write_http_file(Path::new(output_file), &requests).unwrap();
+        let output_file = temp_dir.join("test_roundtrip_output.http");
+        write_http_file(&output_file, &requests).unwrap();
         
-        let reparsed = parse_http_file(output_file, None).unwrap();
+        let reparsed = parse_http_file(output_file.to_str().unwrap(), None).unwrap();
         assert_eq!(reparsed.len(), 2);
         assert_eq!(reparsed[0].method, "GET");
         assert_eq!(reparsed[1].method, "POST");
