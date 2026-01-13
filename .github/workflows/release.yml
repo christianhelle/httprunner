@@ -104,63 +104,32 @@ jobs:
       - name: Build GUI release binary
         run: cargo build --release --target ${{ matrix.target }} -p httprunner-gui
 
-      - name: Create CLI archive (Linux/macOS)
+      - name: Create release archive (Linux/macOS)
         if: matrix.os != 'windows-latest'
         run: |
-          mkdir -p release-cli
-          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-cli/
-          cp README.md release-cli/
-          cp LICENSE release-cli/
-          cd release-cli
+          mkdir -p release
+          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release/
+          cp target/${{ matrix.target }}/release/httprunner-gui release/
+          cp README.md release/
+          cp LICENSE release/
+          cd release
           tar -czf ../${{ matrix.archive_name }} *
 
-      - name: Create CLI archive (Windows)
+      - name: Create release archive (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          mkdir release-cli
-          copy target\${{ matrix.target }}\release\${{ matrix.binary_name }} release-cli\
-          copy README.md release-cli\
-          copy LICENSE release-cli\
-          Compress-Archive -Path release-cli\* -DestinationPath ${{ matrix.archive_name }}
+          mkdir release
+          copy target\${{ matrix.target }}\release\${{ matrix.binary_name }} release\
+          copy target\${{ matrix.target }}\release\httprunner-gui.exe release\
+          copy README.md release\
+          copy LICENSE release\
+          Compress-Archive -Path release\* -DestinationPath ${{ matrix.archive_name }}
 
-      - name: Create GUI archive (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        run: |
-          mkdir -p release-gui
-          cp target/${{ matrix.target }}/release/httprunner-gui release-gui/
-          cp README.md release-gui/
-          cp LICENSE release-gui/
-          cd release-gui
-          tar -czf ../httprunner-gui-${{ matrix.target }}.tar.gz *
-
-      - name: Create GUI archive (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir release-gui
-          copy target\${{ matrix.target }}\release\httprunner-gui.exe release-gui\
-          copy README.md release-gui\
-          copy LICENSE release-gui\
-          Compress-Archive -Path release-gui\* -DestinationPath httprunner-gui-${{ matrix.target }}.zip
-
-      - name: Upload CLI artifact
+      - name: Upload release artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.archive_name }}
           path: ${{ matrix.archive_name }}
-
-      - name: Upload GUI artifact (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v6
-        with:
-          name: httprunner-gui-${{ matrix.target }}.tar.gz
-          path: httprunner-gui-${{ matrix.target }}.tar.gz
-
-      - name: Upload GUI artifact (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v6
-        with:
-          name: httprunner-gui-${{ matrix.target }}.zip
-          path: httprunner-gui-${{ matrix.target }}.zip
 
   release:
     name: Create Release
