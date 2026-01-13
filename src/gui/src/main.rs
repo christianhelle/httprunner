@@ -2,6 +2,7 @@
 
 mod app;
 mod file_tree;
+mod request_editor;
 mod request_view;
 mod results_view;
 

@@ -12,6 +12,7 @@ pub mod parser;
 pub mod processor;
 pub mod report;
 pub mod runner;
+pub mod serializer;
 pub mod types;
 pub mod variables;
 
