@@ -206,6 +206,14 @@ impl eframe::App for HttpRunnerApp {
                                     self.request_view.show(ui, &self.selected_file)
                                 {
                                     self.selected_request_index = Some(selected_idx);
+                                    // When a request button is clicked, run it immediately
+                                    if let Some(file) = &self.selected_file {
+                                        self.results_view.run_single_request(
+                                            file,
+                                            selected_idx,
+                                            self.selected_environment.as_deref(),
+                                        );
+                                    }
                                 }
                             });
 
@@ -214,8 +222,6 @@ impl eframe::App for HttpRunnerApp {
                         // Run buttons - always visible at bottom
                         ui.horizontal(|ui| {
                             let run_all_enabled = self.selected_file.is_some();
-                            let run_one_enabled = self.selected_file.is_some()
-                                && self.selected_request_index.is_some();
 
                             if ui
                                 .add_enabled(
@@ -227,22 +233,6 @@ impl eframe::App for HttpRunnerApp {
                             {
                                 self.results_view
                                     .run_file(file, self.selected_environment.as_deref());
-                            }
-
-                            if ui
-                                .add_enabled(
-                                    run_one_enabled,
-                                    egui::Button::new("▶ Run Selected Request"),
-                                )
-                                .clicked()
-                                && let (Some(file), Some(idx)) =
-                                    (&self.selected_file, self.selected_request_index)
-                            {
-                                self.results_view.run_single_request(
-                                    file,
-                                    idx,
-                                    self.selected_environment.as_deref(),
-                                );
                             }
                         });
                     });
