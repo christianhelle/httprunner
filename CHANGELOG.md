@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Add support for running individual requests from GUI app [\#115](https://github.com/christianhelle/httprunner/pull/115) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Align GUI and CLI behavior in regards to .http file processing [\#108](https://github.com/christianhelle/httprunner/pull/108) ([christianhelle](https://github.com/christianhelle))
 - Update GUI layout to have Results below Request Details [\#107](https://github.com/christianhelle/httprunner/pull/107) ([christianhelle](https://github.com/christianhelle))
 - Add keyboard shortcuts for font size adjustment in GUI [\#105](https://github.com/christianhelle/httprunner/pull/105) ([christianhelle](https://github.com/christianhelle))
