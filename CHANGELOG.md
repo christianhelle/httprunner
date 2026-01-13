@@ -13,6 +13,7 @@
 
 **Merged pull requests:**
 
+- Fix GUI window icon to use custom icon instead of default egui icon [\#114](https://github.com/christianhelle/httprunner/pull/114) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Fix Windows GUI app opening terminal window on launch [\#113](https://github.com/christianhelle/httprunner/pull/113) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Show assertion results in GUI [\#112](https://github.com/christianhelle/httprunner/pull/112) ([christianhelle](https://github.com/christianhelle))
 - Include GUI binary in build and release workflow artifacts [\#111](https://github.com/christianhelle/httprunner/pull/111) ([Copilot](https://github.com/apps/copilot-swe-agent))
