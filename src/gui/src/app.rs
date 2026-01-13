@@ -1,4 +1,8 @@
-use super::{file_tree::FileTree, request_view::RequestView, results_view::ResultsView};
+use super::{
+    file_tree::FileTree,
+    request_view::{RequestView, RequestViewAction},
+    results_view::ResultsView,
+};
 use std::path::{Path, PathBuf};
 
 pub struct HttpRunnerApp {
@@ -97,6 +101,26 @@ impl HttpRunnerApp {
                             self.file_tree = FileTree::new(path);
                             self.selected_file = None;
                             self.selected_request_index = None;
+                        }
+                        ui.close();
+                    }
+
+                    if ui.button("New .http File...").clicked() {
+                        if let Some(path) = rfd::FileDialog::new()
+                            .set_directory(&self.root_directory)
+                            .add_filter("HTTP Files", &["http"])
+                            .set_file_name("new.http")
+                            .save_file()
+                        {
+                            // Create an empty .http file
+                            if let Err(e) = std::fs::write(&path, "### New Request\nGET https://httpbin.org/get\n") {
+                                eprintln!("Failed to create file: {}", e);
+                            } else {
+                                // Refresh file tree and select the new file
+                                self.file_tree = FileTree::new(self.root_directory.clone());
+                                self.selected_file = Some(path.clone());
+                                self.request_view.load_file(&path);
+                            }
                         }
                         ui.close();
                     }
@@ -202,18 +226,28 @@ impl eframe::App for HttpRunnerApp {
                             .max_height(available_height)
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
-                                if let Some(selected_idx) =
-                                    self.request_view.show(ui, &self.selected_file)
-                                {
-                                    self.selected_request_index = Some(selected_idx);
-                                    // When a request button is clicked, run it immediately
-                                    if let Some(file) = &self.selected_file {
-                                        self.results_view.run_single_request(
-                                            file,
-                                            selected_idx,
-                                            self.selected_environment.as_deref(),
-                                        );
+                                match self.request_view.show(ui, &self.selected_file) {
+                                    RequestViewAction::RunRequest(idx) => {
+                                        self.selected_request_index = Some(idx);
+                                        // When a request button is clicked, run it immediately
+                                        if let Some(file) = &self.selected_file {
+                                            self.results_view.run_single_request(
+                                                file,
+                                                idx,
+                                                self.selected_environment.as_deref(),
+                                            );
+                                        }
                                     }
+                                    RequestViewAction::SaveFile => {
+                                        // Save the file
+                                        if let Err(e) = self.request_view.save_to_file() {
+                                            eprintln!("Failed to save file: {}", e);
+                                        } else {
+                                            // Refresh the file tree to show any new files
+                                            self.file_tree = FileTree::new(self.root_directory.clone());
+                                        }
+                                    }
+                                    RequestViewAction::None => {}
                                 }
                             });
 
@@ -221,7 +255,7 @@ impl eframe::App for HttpRunnerApp {
 
                         // Run buttons - always visible at bottom
                         ui.horizontal(|ui| {
-                            let run_all_enabled = self.selected_file.is_some();
+                            let run_all_enabled = self.selected_file.is_some() && !self.request_view.has_changes();
 
                             if ui
                                 .add_enabled(
@@ -233,6 +267,11 @@ impl eframe::App for HttpRunnerApp {
                             {
                                 self.results_view
                                     .run_file(file, self.selected_environment.as_deref());
+                            }
+
+                            // Show save indicator if there are unsaved changes
+                            if self.request_view.has_changes() {
+                                ui.colored_label(egui::Color32::from_rgb(255, 165, 0), "● Unsaved changes");
                             }
                         });
                     });
