@@ -29,6 +29,6 @@ fn main() -> eframe::Result<()> {
 fn load_icon() -> std::sync::Arc<egui::IconData> {
     let icon_bytes = include_bytes!("../../../images/icon.png");
     let icon_data = eframe::icon_data::from_png_bytes(icon_bytes)
-        .expect("Failed to load application icon");
+        .expect("Failed to parse PNG icon data from embedded icon.png bytes");
     std::sync::Arc::new(icon_data)
 }
