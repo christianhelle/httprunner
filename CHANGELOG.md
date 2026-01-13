@@ -7,6 +7,9 @@
 **Implemented enhancements:**
 
 - Add support for running individual requests from GUI app [\#115](https://github.com/christianhelle/httprunner/pull/115) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Fix GUI window icon to use custom icon instead of default egui icon [\#114](https://github.com/christianhelle/httprunner/pull/114) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Fix Windows GUI app opening terminal window on launch [\#113](https://github.com/christianhelle/httprunner/pull/113) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Show assertion results in GUI [\#112](https://github.com/christianhelle/httprunner/pull/112) ([christianhelle](https://github.com/christianhelle))
 - Align GUI and CLI behavior in regards to .http file processing [\#108](https://github.com/christianhelle/httprunner/pull/108) ([christianhelle](https://github.com/christianhelle))
 - Update GUI layout to have Results below Request Details [\#107](https://github.com/christianhelle/httprunner/pull/107) ([christianhelle](https://github.com/christianhelle))
 - Add keyboard shortcuts for font size adjustment in GUI [\#105](https://github.com/christianhelle/httprunner/pull/105) ([christianhelle](https://github.com/christianhelle))
@@ -14,10 +17,8 @@
 
 **Merged pull requests:**
 
-- Fix GUI window icon to use custom icon instead of default egui icon [\#114](https://github.com/christianhelle/httprunner/pull/114) ([Copilot](https://github.com/apps/copilot-swe-agent))
-- Fix Windows GUI app opening terminal window on launch [\#113](https://github.com/christianhelle/httprunner/pull/113) ([Copilot](https://github.com/apps/copilot-swe-agent))
-- Show assertion results in GUI [\#112](https://github.com/christianhelle/httprunner/pull/112) ([christianhelle](https://github.com/christianhelle))
 - Include GUI binary in build and release workflow artifacts [\#111](https://github.com/christianhelle/httprunner/pull/111) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Update dependency ruby to v4.0.1 [\#110](https://github.com/christianhelle/httprunner/pull/110) ([renovate[bot]](https://github.com/apps/renovate))
 - Upgrade to egui v0.33 [\#109](https://github.com/christianhelle/httprunner/pull/109) ([christianhelle](https://github.com/christianhelle))
 - Exclude GUI package from code coverage [\#106](https://github.com/christianhelle/httprunner/pull/106) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update Rust crate rfd to 0.17 [\#104](https://github.com/christianhelle/httprunner/pull/104) ([renovate[bot]](https://github.com/apps/renovate))
