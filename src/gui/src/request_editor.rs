@@ -77,14 +77,24 @@ impl EditableRequest {
             },
             assertions: vec![],
             variables: vec![],
-            timeout: self.timeout.parse().ok(),
-            connection_timeout: self.connection_timeout.parse().ok(),
+            timeout: Self::parse_timeout(&self.timeout),
+            connection_timeout: Self::parse_timeout(&self.connection_timeout),
             depends_on: if self.depends_on.is_empty() {
                 None
             } else {
                 Some(self.depends_on.clone())
             },
             conditions: vec![],
+        }
+    }
+
+    /// Parse timeout value. Returns None if empty or invalid.
+    /// This is acceptable for GUI usage - invalid values are simply ignored.
+    fn parse_timeout(value: &str) -> Option<u64> {
+        if value.is_empty() {
+            None
+        } else {
+            value.parse().ok()
         }
     }
 }
