@@ -1,7 +1,7 @@
+use httprunner_lib::types::AssertionResult;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use httprunner_lib::types::AssertionResult;
 
 #[derive(Clone)]
 pub enum ExecutionResult {
@@ -73,7 +73,7 @@ impl ResultsView {
                             for file_result in processor_results.files {
                                 for request_context in file_result.result_contexts {
                                     if let Some(http_result) = request_context.result {
-                                         if http_result.success {
+                                        if http_result.success {
                                             r.push(ExecutionResult::Success {
                                                 method: request_context.request.method,
                                                 url: request_context.request.url,
@@ -82,7 +82,9 @@ impl ResultsView {
                                                 response_body: http_result
                                                     .response_body
                                                     .unwrap_or_default(),
-                                                assertion_results: http_result.assertion_results.clone(),
+                                                assertion_results: http_result
+                                                    .assertion_results
+                                                    .clone(),
                                             });
                                         } else {
                                             r.push(ExecutionResult::Failure {
@@ -187,9 +189,10 @@ impl ResultsView {
 
     pub fn show(&self, ui: &mut egui::Ui) {
         if let Ok(is_running) = self.is_running.lock()
-            && *is_running {
-                ui.spinner();
-            }
+            && *is_running
+        {
+            ui.spinner();
+        }
 
         if let Ok(results) = self.results.lock() {
             if results.is_empty() {
@@ -216,17 +219,25 @@ impl ResultsView {
                         if !assertion_results.is_empty() {
                             ui.separator();
                             ui.label("🔍 Assertion Results:");
-                            
+
                             for assertion_result in assertion_results {
-                                let assertion_type_str = match assertion_result.assertion.assertion_type {
+                                let assertion_type_str = match assertion_result
+                                    .assertion
+                                    .assertion_type
+                                {
                                     httprunner_lib::types::AssertionType::Status => "Status Code",
                                     httprunner_lib::types::AssertionType::Body => "Response Body",
-                                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                                    httprunner_lib::types::AssertionType::Headers => {
+                                        "Response Headers"
+                                    }
                                 };
 
                                 if assertion_result.passed {
                                     ui.horizontal(|ui| {
-                                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "  ✅");
+                                        ui.colored_label(
+                                            egui::Color32::from_rgb(0, 200, 0),
+                                            "  ✅",
+                                        );
                                         ui.label(format!(
                                             "{}: Expected '{}'",
                                             assertion_type_str,
@@ -235,7 +246,10 @@ impl ResultsView {
                                     });
                                 } else {
                                     ui.horizontal(|ui| {
-                                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "  ❌");
+                                        ui.colored_label(
+                                            egui::Color32::from_rgb(200, 0, 0),
+                                            "  ❌",
+                                        );
                                         ui.label(format!(
                                             "{}: {}",
                                             assertion_type_str,
@@ -245,20 +259,23 @@ impl ResultsView {
                                                 .unwrap_or(&"Failed".to_string())
                                         ));
                                     });
-                                    
+
                                     if let Some(ref actual) = assertion_result.actual_value {
                                         ui.horizontal(|ui| {
                                             ui.label("     ");
                                             ui.colored_label(
                                                 egui::Color32::from_rgb(255, 200, 0),
-                                                format!("Expected: '{}'", assertion_result.assertion.expected_value)
+                                                format!(
+                                                    "Expected: '{}'",
+                                                    assertion_result.assertion.expected_value
+                                                ),
                                             );
                                         });
                                         ui.horizontal(|ui| {
                                             ui.label("     ");
                                             ui.colored_label(
                                                 egui::Color32::from_rgb(255, 200, 0),
-                                                format!("Actual: '{}'", actual)
+                                                format!("Actual: '{}'", actual),
                                             );
                                         });
                                     }
