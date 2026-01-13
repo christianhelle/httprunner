@@ -16,11 +16,14 @@ pub fn serialize_http_request(request: &HttpRequest) -> String {
     }
 
     // Add timeout if present
+    // Note: Internal representation is always in milliseconds, so we use "ms" suffix
+    // The parser handles ms/s/m suffixes correctly
     if let Some(timeout) = request.timeout {
         output.push_str(&format!("# @timeout {}ms\n", timeout));
     }
 
     // Add connection timeout if present
+    // Note: Internal representation is always in milliseconds, so we use "ms" suffix
     if let Some(connection_timeout) = request.connection_timeout {
         output.push_str(&format!("# @connection-timeout {}ms\n", connection_timeout));
     }
@@ -243,6 +246,49 @@ Authorization: Bearer token123
         assert_eq!(reparsed[1].method, "POST");
         
         // Cleanup test files
+        let _ = fs::remove_file(&test_file);
+        let _ = fs::remove_file(&output_file);
+    }
+}
+
+#[cfg(test)]
+mod timeout_tests {
+    use super::*;
+    use crate::parser::parse_http_file;
+    use std::fs;
+
+    #[test]
+    fn test_timeout_serialization_roundtrip() {
+        let test_content = r#"###
+# @name test-timeout
+# @timeout 5000ms
+# @connection-timeout 3000ms
+GET https://httpbin.org/get
+"#;
+        
+        let temp_dir = std::env::temp_dir();
+        let test_file = temp_dir.join("test_timeout.http");
+        fs::write(&test_file, test_content).unwrap();
+        
+        // Parse
+        let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(requests.len(), 1);
+        assert_eq!(requests[0].timeout, Some(5000));
+        assert_eq!(requests[0].connection_timeout, Some(3000));
+        
+        // Serialize and re-parse
+        let serialized = serialize_http_requests(&requests);
+        println!("Serialized:\n{}", serialized);
+        
+        let output_file = temp_dir.join("test_timeout_output.http");
+        write_http_file(&output_file, &requests).unwrap();
+        
+        let reparsed = parse_http_file(output_file.to_str().unwrap(), None).unwrap();
+        assert_eq!(reparsed.len(), 1);
+        assert_eq!(reparsed[0].timeout, Some(5000));
+        assert_eq!(reparsed[0].connection_timeout, Some(3000));
+        
+        // Cleanup
         let _ = fs::remove_file(&test_file);
         let _ = fs::remove_file(&output_file);
     }
