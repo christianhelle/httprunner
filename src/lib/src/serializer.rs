@@ -241,5 +241,9 @@ Authorization: Bearer token123
         assert_eq!(reparsed.len(), 2);
         assert_eq!(reparsed[0].method, "GET");
         assert_eq!(reparsed[1].method, "POST");
+        
+        // Cleanup test files
+        let _ = fs::remove_file(&test_file);
+        let _ = fs::remove_file(&output_file);
     }
 }
