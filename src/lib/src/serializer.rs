@@ -180,3 +180,65 @@ mod tests {
         assert!(serialized.contains(r#"{"key": "value"}"#));
     }
 }
+
+#[cfg(test)]
+mod integration_tests {
+    use super::*;
+    use crate::parser::parse_http_file;
+    use std::fs;
+
+    #[test]
+    fn test_roundtrip_serialization() {
+        // Create a test file
+        let test_content = r#"### Test Request
+# @name my-test
+GET https://httpbin.org/get
+Content-Type: application/json
+
+### Another Request
+POST https://httpbin.org/post
+Content-Type: application/json
+Authorization: Bearer token123
+
+{
+  "key": "value"
+}
+"#;
+        
+        let test_file = "/tmp/test_roundtrip_integration.http";
+        fs::write(test_file, test_content).unwrap();
+        
+        // Parse
+        let requests = parse_http_file(test_file, None).unwrap();
+        assert_eq!(requests.len(), 2);
+        
+        // First request
+        assert_eq!(requests[0].name, Some("my-test".to_string()));
+        assert_eq!(requests[0].method, "GET");
+        assert_eq!(requests[0].url, "https://httpbin.org/get");
+        assert_eq!(requests[0].headers.len(), 1);
+        assert_eq!(requests[0].headers[0].name, "Content-Type");
+        
+        // Second request
+        assert_eq!(requests[1].method, "POST");
+        assert_eq!(requests[1].url, "https://httpbin.org/post");
+        assert_eq!(requests[1].headers.len(), 2);
+        assert!(requests[1].body.is_some());
+        
+        // Serialize
+        let serialized = serialize_http_requests(&requests);
+        assert!(serialized.contains("# @name my-test"));
+        assert!(serialized.contains("GET https://httpbin.org/get"));
+        assert!(serialized.contains("POST https://httpbin.org/post"));
+        assert!(serialized.contains("Content-Type: application/json"));
+        
+        // Write and re-parse
+        let output_file = "/tmp/test_roundtrip_output.http";
+        write_http_file(Path::new(output_file), &requests).unwrap();
+        
+        let reparsed = parse_http_file(output_file, None).unwrap();
+        assert_eq!(reparsed.len(), 2);
+        assert_eq!(reparsed[0].method, "GET");
+        assert_eq!(reparsed[1].method, "POST");
+    }
+}
