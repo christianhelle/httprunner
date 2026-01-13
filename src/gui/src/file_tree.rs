@@ -19,9 +19,10 @@ impl FileTree {
         {
             if entry.file_type().is_file()
                 && let Some(ext) = entry.path().extension()
-                    && ext == "http" {
-                        http_files.push(entry.path().to_path_buf());
-                    }
+                && ext == "http"
+            {
+                http_files.push(entry.path().to_path_buf());
+            }
         }
 
         // Sort files by path
