@@ -49,4 +49,6 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: httprunner-macos
-        path: target/release/httprunner
+        path: |
+          target/release/httprunner
+          target/release/httprunner-gui
