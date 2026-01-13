@@ -13,6 +13,7 @@
 
 **Merged pull requests:**
 
+- Show assertion results in GUI [\#112](https://github.com/christianhelle/httprunner/pull/112) ([christianhelle](https://github.com/christianhelle))
 - Upgrade to egui v0.33 [\#109](https://github.com/christianhelle/httprunner/pull/109) ([christianhelle](https://github.com/christianhelle))
 - Exclude GUI package from code coverage [\#106](https://github.com/christianhelle/httprunner/pull/106) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update Rust crate rfd to 0.17 [\#104](https://github.com/christianhelle/httprunner/pull/104) ([renovate[bot]](https://github.com/apps/renovate))
