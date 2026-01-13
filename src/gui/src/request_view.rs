@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct RequestView {
     requests: Vec<RequestInfo>,
@@ -21,7 +21,7 @@ impl RequestView {
         }
     }
 
-    pub fn load_file(&mut self, path: &PathBuf) {
+    pub fn load_file(&mut self, path: &Path) {
         self.requests.clear();
         self.selected_index = None;
 

@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod logging_tests {
     use crate::logging::Log;
 
     use std::fs;
