@@ -49,4 +49,6 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: httprunner-windows
-        path: target/release/httprunner.exe
+        path: |
+          target/release/httprunner.exe
+          target/release/httprunner-gui.exe
