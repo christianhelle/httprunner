@@ -1,10 +1,11 @@
 name: httprunner
 base: core24
 version: v0.6.45
-summary: Execute HTTP requests from .http files with colored output
+summary: Execute HTTP requests from .http files - CLI and GUI tools
 description: |
-  HTTP File Runner is a command-line tool written in Rust for parsing and 
-  executing HTTP requests from .http files. Features include:
+  HTTP File Runner is a suite of tools written in Rust for parsing and 
+  executing HTTP requests from .http files. Includes both a command-line 
+  tool and a native GUI application. Features include:
 
   • Support for GET, POST, PUT, DELETE, PATCH methods
   • Color-coded output with emojis for success/failure indication
@@ -12,6 +13,7 @@ description: |
   • Detailed error reporting with status codes
   • Summary statistics
   • Robust network error handling
+  • Native GUI with file browser and request inspector
 
 title: HTTP File Runner
 contact: https://github.com/christianhelle/httprunner/issues
@@ -30,6 +32,19 @@ apps:
     plugs:
       - network
       - home
+  
+  httprunner-gui:
+    command: bin/httprunner-gui
+    desktop: snap/gui/httprunner-gui.desktop
+    plugs:
+      - network
+      - home
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+      - opengl
+      - pulseaudio
 
 parts:
   httprunner:
@@ -40,6 +55,27 @@ parts:
       - libssl-dev
       - pkg-config
       - git
+      - libxcb-render0-dev
+      - libxcb-shape0-dev
+      - libxcb-xfixes0-dev
+      - libxkbcommon-dev
+      - libwayland-dev
+      - libfontconfig1-dev
     stage-packages:
       - libssl3
       - ca-certificates
+      - libxcb1
+      - libxcb-render0
+      - libxcb-shape0
+      - libxcb-xfixes0
+      - libxkbcommon0
+      - libwayland-client0
+      - libwayland-cursor0
+      - libfontconfig1
+      - libfreetype6
+    override-build: |
+      # Build both CLI and GUI binaries
+      cargo build --release --workspace
+      # Install binaries
+      install -Dm755 target/release/httprunner $CRAFT_PART_INSTALL/bin/httprunner
+      install -Dm755 target/release/httprunner-gui $CRAFT_PART_INSTALL/bin/httprunner-gui
