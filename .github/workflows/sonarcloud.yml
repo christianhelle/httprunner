@@ -37,12 +37,11 @@ jobs:
           cargo tarpaulin --out Xml --output-dir coverage \
             --exclude-files 'build.rs' --timeout 300
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
-          # Needed to get PR information, if any
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            -Dsonar.organization=christianhelle
             -Dsonar.verbose=false
