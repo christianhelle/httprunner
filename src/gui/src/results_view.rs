@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use httprunner_lib::types::AssertionResult;
 
 #[derive(Clone)]
 pub enum ExecutionResult {
@@ -10,6 +11,7 @@ pub enum ExecutionResult {
         status: u16,
         duration_ms: u64,
         response_body: String,
+        assertion_results: Vec<AssertionResult>,
     },
     Failure {
         method: String,
@@ -71,7 +73,7 @@ impl ResultsView {
                             for file_result in processor_results.files {
                                 for request_context in file_result.result_contexts {
                                     if let Some(http_result) = request_context.result {
-                                        if http_result.success {
+                                         if http_result.success {
                                             r.push(ExecutionResult::Success {
                                                 method: request_context.request.method,
                                                 url: request_context.request.url,
@@ -80,6 +82,7 @@ impl ResultsView {
                                                 response_body: http_result
                                                     .response_body
                                                     .unwrap_or_default(),
+                                                assertion_results: http_result.assertion_results.clone(),
                                             });
                                         } else {
                                             r.push(ExecutionResult::Failure {
@@ -202,11 +205,66 @@ impl ResultsView {
                         status,
                         duration_ms,
                         response_body,
+                        assertion_results,
                     } => {
                         ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
                         ui.monospace(format!("{} {}", method, url));
                         ui.label(format!("Status: {}", status));
                         ui.label(format!("Duration: {} ms", duration_ms));
+
+                        // Display assertion results if any
+                        if !assertion_results.is_empty() {
+                            ui.separator();
+                            ui.label("🔍 Assertion Results:");
+                            
+                            for assertion_result in assertion_results {
+                                let assertion_type_str = match assertion_result.assertion.assertion_type {
+                                    httprunner_lib::types::AssertionType::Status => "Status Code",
+                                    httprunner_lib::types::AssertionType::Body => "Response Body",
+                                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                                };
+
+                                if assertion_result.passed {
+                                    ui.horizontal(|ui| {
+                                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "  ✅");
+                                        ui.label(format!(
+                                            "{}: Expected '{}'",
+                                            assertion_type_str,
+                                            assertion_result.assertion.expected_value
+                                        ));
+                                    });
+                                } else {
+                                    ui.horizontal(|ui| {
+                                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "  ❌");
+                                        ui.label(format!(
+                                            "{}: {}",
+                                            assertion_type_str,
+                                            assertion_result
+                                                .error_message
+                                                .as_ref()
+                                                .unwrap_or(&"Failed".to_string())
+                                        ));
+                                    });
+                                    
+                                    if let Some(ref actual) = assertion_result.actual_value {
+                                        ui.horizontal(|ui| {
+                                            ui.label("     ");
+                                            ui.colored_label(
+                                                egui::Color32::from_rgb(255, 200, 0),
+                                                format!("Expected: '{}'", assertion_result.assertion.expected_value)
+                                            );
+                                        });
+                                        ui.horizontal(|ui| {
+                                            ui.label("     ");
+                                            ui.colored_label(
+                                                egui::Color32::from_rgb(255, 200, 0),
+                                                format!("Actual: '{}'", actual)
+                                            );
+                                        });
+                                    }
+                                }
+                            }
+                        }
 
                         ui.separator();
                         ui.label("Response:");
@@ -252,6 +310,7 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
                     status: result.status_code,
                     duration_ms,
                     response_body: result.response_body.unwrap_or_default(),
+                    assertion_results: result.assertion_results.clone(),
                 }
             } else {
                 ExecutionResult::Failure {
