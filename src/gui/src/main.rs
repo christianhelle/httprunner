@@ -10,14 +10,11 @@ use app::HttpRunnerApp;
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    // Load the application icon
-    let icon = load_icon();
-
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1200.0, 800.0])
             .with_min_inner_size([800.0, 600.0])
-            .with_icon(icon),
+            .with_icon(load_icon()),
         ..Default::default()
     };
 
@@ -30,7 +27,12 @@ fn main() -> eframe::Result<()> {
 
 fn load_icon() -> std::sync::Arc<egui::IconData> {
     let icon_bytes = include_bytes!("../../../images/icon.png");
-    let icon_data = eframe::icon_data::from_png_bytes(icon_bytes)
-        .expect("Failed to parse PNG icon data from embedded icon.png bytes");
-    std::sync::Arc::new(icon_data)
+    match eframe::icon_data::from_png_bytes(icon_bytes) {
+        Ok(icon_data) => std::sync::Arc::new(icon_data),
+        Err(e) => {
+            eprintln!("Warning: Failed to load application icon: {}", e);
+            // Return default icon data (empty) which will use the egui default
+            std::sync::Arc::new(egui::IconData::default())
+        }
+    }
 }
