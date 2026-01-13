@@ -13,7 +13,9 @@
 
 **Merged pull requests:**
 
+- Fix Windows GUI app opening terminal window on launch [\#113](https://github.com/christianhelle/httprunner/pull/113) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Show assertion results in GUI [\#112](https://github.com/christianhelle/httprunner/pull/112) ([christianhelle](https://github.com/christianhelle))
+- Include GUI binary in build and release workflow artifacts [\#111](https://github.com/christianhelle/httprunner/pull/111) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Upgrade to egui v0.33 [\#109](https://github.com/christianhelle/httprunner/pull/109) ([christianhelle](https://github.com/christianhelle))
 - Exclude GUI package from code coverage [\#106](https://github.com/christianhelle/httprunner/pull/106) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update Rust crate rfd to 0.17 [\#104](https://github.com/christianhelle/httprunner/pull/104) ([renovate[bot]](https://github.com/apps/renovate))
