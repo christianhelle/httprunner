@@ -36,7 +36,11 @@ sudo snap install --dangerous --devmode ./httprunner_*.snap
 
 Test the installation:
 ```bash
+# Test CLI tool
 httprunner examples/simple.http
+
+# Test GUI application
+httprunner-gui
 ```
 
 ## Publishing to Snap Store
@@ -92,17 +96,22 @@ The project includes a GitHub Actions workflow (`.github/workflows/snap.yml`) th
 
 The snap is configured with:
 
-- **Base**: core22 (Ubuntu 22.04 LTS)
+- **Base**: core24 (Ubuntu 24.04 LTS)
 - **Confinement**: strict (full security isolation)
+- **Apps**: 
+  - `httprunner`: CLI tool
+  - `httprunner-gui`: GUI application
 - **Plugs**: 
   - `network`: Required for HTTP requests
   - `home`: Access to user's home directory for .http files
+  - GUI-specific plugs: `desktop`, `wayland`, `x11`, `opengl`, `pulseaudio`
 
 ## Files Created
 
-- `snap/snapcraft.yaml` - Primary snap configuration
-- `.snapcraft.yaml` - Alternative configuration in root
-- `build-snap.sh` - Build script
+- `snapcraft.yaml` - Primary snap configuration
+- `snap/gui/httprunner-gui.desktop` - Desktop entry for GUI app
+- `snap/gui/icon.png` - Application icon
+- `build-snap.sh` - Build script (if exists)
 - `.github/workflows/snap.yml` - GitHub Actions workflow
 - `docs/SNAPCRAFT.md` - This documentation
 
@@ -110,9 +119,9 @@ The snap is configured with:
 
 ### Build Issues
 
-1. **Zig version conflicts**: The snap downloads a specific Zig version. Update the version in snapcraft.yaml if needed.
+1. **Missing GUI libraries**: The snap includes all necessary libraries for both CLI and GUI applications.
 
-2. **Network issues during build**: Ensure the build environment has internet access for downloading Zig.
+2. **Network issues during build**: Ensure the build environment has internet access for downloading dependencies.
 
 ### Installation Issues
 
@@ -129,13 +138,16 @@ The snap is configured with:
 
 When publishing, consider:
 
-- **Description**: Clear, concise description of functionality
-- **Screenshots**: Terminal screenshots showing colored output
+- **Description**: Clear description highlighting both CLI and GUI tools
+- **Screenshots**: 
+  - Terminal screenshots showing colored CLI output
+  - GUI application screenshots showing the file browser and request inspector
 - **Categories**: Choose appropriate categories (e.g., "Development", "Utilities")
-- **Keywords**: HTTP, REST, API, testing, development tools
+- **Keywords**: HTTP, REST, API, testing, development tools, GUI, command-line
 
 ## Maintenance
 
 - Update the version in snapcraft.yaml for new releases
 - Monitor the Snap Store for user feedback and metrics
-- Keep Zig version updated in the build configuration
+- Keep Rust toolchain and dependencies updated
+- Test both CLI and GUI apps after updates
