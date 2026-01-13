@@ -76,6 +76,17 @@ parts:
     override-build: |
       # Build both CLI and GUI binaries
       cargo build --release --workspace
+      
+      # Verify binaries were built successfully
+      if [ ! -f target/release/httprunner ]; then
+        echo "Error: CLI binary not found"
+        exit 1
+      fi
+      if [ ! -f target/release/httprunner-gui ]; then
+        echo "Error: GUI binary not found"
+        exit 1
+      fi
+      
       # Install binaries
       install -Dm755 target/release/httprunner $CRAFT_PART_INSTALL/bin/httprunner
       install -Dm755 target/release/httprunner-gui $CRAFT_PART_INSTALL/bin/httprunner-gui
