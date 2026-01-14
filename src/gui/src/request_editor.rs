@@ -197,10 +197,6 @@ impl RequestEditor {
         &self.requests
     }
 
-    pub fn get_editing_request(&self) -> Option<&EditableRequest> {
-        self.editing_request.as_ref()
-    }
-
     pub fn get_editing_request_mut(&mut self) -> Option<&mut EditableRequest> {
         self.editing_request.as_mut()
     }
@@ -211,9 +207,5 @@ impl RequestEditor {
 
     pub fn has_changes(&self) -> bool {
         self.has_changes
-    }
-
-    pub fn get_current_file(&self) -> Option<&Path> {
-        self.current_file.as_deref()
     }
 }
