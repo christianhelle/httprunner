@@ -10,7 +10,7 @@ documentation = "https://github.com/christianhelle/httprunner"
 
 [lib]
 name = "httprunner"
-path = "src/lib.rs"
+path = "src/lib/lib.rs"
 
 [[bin]]
 name = "httprunner"
