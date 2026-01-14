@@ -100,7 +100,7 @@ impl HttpRunnerApp {
             self.update_font_size(ctx);
         }
 
-        // Check for F5 (run all tests for selected file)
+        // Check for F5 (run all requests for selected file)
         if ctx.input(|i| i.key_pressed(egui::Key::F5)) {
             return KeyboardAction::RunAllRequests;
         }
@@ -181,8 +181,9 @@ impl HttpRunnerApp {
                     }
                 });
 
-                // Track whether the combo box is open
-                self.environment_selector_open = response.response.has_focus();
+                // Track whether the combo box is open by checking if the popup is actually open
+                self.environment_selector_open = response.response.has_focus()
+                    || egui::containers::Popup::is_id_open(ui.ctx(), response.response.id);
             });
         });
     }
@@ -225,8 +226,7 @@ impl eframe::App for HttpRunnerApp {
         // Process keyboard actions
         match keyboard_action {
             KeyboardAction::RunAllRequests => {
-                if self.selected_file.is_some()
-                    && !self.request_view.has_changes()
+                if !self.request_view.has_changes()
                     && let Some(file) = &self.selected_file
                 {
                     self.results_view
@@ -258,6 +258,9 @@ impl eframe::App for HttpRunnerApp {
                             } else {
                                 Some(self.environments[next_idx].clone())
                             };
+                        } else {
+                            // Current environment not found; reset to first environment
+                            self.selected_environment = self.environments.first().cloned();
                         }
                     } else {
                         // Currently "None", switch to first environment
