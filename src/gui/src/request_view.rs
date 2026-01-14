@@ -198,9 +198,7 @@ impl RequestView {
 
             ui.separator();
             ui.horizontal(|ui| {
-                if ui.button("💾 Save").clicked()
-                    && self.editor.save_current_edit()
-                {
+                if ui.button("💾 Save").clicked() && self.editor.save_current_edit() {
                     action = RequestViewAction::SaveFile;
                 }
                 if ui.button("❌ Cancel").clicked() {
