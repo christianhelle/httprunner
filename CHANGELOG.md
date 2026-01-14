@@ -6,7 +6,7 @@
 
 **Implemented enhancements:**
 
-- Add keyboard shortcuts to GUI app (F5, Ctrl+O, Ctrl+Q, Ctrl+E)
+- Add keyboard shortcuts to GUI app \(F5, Ctrl+O, Ctrl+Q, Ctrl+E\) [\#118](https://github.com/christianhelle/httprunner/pull/118) ([christianhelle](https://github.com/christianhelle))
 - Add support for running individual requests from GUI app [\#115](https://github.com/christianhelle/httprunner/pull/115) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Fix GUI window icon to use custom icon instead of default egui icon [\#114](https://github.com/christianhelle/httprunner/pull/114) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Fix Windows GUI app opening terminal window on launch [\#113](https://github.com/christianhelle/httprunner/pull/113) ([Copilot](https://github.com/apps/copilot-swe-agent))
