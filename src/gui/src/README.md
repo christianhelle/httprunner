@@ -61,12 +61,13 @@ cargo run --bin httprunner-gui --features gui
 
 ## Usage
 
-1. **Open Directory**: Use `File -> Open Directory` to select a folder containing .http files
+1. **Open Directory**: Use `File -> Open Directory` or press **Ctrl+O** to select a folder containing .http files
 2. **Browse Files**: Click on files in the left panel to view their contents
 3. **View Requests**: Expand requests in the center panel to see details
-4. **Select Environment** (optional): Choose an environment from the dropdown in the top menu
+4. **Select Environment** (optional): Choose an environment from the dropdown in the top menu or cycle through them with **Ctrl+E**
 5. **Run Requests**: 
    - Click "▶ Run All Requests" to execute all requests in the file
+   - Press **F5** to run all requests in the selected file
    - Click "▶ Run this request" on any individual request to execute it
 6. **View Results**: See execution results in the bottom panel
 
@@ -113,8 +114,13 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 
 ## Keyboard Shortcuts
 
-- **Ctrl+Q** / **Cmd+Q**: Quit application (menu)
-- **Ctrl+O** / **Cmd+O**: Open directory (menu)
+- **F5**: Run all requests in the selected file
+- **Ctrl+O** / **Cmd+O**: Open directory
+- **Ctrl+Q** / **Cmd+Q**: Quit application
+- **Ctrl+E** / **Cmd+E**: Cycle through environments
+- **Ctrl+Plus** / **Cmd+Plus**: Zoom in (increase font size)
+- **Ctrl+Minus** / **Cmd+Minus**: Zoom out (decrease font size)
+- **Ctrl+0** / **Cmd+0**: Reset font size to default
 
 ## Technical Details
 
