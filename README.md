@@ -2028,6 +2028,16 @@ The GUI provides a visual interface for:
 - Viewing response status, headers, and body
 - Automatically detecting environment files
 
+#### Keyboard Shortcuts
+
+- **F5**: Run all requests in the selected file
+- **Ctrl+O** / **Cmd+O**: Open directory
+- **Ctrl+Q** / **Cmd+Q**: Quit application
+- **Ctrl+E** / **Cmd+E**: Cycle through environments
+- **Ctrl+Plus** / **Cmd+Plus**: Zoom in (increase font size)
+- **Ctrl+Minus** / **Cmd+Minus**: Zoom out (decrease font size)
+- **Ctrl+0** / **Cmd+0**: Reset font size to default
+
 See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
 
 ## Project Structure
