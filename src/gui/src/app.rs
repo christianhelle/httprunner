@@ -5,6 +5,14 @@ use super::{
 };
 use std::path::{Path, PathBuf};
 
+enum KeyboardAction {
+    None,
+    RunAllRequests,
+    OpenFolder,
+    Quit,
+    SwitchEnvironment,
+}
+
 pub struct HttpRunnerApp {
     file_tree: FileTree,
     request_view: RequestView,
@@ -15,6 +23,7 @@ pub struct HttpRunnerApp {
     selected_environment: Option<String>,
     root_directory: PathBuf,
     font_size: f32,
+    environment_selector_open: bool,
 }
 
 impl HttpRunnerApp {
@@ -37,6 +46,7 @@ impl HttpRunnerApp {
             selected_environment: None,
             root_directory,
             font_size: Self::DEFAULT_FONT_SIZE,
+            environment_selector_open: false,
         }
     }
 
@@ -69,7 +79,7 @@ impl HttpRunnerApp {
         ctx.set_style(style);
     }
 
-    fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) {
+    fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) -> KeyboardAction {
         // Check for Ctrl + Plus (zoom in)
         if ctx.input(|i| {
             i.modifiers.ctrl && (i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals))
@@ -89,6 +99,28 @@ impl HttpRunnerApp {
             self.font_size = Self::DEFAULT_FONT_SIZE;
             self.update_font_size(ctx);
         }
+
+        // Check for F5 (run all tests for selected file)
+        if ctx.input(|i| i.key_pressed(egui::Key::F5)) {
+            return KeyboardAction::RunAllRequests;
+        }
+
+        // Check for Ctrl+O (open folder)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::O)) {
+            return KeyboardAction::OpenFolder;
+        }
+
+        // Check for Ctrl+Q (quit)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Q)) {
+            return KeyboardAction::Quit;
+        }
+
+        // Check for Ctrl+E (switch environment)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::E)) {
+            return KeyboardAction::SwitchEnvironment;
+        }
+
+        KeyboardAction::None
     }
 
     fn show_top_panel(&mut self, ctx: &egui::Context) {
@@ -138,15 +170,19 @@ impl HttpRunnerApp {
                 ui.separator();
 
                 ui.label("Environment:");
-                egui::ComboBox::from_id_salt("env_selector")
-                    .selected_text(self.selected_environment.as_deref().unwrap_or("None"))
-                    .show_ui(ui, |ui| {
-                        ui.selectable_value(&mut self.selected_environment, None, "None");
-                        for env in &self.environments {
-                            let env_clone = Some(env.clone());
-                            ui.selectable_value(&mut self.selected_environment, env_clone, env);
-                        }
-                    });
+                let combo = egui::ComboBox::from_id_salt("env_selector")
+                    .selected_text(self.selected_environment.as_deref().unwrap_or("None"));
+                
+                let response = combo.show_ui(ui, |ui| {
+                    ui.selectable_value(&mut self.selected_environment, None, "None");
+                    for env in &self.environments {
+                        let env_clone = Some(env.clone());
+                        ui.selectable_value(&mut self.selected_environment, env_clone, env);
+                    }
+                });
+                
+                // Track whether the combo box is open
+                self.environment_selector_open = response.response.has_focus();
             });
         });
     }
@@ -184,7 +220,53 @@ impl HttpRunnerApp {
 
 impl eframe::App for HttpRunnerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.handle_keyboard_shortcuts(ctx);
+        let keyboard_action = self.handle_keyboard_shortcuts(ctx);
+        
+        // Process keyboard actions
+        match keyboard_action {
+            KeyboardAction::RunAllRequests => {
+                if self.selected_file.is_some() && !self.request_view.has_changes() {
+                    if let Some(file) = &self.selected_file {
+                        self.results_view
+                            .run_file(file, self.selected_environment.as_deref());
+                    }
+                }
+            }
+            KeyboardAction::OpenFolder => {
+                if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                    self.root_directory = path.clone();
+                    self.file_tree = FileTree::new(path);
+                    self.selected_file = None;
+                    self.selected_request_index = None;
+                }
+            }
+            KeyboardAction::Quit => {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+            KeyboardAction::SwitchEnvironment => {
+                if !self.environment_selector_open {
+                    // Cycle through environments
+                    if self.environments.is_empty() {
+                        // No environments available
+                    } else if let Some(ref current_env) = self.selected_environment {
+                        // Find current index and move to next
+                        if let Some(idx) = self.environments.iter().position(|e| e == current_env) {
+                            let next_idx = (idx + 1) % (self.environments.len() + 1);
+                            self.selected_environment = if next_idx == self.environments.len() {
+                                None
+                            } else {
+                                Some(self.environments[next_idx].clone())
+                            };
+                        }
+                    } else {
+                        // Currently "None", switch to first environment
+                        self.selected_environment = self.environments.first().cloned();
+                    }
+                }
+            }
+            KeyboardAction::None => {}
+        }
+        
         self.show_top_panel(ctx);
         self.show_bottom_panel(ctx);
 
