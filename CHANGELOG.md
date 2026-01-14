@@ -17,6 +17,7 @@
 
 **Merged pull requests:**
 
+- Add full editing capabilities to GUI for .http files [\#117](https://github.com/christianhelle/httprunner/pull/117) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Include GUI binary in build and release workflow artifacts [\#111](https://github.com/christianhelle/httprunner/pull/111) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update dependency ruby to v4.0.1 [\#110](https://github.com/christianhelle/httprunner/pull/110) ([renovate[bot]](https://github.com/apps/renovate))
 - Upgrade to egui v0.33 [\#109](https://github.com/christianhelle/httprunner/pull/109) ([christianhelle](https://github.com/christianhelle))
