@@ -172,7 +172,7 @@ impl HttpRunnerApp {
                 ui.label("Environment:");
                 let combo = egui::ComboBox::from_id_salt("env_selector")
                     .selected_text(self.selected_environment.as_deref().unwrap_or("None"));
-                
+
                 let response = combo.show_ui(ui, |ui| {
                     ui.selectable_value(&mut self.selected_environment, None, "None");
                     for env in &self.environments {
@@ -180,7 +180,7 @@ impl HttpRunnerApp {
                         ui.selectable_value(&mut self.selected_environment, env_clone, env);
                     }
                 });
-                
+
                 // Track whether the combo box is open
                 self.environment_selector_open = response.response.has_focus();
             });
@@ -221,15 +221,16 @@ impl HttpRunnerApp {
 impl eframe::App for HttpRunnerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let keyboard_action = self.handle_keyboard_shortcuts(ctx);
-        
+
         // Process keyboard actions
         match keyboard_action {
             KeyboardAction::RunAllRequests => {
-                if self.selected_file.is_some() && !self.request_view.has_changes() {
-                    if let Some(file) = &self.selected_file {
-                        self.results_view
-                            .run_file(file, self.selected_environment.as_deref());
-                    }
+                if self.selected_file.is_some()
+                    && !self.request_view.has_changes()
+                    && let Some(file) = &self.selected_file
+                {
+                    self.results_view
+                        .run_file(file, self.selected_environment.as_deref());
                 }
             }
             KeyboardAction::OpenFolder => {
@@ -266,7 +267,7 @@ impl eframe::App for HttpRunnerApp {
             }
             KeyboardAction::None => {}
         }
-        
+
         self.show_top_panel(ctx);
         self.show_bottom_panel(ctx);
 
