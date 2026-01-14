@@ -81,7 +81,7 @@ pub fn write_http_file(path: &Path, requests: &[HttpRequest]) -> Result<()> {
 
 fn format_condition(condition: &Condition) -> String {
     use crate::types::ConditionType;
-    
+
     match &condition.condition_type {
         ConditionType::BodyJsonPath(jsonpath) => {
             format!(
@@ -207,44 +207,44 @@ Authorization: Bearer token123
   "key": "value"
 }
 "#;
-        
+
         let temp_dir = std::env::temp_dir();
         let test_file = temp_dir.join("test_roundtrip_integration.http");
         fs::write(&test_file, test_content).unwrap();
-        
+
         // Parse
         let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 2);
-        
+
         // First request
         assert_eq!(requests[0].name, Some("my-test".to_string()));
         assert_eq!(requests[0].method, "GET");
         assert_eq!(requests[0].url, "https://httpbin.org/get");
         assert_eq!(requests[0].headers.len(), 1);
         assert_eq!(requests[0].headers[0].name, "Content-Type");
-        
+
         // Second request
         assert_eq!(requests[1].method, "POST");
         assert_eq!(requests[1].url, "https://httpbin.org/post");
         assert_eq!(requests[1].headers.len(), 2);
         assert!(requests[1].body.is_some());
-        
+
         // Serialize
         let serialized = serialize_http_requests(&requests);
         assert!(serialized.contains("# @name my-test"));
         assert!(serialized.contains("GET https://httpbin.org/get"));
         assert!(serialized.contains("POST https://httpbin.org/post"));
         assert!(serialized.contains("Content-Type: application/json"));
-        
+
         // Write and re-parse
         let output_file = temp_dir.join("test_roundtrip_output.http");
         write_http_file(&output_file, &requests).unwrap();
-        
+
         let reparsed = parse_http_file(output_file.to_str().unwrap(), None).unwrap();
         assert_eq!(reparsed.len(), 2);
         assert_eq!(reparsed[0].method, "GET");
         assert_eq!(reparsed[1].method, "POST");
-        
+
         // Cleanup test files
         let _ = fs::remove_file(&test_file);
         let _ = fs::remove_file(&output_file);
@@ -265,29 +265,29 @@ mod timeout_tests {
 # @connection-timeout 3000ms
 GET https://httpbin.org/get
 "#;
-        
+
         let temp_dir = std::env::temp_dir();
         let test_file = temp_dir.join("test_timeout.http");
         fs::write(&test_file, test_content).unwrap();
-        
+
         // Parse
         let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0].timeout, Some(5000));
         assert_eq!(requests[0].connection_timeout, Some(3000));
-        
+
         // Serialize and re-parse
         let serialized = serialize_http_requests(&requests);
         println!("Serialized:\n{}", serialized);
-        
+
         let output_file = temp_dir.join("test_timeout_output.http");
         write_http_file(&output_file, &requests).unwrap();
-        
+
         let reparsed = parse_http_file(output_file.to_str().unwrap(), None).unwrap();
         assert_eq!(reparsed.len(), 1);
         assert_eq!(reparsed[0].timeout, Some(5000));
         assert_eq!(reparsed[0].connection_timeout, Some(3000));
-        
+
         // Cleanup
         let _ = fs::remove_file(&test_file);
         let _ = fs::remove_file(&output_file);

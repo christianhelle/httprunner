@@ -113,7 +113,10 @@ impl HttpRunnerApp {
                             .save_file()
                         {
                             // Create an empty .http file
-                            if let Err(e) = std::fs::write(&path, "### New Request\nGET https://httpbin.org/get\n") {
+                            if let Err(e) = std::fs::write(
+                                &path,
+                                "### New Request\nGET https://httpbin.org/get\n",
+                            ) {
                                 eprintln!("Failed to create file: {}", e);
                             } else {
                                 // Refresh file tree and select the new file
@@ -244,7 +247,8 @@ impl eframe::App for HttpRunnerApp {
                                             eprintln!("Failed to save file: {}", e);
                                         } else {
                                             // Refresh the file tree to show any new files
-                                            self.file_tree = FileTree::new(self.root_directory.clone());
+                                            self.file_tree =
+                                                FileTree::new(self.root_directory.clone());
                                         }
                                     }
                                     RequestViewAction::None => {}
@@ -255,7 +259,8 @@ impl eframe::App for HttpRunnerApp {
 
                         // Run buttons - always visible at bottom
                         ui.horizontal(|ui| {
-                            let run_all_enabled = self.selected_file.is_some() && !self.request_view.has_changes();
+                            let run_all_enabled =
+                                self.selected_file.is_some() && !self.request_view.has_changes();
 
                             if ui
                                 .add_enabled(
@@ -271,7 +276,10 @@ impl eframe::App for HttpRunnerApp {
 
                             // Show save indicator if there are unsaved changes
                             if self.request_view.has_changes() {
-                                ui.colored_label(egui::Color32::from_rgb(255, 165, 0), "● Unsaved changes");
+                                ui.colored_label(
+                                    egui::Color32::from_rgb(255, 165, 0),
+                                    "● Unsaved changes",
+                                );
                             }
                         });
                     });
