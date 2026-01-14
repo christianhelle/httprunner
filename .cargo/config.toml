@@ -1,0 +1,8 @@
+[alias]
+# Convenient shortcuts for building individual binaries
+cli = "build --bin httprunner"
+gui = "build --bin httprunner-gui"
+
+
+
+

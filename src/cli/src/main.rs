@@ -2,7 +2,7 @@ mod cli;
 mod upgrade;
 
 use clap::{CommandFactory, Parser};
-use httprunner_lib::{colors, discovery, processor, report};
+use httprunner::{colors, discovery, processor, report};
 
 use crate::cli::ReportFormat;
 use crate::report::{generate_html, generate_markdown};
