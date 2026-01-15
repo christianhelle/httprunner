@@ -69,7 +69,7 @@ cargo run --bin httprunner-gui --features gui
    - Click "▶ Run All Requests" to execute all requests in the file
    - Press **F5** to run all requests in the selected file
    - Click "▶ Run this request" on any individual request to execute it
-6. **View Results**: See execution results in the bottom panel
+6. **View Results**: See execution results in the right panel
 
 ## Architecture
 
@@ -86,30 +86,23 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 ## UI Layout
 
 ```
-┌───────────────────────────────────────────────────────────┐
-│ File | Environment: [None ▾]                              │
-├──────────┬────────────────────────────────────────────────┤
-│          │                                                │
-│ Dir      │  Request Details                               │
-│  File    │                                                │
-│  File    │  [Request 1] -> Run this request               │
-│          │  [Request 2] -> Run this request               │
-│          │                                                │
-│          │  Run All Requests                              │
-│          │                                                │
-├──────────┼────────────────────────────────────────────────┤
-│          │  Results                                       │
-│          │                                                │
-│          │  SUCCESS                                       │
-│          │  GET https://...                               │
-│          │  Status: 200                                   │
-│          │  Duration: 123 ms                              │
-│          │                                                │
-│          │  Response:                                     │
-│          │  { "data": "..." }                             │
-└──────────┴────────────────────────────────────────────────┘
-│ Working Directory: /path/to/files                         │
-└───────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│ File | Environment: [None ▾]                                  │
+├──────────┬────────────────────────────────┬────────────────────┤
+│          │                                │                    │
+│ Dir      │  Request Details               │  Results           │
+│  File    │                                │                    │
+│  File    │  [Request 1] -> Run this       │  SUCCESS           │
+│          │  [Request 2] -> Run this       │  GET https://...   │
+│          │                                │  Status: 200       │
+│          │  Run All Requests              │  Duration: 123 ms  │
+│          │                                │                    │
+│          │                                │  Response:         │
+│          │                                │  { "data": "..." } │
+│          │                                │                    │
+└──────────┴────────────────────────────────┴────────────────────┘
+│ Working Directory: /path/to/files                             │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ## Keyboard Shortcuts
