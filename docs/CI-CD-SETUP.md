@@ -2,9 +2,17 @@
 
 ## Overview
 
-This document describes the complete CI/CD pipeline setup for the HTTP File Runner project using GitHub Actions. The pipeline provides automated building, testing, security scanning, and deployment across multiple platforms.
+This document describes the complete CI/CD pipeline setup for the HTTP File Runner project. The project supports multiple CI/CD platforms:
+- **GitHub Actions** - Primary CI/CD platform with comprehensive workflows for building, testing, security scanning, and deployment across multiple platforms
+- **CircleCI** - Alternative CI/CD platform for validation and testing
 
-## Pipeline Components
+## Supported CI/CD Platforms
+
+### GitHub Actions (Primary)
+
+The primary CI/CD platform providing automated building, testing, security scanning, and deployment across multiple platforms.
+
+## GitHub Actions Pipeline Components
 
 ### 1. Continuous Integration (`.github/workflows/build.yml`)
 
@@ -83,6 +91,29 @@ This document describes the complete CI/CD pipeline setup for the HTTP File Runn
 - Multi-platform validation
 - Integration testing with example files
 - Comprehensive test result summary
+
+### CircleCI (Alternative Platform)
+
+The project also supports CircleCI as an alternative CI/CD platform. Configuration is located at `.circleci/config.yml`.
+
+**Workflow: ci-pipeline**
+- **Job: build-and-test**
+  - Uses Rust 1.92 Docker image (`cimg/rust:1.92`)
+  - Caches Cargo dependencies for faster builds
+  - Checks code formatting with `cargo fmt --check`
+  - Runs Clippy linting with `cargo clippy -- -D warnings`
+  - Builds project in release mode
+  - Runs unit tests with `cargo test`
+
+**Key Features:**
+- Automated dependency caching for improved build performance
+- Consistent validation with GitHub Actions workflows
+- Suitable for teams using CircleCI infrastructure
+
+**CircleCI Setup:**
+1. Connect your repository to CircleCI
+2. The `.circleci/config.yml` will be automatically detected
+3. Pipelines will run on every push and pull request
 
 ## Development Tools
 
