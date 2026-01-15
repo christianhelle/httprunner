@@ -269,30 +269,22 @@ impl HttpRunnerApp {
     }
 
     fn save_state(&self) {
-        let state = AppState {
-            root_directory: Some(self.root_directory.clone()),
-            selected_file: self.selected_file.clone(),
-            selected_environment: self.selected_environment.clone(),
-            font_size: Some(self.font_size),
-            window_size: None, // Will be set by save_state_with_window
-            last_results: Some(self.results_view.get_results()),
-        };
-
-        if let Err(e) = state.save() {
-            eprintln!("Failed to save application state: {}", e);
-        }
+        self.save_state_internal(None);
     }
 
     fn save_state_with_window(&self, ctx: &egui::Context) {
         // Get viewport size from context
         let window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
-        
+        self.save_state_internal(Some((window_size.x, window_size.y)));
+    }
+
+    fn save_state_internal(&self, window_size: Option<(f32, f32)>) {
         let state = AppState {
             root_directory: Some(self.root_directory.clone()),
             selected_file: self.selected_file.clone(),
             selected_environment: self.selected_environment.clone(),
             font_size: Some(self.font_size),
-            window_size: Some((window_size.x, window_size.y)),
+            window_size,
             last_results: Some(self.results_view.get_results()),
         };
 
@@ -485,9 +477,12 @@ impl eframe::App for HttpRunnerApp {
         let current_window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
         let current_size = (current_window_size.x, current_window_size.y);
         
-        if self.last_saved_window_size.is_none() 
-            || self.last_saved_window_size.unwrap() != current_size 
-        {
+        let should_save_window_size = match self.last_saved_window_size {
+            None => true,
+            Some(last_size) => last_size != current_size,
+        };
+        
+        if should_save_window_size {
             self.last_saved_window_size = Some(current_size);
             self.save_state_with_window(ctx);
         }

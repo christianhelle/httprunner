@@ -20,7 +20,7 @@
   {
     "label": "cargo run cli",
     "command": "cargo",
-    "args": ["run", "--", "examples/simple.http"],
+    "args": ["run", "--bin", "httprunner", "--", "examples/simple.http"],
     "use_new_terminal": false,
   },
   {

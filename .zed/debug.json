@@ -3,7 +3,7 @@
     "label": "Build & Debug",
     "build": {
       "command": "cargo",
-      "args": ["build"],
+      "args": ["build", "--bin", "httprunner-gui"],
     },
     "program": "$ZED_WORKTREE_ROOT/target/debug/httprunner-gui",
     // sourceLanguages is required for CodeLLDB (not GDB) when using Rust
