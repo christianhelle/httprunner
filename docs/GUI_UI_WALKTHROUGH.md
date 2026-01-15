@@ -10,6 +10,7 @@ The GUI application automatically saves your workspace state and restores it whe
 - **Selected file**: The `.http` file you had open
 - **Active environment**: Your current environment selection
 - **Font size**: Your preferred zoom level
+- **Window size**: Your window dimensions
 
 ### State File Location
 
@@ -25,6 +26,7 @@ State is automatically saved when you:
 - Select a different file
 - Switch environments
 - Change font size (zoom in/out)
+- Resize the window
 - Quit the application
 
 You don't need to manually save anything - just close the application and your workspace will be exactly as you left it when you return.
