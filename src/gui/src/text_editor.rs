@@ -2,18 +2,26 @@ use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
+/// Action to perform after showing the text editor UI
 pub enum TextEditorAction {
+    /// Run a specific request by index
     RunRequest(usize),
+    /// No action required
     None,
 }
 
+/// Text editor component for editing .http files with syntax highlighting
 pub struct TextEditor {
+    /// Current file content
     content: String,
+    /// Path to the currently loaded file
     current_file: Option<PathBuf>,
+    /// Whether the content has been modified since last save
     has_changes: bool,
 }
 
 impl TextEditor {
+    /// Create a new text editor instance
     pub fn new() -> Self {
         Self {
             content: String::new(),
@@ -22,6 +30,7 @@ impl TextEditor {
         }
     }
 
+    /// Load a .http file into the editor
     pub fn load_file(&mut self, path: &Path) {
         if let Ok(content) = std::fs::read_to_string(path) {
             self.content = content;
@@ -30,6 +39,7 @@ impl TextEditor {
         }
     }
 
+    /// Save the current content to the loaded file
     pub fn save_to_file(&mut self) -> anyhow::Result<()> {
         if let Some(path) = &self.current_file {
             std::fs::write(path, &self.content)?;
@@ -40,6 +50,8 @@ impl TextEditor {
         }
     }
 
+    /// Display the text editor UI and handle user interactions
+    /// Returns an action to be performed by the parent component
     pub fn show(&mut self, ui: &mut egui::Ui, file: &Option<PathBuf>) -> TextEditorAction {
         let mut action = TextEditorAction::None;
 
@@ -88,7 +100,8 @@ impl TextEditor {
         action
     }
 
-    /// Find which request the cursor is currently in
+    /// Find the index of the request at the current cursor position
+    /// Currently returns the first request (cursor tracking to be implemented)
     fn find_request_at_cursor(&self) -> Option<usize> {
         // Parse the file to find request boundaries
         if let Some(path) = &self.current_file
@@ -107,6 +120,7 @@ impl TextEditor {
         None
     }
 
+    /// Check if the editor has unsaved changes
     pub fn has_changes(&self) -> bool {
         self.has_changes
     }
