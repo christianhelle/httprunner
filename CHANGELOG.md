@@ -19,6 +19,7 @@
 
 **Merged pull requests:**
 
+- Refactor GUI state persistence code and fix Zed configuration [\#122](https://github.com/christianhelle/httprunner/pull/122) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add full editing capabilities to GUI for .http files [\#117](https://github.com/christianhelle/httprunner/pull/117) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Include GUI binary in build and release workflow artifacts [\#111](https://github.com/christianhelle/httprunner/pull/111) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Update dependency ruby to v4.0.1 [\#110](https://github.com/christianhelle/httprunner/pull/110) ([renovate[bot]](https://github.com/apps/renovate))
