@@ -1,0 +1,153 @@
+use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
+use std::collections::BTreeSet;
+use std::path::{Path, PathBuf};
+
+pub enum TextEditorAction {
+    RunRequest(usize),
+    None,
+}
+
+pub struct TextEditor {
+    content: String,
+    current_file: Option<PathBuf>,
+    has_changes: bool,
+    cursor_position: usize,
+}
+
+impl TextEditor {
+    pub fn new() -> Self {
+        Self {
+            content: String::new(),
+            current_file: None,
+            has_changes: false,
+            cursor_position: 0,
+        }
+    }
+
+    pub fn load_file(&mut self, path: &Path) {
+        if let Ok(content) = std::fs::read_to_string(path) {
+            self.content = content;
+            self.current_file = Some(path.to_path_buf());
+            self.has_changes = false;
+        }
+    }
+
+    pub fn save_to_file(&mut self) -> anyhow::Result<()> {
+        if let Some(path) = &self.current_file {
+            std::fs::write(path, &self.content)?;
+            self.has_changes = false;
+            Ok(())
+        } else {
+            Err(anyhow::anyhow!("No file loaded"))
+        }
+    }
+
+    pub fn show(&mut self, ui: &mut egui::Ui, file: &Option<PathBuf>) -> TextEditorAction {
+        let mut action = TextEditorAction::None;
+
+        if file.is_none() {
+            ui.label("No file selected. Select a .http file from the left panel.");
+            return action;
+        }
+
+        // Store original content to detect changes
+        let original_content = self.content.clone();
+
+        // Use egui_code_editor for syntax highlighting
+        CodeEditor::default()
+            .with_rows(30)
+            .with_fontsize(14.0)
+            .with_theme(ColorTheme::GITHUB_DARK)
+            .with_syntax(http_syntax())
+            .with_numlines(true)
+            .show(ui, &mut self.content);
+
+        // Detect changes
+        if self.content != original_content {
+            self.has_changes = true;
+        }
+
+        // Add buttons below the editor
+        ui.separator();
+        ui.horizontal(|ui| {
+            if ui.button("💾 Save").clicked() {
+                if let Err(e) = self.save_to_file() {
+                    eprintln!("Failed to save file: {}", e);
+                }
+            }
+
+            if ui.button("▶ Run Request at Cursor").clicked() {
+                if let Some(request_index) = self.find_request_at_cursor() {
+                    action = TextEditorAction::RunRequest(request_index);
+                }
+            }
+
+            if self.has_changes {
+                ui.colored_label(egui::Color32::from_rgb(255, 165, 0), "● Unsaved changes");
+            }
+        });
+
+        action
+    }
+
+    /// Find which request the cursor is currently in
+    fn find_request_at_cursor(&self) -> Option<usize> {
+        // Parse the file to find request boundaries
+        if let Some(path) = &self.current_file
+            && let Some(path_str) = path.to_str()
+        {
+            if let Ok(requests) =
+                httprunner_lib::parser::parse_http_file(path_str, None)
+            {
+                // For now, just return the first request
+                // TODO: Implement proper cursor position tracking and request detection
+                if !requests.is_empty() {
+                    return Some(0);
+                }
+            }
+        }
+        None
+    }
+
+    pub fn has_changes(&self) -> bool {
+        self.has_changes
+    }
+
+    pub fn get_content(&self) -> &str {
+        &self.content
+    }
+}
+
+/// Custom syntax highlighting for .http files
+fn http_syntax() -> Syntax {
+    Syntax {
+        language: "HTTP",
+        case_sensitive: true,
+        comment: "#",
+        comment_multiline: ["###", "###"],
+        hyperlinks: BTreeSet::new(), // Empty set for now
+        keywords: vec![
+            // HTTP Methods
+            "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "CONNECT", "TRACE",
+            // Common headers
+            "Content-Type", "Authorization", "Accept", "User-Agent", "Host", "Connection",
+            "Cache-Control", "Cookie", "Set-Cookie",
+            // httprunner specific
+            "ASSERT", "VAR",
+        ]
+        .into_iter()
+        .collect(),
+        types: vec![
+            "http", "https", "HTTP/1.1", "HTTP/2", "HTTP/3",
+            "application/json", "application/xml", "text/html", "text/plain",
+        ]
+        .into_iter()
+        .collect(),
+        special: vec![
+            // Status codes
+            "200", "201", "204", "301", "302", "400", "401", "403", "404", "500", "502", "503",
+        ]
+        .into_iter()
+        .collect(),
+    }
+}

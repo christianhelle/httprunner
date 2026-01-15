@@ -6,6 +6,7 @@ mod request_editor;
 mod request_view;
 mod results_view;
 mod state;
+mod text_editor;
 
 use app::HttpRunnerApp;
 
