@@ -1,8 +1,26 @@
+use httprunner_lib::types::AssertionResult;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-// Import ExecutionResult from results_view
-use crate::results_view::ExecutionResult;
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub enum ExecutionResult {
+    Success {
+        method: String,
+        url: String,
+        status: u16,
+        duration_ms: u64,
+        response_body: String,
+        assertion_results: Vec<AssertionResult>,
+    },
+    Failure {
+        method: String,
+        url: String,
+        error: String,
+    },
+    Running {
+        message: String,
+    },
+}
 
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct AppState {

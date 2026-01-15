@@ -26,8 +26,7 @@ base64 = { version = "0.22.1", default-features = false, features = ["std"] }
 clap = { version = "4.5", features = ["derive", "std", "help", "usage", "error-context"], default-features = false }
 
 # GUI dependencies
-eframe = { version = "0.33", features = ["wayland", "x11"] }
-egui = "0.33"
+slint = { version = "1.9", features = ["backend-winit", "renderer-software"] }
 rfd = "0.17"
 env_logger = "0.11"
 

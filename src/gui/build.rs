@@ -1,6 +1,9 @@
 use std::process::Command;
 
 fn main() {
+    // Compile Slint UI files
+    slint_build::compile("ui/main.slint").unwrap();
+
     // Embed Windows icon
     #[cfg(windows)]
     {

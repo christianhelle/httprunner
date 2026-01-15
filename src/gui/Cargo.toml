@@ -22,8 +22,7 @@ path = "src/main.rs"
 
 [dependencies]
 httprunner-lib = { path = "../lib" }
-eframe = { workspace = true }
-egui = { workspace = true }
+slint = { version = "1.9", features = ["backend-winit", "renderer-software"] }
 rfd = { workspace = true }
 env_logger = { workspace = true }
 anyhow = { workspace = true }
@@ -31,6 +30,9 @@ walkdir = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }
 dirs = "6.0"
+
+[build-dependencies]
+slint-build = "1.9"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
