@@ -111,15 +111,31 @@ impl TextEditor {
     /// Find the first request in the file
     /// TODO: Implement proper cursor position tracking to find request at cursor
     fn find_first_request(&self) -> Option<usize> {
-        // Parse the file to find request boundaries
-        if let Some(path) = &self.current_file
-            && let Some(path_str) = path.to_str()
-        {
-            if let Ok(requests) =
-                httprunner_lib::parser::parse_http_file(path_str, None)
-            {
-                if !requests.is_empty() {
-                    return Some(0);
+        // Save current content to a temporary file and parse it
+        // This ensures we parse the current editor content, not the saved file
+        if let Some(path) = &self.current_file {
+            // Create a temporary file with current content
+            if let Ok(temp_dir) = std::env::temp_dir().canonicalize() {
+                let temp_file = temp_dir.join(format!(".httprunner_temp_{}", 
+                    path.file_name()?.to_str()?));
+                
+                // Write current content to temp file
+                if std::fs::write(&temp_file, &self.content).is_ok() {
+                    // Parse the temp file
+                    if let Some(temp_path_str) = temp_file.to_str() {
+                        if let Ok(requests) = 
+                            httprunner_lib::parser::parse_http_file(temp_path_str, None)
+                        {
+                            // Clean up temp file
+                            let _ = std::fs::remove_file(&temp_file);
+                            
+                            if !requests.is_empty() {
+                                return Some(0);
+                            }
+                        }
+                    }
+                    // Clean up temp file on error
+                    let _ = std::fs::remove_file(&temp_file);
                 }
             }
         }
