@@ -1,10 +1,16 @@
+use iced::widget::{button, text, Column};
+use iced::Element;
 use std::path::PathBuf;
 use walkdir::WalkDir;
+
+#[derive(Debug, Clone)]
+pub enum Message {
+    FileClicked(PathBuf),
+}
 
 pub struct FileTree {
     root_path: PathBuf,
     http_files: Vec<PathBuf>,
-    expanded_dirs: std::collections::HashSet<PathBuf>,
 }
 
 impl FileTree {
@@ -31,14 +37,23 @@ impl FileTree {
         Self {
             root_path,
             http_files,
-            expanded_dirs: std::collections::HashSet::new(),
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui) -> Option<PathBuf> {
-        let mut selected_file = None;
+    pub fn update(&mut self, message: Message) -> Option<PathBuf> {
+        match message {
+            Message::FileClicked(path) => Some(path),
+        }
+    }
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
+    pub fn view(&self) -> Element<Message> {
+        let mut content: Column<Message> = Column::new().spacing(5);
+
+        if self.http_files.is_empty() {
+            content = content
+                .push(text("No .http files found in this directory."))
+                .push(text("Use File -> Open Directory to choose a different folder."));
+        } else {
             // Group files by directory
             let mut dir_files: std::collections::BTreeMap<Option<PathBuf>, Vec<PathBuf>> =
                 std::collections::BTreeMap::new();
@@ -57,37 +72,18 @@ impl FileTree {
                         .display()
                         .to_string();
 
-                    let is_expanded = self.expanded_dirs.contains(&dir_path);
-                    let header_text = if is_expanded {
-                        format!("📂 {}", dir_name)
-                    } else {
-                        format!("📁 {}", dir_name)
-                    };
+                    content = content.push(text(format!("📂 {}", dir_name)).size(14));
 
-                    let header = egui::CollapsingHeader::new(header_text)
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            for file in &files {
-                                let file_name = file
-                                    .file_name()
-                                    .and_then(|n| n.to_str())
-                                    .unwrap_or("unknown");
+                    for file in &files {
+                        let file_name = file
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or("unknown");
 
-                                if ui
-                                    .selectable_label(false, format!("📄 {}", file_name))
-                                    .clicked()
-                                {
-                                    selected_file = Some(file.clone());
-                                }
-                            }
-                        });
+                        let file_button = button(text(format!("  📄 {}", file_name)))
+                            .on_press(Message::FileClicked(file.clone()));
 
-                    if header.header_response.clicked() {
-                        if is_expanded {
-                            self.expanded_dirs.remove(&dir_path);
-                        } else {
-                            self.expanded_dirs.insert(dir_path.clone());
-                        }
+                        content = content.push(file_button);
                     }
                 } else {
                     // Files in root directory
@@ -97,22 +93,15 @@ impl FileTree {
                             .and_then(|n| n.to_str())
                             .unwrap_or("unknown");
 
-                        if ui
-                            .selectable_label(false, format!("📄 {}", file_name))
-                            .clicked()
-                        {
-                            selected_file = Some(file.clone());
-                        }
+                        let file_button = button(text(format!("📄 {}", file_name)))
+                            .on_press(Message::FileClicked(file.clone()));
+
+                        content = content.push(file_button);
                     }
                 }
             }
+        }
 
-            if self.http_files.is_empty() {
-                ui.label("No .http files found in this directory.");
-                ui.label("Use File -> Open Directory to choose a different folder.");
-            }
-        });
-
-        selected_file
+        content.into()
     }
 }

@@ -1,4 +1,6 @@
 use httprunner_lib::types::AssertionResult;
+use iced::widget::{column, text, Column};
+use iced::Element;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -207,20 +209,22 @@ impl ResultsView {
         });
     }
 
-    pub fn show(&self, ui: &mut egui::Ui) {
+    pub fn view(&self) -> Element<'static, crate::app::Message> {
+        let mut content: Column<crate::app::Message> = Column::new().spacing(10);
+
         if let Ok(is_running) = self.is_running.lock()
             && *is_running
         {
-            ui.spinner();
+            content = content.push(text("⏳ Running..."));
         }
 
         if let Ok(results) = self.results.lock() {
             if results.is_empty() {
-                ui.label("No results yet. Select and run a request.");
-                return;
+                content = content.push(text("No results yet. Select and run a request."));
+                return content.into();
             }
 
-            for (result_idx, result) in results.iter().enumerate() {
+            for result in results.iter() {
                 match result {
                     ExecutionResult::Success {
                         method,
@@ -230,122 +234,76 @@ impl ResultsView {
                         response_body,
                         assertion_results,
                     } => {
-                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
-                        ui.monospace(format!("{} {}", method, url));
-                        ui.label(format!("Status: {}", status));
-                        ui.label(format!("Duration: {} ms", duration_ms));
+                        let mut result_section = column![
+                            text("✅ SUCCESS").style(text::success),
+                            text(format!("{} {}", method, url)),
+                            text(format!("Status: {}", status)),
+                            text(format!("Duration: {} ms", duration_ms)),
+                        ]
+                        .spacing(5);
 
-                        // Display assertion results if any
                         if !assertion_results.is_empty() {
-                            ui.separator();
-                            ui.label("🔍 Assertion Results:");
-
+                            result_section = result_section.push(text("🔍 Assertion Results:"));
                             for assertion_result in assertion_results {
-                                let assertion_type_str = match assertion_result
-                                    .assertion
-                                    .assertion_type
-                                {
-                                    httprunner_lib::types::AssertionType::Status => "Status Code",
-                                    httprunner_lib::types::AssertionType::Body => "Response Body",
-                                    httprunner_lib::types::AssertionType::Headers => {
-                                        "Response Headers"
-                                    }
-                                };
-
-                                if assertion_result.passed {
-                                    ui.horizontal(|ui| {
-                                        ui.colored_label(
-                                            egui::Color32::from_rgb(0, 200, 0),
-                                            "  ✅",
-                                        );
-                                        ui.label(format!(
-                                            "{}: Expected '{}'",
-                                            assertion_type_str,
-                                            assertion_result.assertion.expected_value
-                                        ));
-                                    });
+                                let status_symbol = if assertion_result.passed {
+                                    "✅"
                                 } else {
-                                    ui.horizontal(|ui| {
-                                        ui.colored_label(
-                                            egui::Color32::from_rgb(200, 0, 0),
-                                            "  ❌",
-                                        );
-                                        ui.label(format!(
-                                            "{}: {}",
-                                            assertion_type_str,
-                                            assertion_result
-                                                .error_message
-                                                .as_ref()
-                                                .unwrap_or(&"Failed".to_string())
-                                        ));
-                                    });
-
-                                    if let Some(ref actual) = assertion_result.actual_value {
-                                        ui.horizontal(|ui| {
-                                            ui.label("     ");
-                                            ui.colored_label(
-                                                egui::Color32::from_rgb(255, 200, 0),
-                                                format!(
-                                                    "Expected: '{}'",
-                                                    assertion_result.assertion.expected_value
-                                                ),
-                                            );
-                                        });
-                                        ui.horizontal(|ui| {
-                                            ui.label("     ");
-                                            ui.colored_label(
-                                                egui::Color32::from_rgb(255, 200, 0),
-                                                format!("Actual: '{}'", actual),
-                                            );
-                                        });
-                                    }
-                                }
+                                    "❌"
+                                };
+                                result_section = result_section.push(text(format!(
+                                    "  {} {:?}",
+                                    status_symbol, assertion_result.assertion
+                                )));
                             }
                         }
 
-                        ui.separator();
-                        ui.label("Response:");
-                        egui::ScrollArea::vertical()
-                            .id_salt(format!("response_body_{}", result_idx))
-                            .max_height(300.0)
-                            .show(ui, |ui| {
-                                ui.monospace(response_body);
-                            });
-                        ui.separator();
+                        if !response_body.is_empty() {
+                            result_section = result_section.push(text("Response Body:"));
+                            let body_preview = if response_body.len() > 500 {
+                                format!("{}...", &response_body[..500])
+                            } else {
+                                response_body.clone()
+                            };
+                            result_section = result_section.push(text(body_preview));
+                        }
+
+                        content = content.push(result_section);
                     }
-                    ExecutionResult::Failure { method, url, error } => {
-                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌ FAILED");
-                        ui.monospace(format!("{} {}", method, url));
-                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
-                        ui.separator();
+                    ExecutionResult::Failure {
+                        method,
+                        url,
+                        error,
+                    } => {
+                        let result_section = column![
+                            text("❌ FAILURE").style(text::danger),
+                            text(format!("{} {}", method, url)),
+                            text(format!("Error: {}", error)),
+                        ]
+                        .spacing(5);
+
+                        content = content.push(result_section);
                     }
                     ExecutionResult::Running { message } => {
-                        ui.colored_label(egui::Color32::from_rgb(0, 100, 200), "⏳ RUNNING");
-                        ui.label(message);
-                        ui.separator();
+                        content = content.push(text(format!("⏳ {}", message)));
                     }
                 }
             }
         }
+
+        content.into()
     }
 }
 
+// Helper function to execute a single request
 fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
-    use std::time::Instant;
-
-    let start = Instant::now();
-
-    // Execute the request using the runner
     match httprunner_lib::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
-            let duration_ms = start.elapsed().as_millis() as u64;
-
             if result.success {
                 ExecutionResult::Success {
                     method: request.method,
                     url: request.url,
                     status: result.status_code,
-                    duration_ms,
+                    duration_ms: result.duration_ms,
                     response_body: result.response_body.unwrap_or_default(),
                     assertion_results: result.assertion_results.clone(),
                 }
