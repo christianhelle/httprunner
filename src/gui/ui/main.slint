@@ -1,0 +1,448 @@
+import { Button, VerticalBox, HorizontalBox, ListView, ComboBox, ScrollView, TextEdit, GroupBox, TabWidget } from "std-widgets.slint";
+
+export struct HttpFile {
+    path: string,
+    name: string,
+}
+
+export struct HttpRequest {
+    index: int,
+    name: string,
+    method: string,
+    url: string,
+    headers: string,
+    body: string,
+}
+
+export struct ExecutionResult {
+    method: string,
+    url: string,
+    status: string,
+    duration: string,
+    response: string,
+    is-success: bool,
+    is-running: bool,
+}
+
+export component MainWindow inherits Window {
+    title: "HTTP File Runner";
+    preferred-width: 1200px;
+    preferred-height: 800px;
+    min-width: 800px;
+    min-height: 600px;
+    
+    // Properties for data binding
+    in-out property <string> working-directory: "";
+    in-out property <string> selected-file: "";
+    in-out property <[HttpFile]> http-files: [];
+    in-out property <[string]> environments: [];
+    in-out property <int> selected-environment-index: -1;
+    in-out property <[HttpRequest]> requests: [];
+    in-out property <[ExecutionResult]> results: [];
+    in-out property <bool> has-unsaved-changes: false;
+    in-out property <string> selected-request-details: "";
+    
+    // Callbacks for user actions
+    callback open-directory();
+    callback new-http-file();
+    callback quit();
+    callback select-file(string);
+    callback select-environment(int);
+    callback run-all-requests();
+    callback run-single-request(int);
+    callback save-file();
+    callback edit-request(int);
+    callback delete-request(int);
+    
+    VerticalBox {
+        padding: 0px;
+        spacing: 0px;
+        
+        // Top Menu Bar
+        Rectangle {
+            height: 40px;
+            background: #2b2b2b;
+            
+            HorizontalBox {
+                padding: 8px;
+                spacing: 10px;
+                
+                Button {
+                    text: "Open Directory...";
+                    clicked => { root.open-directory(); }
+                }
+                
+                Button {
+                    text: "New .http File...";
+                    clicked => { root.new-http-file(); }
+                }
+                
+                Rectangle {
+                    width: 20px;
+                }
+                
+                Text {
+                    text: "Environment:";
+                    vertical-alignment: center;
+                    color: #ffffff;
+                }
+                
+                ComboBox {
+                    model: root.environments;
+                    current-index: root.selected-environment-index;
+                    selected(idx) => {
+                        root.select-environment(idx);
+                    }
+                }
+                
+                Rectangle {
+                    horizontal-stretch: 1;
+                }
+                
+                Button {
+                    text: "Quit";
+                    clicked => { root.quit(); }
+                }
+            }
+        }
+        
+        // Main Content Area
+        HorizontalBox {
+            padding: 0px;
+            spacing: 0px;
+            vertical-stretch: 1;
+            
+            // Left Panel - File Tree
+            Rectangle {
+                width: 300px;
+                background: #1e1e1e;
+                
+                VerticalBox {
+                    padding: 10px;
+                    spacing: 5px;
+                    
+                    Text {
+                        text: "HTTP Files";
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: #ffffff;
+                    }
+                    
+                    Rectangle {
+                        height: 1px;
+                        background: #3e3e3e;
+                    }
+                    
+                    ScrollView {
+                        vertical-stretch: 1;
+                        
+                        VerticalBox {
+                            spacing: 2px;
+                            
+                            for file in root.http-files: Rectangle {
+                                height: 30px;
+                                background: file-touch.has-hover ? #3e3e3e : transparent;
+                                border-radius: 4px;
+                                
+                                file-touch := TouchArea {
+                                    clicked => {
+                                        root.select-file(file.path);
+                                    }
+                                }
+                                
+                                HorizontalBox {
+                                    padding-left: 8px;
+                                    padding-right: 8px;
+                                    
+                                    Text {
+                                        text: "📄 " + file.name;
+                                        color: #ffffff;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Right Panel - Request Details and Results
+            VerticalBox {
+                padding: 0px;
+                spacing: 0px;
+                horizontal-stretch: 1;
+                
+                // Request Details (Top)
+                Rectangle {
+                    height: 400px;
+                    background: #252526;
+                    
+                    VerticalBox {
+                        padding: 10px;
+                        spacing: 5px;
+                        
+                        HorizontalBox {
+                            Text {
+                                text: "Request Details";
+                                font-size: 16px;
+                                font-weight: 700;
+                                color: #ffffff;
+                            }
+                            
+                            Rectangle { horizontal-stretch: 1; }
+                            
+                            if root.has-unsaved-changes: Text {
+                                text: "● Unsaved changes";
+                                color: #ffa500;
+                                vertical-alignment: center;
+                            }
+                        }
+                        
+                        Rectangle {
+                            height: 1px;
+                            background: #3e3e3e;
+                        }
+                        
+                        ScrollView {
+                            vertical-stretch: 1;
+                            
+                            VerticalBox {
+                                spacing: 8px;
+                                
+                                for request in root.requests: Rectangle {
+                                    background: #2d2d30;
+                                    border-radius: 4px;
+                                    
+                                    VerticalBox {
+                                        padding: 10px;
+                                        spacing: 8px;
+                                        
+                                        Text {
+                                            text: request.name != "" ? request.index + " - " + request.method + " " + request.name : request.index + " - " + request.method + " " + request.url;
+                                            font-size: 14px;
+                                            font-weight: 600;
+                                            color: #ffffff;
+                                        }
+                                        
+                                        HorizontalBox {
+                                            spacing: 5px;
+                                            
+                                            Text {
+                                                text: "Method:";
+                                                color: #cccccc;
+                                            }
+                                            Text {
+                                                text: request.method;
+                                                color: #4ec9b0;
+                                                font-family: "monospace";
+                                            }
+                                        }
+                                        
+                                        HorizontalBox {
+                                            spacing: 5px;
+                                            
+                                            Text {
+                                                text: "URL:";
+                                                color: #cccccc;
+                                            }
+                                            Text {
+                                                text: request.url;
+                                                color: #4ec9b0;
+                                                font-family: "monospace";
+                                            }
+                                        }
+                                        
+                                        if request.headers != "": VerticalBox {
+                                            spacing: 4px;
+                                            
+                                            Text {
+                                                text: "Headers:";
+                                                color: #cccccc;
+                                            }
+                                            Text {
+                                                text: request.headers;
+                                                color: #ce9178;
+                                                font-family: "monospace";
+                                            }
+                                        }
+                                        
+                                        if request.body != "": VerticalBox {
+                                            spacing: 4px;
+                                            
+                                            Text {
+                                                text: "Body:";
+                                                color: #cccccc;
+                                            }
+                                            ScrollView {
+                                                max-height: 150px;
+                                                
+                                                Text {
+                                                    text: request.body;
+                                                    color: #ce9178;
+                                                    font-family: "monospace";
+                                                    wrap: word-wrap;
+                                                }
+                                            }
+                                        }
+                                        
+                                        HorizontalBox {
+                                            spacing: 5px;
+                                            
+                                            Button {
+                                                text: "▶ Run";
+                                                clicked => {
+                                                    root.run-single-request(request.index);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Rectangle {
+                            height: 1px;
+                            background: #3e3e3e;
+                        }
+                        
+                        HorizontalBox {
+                            spacing: 10px;
+                            
+                            Button {
+                                text: "▶ Run All Requests";
+                                enabled: !root.has-unsaved-changes && root.selected-file != "";
+                                clicked => {
+                                    root.run-all-requests();
+                                }
+                            }
+                            
+                            Button {
+                                text: "💾 Save";
+                                enabled: root.has-unsaved-changes;
+                                clicked => {
+                                    root.save-file();
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Results (Bottom)
+                Rectangle {
+                    background: #1e1e1e;
+                    vertical-stretch: 1;
+                    
+                    VerticalBox {
+                        padding: 10px;
+                        spacing: 5px;
+                        
+                        Text {
+                            text: "Results";
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: #ffffff;
+                        }
+                        
+                        Rectangle {
+                            height: 1px;
+                            background: #3e3e3e;
+                        }
+                        
+                        ScrollView {
+                            vertical-stretch: 1;
+                            
+                            VerticalBox {
+                                spacing: 8px;
+                                
+                                for result in root.results: Rectangle {
+                                    background: #252526;
+                                    border-radius: 4px;
+                                    border-width: 1px;
+                                    border-color: result.is-success ? #4ec9b0 : (result.is-running ? #ffa500 : #f48771);
+                                    
+                                    VerticalBox {
+                                        padding: 10px;
+                                        spacing: 6px;
+                                        
+                                        HorizontalBox {
+                                            spacing: 5px;
+                                            
+                                            Text {
+                                                text: result.method;
+                                                color: #4ec9b0;
+                                                font-weight: 600;
+                                            }
+                                            Text {
+                                                text: result.url;
+                                                color: #ffffff;
+                                            }
+                                        }
+                                        
+                                        if !result.is-running: HorizontalBox {
+                                            spacing: 10px;
+                                            
+                                            Text {
+                                                text: "Status: " + result.status;
+                                                color: result.is-success ? #4ec9b0 : #f48771;
+                                            }
+                                            Text {
+                                                text: "Duration: " + result.duration;
+                                                color: #cccccc;
+                                            }
+                                        }
+                                        
+                                        if result.response != "": VerticalBox {
+                                            spacing: 4px;
+                                            
+                                            Text {
+                                                text: "Response:";
+                                                color: #cccccc;
+                                            }
+                                            ScrollView {
+                                                max-height: 200px;
+                                                
+                                                Text {
+                                                    text: result.response;
+                                                    color: #ce9178;
+                                                    font-family: "monospace";
+                                                    wrap: word-wrap;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Bottom Status Bar
+        Rectangle {
+            height: 30px;
+            background: #007acc;
+            
+            HorizontalBox {
+                padding-left: 10px;
+                padding-right: 10px;
+                
+                Text {
+                    text: "Working Directory: " + root.working-directory;
+                    color: #ffffff;
+                    vertical-alignment: center;
+                }
+                
+                if root.selected-file != "": Rectangle {
+                    width: 20px;
+                }
+                
+                if root.selected-file != "": Text {
+                    text: "Selected: " + root.selected-file;
+                    color: #ffffff;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}
