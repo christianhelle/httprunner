@@ -141,7 +141,7 @@ impl HttpRunnerApp {
             self.save_state();
         }
 
-        // Check for F5 or Ctrl+R (run all requests for selected file)
+        // Check for F5 (run all requests for selected file)
         if ctx.input(|i| i.key_pressed(egui::Key::F5)) {
             return KeyboardAction::RunAllRequests;
         }
