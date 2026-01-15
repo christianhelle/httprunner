@@ -2,6 +2,7 @@ use super::{
     file_tree::FileTree,
     request_view::{RequestView, RequestViewAction},
     results_view::ResultsView,
+    state::AppState,
 };
 use std::path::{Path, PathBuf};
 
@@ -33,10 +34,19 @@ impl HttpRunnerApp {
     const FONT_SIZE_STEP: f32 = 1.0;
 
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        // Start with current directory
-        let root_directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        // Load saved state
+        let state = AppState::load();
 
-        Self {
+        // Use saved root directory or fall back to current directory
+        let root_directory = state
+            .root_directory
+            .and_then(|p| if p.exists() { Some(p) } else { None })
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+
+        // Use saved font size or default
+        let font_size = state.font_size.unwrap_or(Self::DEFAULT_FONT_SIZE);
+
+        let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
             request_view: RequestView::new(),
             results_view: ResultsView::new(),
@@ -45,9 +55,27 @@ impl HttpRunnerApp {
             environments: Vec::new(),
             selected_environment: None,
             root_directory,
-            font_size: Self::DEFAULT_FONT_SIZE,
+            font_size,
             environment_selector_open: false,
+        };
+
+        // Restore selected file if it still exists
+        if let Some(saved_file) = state.selected_file {
+            if saved_file.exists() {
+                app.selected_file = Some(saved_file.clone());
+                app.load_environments(&saved_file);
+                app.request_view.load_file(&saved_file);
+
+                // Restore selected environment if it's still valid
+                if let Some(saved_env) = state.selected_environment {
+                    if app.environments.contains(&saved_env) {
+                        app.selected_environment = Some(saved_env);
+                    }
+                }
+            }
         }
+
+        app
     }
 
     fn update_font_size(&mut self, ctx: &egui::Context) {
@@ -86,18 +114,21 @@ impl HttpRunnerApp {
         }) {
             self.font_size = (self.font_size + Self::FONT_SIZE_STEP).min(Self::MAX_FONT_SIZE);
             self.update_font_size(ctx);
+            self.save_state();
         }
 
         // Check for Ctrl + Minus (zoom out)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Minus)) {
             self.font_size = (self.font_size - Self::FONT_SIZE_STEP).max(Self::MIN_FONT_SIZE);
             self.update_font_size(ctx);
+            self.save_state();
         }
 
         // Check for Ctrl + 0 (reset to default)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Num0)) {
             self.font_size = Self::DEFAULT_FONT_SIZE;
             self.update_font_size(ctx);
+            self.save_state();
         }
 
         // Check for F5 (run all requests for selected file)
@@ -133,6 +164,7 @@ impl HttpRunnerApp {
                             self.file_tree = FileTree::new(path);
                             self.selected_file = None;
                             self.selected_request_index = None;
+                            self.save_state();
                         }
                         ui.close();
                     }
@@ -155,6 +187,7 @@ impl HttpRunnerApp {
                                 self.file_tree = FileTree::new(self.root_directory.clone());
                                 self.selected_file = Some(path.clone());
                                 self.request_view.load_file(&path);
+                                self.save_state();
                             }
                         }
                         ui.close();
@@ -163,6 +196,7 @@ impl HttpRunnerApp {
                     ui.separator();
 
                     if ui.button("Quit").clicked() {
+                        self.save_state();
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
@@ -173,6 +207,7 @@ impl HttpRunnerApp {
                 let combo = egui::ComboBox::from_id_salt("env_selector")
                     .selected_text(self.selected_environment.as_deref().unwrap_or("None"));
 
+                let previous_env = self.selected_environment.clone();
                 let response = combo.show_ui(ui, |ui| {
                     ui.selectable_value(&mut self.selected_environment, None, "None");
                     for env in &self.environments {
@@ -180,6 +215,11 @@ impl HttpRunnerApp {
                         ui.selectable_value(&mut self.selected_environment, env_clone, env);
                     }
                 });
+
+                // Save state if environment changed
+                if previous_env != self.selected_environment {
+                    self.save_state();
+                }
 
                 // Track whether the combo box is open by checking if the popup is actually open
                 self.environment_selector_open = response.response.has_focus()
@@ -217,6 +257,19 @@ impl HttpRunnerApp {
         // No environments found or error occurred
         self.environments = Vec::new();
     }
+
+    fn save_state(&self) {
+        let state = AppState {
+            root_directory: Some(self.root_directory.clone()),
+            selected_file: self.selected_file.clone(),
+            selected_environment: self.selected_environment.clone(),
+            font_size: Some(self.font_size),
+        };
+
+        if let Err(e) = state.save() {
+            eprintln!("Failed to save application state: {}", e);
+        }
+    }
 }
 
 impl eframe::App for HttpRunnerApp {
@@ -239,9 +292,11 @@ impl eframe::App for HttpRunnerApp {
                     self.file_tree = FileTree::new(path);
                     self.selected_file = None;
                     self.selected_request_index = None;
+                    self.save_state();
                 }
             }
             KeyboardAction::Quit => {
+                self.save_state();
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
             KeyboardAction::SwitchEnvironment => {
@@ -266,6 +321,7 @@ impl eframe::App for HttpRunnerApp {
                         // Currently "None", switch to first environment
                         self.selected_environment = self.environments.first().cloned();
                     }
+                    self.save_state();
                 }
             }
             KeyboardAction::None => {}
@@ -291,6 +347,9 @@ impl eframe::App for HttpRunnerApp {
 
                     // Update request view
                     self.request_view.load_file(&selected);
+
+                    // Save state after file selection
+                    self.save_state();
                 }
             });
 

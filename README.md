@@ -2027,6 +2027,7 @@ The GUI provides a visual interface for:
 - Running all requests in a file
 - Viewing response status, headers, and body
 - Automatically detecting environment files
+- **Automatic state persistence**: Your last working directory, selected file, environment, and font size are saved and automatically restored when you restart the application
 
 #### Keyboard Shortcuts
 
@@ -2037,6 +2038,26 @@ The GUI provides a visual interface for:
 - **Ctrl+Plus** / **Cmd+Plus**: Zoom in (increase font size)
 - **Ctrl+Minus** / **Cmd+Minus**: Zoom out (decrease font size)
 - **Ctrl+0** / **Cmd+0**: Reset font size to default
+
+#### State Persistence
+
+The GUI application automatically saves your workspace state, including:
+- Last opened directory
+- Currently selected `.http` file
+- Active environment selection
+- Font size preference
+
+The state is saved to a platform-specific configuration directory:
+- **Windows**: `%APPDATA%\httprunner\httprunner-gui-state.json`
+- **macOS**: `~/Library/Application Support/httprunner/httprunner-gui-state.json`
+- **Linux**: `~/.config/httprunner/httprunner-gui-state.json`
+
+State is automatically saved when you:
+- Open a new directory
+- Select a different file
+- Switch environments
+- Change font size
+- Quit the application
 
 See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
 

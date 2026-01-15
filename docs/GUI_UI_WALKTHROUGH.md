@@ -2,6 +2,33 @@
 
 This document provides a detailed walkthrough of the GUI editing interface.
 
+## State Persistence
+
+The GUI application automatically saves your workspace state and restores it when you restart the application. This includes:
+
+- **Last opened directory**: The root directory you were working in
+- **Selected file**: The `.http` file you had open
+- **Active environment**: Your current environment selection
+- **Font size**: Your preferred zoom level
+
+### State File Location
+
+The state is saved to a platform-specific configuration directory:
+- **Windows**: `%APPDATA%\httprunner\httprunner-gui-state.json`
+- **macOS**: `~/Library/Application Support/httprunner/httprunner-gui-state.json`
+- **Linux**: `~/.config/httprunner/httprunner-gui-state.json`
+
+### When State is Saved
+
+State is automatically saved when you:
+- Open a new directory
+- Select a different file
+- Switch environments
+- Change font size (zoom in/out)
+- Quit the application
+
+You don't need to manually save anything - just close the application and your workspace will be exactly as you left it when you return.
+
 ## Main Application Window
 
 ```
