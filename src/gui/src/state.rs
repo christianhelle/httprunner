@@ -7,6 +7,7 @@ pub struct AppState {
     pub selected_file: Option<PathBuf>,
     pub selected_environment: Option<String>,
     pub font_size: Option<f32>,
+    pub window_size: Option<(f32, f32)>,
 }
 
 impl AppState {

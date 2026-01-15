@@ -2046,6 +2046,7 @@ The GUI application automatically saves your workspace state, including:
 - Currently selected `.http` file
 - Active environment selection
 - Font size preference
+- Window size and position
 
 The state is saved to a platform-specific configuration directory:
 - **Windows**: `%APPDATA%\httprunner\httprunner-gui-state.json`
@@ -2057,6 +2058,7 @@ State is automatically saved when you:
 - Select a different file
 - Switch environments
 - Change font size
+- Resize the window
 - Quit the application
 
 See [GUI README](src/gui/src/README.md) for GUI-specific documentation.

@@ -25,6 +25,7 @@ pub struct HttpRunnerApp {
     root_directory: PathBuf,
     font_size: f32,
     environment_selector_open: bool,
+    last_saved_window_size: Option<(f32, f32)>,
 }
 
 impl HttpRunnerApp {
@@ -57,6 +58,7 @@ impl HttpRunnerApp {
             root_directory,
             font_size,
             environment_selector_open: false,
+            last_saved_window_size: state.window_size,
         };
 
         // Apply the loaded font size to the UI context
@@ -267,6 +269,24 @@ impl HttpRunnerApp {
             selected_file: self.selected_file.clone(),
             selected_environment: self.selected_environment.clone(),
             font_size: Some(self.font_size),
+            window_size: None, // Will be set by save_state_with_window
+        };
+
+        if let Err(e) = state.save() {
+            eprintln!("Failed to save application state: {}", e);
+        }
+    }
+
+    fn save_state_with_window(&self, ctx: &egui::Context) {
+        // Get viewport size from context
+        let window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
+        
+        let state = AppState {
+            root_directory: Some(self.root_directory.clone()),
+            selected_file: self.selected_file.clone(),
+            selected_environment: self.selected_environment.clone(),
+            font_size: Some(self.font_size),
+            window_size: Some((window_size.x, window_size.y)),
         };
 
         if let Err(e) = state.save() {
@@ -299,7 +319,7 @@ impl eframe::App for HttpRunnerApp {
                 }
             }
             KeyboardAction::Quit => {
-                self.save_state();
+                self.save_state_with_window(ctx);
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
             KeyboardAction::SwitchEnvironment => {
@@ -453,5 +473,16 @@ impl eframe::App for HttpRunnerApp {
                 });
             });
         });
+
+        // Save window size if it changed (to avoid unnecessary file writes)
+        let current_window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
+        let current_size = (current_window_size.x, current_window_size.y);
+        
+        if self.last_saved_window_size.is_none() 
+            || self.last_saved_window_size.unwrap() != current_size 
+        {
+            self.last_saved_window_size = Some(current_size);
+            self.save_state_with_window(ctx);
+        }
     }
 }

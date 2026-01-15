@@ -12,9 +12,16 @@ use app::HttpRunnerApp;
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
+    // Load saved state to restore window size
+    let saved_state = state::AppState::load();
+    let window_size = saved_state
+        .window_size
+        .map(|(w, h)| [w, h])
+        .unwrap_or([1200.0, 800.0]);
+
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1200.0, 800.0])
+            .with_inner_size(window_size)
             .with_min_inner_size([800.0, 600.0])
             .with_icon(load_icon()),
         ..Default::default()
