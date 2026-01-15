@@ -22,7 +22,7 @@ jobs:
       # Restore cached dependencies
       - restore_cache:
           keys:
-            - cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - cargo-cache-{{ arch }}-{{ checksum "Cargo.toml" }}
             - cargo-cache-{{ arch }}-
       
       # Check code formatting
@@ -47,7 +47,7 @@ jobs:
       
       # Save dependencies to cache
       - save_cache:
-          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+          key: cargo-cache-{{ arch }}-{{ checksum "Cargo.toml" }}
           paths:
             - ~/.cargo/registry
             - ~/.cargo/git
