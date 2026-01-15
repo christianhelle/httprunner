@@ -5,6 +5,7 @@ mod file_tree;
 mod request_editor;
 mod request_view;
 mod results_view;
+mod state;
 
 use app::HttpRunnerApp;
 

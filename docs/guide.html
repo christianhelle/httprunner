@@ -42,6 +42,7 @@
                     <h4>Table of Contents</h4>
                     <ul>
                         <li><a href="#getting-started">Getting Started</a></li>
+                        <li><a href="#gui-application">GUI Application</a></li>
                         <li><a href="#http-file-format">HTTP File Format</a></li>
                         <li><a href="#variables">Variables</a></li>
                         <li><a href="#built-in-functions">Built-in Functions</a></li>
@@ -85,6 +86,61 @@ httprunner --discover</code>
                         <li><strong>Logging (<code>--log</code>):</strong> Saves output to a file for analysis</li>
                         <li><strong>Report (<code>--report [format]</code>):</strong> Generates summary report in markdown or html format. Defaults to markdown if no format specified</li>
                     </ul>
+                </section>
+
+                <section id="gui-application" class="guide-section">
+                    <h2>GUI Application</h2>
+                    <p>HTTP File Runner includes a native graphical user interface (GUI) application for a visual, interactive experience.</p>
+                    
+                    <h3>Features</h3>
+                    <ul>
+                        <li><strong>Visual File Browser:</strong> Browse and select .http files from a directory tree</li>
+                        <li><strong>Request Execution:</strong> Run individual requests or all requests in a file</li>
+                        <li><strong>Response Viewer:</strong> View status codes, headers, and formatted response bodies</li>
+                        <li><strong>Environment Management:</strong> Easily switch between different environments</li>
+                        <li><strong>State Persistence:</strong> Automatically saves and restores your workspace</li>
+                        <li><strong>Font Size Control:</strong> Zoom in/out for comfortable viewing</li>
+                    </ul>
+
+                    <h3>State Persistence</h3>
+                    <p>The GUI automatically saves your workspace state and restores it when you restart. This includes:</p>
+                    <ul>
+                        <li>Last opened directory</li>
+                        <li>Currently selected .http file</li>
+                        <li>Active environment selection</li>
+                        <li>Font size preference</li>
+                    </ul>
+
+                    <div class="info-box">
+                        <strong>💾 State File Location</strong>
+                        <ul>
+                            <li><strong>Windows:</strong> <code>%APPDATA%\httprunner\httprunner-gui-state.json</code></li>
+                            <li><strong>macOS:</strong> <code>~/Library/Application Support/httprunner/httprunner-gui-state.json</code></li>
+                            <li><strong>Linux:</strong> <code>~/.config/httprunner/httprunner-gui-state.json</code></li>
+                        </ul>
+                    </div>
+
+                    <h3>Keyboard Shortcuts</h3>
+                    <div class="code-block">
+                        <code>F5               Run all requests in selected file
+Ctrl+O / Cmd+O   Open directory
+Ctrl+Q / Cmd+Q   Quit application
+Ctrl+E / Cmd+E   Cycle through environments
+Ctrl++ / Cmd++   Zoom in (increase font size)
+Ctrl+- / Cmd+-   Zoom out (decrease font size)
+Ctrl+0 / Cmd+0   Reset font size to default</code>
+                    </div>
+
+                    <h3>Automatic State Saving</h3>
+                    <p>State is automatically saved when you:</p>
+                    <ul>
+                        <li>Open a new directory</li>
+                        <li>Select a different file</li>
+                        <li>Switch environments</li>
+                        <li>Change font size</li>
+                        <li>Quit the application</li>
+                    </ul>
+                    <p>Just close the application and your workspace will be exactly as you left it when you return. No manual saving required!</p>
                 </section>
 
                 <section id="http-file-format" class="guide-section">
