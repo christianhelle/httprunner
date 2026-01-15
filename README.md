@@ -2013,11 +2013,15 @@ cargo test test_name
 HTTP Runner is available in two interfaces:
 
 - **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
-- **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
+- **GUI (Graphical User Interface)** - Two native cross-platform desktop applications:
+  - **egui GUI** (binary: `httprunner-gui`) - Immediate mode GUI using egui
+  - **Tauri GUI** (binary: `httprunner-gui-tauri`) - Modern web-based UI using Tauri framework
 
-### GUI Application
+### GUI Applications
 
-> **⚠️ Experimental**: The GUI application is currently in an experimental phase. Features and interface may change. For production use, we recommend the stable CLI version.
+> **⚠️ Experimental**: The GUI applications are currently in an experimental phase. Features and interface may change. For production use, we recommend the stable CLI version.
+
+#### egui GUI (Recommended)
 
 ![HTTP Runner GUI](images/gui.png)
 
@@ -2063,7 +2067,18 @@ State is automatically saved when you:
 - Execute requests
 - Quit the application
 
-See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
+See [egui GUI README](src/gui/src/README.md) for egui-specific documentation.
+
+#### Tauri GUI (Alternative)
+
+The Tauri GUI provides a modern, web-based alternative interface:
+- Built with HTML/CSS/JavaScript frontend
+- Rust backend for HTTP execution
+- Smaller memory footprint than traditional webview apps
+- Hot-reload support for rapid development
+- All the core features of the egui GUI
+
+See [Tauri GUI README](src/gui-tauri/README.md) for Tauri-specific documentation and build instructions.
 
 ## Project Structure
 
@@ -2072,9 +2087,10 @@ The project is organized as a Cargo workspace with the following structure:
 ```
 httprunner/
 ├── src/
-│   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
-│   ├── cli/         # CLI application (httprunner) - builds httprunner binary
-│   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary
+│   ├── lib/          # Core library (httprunner-lib) - HTTP processing logic
+│   ├── cli/          # CLI application (httprunner) - builds httprunner binary
+│   ├── gui/          # egui GUI application (httprunner-gui) - builds httprunner-gui binary
+│   └── gui-tauri/    # Tauri GUI application (httprunner-gui-tauri) - builds httprunner-gui-tauri binary
 ├── examples/
 ├── docs/
 └── ...

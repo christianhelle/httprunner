@@ -1,0 +1,28 @@
+{
+  "productName": "HTTP File Runner",
+  "version": "0.1.0",
+  "identifier": "com.christianhelle.httprunner",
+  "build": {
+    "beforeDevCommand": "",
+    "devUrl": "../dist",
+    "frontendDist": "../dist",
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "HTTP File Runner",
+        "width": 1200,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}
