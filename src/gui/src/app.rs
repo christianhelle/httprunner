@@ -33,7 +33,7 @@ impl HttpRunnerApp {
     const MAX_FONT_SIZE: f32 = 32.0;
     const FONT_SIZE_STEP: f32 = 1.0;
 
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // Load saved state
         let state = AppState::load();
 
@@ -58,6 +58,9 @@ impl HttpRunnerApp {
             font_size,
             environment_selector_open: false,
         };
+
+        // Apply the loaded font size to the UI context
+        app.update_font_size(&cc.egui_ctx);
 
         // Restore selected file if it still exists
         if let Some(saved_file) = state.selected_file {
