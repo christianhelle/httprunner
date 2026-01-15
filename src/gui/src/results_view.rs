@@ -1,9 +1,10 @@
 use httprunner_lib::types::AssertionResult;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ExecutionResult {
     Success {
         method: String,
@@ -33,6 +34,25 @@ impl ResultsView {
         Self {
             results: Arc::new(Mutex::new(Vec::new())),
             is_running: Arc::new(Mutex::new(false)),
+        }
+    }
+
+    pub fn get_results(&self) -> Vec<ExecutionResult> {
+        if let Ok(results) = self.results.lock() {
+            // Filter out Running results as they are transient
+            results
+                .iter()
+                .filter(|r| !matches!(r, ExecutionResult::Running { .. }))
+                .cloned()
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn restore_results(&mut self, saved_results: Vec<ExecutionResult>) {
+        if let Ok(mut results) = self.results.lock() {
+            *results = saved_results;
         }
     }
 

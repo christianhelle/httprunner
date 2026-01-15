@@ -64,6 +64,11 @@ impl HttpRunnerApp {
         // Apply the loaded font size to the UI context
         app.update_font_size(&cc.egui_ctx);
 
+        // Restore last results if available
+        if let Some(last_results) = state.last_results {
+            app.results_view.restore_results(last_results);
+        }
+
         // Restore selected file if it still exists
         if let Some(saved_file) = state.selected_file {
             if saved_file.exists() {
@@ -270,6 +275,7 @@ impl HttpRunnerApp {
             selected_environment: self.selected_environment.clone(),
             font_size: Some(self.font_size),
             window_size: None, // Will be set by save_state_with_window
+            last_results: Some(self.results_view.get_results()),
         };
 
         if let Err(e) = state.save() {
@@ -287,6 +293,7 @@ impl HttpRunnerApp {
             selected_environment: self.selected_environment.clone(),
             font_size: Some(self.font_size),
             window_size: Some((window_size.x, window_size.y)),
+            last_results: Some(self.results_view.get_results()),
         };
 
         if let Err(e) = state.save() {

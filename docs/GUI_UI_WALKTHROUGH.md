@@ -11,6 +11,7 @@ The GUI application automatically saves your workspace state and restores it whe
 - **Active environment**: Your current environment selection
 - **Font size**: Your preferred zoom level
 - **Window size**: Your window dimensions
+- **Last run results**: Your previous request execution results
 
 ### State File Location
 
@@ -27,6 +28,7 @@ State is automatically saved when you:
 - Switch environments
 - Change font size (zoom in/out)
 - Resize the window
+- Execute requests (results are captured)
 - Quit the application
 
 You don't need to manually save anything - just close the application and your workspace will be exactly as you left it when you return.

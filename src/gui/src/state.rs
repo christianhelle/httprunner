@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+// Import ExecutionResult from results_view
+use crate::results_view::ExecutionResult;
+
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct AppState {
     pub root_directory: Option<PathBuf>,
@@ -8,6 +11,7 @@ pub struct AppState {
     pub selected_environment: Option<String>,
     pub font_size: Option<f32>,
     pub window_size: Option<(f32, f32)>,
+    pub last_results: Option<Vec<ExecutionResult>>,
 }
 
 impl AppState {
