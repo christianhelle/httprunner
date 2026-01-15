@@ -11,7 +11,6 @@ pub struct TextEditor {
     content: String,
     current_file: Option<PathBuf>,
     has_changes: bool,
-    cursor_position: usize,
 }
 
 impl TextEditor {
@@ -20,7 +19,6 @@ impl TextEditor {
             content: String::new(),
             current_file: None,
             has_changes: false,
-            cursor_position: 0,
         }
     }
 
@@ -111,10 +109,6 @@ impl TextEditor {
 
     pub fn has_changes(&self) -> bool {
         self.has_changes
-    }
-
-    pub fn get_content(&self) -> &str {
-        &self.content
     }
 }
 
