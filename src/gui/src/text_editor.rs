@@ -32,10 +32,16 @@ impl TextEditor {
 
     /// Load a .http file into the editor
     pub fn load_file(&mut self, path: &Path) {
-        if let Ok(content) = std::fs::read_to_string(path) {
-            self.content = content;
-            self.current_file = Some(path.to_path_buf());
-            self.has_changes = false;
+        match std::fs::read_to_string(path) {
+            Ok(content) => {
+                self.content = content;
+                self.current_file = Some(path.to_path_buf());
+                self.has_changes = false;
+            }
+            Err(e) => {
+                eprintln!("Failed to load file {}: {}", path.display(), e);
+                // Keep existing content and file state on error
+            }
         }
     }
 
@@ -86,8 +92,10 @@ impl TextEditor {
                 }
             }
 
-            if ui.button("▶ Run Request at Cursor").clicked() {
-                if let Some(request_index) = self.find_request_at_cursor() {
+            // Note: Cursor position tracking not yet implemented
+            // For now, this runs the first request in the file
+            if ui.button("▶ Run First Request").clicked() {
+                if let Some(request_index) = self.find_first_request() {
                     action = TextEditorAction::RunRequest(request_index);
                 }
             }
@@ -100,9 +108,9 @@ impl TextEditor {
         action
     }
 
-    /// Find the index of the request at the current cursor position
-    /// Currently returns the first request (cursor tracking to be implemented)
-    fn find_request_at_cursor(&self) -> Option<usize> {
+    /// Find the first request in the file
+    /// TODO: Implement proper cursor position tracking to find request at cursor
+    fn find_first_request(&self) -> Option<usize> {
         // Parse the file to find request boundaries
         if let Some(path) = &self.current_file
             && let Some(path_str) = path.to_str()
@@ -110,8 +118,6 @@ impl TextEditor {
             if let Ok(requests) =
                 httprunner_lib::parser::parse_http_file(path_str, None)
             {
-                // For now, just return the first request
-                // TODO: Implement proper cursor position tracking and request detection
                 if !requests.is_empty() {
                     return Some(0);
                 }

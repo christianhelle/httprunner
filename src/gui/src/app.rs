@@ -87,6 +87,7 @@ impl HttpRunnerApp {
                 app.selected_file = Some(saved_file.clone());
                 app.load_environments(&saved_file);
                 app.request_view.load_file(&saved_file);
+                app.text_editor.load_file(&saved_file); // Load into text editor too
 
                 // Restore selected environment if it's still valid
                 if let Some(saved_env) = state.selected_environment {
