@@ -16,6 +16,7 @@ categories = [
 
 [dependencies]
 reqwest = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
 walkdir = { workspace = true }
