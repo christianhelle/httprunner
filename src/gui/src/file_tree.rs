@@ -46,7 +46,7 @@ impl FileTree {
         }
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let mut content: Column<Message> = Column::new().spacing(5);
 
         if self.http_files.is_empty() {

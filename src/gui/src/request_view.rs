@@ -63,7 +63,7 @@ impl RequestView {
         }
     }
 
-    pub fn view(&self, file: &Option<PathBuf>) -> Element<Message> {
+    pub fn view(&self, file: &Option<PathBuf>) -> Element<'_, Message> {
         let mut content: Column<Message> = Column::new().spacing(10);
 
         if file.is_none() {
@@ -98,11 +98,11 @@ impl RequestView {
                 text(header_text).size(16),
                 row![
                     text("Method: "),
-                    text(&request.method),
+                    text(request.method.clone()),
                 ],
                 row![
                     text("URL: "),
-                    text(&request.url),
+                    text(request.url.clone()),
                 ],
             ]
             .spacing(5);
@@ -117,7 +117,7 @@ impl RequestView {
 
             if let Some(body) = &request.body {
                 request_section = request_section.push(text("Body:"));
-                request_section = request_section.push(text(body));
+                request_section = request_section.push(text(body.clone()));
             }
 
             let button_row = row![
@@ -137,7 +137,7 @@ impl RequestView {
         content.into()
     }
 
-    fn show_editor(&self) -> Element<Message> {
+    fn show_editor(&self) -> Element<'_, Message> {
         let mut content: Column<Message> = column![
             text("Edit Request").size(18),
             text("Editor functionality coming soon..."),

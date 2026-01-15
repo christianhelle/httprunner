@@ -5,7 +5,7 @@ use crate::{
     state::AppState,
 };
 use iced::widget::{button, column, container, row, scrollable, text, Row};
-use iced::{executor, keyboard, window, Element, Length, Subscription, Task, Theme};
+use iced::{keyboard, window, Element, Length, Subscription, Task, Theme};
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -341,7 +341,7 @@ impl HttpRunnerApp {
         Task::none()
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let content = column![
             self.top_menu(),
             row![
@@ -360,7 +360,7 @@ impl HttpRunnerApp {
             .into()
     }
 
-    fn top_menu(&self) -> Element<Message> {
+    fn top_menu(&self) -> Element<'_, Message> {
         let open_btn = button("Open Directory...").on_press(Message::OpenDirectoryClicked);
         let new_btn = button("New .http File...").on_press(Message::NewFileClicked);
         let quit_btn = button("Quit").on_press(Message::Quit);
@@ -388,7 +388,7 @@ impl HttpRunnerApp {
             .into()
     }
 
-    fn file_tree_panel(&self) -> Element<Message> {
+    fn file_tree_panel(&self) -> Element<'_, Message> {
         let content = column![
             text("HTTP Files").size(18),
             scrollable(
@@ -408,7 +408,7 @@ impl HttpRunnerApp {
             .into()
     }
 
-    fn center_panel(&self) -> Element<Message> {
+    fn center_panel(&self) -> Element<'_, Message> {
         column![
             self.request_details_panel(),
             self.results_panel(),
@@ -418,7 +418,7 @@ impl HttpRunnerApp {
         .into()
     }
 
-    fn request_details_panel(&self) -> Element<Message> {
+    fn request_details_panel(&self) -> Element<'_, Message> {
         let mut content = column![text("Request Details").size(18)].spacing(10);
 
         let request_content = scrollable(
@@ -452,7 +452,7 @@ impl HttpRunnerApp {
             .into()
     }
 
-    fn results_panel(&self) -> Element<Message> {
+    fn results_panel(&self) -> Element<'_, Message> {
         let content = column![
             text("Results").size(18),
             scrollable(self.results_view.view()).height(Length::Fill),
@@ -466,7 +466,7 @@ impl HttpRunnerApp {
             .into()
     }
 
-    fn bottom_panel(&self) -> Element<Message> {
+    fn bottom_panel(&self) -> Element<'_, Message> {
         let status = row![
             text(format!("Working Directory: {}", self.root_directory.display())),
             text(" | "),
@@ -509,6 +509,6 @@ impl HttpRunnerApp {
     }
 
     pub fn theme(&self) -> Theme {
-        Theme::CatppuccinMocha
+        Theme::Dark
     }
 }
