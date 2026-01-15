@@ -47,7 +47,7 @@ export component MainWindow inherits Window {
     callback new-http-file();
     callback quit();
     callback select-file(string);
-    callback select-environment(int);
+    callback select-environment(string);
     callback run-all-requests();
     callback run-single-request(int);
     callback save-file();
@@ -90,8 +90,8 @@ export component MainWindow inherits Window {
                 ComboBox {
                     model: root.environments;
                     current-index: root.selected-environment-index;
-                    selected(idx) => {
-                        root.select-environment(idx);
+                    selected(value) => {
+                        root.select-environment(value);
                     }
                 }
                 

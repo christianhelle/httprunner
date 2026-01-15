@@ -95,7 +95,7 @@ fn discover_http_files(root_path: &PathBuf) -> Vec<HttpFile> {
 }
 
 fn load_file_requests(ui: &MainWindow, file_path: &PathBuf) {
-    let requests = match httprunner_lib::parser::parse_http_file(file_path.to_str().unwrap()) {
+    let requests = match httprunner_lib::parser::parse_http_file(file_path.to_str().unwrap(), None) {
         Ok(parsed_requests) => {
             parsed_requests
                 .into_iter()
@@ -267,10 +267,17 @@ fn setup_callbacks(ui: &MainWindow, initial_root: PathBuf) {
     {
         let ui_weak = ui_weak.clone();
         let root_dir = root_dir.clone();
-        ui.on_select_environment(move |index| {
+        ui.on_select_environment(move |env_value| {
             if let Some(ui) = ui_weak.upgrade() {
-                ui.set_selected_environment_index(index);
-                save_state(&ui, &root_dir.borrow());
+                // Find the index of the selected environment
+                let envs = ui.get_environments();
+                for i in 0..envs.row_count() {
+                    if envs.row_data(i) == Some(env_value.clone()) {
+                        ui.set_selected_environment_index(i as i32);
+                        save_state(&ui, &root_dir.borrow());
+                        break;
+                    }
+                }
             }
         });
     }
@@ -379,7 +386,7 @@ fn run_all_requests(ui: &MainWindow, file_path: &PathBuf, environment: Option<St
                                     url: request_context.request.url.into(),
                                     status: http_result.status_code.to_string().into(),
                                     duration: format!("{}ms", http_result.duration_ms).into(),
-                                    response: http_result.body.into(),
+                                    response: http_result.response_body.unwrap_or_default().into(),
                                     is_success: true,
                                     is_running: false,
                                 }
@@ -389,7 +396,7 @@ fn run_all_requests(ui: &MainWindow, file_path: &PathBuf, environment: Option<St
                                     url: request_context.request.url.into(),
                                     status: http_result.status_code.to_string().into(),
                                     duration: format!("{}ms", http_result.duration_ms).into(),
-                                    response: http_result.body.into(),
+                                    response: http_result.error_message.unwrap_or_default().into(),
                                     is_success: false,
                                     is_running: false,
                                 }
@@ -432,7 +439,7 @@ fn run_single_request(
     environment: Option<String>,
 ) {
     // Parse the file to get the specific request
-    if let Ok(requests) = httprunner_lib::parser::parse_http_file(file_path.to_str().unwrap()) {
+    if let Ok(requests) = httprunner_lib::parser::parse_http_file(file_path.to_str().unwrap(), environment.as_deref()) {
         if request_index < requests.len() {
             let request = &requests[request_index];
 
@@ -458,11 +465,10 @@ fn run_single_request(
             ui.set_results(ModelRc::from(results_model.clone()));
 
             // Execute the request
-            match httprunner_lib::executor::execute_request(
+            match httprunner_lib::runner::execute_http_request(
                 request,
-                file_path.to_str().unwrap(),
-                environment.as_deref(),
-                false,
+                false, // verbose
+                false, // insecure
             ) {
                 Ok(http_result) => {
                     // Remove running indicator
@@ -477,7 +483,7 @@ fn run_single_request(
                             url: request.url.clone().into(),
                             status: http_result.status_code.to_string().into(),
                             duration: format!("{}ms", http_result.duration_ms).into(),
-                            response: http_result.body.into(),
+                            response: http_result.response_body.unwrap_or_default().into(),
                             is_success: true,
                             is_running: false,
                         }
@@ -487,7 +493,7 @@ fn run_single_request(
                             url: request.url.clone().into(),
                             status: http_result.status_code.to_string().into(),
                             duration: format!("{}ms", http_result.duration_ms).into(),
-                            response: http_result.body.into(),
+                            response: http_result.error_message.unwrap_or_default().into(),
                             is_success: false,
                             is_running: false,
                         }
