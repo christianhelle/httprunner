@@ -19,6 +19,7 @@
 
 **Merged pull requests:**
 
+- Add text editor with syntax highlighting for .http files [\#132](https://github.com/christianhelle/httprunner/pull/132) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add CTRL+R keyboard shortcut to run all requests [\#126](https://github.com/christianhelle/httprunner/pull/126) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Move GUI Results panel from bottom to right side [\#125](https://github.com/christianhelle/httprunner/pull/125) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Refactor GUI state persistence code and fix Zed configuration [\#122](https://github.com/christianhelle/httprunner/pull/122) ([Copilot](https://github.com/apps/copilot-swe-agent))
