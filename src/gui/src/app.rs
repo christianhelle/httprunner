@@ -60,6 +60,9 @@ impl HttpRunnerApp {
         // Use saved font size or default
         let font_size = state.font_size.unwrap_or(Self::DEFAULT_FONT_SIZE);
 
+        // Use saved file tree visibility or default to true
+        let file_tree_visible = state.file_tree_visible.unwrap_or(true);
+
         let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
             request_view: RequestView::new(),
@@ -74,7 +77,7 @@ impl HttpRunnerApp {
             environment_selector_open: false,
             last_saved_window_size: state.window_size,
             view_mode: ViewMode::TextEditor, // Default to text editor for new files
-            file_tree_visible: true,
+            file_tree_visible,
         };
 
         // Apply the loaded font size to the UI context
@@ -331,6 +334,7 @@ impl HttpRunnerApp {
             font_size: Some(self.font_size),
             window_size,
             last_results: Some(self.results_view.get_results()),
+            file_tree_visible: Some(self.file_tree_visible),
         };
 
         if let Err(e) = state.save() {
@@ -401,16 +405,17 @@ impl eframe::App for HttpRunnerApp {
             KeyboardAction::ToggleFileTree => {
                 // Toggle file tree visibility
                 self.file_tree_visible = !self.file_tree_visible;
+                self.save_state();
             }
             KeyboardAction::SaveFile => {
                 // Save file based on current view mode
                 match self.view_mode {
                     ViewMode::TextEditor => {
                         // Only attempt to save when a file is currently selected
-                        if self.selected_file.is_some() {
-                            if let Err(e) = self.text_editor.save_to_file() {
-                                eprintln!("Failed to save file: {}", e);
-                            }
+                        if self.selected_file.is_some()
+                            && let Err(e) = self.text_editor.save_to_file()
+                        {
+                            eprintln!("Failed to save file: {}", e);
                         }
                     }
                     ViewMode::RequestDetails => {
