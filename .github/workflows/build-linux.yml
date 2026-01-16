@@ -30,7 +30,7 @@ jobs:
         toolchain: stable
         cache: true
 
-    - name: Build CLI
+    - name: Build
       run: cargo build
 
     - name: Install Linux dependencies for GUI
@@ -38,17 +38,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
 
-    - name: Build GUI
-      run: cargo build --package httprunner-gui
-
     - name: Run tests
       run: cargo test
 
     - name: Build release
       run: cargo build --release
-
-    - name: Build GUI release
-      run: cargo build --package httprunner-gui --release
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6

@@ -30,20 +30,14 @@ jobs:
         toolchain: stable
         cache: true
 
-    - name: Build CLI
+    - name: Build
       run: cargo build
-
-    - name: Build GUI
-      run: cargo build --package httprunner-gui
 
     - name: Run tests
       run: cargo test
 
     - name: Build release
       run: cargo build --release
-
-    - name: Build GUI release
-      run: cargo build --package httprunner-gui --release
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6
