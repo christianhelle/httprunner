@@ -1,14 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod app;
-mod file_tree;
-mod request_editor;
-mod request_view;
-mod results_view;
-mod state;
-mod text_editor;
-
-use app::HttpRunnerApp;
+use httprunner_gui::app::HttpRunnerApp;
+use httprunner_gui::state;
 
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).

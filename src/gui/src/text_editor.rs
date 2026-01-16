@@ -310,3 +310,67 @@ fn is_http_method_line(line: &str) -> bool {
         "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS" | "CONNECT" | "TRACE"
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_http_method_line() {
+        // Valid HTTP method lines
+        assert!(is_http_method_line("GET https://example.com"));
+        assert!(is_http_method_line("POST https://api.example.com/data"));
+        assert!(is_http_method_line("  PUT https://example.com  "));
+        assert!(is_http_method_line("DELETE /api/users/1"));
+
+        // Invalid lines
+        assert!(!is_http_method_line("# Comment"));
+        assert!(!is_http_method_line("Content-Type: application/json"));
+        assert!(!is_http_method_line("GET"));
+        assert!(!is_http_method_line(""));
+        assert!(!is_http_method_line("INVALID https://example.com"));
+    }
+
+    #[test]
+    fn test_get_request_boundaries() {
+        let mut editor = TextEditor::new();
+        editor.content = r#"# Simple test file
+GET https://httpbin.org/status/200
+
+# Test a not found error
+GET https://httpbin.org/status/404
+
+POST https://example.com/api
+Content-Type: application/json
+
+{"test": "data"}
+"#
+        .to_string();
+
+        let boundaries = editor.get_request_boundaries();
+        assert!(boundaries.is_some());
+
+        let boundaries = boundaries.unwrap();
+        
+        // Debug output
+        eprintln!("Number of boundaries: {}", boundaries.len());
+        for (idx, (start, end)) in boundaries.iter().enumerate() {
+            eprintln!("Request {}: start={}, end={}", idx, start, end);
+        }
+        
+        // Should find 3 requests
+        assert_eq!(boundaries.len(), 3);
+
+        // First request starts at "GET https://httpbin.org/status/200"
+        assert!(boundaries[0].0 < boundaries[0].1);
+        // Second request starts after first request ends
+        assert!(boundaries[1].0 >= boundaries[0].1, 
+            "Second request start ({}) should be >= first request end ({})", 
+            boundaries[1].0, boundaries[0].1);
+        assert!(boundaries[1].0 < boundaries[1].1);
+        // Third request starts after second request ends
+        assert!(boundaries[2].0 >= boundaries[1].1,
+            "Third request start ({}) should be >= second request end ({})", 
+            boundaries[2].0, boundaries[1].1);
+    }
+}

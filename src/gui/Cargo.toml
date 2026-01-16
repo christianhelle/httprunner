@@ -20,6 +20,10 @@ categories = [
 name = "httprunner-gui"
 path = "src/main.rs"
 
+[lib]
+name = "httprunner_gui"
+path = "src/lib.rs"
+
 [dependencies]
 httprunner-lib = { path = "../lib" }
 eframe = { workspace = true }

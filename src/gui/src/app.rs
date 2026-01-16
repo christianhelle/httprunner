@@ -1,4 +1,4 @@
-use super::{
+use crate::{
     file_tree::FileTree,
     request_view::{RequestView, RequestViewAction},
     results_view::ResultsView,
