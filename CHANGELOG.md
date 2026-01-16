@@ -20,6 +20,7 @@
 **Merged pull requests:**
 
 - Add CTRL+R keyboard shortcut to run all requests [\#126](https://github.com/christianhelle/httprunner/pull/126) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Move GUI Results panel from bottom to right side [\#125](https://github.com/christianhelle/httprunner/pull/125) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Refactor GUI state persistence code and fix Zed configuration [\#122](https://github.com/christianhelle/httprunner/pull/122) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add full editing capabilities to GUI for .http files [\#117](https://github.com/christianhelle/httprunner/pull/117) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Include GUI binary in build and release workflow artifacts [\#111](https://github.com/christianhelle/httprunner/pull/111) ([Copilot](https://github.com/apps/copilot-swe-agent))
