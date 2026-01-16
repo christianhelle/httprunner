@@ -3,7 +3,7 @@ use super::{
     request_view::{RequestView, RequestViewAction},
     results_view::ResultsView,
     state::AppState,
-    text_editor::{TextEditor, TextEditorAction},
+    text_editor::TextEditor,
 };
 use std::path::{Path, PathBuf};
 
@@ -534,20 +534,7 @@ impl eframe::App for HttpRunnerApp {
                             .max_height(available_height)
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
-                                match self.text_editor.show(ui, &self.selected_file) {
-                                    TextEditorAction::RunRequest(idx) => {
-                                        self.selected_request_index = Some(idx);
-                                        // When run request is clicked, run it immediately
-                                        if let Some(file) = &self.selected_file {
-                                            self.results_view.run_single_request(
-                                                file,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                            );
-                                        }
-                                    }
-                                    TextEditorAction::None => {}
-                                }
+                                self.text_editor.show(ui, &self.selected_file)
                             });
 
                         ui.separator();
