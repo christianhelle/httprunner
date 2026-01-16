@@ -12,6 +12,7 @@ pub struct AppState {
     pub font_size: Option<f32>,
     pub window_size: Option<(f32, f32)>,
     pub last_results: Option<Vec<ExecutionResult>>,
+    pub file_tree_visible: Option<bool>,
 }
 
 impl AppState {
