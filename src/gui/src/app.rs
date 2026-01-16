@@ -14,6 +14,8 @@ enum KeyboardAction {
     Quit,
     SwitchEnvironment,
     ToggleView,
+    ToggleFileTree,
+    SaveFile,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,6 +38,7 @@ pub struct HttpRunnerApp {
     environment_selector_open: bool,
     last_saved_window_size: Option<(f32, f32)>,
     view_mode: ViewMode,
+    file_tree_visible: bool,
 }
 
 impl HttpRunnerApp {
@@ -71,6 +74,7 @@ impl HttpRunnerApp {
             environment_selector_open: false,
             last_saved_window_size: state.window_size,
             view_mode: ViewMode::TextEditor, // Default to text editor for new files
+            file_tree_visible: true,
         };
 
         // Apply the loaded font size to the UI context
@@ -82,19 +86,19 @@ impl HttpRunnerApp {
         }
 
         // Restore selected file if it still exists
-        if let Some(saved_file) = state.selected_file {
-            if saved_file.exists() {
-                app.selected_file = Some(saved_file.clone());
-                app.load_environments(&saved_file);
-                app.request_view.load_file(&saved_file);
-                app.text_editor.load_file(&saved_file); // Load into text editor too
+        if let Some(saved_file) = state.selected_file
+            && saved_file.exists()
+        {
+            app.selected_file = Some(saved_file.clone());
+            app.load_environments(&saved_file);
+            app.request_view.load_file(&saved_file);
+            app.text_editor.load_file(&saved_file); // Load into text editor too
 
-                // Restore selected environment if it's still valid
-                if let Some(saved_env) = state.selected_environment {
-                    if app.environments.contains(&saved_env) {
-                        app.selected_environment = Some(saved_env);
-                    }
-                }
+            // Restore selected environment if it's still valid
+            if let Some(saved_env) = state.selected_environment
+                && app.environments.contains(&saved_env)
+            {
+                app.selected_environment = Some(saved_env);
             }
         }
 
@@ -182,6 +186,16 @@ impl HttpRunnerApp {
         // Check for Ctrl+T (toggle between Text Editor and Request Details)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::T)) {
             return KeyboardAction::ToggleView;
+        }
+
+        // Check for Ctrl+B (toggle file tree visibility)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
+            return KeyboardAction::ToggleFileTree;
+        }
+
+        // Check for Ctrl+S (save file)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::S)) {
+            return KeyboardAction::SaveFile;
         }
 
         KeyboardAction::None
@@ -300,7 +314,12 @@ impl HttpRunnerApp {
 
     fn save_state_with_window(&self, ctx: &egui::Context) {
         // Get viewport size from context
-        let window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
+        let window_size = ctx.input(|i| {
+            i.viewport()
+                .inner_rect
+                .map(|r| r.size())
+                .unwrap_or(egui::vec2(1200.0, 800.0))
+        });
         self.save_state_internal(Some((window_size.x, window_size.y)));
     }
 
@@ -379,35 +398,66 @@ impl eframe::App for HttpRunnerApp {
                     ViewMode::RequestDetails => ViewMode::TextEditor,
                 };
             }
+            KeyboardAction::ToggleFileTree => {
+                // Toggle file tree visibility
+                self.file_tree_visible = !self.file_tree_visible;
+            }
+            KeyboardAction::SaveFile => {
+                // Save file based on current view mode
+                match self.view_mode {
+                    ViewMode::TextEditor => {
+                        // Only attempt to save when a file is currently selected
+                        if self.selected_file.is_some() {
+                            if let Err(e) = self.text_editor.save_to_file() {
+                                eprintln!("Failed to save file: {}", e);
+                            }
+                        }
+                    }
+                    ViewMode::RequestDetails => {
+                        if let Err(e) = self.request_view.save_to_file() {
+                            eprintln!("Failed to save file: {}", e);
+                        } else {
+                            // Refresh the file tree to show any new files
+                            self.file_tree = FileTree::new(self.root_directory.clone());
+                            // Reload text editor with updated content
+                            if let Some(file) = &self.selected_file {
+                                self.text_editor.load_file(file);
+                            }
+                        }
+                    }
+                }
+            }
             KeyboardAction::None => {}
         }
 
         self.show_top_panel(ctx);
         self.show_bottom_panel(ctx);
 
-        // Left panel - File tree
-        egui::SidePanel::left("file_tree_panel")
-            .resizable(true)
-            .default_width(300.0)
-            .show(ctx, |ui| {
-                ui.heading("HTTP Files");
-                ui.separator();
+        // Left panel - File tree (only show if visible)
+        if self.file_tree_visible {
+            egui::SidePanel::left("file_tree_panel")
+                .resizable(true)
+                .default_width(300.0)
+                .show(ctx, |ui| {
+                    ui.heading("HTTP Files");
+                    ui.separator();
 
-                if let Some(selected) = self.file_tree.show(ui) {
-                    self.selected_file = Some(selected.clone());
-                    self.selected_request_index = None;
+                    if let Some(selected) = self.file_tree.show(ui) {
+                        self.selected_file = Some(selected.clone());
+                        self.selected_request_index = None;
 
-                    // Load environments for this file
-                    self.load_environments(&selected);
+                        // Load environments for this file
+                        self.load_environments(&selected);
 
-                    // Update both request view and text editor
-                    self.request_view.load_file(&selected);
-                    self.text_editor.load_file(&selected);
+                        // Update both request view and text editor
+                        self.request_view.load_file(&selected);
+                        self.text_editor.load_file(&selected);
 
-                    // Save state after file selection
-                    self.save_state();
-                }
-            });
+                        // Save state after file selection
+                        self.save_state();
+                    }
+                });
+        }
 
         // Right panel - Results (from main branch)
         egui::SidePanel::right("results_panel")
@@ -436,9 +486,17 @@ impl eframe::App for HttpRunnerApp {
             ui.vertical(|ui| {
                 // Tab selection
                 ui.horizontal(|ui| {
-                    ui.selectable_value(&mut self.view_mode, ViewMode::TextEditor, "📝 Text Editor");
-                    ui.selectable_value(&mut self.view_mode, ViewMode::RequestDetails, "📋 Request Details");
-                    ui.label("(Ctrl+T to toggle)");
+                    ui.selectable_value(
+                        &mut self.view_mode,
+                        ViewMode::TextEditor,
+                        "📝 Text Editor",
+                    );
+                    ui.selectable_value(
+                        &mut self.view_mode,
+                        ViewMode::RequestDetails,
+                        "📋 Request Details",
+                    );
+                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree)");
                 });
                 ui.separator();
 
@@ -568,14 +626,19 @@ impl eframe::App for HttpRunnerApp {
         });
 
         // Save window size if it changed (to avoid unnecessary file writes)
-        let current_window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
+        let current_window_size = ctx.input(|i| {
+            i.viewport()
+                .inner_rect
+                .map(|r| r.size())
+                .unwrap_or(egui::vec2(1200.0, 800.0))
+        });
         let current_size = (current_window_size.x, current_window_size.y);
-        
+
         let should_save_window_size = match self.last_saved_window_size {
             None => true,
             Some(last_size) => last_size != current_size,
         };
-        
+
         if should_save_window_size {
             self.last_saved_window_size = Some(current_size);
             self.save_state_with_window(ctx);
