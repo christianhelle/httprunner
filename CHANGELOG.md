@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Add compact/verbose mode toggle in GUI app Results section [\#135](https://github.com/christianhelle/httprunner/pull/135) ([christianhelle](https://github.com/christianhelle))
 - Persist file tree visibility preference across application restarts [\#134](https://github.com/christianhelle/httprunner/pull/134) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add keyboard shortcuts: Ctrl+B to toggle file tree, Ctrl+S to save [\#133](https://github.com/christianhelle/httprunner/pull/133) ([christianhelle](https://github.com/christianhelle))
 - Add state persistence to GUI application [\#121](https://github.com/christianhelle/httprunner/pull/121) ([christianhelle](https://github.com/christianhelle))
