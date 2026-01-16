@@ -15,6 +15,7 @@ enum KeyboardAction {
     SwitchEnvironment,
     ToggleView,
     ToggleFileTree,
+    ToggleResultsView,
     SaveFile,
 }
 
@@ -87,6 +88,10 @@ impl HttpRunnerApp {
         if let Some(last_results) = state.last_results {
             app.results_view.restore_results(last_results);
         }
+
+        // Restore results compact mode preference (default to compact)
+        app.results_view
+            .set_compact_mode(state.results_compact_mode.unwrap_or(true));
 
         // Restore selected file if it still exists
         if let Some(saved_file) = state.selected_file
@@ -194,6 +199,11 @@ impl HttpRunnerApp {
         // Check for Ctrl+B (toggle file tree visibility)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
             return KeyboardAction::ToggleFileTree;
+        }
+
+        // Check for Ctrl+D (toggle results view mode: compact/verbose)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::D)) {
+            return KeyboardAction::ToggleResultsView;
         }
 
         // Check for Ctrl+S (save file)
@@ -335,6 +345,7 @@ impl HttpRunnerApp {
             window_size,
             last_results: Some(self.results_view.get_results()),
             file_tree_visible: Some(self.file_tree_visible),
+            results_compact_mode: Some(self.results_view.is_compact_mode()),
         };
 
         if let Err(e) = state.save() {
@@ -405,6 +416,12 @@ impl eframe::App for HttpRunnerApp {
             KeyboardAction::ToggleFileTree => {
                 // Toggle file tree visibility
                 self.file_tree_visible = !self.file_tree_visible;
+                self.save_state();
+            }
+            KeyboardAction::ToggleResultsView => {
+                // Toggle results view mode between compact and verbose
+                self.results_view
+                    .set_compact_mode(!self.results_view.is_compact_mode());
                 self.save_state();
             }
             KeyboardAction::SaveFile => {
@@ -501,7 +518,7 @@ impl eframe::App for HttpRunnerApp {
                         ViewMode::RequestDetails,
                         "📋 Request Details",
                     );
-                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree)");
+                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree | Ctrl+D to toggle results view)");
                 });
                 ui.separator();
 
