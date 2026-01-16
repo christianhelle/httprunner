@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP File Runner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 HTTP File Runner</h1>
+            <div class="header-controls">
+                <button id="open-folder-btn" class="btn btn-primary">📁 Open Directory</button>
+                <label for="env-select">Environment:</label>
+                <select id="env-select" class="env-select">
+                    <option value="">None</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <h2>HTTP Files</h2>
+                <div id="file-list" class="file-list">
+                    <p class="empty-state">No .http files found</p>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div class="editor-panel">
+                    <div class="editor-header">
+                        <h2>Request Details</h2>
+                        <div class="editor-controls">
+                            <span id="file-path" class="file-path"></span>
+                            <button id="save-btn" class="btn btn-secondary" disabled>💾 Save</button>
+                        </div>
+                    </div>
+                    <div class="editor-content">
+                        <div id="requests-list" class="requests-list">
+                            <p class="empty-state">Select a file to view requests</p>
+                        </div>
+                        <textarea id="file-editor" class="file-editor" placeholder="Select a file to edit"></textarea>
+                    </div>
+                    <div class="editor-actions">
+                        <button id="run-all-btn" class="btn btn-success" disabled>▶ Run All Requests</button>
+                        <span id="status-message" class="status-message"></span>
+                    </div>
+                </div>
+
+                <div class="results-panel">
+                    <h2>Results</h2>
+                    <div id="results-area" class="results-area">
+                        <p class="empty-state">No results yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <span id="working-dir">Working Directory: <span id="current-dir"></span></span>
+            <span id="selected-file-footer"></span>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

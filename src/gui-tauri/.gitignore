@@ -1,0 +1,23 @@
+# Tauri build artifacts
+target/
+WixTools/
+
+# Generated files
+gen/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node modules (if using npm/yarn for frontend)
+node_modules/
