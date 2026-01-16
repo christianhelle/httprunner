@@ -2,14 +2,6 @@ use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-/// Action to perform after showing the text editor UI
-pub enum TextEditorAction {
-    /// Run a specific request by index
-    RunRequest(usize),
-    /// No action required
-    None,
-}
-
 /// Text editor component for editing .http files with syntax highlighting
 pub struct TextEditor {
     /// Current file content
@@ -58,12 +50,10 @@ impl TextEditor {
 
     /// Display the text editor UI and handle user interactions
     /// Returns an action to be performed by the parent component
-    pub fn show(&mut self, ui: &mut egui::Ui, file: &Option<PathBuf>) -> TextEditorAction {
-        let mut action = TextEditorAction::None;
-
+    pub fn show(&mut self, ui: &mut egui::Ui, file: &Option<PathBuf>) {
         if file.is_none() {
             ui.label("No file selected. Select a .http file from the left panel.");
-            return action;
+            return;
         }
 
         // Store original content to detect changes
@@ -92,55 +82,10 @@ impl TextEditor {
                 eprintln!("Failed to save file: {}", e);
             }
 
-            // Note: Cursor position tracking not yet implemented
-            // For now, this runs the first request in the file
-            if ui.button("▶ Run First Request").clicked()
-                && let Some(request_index) = self.find_first_request()
-            {
-                action = TextEditorAction::RunRequest(request_index);
-            }
-
             if self.has_changes {
                 ui.colored_label(egui::Color32::from_rgb(255, 165, 0), "● Unsaved changes");
             }
         });
-
-        action
-    }
-
-    /// Find the first request in the file
-    /// TODO: Implement proper cursor position tracking to find request at cursor
-    fn find_first_request(&self) -> Option<usize> {
-        // Parse current editor content by writing to a temporary file
-        // This ensures we parse what the user sees, not the saved file
-        use std::io::Write;
-
-        // Create a secure temporary file with automatic cleanup
-        let mut temp_file = match tempfile::NamedTempFile::new() {
-            Ok(f) => f,
-            Err(e) => {
-                eprintln!("Failed to create temporary file for parsing: {}", e);
-                return None;
-            }
-        };
-
-        // Write current content to the temporary file
-        if let Err(e) = temp_file.write_all(self.content.as_bytes()) {
-            eprintln!("Failed to write to temporary file: {}", e);
-            return None;
-        }
-
-        // Get the path and parse
-        let temp_path = temp_file.path();
-        if let Some(temp_path_str) = temp_path.to_str()
-            && let Ok(requests) = httprunner_lib::parser::parse_http_file(temp_path_str, None)
-            && !requests.is_empty()
-        {
-            return Some(0);
-        }
-
-        // Temporary file is automatically cleaned up when temp_file goes out of scope
-        None
     }
 
     /// Check if the editor has unsaved changes

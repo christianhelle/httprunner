@@ -234,7 +234,7 @@ impl ResultsView {
             {
                 self.compact_mode = false;
             }
-            
+
             // Add visible hint for keyboard shortcut
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(
