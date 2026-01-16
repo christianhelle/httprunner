@@ -201,7 +201,7 @@ impl TextEditor {
         let mut char_pos = 0;
         let mut current_request_start: Option<usize> = None;
 
-        for line in lines.iter() {
+        for (idx, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
 
             // Check if this is an HTTP request line
@@ -216,13 +216,17 @@ impl TextEditor {
                 current_request_start = Some(char_pos);
             }
 
-            // Add line length + newline character to char_pos
-            char_pos += line.len() + 1; // +1 for the newline
+            // Add line length to char_pos
+            char_pos += line.len();
+            // Add newline character if not the last line
+            if idx < lines.len() - 1 {
+                char_pos += 1;
+            }
         }
 
-        // Handle the last request
+        // Handle the last request - use content length as the end boundary
         if let Some(start) = current_request_start {
-            boundaries.push((start, char_pos));
+            boundaries.push((start, self.content.len()));
         }
 
         if boundaries.is_empty() {
@@ -352,12 +356,6 @@ Content-Type: application/json
 
         let boundaries = boundaries.unwrap();
         
-        // Debug output
-        eprintln!("Number of boundaries: {}", boundaries.len());
-        for (idx, (start, end)) in boundaries.iter().enumerate() {
-            eprintln!("Request {}: start={}, end={}", idx, start, end);
-        }
-        
         // Should find 3 requests
         assert_eq!(boundaries.len(), 3);
 
@@ -372,5 +370,22 @@ Content-Type: application/json
         assert!(boundaries[2].0 >= boundaries[1].1,
             "Third request start ({}) should be >= second request end ({})", 
             boundaries[2].0, boundaries[1].1);
+    }
+
+    #[test]
+    fn test_get_request_boundaries_no_trailing_newline() {
+        let mut editor = TextEditor::new();
+        // Content without trailing newline
+        editor.content = "GET https://httpbin.org/status/200\nGET https://httpbin.org/status/404".to_string();
+
+        let boundaries = editor.get_request_boundaries();
+        assert!(boundaries.is_some());
+
+        let boundaries = boundaries.unwrap();
+        assert_eq!(boundaries.len(), 2);
+
+        // Verify the last boundary doesn't exceed content length
+        assert_eq!(boundaries[1].1, editor.content.len());
+        assert!(boundaries[1].0 < boundaries[1].1);
     }
 }
