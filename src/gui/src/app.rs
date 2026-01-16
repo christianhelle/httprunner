@@ -86,19 +86,19 @@ impl HttpRunnerApp {
         }
 
         // Restore selected file if it still exists
-        if let Some(saved_file) = state.selected_file {
-            if saved_file.exists() {
-                app.selected_file = Some(saved_file.clone());
-                app.load_environments(&saved_file);
-                app.request_view.load_file(&saved_file);
-                app.text_editor.load_file(&saved_file); // Load into text editor too
+        if let Some(saved_file) = state.selected_file
+            && saved_file.exists()
+        {
+            app.selected_file = Some(saved_file.clone());
+            app.load_environments(&saved_file);
+            app.request_view.load_file(&saved_file);
+            app.text_editor.load_file(&saved_file); // Load into text editor too
 
-                // Restore selected environment if it's still valid
-                if let Some(saved_env) = state.selected_environment {
-                    if app.environments.contains(&saved_env) {
-                        app.selected_environment = Some(saved_env);
-                    }
-                }
+            // Restore selected environment if it's still valid
+            if let Some(saved_env) = state.selected_environment
+                && app.environments.contains(&saved_env)
+            {
+                app.selected_environment = Some(saved_env);
             }
         }
 
@@ -314,7 +314,12 @@ impl HttpRunnerApp {
 
     fn save_state_with_window(&self, ctx: &egui::Context) {
         // Get viewport size from context
-        let window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
+        let window_size = ctx.input(|i| {
+            i.viewport()
+                .inner_rect
+                .map(|r| r.size())
+                .unwrap_or(egui::vec2(1200.0, 800.0))
+        });
         self.save_state_internal(Some((window_size.x, window_size.y)));
     }
 
@@ -478,8 +483,16 @@ impl eframe::App for HttpRunnerApp {
             ui.vertical(|ui| {
                 // Tab selection
                 ui.horizontal(|ui| {
-                    ui.selectable_value(&mut self.view_mode, ViewMode::TextEditor, "📝 Text Editor");
-                    ui.selectable_value(&mut self.view_mode, ViewMode::RequestDetails, "📋 Request Details");
+                    ui.selectable_value(
+                        &mut self.view_mode,
+                        ViewMode::TextEditor,
+                        "📝 Text Editor",
+                    );
+                    ui.selectable_value(
+                        &mut self.view_mode,
+                        ViewMode::RequestDetails,
+                        "📋 Request Details",
+                    );
                     ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle sidebar)");
                 });
                 ui.separator();
@@ -610,14 +623,19 @@ impl eframe::App for HttpRunnerApp {
         });
 
         // Save window size if it changed (to avoid unnecessary file writes)
-        let current_window_size = ctx.input(|i| i.viewport().inner_rect.map(|r| r.size()).unwrap_or(egui::vec2(1200.0, 800.0)));
+        let current_window_size = ctx.input(|i| {
+            i.viewport()
+                .inner_rect
+                .map(|r| r.size())
+                .unwrap_or(egui::vec2(1200.0, 800.0))
+        });
         let current_size = (current_window_size.x, current_window_size.y);
-        
+
         let should_save_window_size = match self.last_saved_window_size {
             None => true,
             Some(last_size) => last_size != current_size,
         };
-        
+
         if should_save_window_size {
             self.last_saved_window_size = Some(current_size);
             self.save_state_with_window(ctx);

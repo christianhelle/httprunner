@@ -29,14 +29,12 @@ impl AppState {
     }
 
     pub fn load() -> Self {
-        if let Some(state_path) = Self::get_state_file_path() {
-            if state_path.exists() {
-                if let Ok(content) = std::fs::read_to_string(&state_path) {
-                    if let Ok(state) = serde_json::from_str::<AppState>(&content) {
-                        return state;
-                    }
-                }
-            }
+        if let Some(state_path) = Self::get_state_file_path()
+            && state_path.exists()
+            && let Ok(content) = std::fs::read_to_string(&state_path)
+            && let Ok(state) = serde_json::from_str::<AppState>(&content)
+        {
+            return state;
         }
         Self::default()
     }

@@ -86,18 +86,18 @@ impl TextEditor {
         // Add buttons below the editor
         ui.separator();
         ui.horizontal(|ui| {
-            if ui.button("💾 Save").clicked() {
-                if let Err(e) = self.save_to_file() {
-                    eprintln!("Failed to save file: {}", e);
-                }
+            if ui.button("💾 Save").clicked()
+                && let Err(e) = self.save_to_file()
+            {
+                eprintln!("Failed to save file: {}", e);
             }
 
             // Note: Cursor position tracking not yet implemented
             // For now, this runs the first request in the file
-            if ui.button("▶ Run First Request").clicked() {
-                if let Some(request_index) = self.find_first_request() {
-                    action = TextEditorAction::RunRequest(request_index);
-                }
+            if ui.button("▶ Run First Request").clicked()
+                && let Some(request_index) = self.find_first_request()
+            {
+                action = TextEditorAction::RunRequest(request_index);
             }
 
             if self.has_changes {
@@ -114,7 +114,7 @@ impl TextEditor {
         // Parse current editor content by writing to a temporary file
         // This ensures we parse what the user sees, not the saved file
         use std::io::Write;
-        
+
         // Create a secure temporary file with automatic cleanup
         let mut temp_file = match tempfile::NamedTempFile::new() {
             Ok(f) => f,
@@ -123,25 +123,22 @@ impl TextEditor {
                 return None;
             }
         };
-        
+
         // Write current content to the temporary file
         if let Err(e) = temp_file.write_all(self.content.as_bytes()) {
             eprintln!("Failed to write to temporary file: {}", e);
             return None;
         }
-        
+
         // Get the path and parse
         let temp_path = temp_file.path();
-        if let Some(temp_path_str) = temp_path.to_str() {
-            if let Ok(requests) = 
-                httprunner_lib::parser::parse_http_file(temp_path_str, None)
-            {
-                if !requests.is_empty() {
-                    return Some(0);
-                }
-            }
+        if let Some(temp_path_str) = temp_path.to_str()
+            && let Ok(requests) = httprunner_lib::parser::parse_http_file(temp_path_str, None)
+            && !requests.is_empty()
+        {
+            return Some(0);
         }
-        
+
         // Temporary file is automatically cleaned up when temp_file goes out of scope
         None
     }
@@ -162,18 +159,41 @@ fn http_syntax() -> Syntax {
         hyperlinks: BTreeSet::new(), // Empty set for now
         keywords: vec![
             // HTTP Methods
-            "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "CONNECT", "TRACE",
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "HEAD",
+            "OPTIONS",
+            "CONNECT",
+            "TRACE",
             // Common headers
-            "Content-Type", "Authorization", "Accept", "User-Agent", "Host", "Connection",
-            "Cache-Control", "Cookie", "Set-Cookie",
+            "Content-Type",
+            "Authorization",
+            "Accept",
+            "User-Agent",
+            "Host",
+            "Connection",
+            "Cache-Control",
+            "Cookie",
+            "Set-Cookie",
             // httprunner specific
-            "ASSERT", "VAR",
+            "ASSERT",
+            "VAR",
         ]
         .into_iter()
         .collect(),
         types: vec![
-            "http", "https", "HTTP/1.1", "HTTP/2", "HTTP/3",
-            "application/json", "application/xml", "text/html", "text/plain",
+            "http",
+            "https",
+            "HTTP/1.1",
+            "HTTP/2",
+            "HTTP/3",
+            "application/json",
+            "application/xml",
+            "text/html",
+            "text/plain",
         ]
         .into_iter()
         .collect(),
