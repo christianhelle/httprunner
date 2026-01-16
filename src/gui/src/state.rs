@@ -13,6 +13,7 @@ pub struct AppState {
     pub window_size: Option<(f32, f32)>,
     pub last_results: Option<Vec<ExecutionResult>>,
     pub file_tree_visible: Option<bool>,
+    pub results_compact_mode: Option<bool>,
 }
 
 impl AppState {

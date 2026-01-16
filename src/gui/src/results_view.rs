@@ -27,6 +27,7 @@ pub enum ExecutionResult {
 pub struct ResultsView {
     results: Arc<Mutex<Vec<ExecutionResult>>>,
     is_running: Arc<Mutex<bool>>,
+    compact_mode: bool,
 }
 
 impl ResultsView {
@@ -34,6 +35,7 @@ impl ResultsView {
         Self {
             results: Arc::new(Mutex::new(Vec::new())),
             is_running: Arc::new(Mutex::new(false)),
+            compact_mode: true, // Default to compact mode
         }
     }
 
@@ -54,6 +56,14 @@ impl ResultsView {
         if let Ok(mut results) = self.results.lock() {
             *results = saved_results;
         }
+    }
+
+    pub fn set_compact_mode(&mut self, compact: bool) {
+        self.compact_mode = compact;
+    }
+
+    pub fn is_compact_mode(&self) -> bool {
+        self.compact_mode
     }
 
     pub fn run_file(&mut self, path: &Path, environment: Option<&str>) {
@@ -207,7 +217,27 @@ impl ResultsView {
         });
     }
 
-    pub fn show(&self, ui: &mut egui::Ui) {
+    pub fn show(&mut self, ui: &mut egui::Ui) {
+        // Add toggle button
+        ui.horizontal(|ui| {
+            if ui
+                .selectable_label(self.compact_mode, "📋 Compact")
+                .on_hover_text("Show compact results")
+                .clicked()
+            {
+                self.compact_mode = true;
+            }
+            if ui
+                .selectable_label(!self.compact_mode, "📄 Verbose")
+                .on_hover_text("Show verbose results")
+                .clicked()
+            {
+                self.compact_mode = false;
+            }
+        });
+
+        ui.separator();
+
         if let Ok(is_running) = self.is_running.lock()
             && *is_running
         {
@@ -230,94 +260,34 @@ impl ResultsView {
                         response_body,
                         assertion_results,
                     } => {
-                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
-                        ui.monospace(format!("{} {}", method, url));
-                        ui.label(format!("Status: {}", status));
-                        ui.label(format!("Duration: {} ms", duration_ms));
-
-                        // Display assertion results if any
-                        if !assertion_results.is_empty() {
-                            ui.separator();
-                            ui.label("🔍 Assertion Results:");
-
-                            for assertion_result in assertion_results {
-                                let assertion_type_str = match assertion_result
-                                    .assertion
-                                    .assertion_type
-                                {
-                                    httprunner_lib::types::AssertionType::Status => "Status Code",
-                                    httprunner_lib::types::AssertionType::Body => "Response Body",
-                                    httprunner_lib::types::AssertionType::Headers => {
-                                        "Response Headers"
-                                    }
-                                };
-
-                                if assertion_result.passed {
-                                    ui.horizontal(|ui| {
-                                        ui.colored_label(
-                                            egui::Color32::from_rgb(0, 200, 0),
-                                            "  ✅",
-                                        );
-                                        ui.label(format!(
-                                            "{}: Expected '{}'",
-                                            assertion_type_str,
-                                            assertion_result.assertion.expected_value
-                                        ));
-                                    });
-                                } else {
-                                    ui.horizontal(|ui| {
-                                        ui.colored_label(
-                                            egui::Color32::from_rgb(200, 0, 0),
-                                            "  ❌",
-                                        );
-                                        ui.label(format!(
-                                            "{}: {}",
-                                            assertion_type_str,
-                                            assertion_result
-                                                .error_message
-                                                .as_ref()
-                                                .unwrap_or(&"Failed".to_string())
-                                        ));
-                                    });
-
-                                    if let Some(ref actual) = assertion_result.actual_value {
-                                        ui.horizontal(|ui| {
-                                            ui.label("     ");
-                                            ui.colored_label(
-                                                egui::Color32::from_rgb(255, 200, 0),
-                                                format!(
-                                                    "Expected: '{}'",
-                                                    assertion_result.assertion.expected_value
-                                                ),
-                                            );
-                                        });
-                                        ui.horizontal(|ui| {
-                                            ui.label("     ");
-                                            ui.colored_label(
-                                                egui::Color32::from_rgb(255, 200, 0),
-                                                format!("Actual: '{}'", actual),
-                                            );
-                                        });
-                                    }
-                                }
-                            }
+                        if self.compact_mode {
+                            self.show_compact_success(
+                                ui,
+                                method,
+                                url,
+                                *status,
+                                *duration_ms,
+                                assertion_results,
+                            );
+                        } else {
+                            self.show_verbose_success(
+                                ui,
+                                result_idx,
+                                method,
+                                url,
+                                *status,
+                                *duration_ms,
+                                response_body,
+                                assertion_results,
+                            );
                         }
-
-                        ui.separator();
-                        ui.label("Response:");
-                        egui::ScrollArea::vertical()
-                            .id_salt(format!("response_body_{}", result_idx))
-                            .max_height(300.0)
-                            .show(ui, |ui| {
-                                ui.monospace(response_body);
-                            });
-                        ui.separator();
                     }
                     ExecutionResult::Failure { method, url, error } => {
-                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌ FAILED");
-                        ui.monospace(format!("{} {}", method, url));
-                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
-                        ui.separator();
+                        if self.compact_mode {
+                            self.show_compact_failure(ui, method, url, error);
+                        } else {
+                            self.show_verbose_failure(ui, method, url, error);
+                        }
                     }
                     ExecutionResult::Running { message } => {
                         ui.colored_label(egui::Color32::from_rgb(0, 100, 200), "⏳ RUNNING");
@@ -327,6 +297,173 @@ impl ResultsView {
                 }
             }
         }
+    }
+
+    fn show_compact_success(
+        &self,
+        ui: &mut egui::Ui,
+        method: &str,
+        url: &str,
+        status: u16,
+        duration_ms: u64,
+        assertion_results: &[AssertionResult],
+    ) {
+        ui.horizontal(|ui| {
+            ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅");
+            ui.monospace(format!("{} {}", method, url));
+            ui.label(format!("| {} | {} ms", status, duration_ms));
+        });
+
+        // Show assertion results in compact form
+        if !assertion_results.is_empty() {
+            for assertion_result in assertion_results {
+                let assertion_type_str = match assertion_result.assertion.assertion_type {
+                    httprunner_lib::types::AssertionType::Status => "Status Code",
+                    httprunner_lib::types::AssertionType::Body => "Response Body",
+                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                };
+
+                if assertion_result.passed {
+                    ui.horizontal(|ui| {
+                        ui.label("  ");
+                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅");
+                        ui.label(format!(
+                            "{}: Expected '{}'",
+                            assertion_type_str, assertion_result.assertion.expected_value
+                        ));
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.label("  ");
+                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌");
+                        ui.label(format!(
+                            "{}: {}",
+                            assertion_type_str,
+                            assertion_result
+                                .error_message
+                                .as_ref()
+                                .unwrap_or(&"Failed".to_string())
+                        ));
+                    });
+
+                    if let Some(ref actual) = assertion_result.actual_value {
+                        ui.horizontal(|ui| {
+                            ui.label("      ");
+                            ui.colored_label(
+                                egui::Color32::from_rgb(255, 200, 0),
+                                format!(
+                                    "Expected: '{}', Actual: '{}'",
+                                    assertion_result.assertion.expected_value, actual
+                                ),
+                            );
+                        });
+                    }
+                }
+            }
+        }
+        ui.separator();
+    }
+
+    fn show_compact_failure(&self, ui: &mut egui::Ui, method: &str, url: &str, error: &str) {
+        ui.horizontal(|ui| {
+            ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌");
+            ui.monospace(format!("{} {}", method, url));
+        });
+        ui.horizontal(|ui| {
+            ui.label("  ");
+            ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
+        });
+        ui.separator();
+    }
+
+    fn show_verbose_success(
+        &self,
+        ui: &mut egui::Ui,
+        result_idx: usize,
+        method: &str,
+        url: &str,
+        status: u16,
+        duration_ms: u64,
+        response_body: &str,
+        assertion_results: &[AssertionResult],
+    ) {
+        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
+        ui.monospace(format!("{} {}", method, url));
+        ui.label(format!("Status: {}", status));
+        ui.label(format!("Duration: {} ms", duration_ms));
+
+        // Display assertion results if any
+        if !assertion_results.is_empty() {
+            ui.separator();
+            ui.label("🔍 Assertion Results:");
+
+            for assertion_result in assertion_results {
+                let assertion_type_str = match assertion_result.assertion.assertion_type {
+                    httprunner_lib::types::AssertionType::Status => "Status Code",
+                    httprunner_lib::types::AssertionType::Body => "Response Body",
+                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                };
+
+                if assertion_result.passed {
+                    ui.horizontal(|ui| {
+                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "  ✅");
+                        ui.label(format!(
+                            "{}: Expected '{}'",
+                            assertion_type_str, assertion_result.assertion.expected_value
+                        ));
+                    });
+                } else {
+                    ui.horizontal(|ui| {
+                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "  ❌");
+                        ui.label(format!(
+                            "{}: {}",
+                            assertion_type_str,
+                            assertion_result
+                                .error_message
+                                .as_ref()
+                                .unwrap_or(&"Failed".to_string())
+                        ));
+                    });
+
+                    if let Some(ref actual) = assertion_result.actual_value {
+                        ui.horizontal(|ui| {
+                            ui.label("     ");
+                            ui.colored_label(
+                                egui::Color32::from_rgb(255, 200, 0),
+                                format!(
+                                    "Expected: '{}'",
+                                    assertion_result.assertion.expected_value
+                                ),
+                            );
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("     ");
+                            ui.colored_label(
+                                egui::Color32::from_rgb(255, 200, 0),
+                                format!("Actual: '{}'", actual),
+                            );
+                        });
+                    }
+                }
+            }
+        }
+
+        ui.separator();
+        ui.label("Response:");
+        egui::ScrollArea::vertical()
+            .id_salt(format!("response_body_{}", result_idx))
+            .max_height(300.0)
+            .show(ui, |ui| {
+                ui.monospace(response_body);
+            });
+        ui.separator();
+    }
+
+    fn show_verbose_failure(&self, ui: &mut egui::Ui, method: &str, url: &str, error: &str) {
+        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌ FAILED");
+        ui.monospace(format!("{} {}", method, url));
+        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
+        ui.separator();
     }
 }
 

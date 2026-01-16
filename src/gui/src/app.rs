@@ -88,6 +88,10 @@ impl HttpRunnerApp {
             app.results_view.restore_results(last_results);
         }
 
+        // Restore results compact mode preference (default to compact)
+        app.results_view
+            .set_compact_mode(state.results_compact_mode.unwrap_or(true));
+
         // Restore selected file if it still exists
         if let Some(saved_file) = state.selected_file
             && saved_file.exists()
@@ -335,6 +339,7 @@ impl HttpRunnerApp {
             window_size,
             last_results: Some(self.results_view.get_results()),
             file_tree_visible: Some(self.file_tree_visible),
+            results_compact_mode: Some(self.results_view.is_compact_mode()),
         };
 
         if let Err(e) = state.save() {
