@@ -1,47 +1,52 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod app;
+mod app_fltk;
 mod file_tree;
 mod request_editor;
 mod request_view;
 mod results_view;
 mod state;
 
-use app::HttpRunnerApp;
+use app_fltk::HttpRunnerApp;
+use fltk::{app, prelude::*, window::DoubleWindow};
 
-fn main() -> eframe::Result<()> {
-    env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
 
     // Load saved state to restore window size
     let saved_state = state::AppState::load();
-    let window_size = saved_state
-        .window_size
-        .map(|(w, h)| [w, h])
-        .unwrap_or([1200.0, 800.0]);
+    let (width, height) = saved_state.window_size.unwrap_or((1200.0, 800.0));
 
-    let native_options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size(window_size)
-            .with_min_inner_size([800.0, 600.0])
-            .with_icon(load_icon()),
-        ..Default::default()
-    };
+    let fltk_app = app::App::default();
+    fltk_theme::WidgetTheme::new(fltk_theme::ThemeType::Greybird).apply();
 
-    eframe::run_native(
-        "HTTP File Runner",
-        native_options,
-        Box::new(|cc| Ok(Box::new(HttpRunnerApp::new(cc)))),
-    )
+    let mut window = DoubleWindow::default()
+        .with_size(width as i32, height as i32)
+        .with_label("HTTP File Runner");
+
+    // Load icon if available
+    if let Ok(icon) = load_icon() {
+        window.set_icon(Some(icon));
+    }
+
+    let (_s, r) = HttpRunnerApp::channel();
+    let mut app_state = HttpRunnerApp::new(&mut window);
+
+    window.end();
+    window.show();
+
+    // Main event loop
+    while fltk_app.wait() {
+        app_state.handle_messages(&r);
+    }
+
+    app_state.save_state_on_exit();
+    Ok(())
 }
 
-fn load_icon() -> std::sync::Arc<egui::IconData> {
+fn load_icon() -> Result<fltk::image::PngImage, Box<dyn std::error::Error>> {
     let icon_bytes = include_bytes!("../../../images/icon.png");
-    match eframe::icon_data::from_png_bytes(icon_bytes) {
-        Ok(icon_data) => std::sync::Arc::new(icon_data),
-        Err(e) => {
-            eprintln!("Warning: Failed to load application icon: {}", e);
-            // Return default icon data (empty) which will use the egui default
-            std::sync::Arc::new(egui::IconData::default())
-        }
-    }
+    let mut icon = fltk::image::PngImage::from_data(icon_bytes)?;
+    icon.scale(32, 32, true, true);
+    Ok(icon)
 }

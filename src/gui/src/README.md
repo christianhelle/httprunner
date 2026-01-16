@@ -2,11 +2,11 @@
 
 > **⚠️ Experimental**: This GUI application is currently in an experimental phase. Features and interface may change as development continues. 
 
-A native cross-platform graphical user interface for HTTP Runner built with Rust and egui.
+A native cross-platform graphical user interface for HTTP Runner built with Rust and FLTK.
 
 ## Features
 
-- 🎨 **Native UI** - Pure Rust, no web technologies
+- 🎨 **Native UI** - Pure Rust with FLTK (Fast Light Toolkit)
 - 🌐 **Cross-platform** - Works on Windows, macOS, and Linux
 - 📁 **File Tree View** - Browse and select .http files with folder navigation
 - 📋 **Request Inspector** - View request details including method, URL, headers, and body
@@ -14,6 +14,8 @@ A native cross-platform graphical user interface for HTTP Runner built with Rust
 - 🌍 **Environment Support** - Select environments for variable substitution
 - 📊 **Live Results** - See execution results in real-time
 - 🚀 **Fast & Responsive** - Thread-based async execution
+- 💾 **State Persistence** - Remembers window size, last file, and results
+- ⌨️ **Keyboard Shortcuts** - Ctrl+O, Ctrl+Q, F5 for common operations
 
 ## Building
 
@@ -21,7 +23,7 @@ A native cross-platform graphical user interface for HTTP Runner built with Rust
 
 - Rust 1.92 or later
 - Development libraries for your platform:
-  - **Linux**: `libxcb`, `libxkbcommon`, `libwayland-client`, `libwayland-cursor`
+  - **Linux**: X11/Wayland libraries, fontconfig, cairo, pango
   - **macOS**: Xcode command-line tools
   - **Windows**: Windows SDK (usually included with Visual Studio)
 
@@ -29,31 +31,34 @@ A native cross-platform graphical user interface for HTTP Runner built with Rust
 
 ```bash
 # Install dependencies
-sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev libfontconfig1-dev libwayland-dev
+sudo apt-get install libx11-dev libxext-dev libxft-dev \
+    libxinerama-dev libxcursor-dev libxrender-dev \
+    libxfixes-dev libpango1.0-dev libcairo2-dev \
+    libfontconfig1-dev
 
 # Build the GUI
-cargo build --bin httprunner-gui --features gui --release
+cargo build -p httprunner-gui --release
 ```
 
 ### macOS
 
 ```bash
 # No additional dependencies needed
-cargo build --bin httprunner-gui --features gui --release
+cargo build -p httprunner-gui --release
 ```
 
 ### Windows
 
 ```bash
 # No additional dependencies needed (PowerShell or CMD)
-cargo build --bin httprunner-gui --features gui --release
+cargo build -p httprunner-gui --release
 ```
 
 ## Running
 
 ```bash
 # Run from source
-cargo run --bin httprunner-gui --features gui
+cargo run -p httprunner-gui
 
 # Or run the compiled binary
 ./target/release/httprunner-gui
@@ -63,25 +68,24 @@ cargo run --bin httprunner-gui --features gui
 
 1. **Open Directory**: Use `File -> Open Directory` or press **Ctrl+O** to select a folder containing .http files
 2. **Browse Files**: Click on files in the left panel to view their contents
-3. **View Requests**: Expand requests in the center panel to see details
-4. **Select Environment** (optional): Choose an environment from the dropdown in the top menu or cycle through them with **Ctrl+E**
-5. **Run Requests**: 
-   - Click "▶ Run All Requests" to execute all requests in the file
-   - Press **F5** to run all requests in the selected file
-   - Click "▶ Run this request" on any individual request to execute it
+3. **View Requests**: See request details displayed in the center panel
+4. **Select Environment** (optional): Choose an environment from the dropdown in the top menu
+5. **Run Requests**: Click "Run All Requests" button or press **F5** to execute all requests in the file
 6. **View Results**: See execution results in the bottom panel
 
 ## Architecture
 
 The GUI is structured into modular components:
 
-- **`main.rs`** - Application entry point and window setup
-- **`app.rs`** - Main application state and UI layout
-- **`file_tree.rs`** - File browser with tree view
-- **`request_view.rs`** - Request details display
+- **`main.rs`** - Application entry point and FLTK window setup
+- **`app_fltk.rs`** - Main application state, UI layout, and message handling
+- **`file_tree.rs`** - File discovery and management
+- **`request_view.rs`** - Request data access
 - **`results_view.rs`** - Execution results and async runner
+- **`request_editor.rs`** - Request editing logic
+- **`state.rs`** - Application state persistence
 
-The GUI shares the core logic with the CLI through the `httprunner` library, ensuring consistent behavior.
+The GUI shares the core logic with the CLI through the `httprunner-lib` library, ensuring consistent behavior.
 
 ## UI Layout
 
@@ -90,12 +94,12 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 │ File | Environment: [None ▾]                              │
 ├──────────┬────────────────────────────────────────────────┤
 │          │                                                │
-│ Dir      │  Request Details                               │
-│  File    │                                                │
-│  File    │  [Request 1] -> Run this request               │
-│          │  [Request 2] -> Run this request               │
+│ Files    │  Request Details                               │
+│  file1   │                                                │
+│  file2   │  GET https://...                               │
+│          │  Headers: ...                                  │
 │          │                                                │
-│          │  Run All Requests                              │
+│          │  [Run All Requests]                            │
 │          │                                                │
 ├──────────┼────────────────────────────────────────────────┤
 │          │  Results                                       │
@@ -108,7 +112,7 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 │          │  Response:                                     │
 │          │  { "data": "..." }                             │
 └──────────┴────────────────────────────────────────────────┘
-│ Working Directory: /path/to/files                         │
+│ Working Directory: /path/to/files | Selected: file.http   │
 └───────────────────────────────────────────────────────────┘
 ```
 
@@ -117,17 +121,14 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 - **F5**: Run all requests in the selected file
 - **Ctrl+O** / **Cmd+O**: Open directory
 - **Ctrl+Q** / **Cmd+Q**: Quit application
-- **Ctrl+E** / **Cmd+E**: Cycle through environments
-- **Ctrl+Plus** / **Cmd+Plus**: Zoom in (increase font size)
-- **Ctrl+Minus** / **Cmd+Minus**: Zoom out (decrease font size)
-- **Ctrl+0** / **Cmd+0**: Reset font size to default
 
 ## Technical Details
 
-- **Framework**: egui (immediate mode GUI)
-- **Window System**: eframe (egui app framework)
-- **File Dialogs**: rfd (native file picker)
+- **Framework**: FLTK (Fast Light Toolkit) - retained mode GUI
+- **Window System**: FLTK native windowing
+- **File Dialogs**: native-dialog (native file picker)
 - **Threading**: Standard library threads for async execution
+- **Theme**: Greybird theme for modern appearance
 - **Rendering**: Default backend (glow for OpenGL, wgpu optional)
 
 ## Troubleshooting
@@ -136,17 +137,19 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 
 If you see errors about missing display:
 ```
-Error: neither WAYLAND_DISPLAY nor WAYLAND_SOCKET nor DISPLAY is set
+Error: DISPLAY is not set
 ```
 
 Ensure you're running in a graphical environment with X11 or Wayland.
 
 ### Linux: Missing libraries
 
-If you get errors about missing `.so` files, install the development libraries:
+If you get linking errors about missing libraries, install the development libraries:
 ```bash
-sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
-    libxkbcommon-dev libwayland-dev
+sudo apt-get install libx11-dev libxext-dev libxft-dev \
+    libxinerama-dev libxcursor-dev libxrender-dev \
+    libxfixes-dev libpango1.0-dev libcairo2-dev \
+    libfontconfig1-dev
 ```
 
 ### macOS: "Cannot be opened because the developer cannot be verified"
@@ -156,16 +159,16 @@ sudo apt-get install libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
 xattr -d com.apple.quarantine ./target/release/httprunner-gui
 ```
 
-### Windows: DPI Scaling Issues
+### Windows: DPI Scaling
 
-The application should automatically detect and use your system's DPI settings. If text appears too small or large, try adjusting your Windows display scaling settings.
+FLTK automatically handles DPI scaling on Windows. If issues persist, try adjusting your Windows display scaling settings.
 
 ## Development
 
 To run in development mode with debugging output:
 
 ```bash
-RUST_LOG=debug cargo run --bin httprunner-gui --features gui
+RUST_LOG=debug cargo run -p httprunner-gui
 ```
 
 ## License
