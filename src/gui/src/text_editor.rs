@@ -201,7 +201,7 @@ impl TextEditor {
 
         // Now we need to find the boundaries of each request in the content
         // We'll search for HTTP method lines to determine request boundaries
-        // Note: We use byte positions in the original content string to handle
+        // Note: We use character positions in the original content string to handle
         // different line endings (LF vs CRLF) correctly
         let mut boundaries = Vec::new();
         let mut current_request_start: Option<usize> = None;
@@ -224,13 +224,13 @@ impl TextEditor {
 
             // Find the actual position of the next line in the content
             // This handles both LF (\n) and CRLF (\r\n) line endings correctly
-            let line_start = char_pos;
-            let line_end = line_start + line.len();
+            let line_end = char_pos + line.len();
             
             // Find where the next line starts by searching for the line ending
-            if let Some(next_line_start) = self.content[line_end..].find(|c| c == '\n') {
+            if let Some(newline_offset) = self.content[line_end..].find('\n') {
                 // Found a newline, next line starts after it
-                char_pos = line_end + next_line_start + 1;
+                // newline_offset is relative to line_end
+                char_pos = line_end + newline_offset + 1;
             } else {
                 // No more newlines, this is the last line
                 char_pos = self.content.len();
