@@ -2,8 +2,6 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 pub struct FileTree {
-    #[allow(dead_code)]
-    root_path: PathBuf,
     http_files: Vec<PathBuf>,
 }
 
@@ -28,10 +26,7 @@ impl FileTree {
         // Sort files by path
         http_files.sort();
 
-        Self {
-            root_path,
-            http_files,
-        }
+        Self { http_files }
     }
 
     pub fn get_files(&self) -> Vec<PathBuf> {

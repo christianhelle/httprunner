@@ -336,14 +336,16 @@ impl HttpRunnerApp {
     }
 
     fn load_environments_for_file(file: &Path, environments: &mut Vec<String>) {
-        if let Some(file_str) = file.to_str()
-            && let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
-            && let Ok(env_config) = httprunner_lib::environment::parse_environment_file(&env_file)
-        {
-            let mut env_names: Vec<String> = env_config.keys().cloned().collect();
-            env_names.sort();
-            *environments = env_names;
-            return;
+        // Try to find and parse http-client.env.json
+        if let Some(file_str) = file.to_str() {
+            if let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str) {
+                if let Ok(env_config) = httprunner_lib::environment::parse_environment_file(&env_file) {
+                    let mut env_names: Vec<String> = env_config.keys().cloned().collect();
+                    env_names.sort();
+                    *environments = env_names;
+                    return;
+                }
+            }
         }
         environments.clear();
     }
@@ -430,10 +432,8 @@ impl HttpRunnerApp {
                 Message::RunAllRequests => {
                     if let Some(ref file) = self.selected_file {
                         self.results_view.run_file(file, self.selected_environment.as_deref());
-                        // Update results display immediately to show "Running" message
+                        // Update results display to show initial "Running" message
                         self.update_results_display();
-                        // Schedule a callback to update when done
-                        // (In FLTK, we'd need to use app::add_idle or app::repeat_timeout)
                     }
                 }
             }
