@@ -49,7 +49,6 @@ impl TextEditor {
     }
 
     /// Display the text editor UI and handle user interactions
-    /// Returns an action to be performed by the parent component
     pub fn show(&mut self, ui: &mut egui::Ui, file: &Option<PathBuf>) {
         if file.is_none() {
             ui.label("No file selected. Select a .http file from the left panel.");
