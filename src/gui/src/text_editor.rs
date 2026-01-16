@@ -138,14 +138,19 @@ impl TextEditor {
 
         for (idx, (req_start, req_end)) in request_boundaries.iter().enumerate() {
             // Check if the cursor/selection overlaps with this request
-            // A request is selected if:
-            // 1. The cursor is within the request (start_pos == end_pos and within range)
-            // 2. The selection overlaps with the request
-            if (start_pos >= *req_start && start_pos < *req_end)
-                || (end_pos > *req_start && end_pos <= *req_end)
-                || (start_pos <= *req_start && end_pos >= *req_end)
-            {
-                selected_indices.push(idx);
+            let is_cursor = start_pos == end_pos;
+            
+            if is_cursor {
+                // For cursor position, check if it's within the request bounds (inclusive start, exclusive end)
+                if start_pos >= *req_start && start_pos < *req_end {
+                    selected_indices.push(idx);
+                }
+            } else {
+                // For selection, use standard range overlap: two ranges overlap if:
+                // start1 < end2 AND end1 > start2
+                if start_pos < *req_end && end_pos > *req_start {
+                    selected_indices.push(idx);
+                }
             }
         }
 
@@ -196,12 +201,13 @@ impl TextEditor {
 
         // Now we need to find the boundaries of each request in the content
         // We'll search for HTTP method lines to determine request boundaries
+        // Note: We use byte positions in the original content string to handle
+        // different line endings (LF vs CRLF) correctly
         let mut boundaries = Vec::new();
-        let lines: Vec<&str> = self.content.lines().collect();
-        let mut char_pos = 0;
         let mut current_request_start: Option<usize> = None;
+        let mut char_pos = 0;
 
-        for (idx, line) in lines.iter().enumerate() {
+        for line in self.content.lines() {
             let trimmed = line.trim();
 
             // Check if this is an HTTP request line
@@ -216,11 +222,18 @@ impl TextEditor {
                 current_request_start = Some(char_pos);
             }
 
-            // Add line length to char_pos
-            char_pos += line.len();
-            // Add newline character if not the last line
-            if idx < lines.len() - 1 {
-                char_pos += 1;
+            // Find the actual position of the next line in the content
+            // This handles both LF (\n) and CRLF (\r\n) line endings correctly
+            let line_start = char_pos;
+            let line_end = line_start + line.len();
+            
+            // Find where the next line starts by searching for the line ending
+            if let Some(next_line_start) = self.content[line_end..].find(|c| c == '\n') {
+                // Found a newline, next line starts after it
+                char_pos = line_end + next_line_start + 1;
+            } else {
+                // No more newlines, this is the last line
+                char_pos = self.content.len();
             }
         }
 
