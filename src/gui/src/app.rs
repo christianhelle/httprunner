@@ -380,100 +380,95 @@ impl eframe::App for HttpRunnerApp {
                 }
             });
 
-        // Center panel - Split into Request Details (top, resizable) and Results (bottom)
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // Top section - Request Details
-            egui::TopBottomPanel::top("request_details_panel")
-                .resizable(true)
-                .default_height(400.0)
-                .min_height(200.0)
-                .show_inside(ui, |ui| {
-                    ui.vertical(|ui| {
-                        ui.heading("Request Details");
-                        ui.separator();
+        // Right panel - Results
+        egui::SidePanel::right("results_panel")
+            .resizable(true)
+            .default_width(500.0)
+            .min_width(300.0)
+            .show(ctx, |ui| {
+                ui.heading("Results");
+                ui.separator();
 
-                        // Use available space minus the button area
-                        let available_height = ui.available_height() - 40.0; // Reserve space for buttons
+                // Use all available height for results scroll area
+                let available_height = ui.available_height();
 
-                        // Wrap the request view in a scroll area with fixed height
-                        egui::ScrollArea::vertical()
-                            .id_salt("request_details_scroll")
-                            .max_height(available_height)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                match self.request_view.show(ui, &self.selected_file) {
-                                    RequestViewAction::RunRequest(idx) => {
-                                        self.selected_request_index = Some(idx);
-                                        // When a request button is clicked, run it immediately
-                                        if let Some(file) = &self.selected_file {
-                                            self.results_view.run_single_request(
-                                                file,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                            );
-                                        }
-                                    }
-                                    RequestViewAction::SaveFile => {
-                                        // Save the file
-                                        if let Err(e) = self.request_view.save_to_file() {
-                                            eprintln!("Failed to save file: {}", e);
-                                        } else {
-                                            // Refresh the file tree to show any new files
-                                            self.file_tree =
-                                                FileTree::new(self.root_directory.clone());
-                                        }
-                                    }
-                                    RequestViewAction::None => {}
-                                }
-                            });
-
-                        ui.separator();
-
-                        // Run buttons - always visible at bottom
-                        ui.horizontal(|ui| {
-                            let run_all_enabled =
-                                self.selected_file.is_some() && !self.request_view.has_changes();
-
-                            if ui
-                                .add_enabled(
-                                    run_all_enabled,
-                                    egui::Button::new("▶ Run All Requests"),
-                                )
-                                .clicked()
-                                && let Some(file) = &self.selected_file
-                            {
-                                self.results_view
-                                    .run_file(file, self.selected_environment.as_deref());
-                            }
-
-                            // Show save indicator if there are unsaved changes
-                            if self.request_view.has_changes() {
-                                ui.colored_label(
-                                    egui::Color32::from_rgb(255, 165, 0),
-                                    "● Unsaved changes",
-                                );
-                            }
-                        });
+                // Wrap results in a scroll area with explicit height
+                egui::ScrollArea::vertical()
+                    .id_salt("results_scroll")
+                    .max_height(available_height)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        self.results_view.show(ui);
                     });
-                });
+            });
 
-            // Bottom section - Results
-            egui::CentralPanel::default().show_inside(ui, |ui| {
-                ui.vertical(|ui| {
-                    ui.heading("Results");
-                    ui.separator();
+        // Center panel - Request Details
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.vertical(|ui| {
+                ui.heading("Request Details");
+                ui.separator();
 
-                    // Reserve all remaining space for results scroll area
-                    let available_height = ui.available_height();
+                // Use available space minus the button area
+                let available_height = ui.available_height() - 40.0; // Reserve space for buttons
 
-                    // Wrap results in a scroll area with explicit height
-                    egui::ScrollArea::vertical()
-                        .id_salt("results_scroll")
-                        .max_height(available_height)
-                        .auto_shrink([false, false])
-                        .show(ui, |ui| {
-                            self.results_view.show(ui);
-                        });
+                // Wrap the request view in a scroll area with fixed height
+                egui::ScrollArea::vertical()
+                    .id_salt("request_details_scroll")
+                    .max_height(available_height)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        match self.request_view.show(ui, &self.selected_file) {
+                            RequestViewAction::RunRequest(idx) => {
+                                self.selected_request_index = Some(idx);
+                                // When a request button is clicked, run it immediately
+                                if let Some(file) = &self.selected_file {
+                                    self.results_view.run_single_request(
+                                        file,
+                                        idx,
+                                        self.selected_environment.as_deref(),
+                                    );
+                                }
+                            }
+                            RequestViewAction::SaveFile => {
+                                // Save the file
+                                if let Err(e) = self.request_view.save_to_file() {
+                                    eprintln!("Failed to save file: {}", e);
+                                } else {
+                                    // Refresh the file tree to show any new files
+                                    self.file_tree =
+                                        FileTree::new(self.root_directory.clone());
+                                }
+                            }
+                            RequestViewAction::None => {}
+                        }
+                    });
+
+                ui.separator();
+
+                // Run buttons - always visible at bottom
+                ui.horizontal(|ui| {
+                    let run_all_enabled =
+                        self.selected_file.is_some() && !self.request_view.has_changes();
+
+                    if ui
+                        .add_enabled(
+                            run_all_enabled,
+                            egui::Button::new("▶ Run All Requests"),
+                        )
+                        .clicked()
+                        && let Some(file) = &self.selected_file
+                    {
+                        self.results_view
+                            .run_file(file, self.selected_environment.as_deref());
+                    }
+
+                    // Show save indicator if there are unsaved changes
+                    if self.request_view.has_changes() {
+                        ui.colored_label(
+                            egui::Color32::from_rgb(255, 165, 0),
+                            "● Unsaved changes",
+                        );
+                    }
                 });
             });
         });
