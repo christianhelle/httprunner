@@ -14,6 +14,8 @@ enum KeyboardAction {
     Quit,
     SwitchEnvironment,
     ToggleView,
+    ToggleFileTree,
+    SaveFile,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,6 +38,7 @@ pub struct HttpRunnerApp {
     environment_selector_open: bool,
     last_saved_window_size: Option<(f32, f32)>,
     view_mode: ViewMode,
+    file_tree_visible: bool,
 }
 
 impl HttpRunnerApp {
@@ -71,6 +74,7 @@ impl HttpRunnerApp {
             environment_selector_open: false,
             last_saved_window_size: state.window_size,
             view_mode: ViewMode::TextEditor, // Default to text editor for new files
+            file_tree_visible: true,
         };
 
         // Apply the loaded font size to the UI context
@@ -182,6 +186,16 @@ impl HttpRunnerApp {
         // Check for Ctrl+T (toggle between Text Editor and Request Details)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::T)) {
             return KeyboardAction::ToggleView;
+        }
+
+        // Check for Ctrl+B (toggle file tree visibility)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
+            return KeyboardAction::ToggleFileTree;
+        }
+
+        // Check for Ctrl+S (save file)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::S)) {
+            return KeyboardAction::SaveFile;
         }
 
         KeyboardAction::None
@@ -379,35 +393,63 @@ impl eframe::App for HttpRunnerApp {
                     ViewMode::RequestDetails => ViewMode::TextEditor,
                 };
             }
+            KeyboardAction::ToggleFileTree => {
+                // Toggle file tree visibility
+                self.file_tree_visible = !self.file_tree_visible;
+            }
+            KeyboardAction::SaveFile => {
+                // Save file based on current view mode
+                match self.view_mode {
+                    ViewMode::TextEditor => {
+                        if let Err(e) = self.text_editor.save_to_file() {
+                            eprintln!("Failed to save file: {}", e);
+                        }
+                    }
+                    ViewMode::RequestDetails => {
+                        if let Err(e) = self.request_view.save_to_file() {
+                            eprintln!("Failed to save file: {}", e);
+                        } else {
+                            // Refresh the file tree to show any new files
+                            self.file_tree = FileTree::new(self.root_directory.clone());
+                            // Reload text editor with updated content
+                            if let Some(file) = &self.selected_file {
+                                self.text_editor.load_file(file);
+                            }
+                        }
+                    }
+                }
+            }
             KeyboardAction::None => {}
         }
 
         self.show_top_panel(ctx);
         self.show_bottom_panel(ctx);
 
-        // Left panel - File tree
-        egui::SidePanel::left("file_tree_panel")
-            .resizable(true)
-            .default_width(300.0)
-            .show(ctx, |ui| {
-                ui.heading("HTTP Files");
-                ui.separator();
+        // Left panel - File tree (only show if visible)
+        if self.file_tree_visible {
+            egui::SidePanel::left("file_tree_panel")
+                .resizable(true)
+                .default_width(300.0)
+                .show(ctx, |ui| {
+                    ui.heading("HTTP Files");
+                    ui.separator();
 
-                if let Some(selected) = self.file_tree.show(ui) {
-                    self.selected_file = Some(selected.clone());
-                    self.selected_request_index = None;
+                    if let Some(selected) = self.file_tree.show(ui) {
+                        self.selected_file = Some(selected.clone());
+                        self.selected_request_index = None;
 
-                    // Load environments for this file
-                    self.load_environments(&selected);
+                        // Load environments for this file
+                        self.load_environments(&selected);
 
-                    // Update both request view and text editor
-                    self.request_view.load_file(&selected);
-                    self.text_editor.load_file(&selected);
+                        // Update both request view and text editor
+                        self.request_view.load_file(&selected);
+                        self.text_editor.load_file(&selected);
 
-                    // Save state after file selection
-                    self.save_state();
-                }
-            });
+                        // Save state after file selection
+                        self.save_state();
+                    }
+                });
+        }
 
         // Right panel - Results (from main branch)
         egui::SidePanel::right("results_panel")
@@ -438,7 +480,7 @@ impl eframe::App for HttpRunnerApp {
                 ui.horizontal(|ui| {
                     ui.selectable_value(&mut self.view_mode, ViewMode::TextEditor, "📝 Text Editor");
                     ui.selectable_value(&mut self.view_mode, ViewMode::RequestDetails, "📋 Request Details");
-                    ui.label("(Ctrl+T to toggle)");
+                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle sidebar)");
                 });
                 ui.separator();
 
