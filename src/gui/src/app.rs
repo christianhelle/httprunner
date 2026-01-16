@@ -3,6 +3,7 @@ use super::{
     request_view::{RequestView, RequestViewAction},
     results_view::ResultsView,
     state::AppState,
+    text_editor::{TextEditor, TextEditorAction},
 };
 use std::path::{Path, PathBuf};
 
@@ -12,11 +13,19 @@ enum KeyboardAction {
     OpenFolder,
     Quit,
     SwitchEnvironment,
+    ToggleView,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ViewMode {
+    TextEditor,
+    RequestDetails,
 }
 
 pub struct HttpRunnerApp {
     file_tree: FileTree,
     request_view: RequestView,
+    text_editor: TextEditor,
     results_view: ResultsView,
     selected_file: Option<PathBuf>,
     selected_request_index: Option<usize>,
@@ -26,6 +35,7 @@ pub struct HttpRunnerApp {
     font_size: f32,
     environment_selector_open: bool,
     last_saved_window_size: Option<(f32, f32)>,
+    view_mode: ViewMode,
 }
 
 impl HttpRunnerApp {
@@ -50,6 +60,7 @@ impl HttpRunnerApp {
         let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
             request_view: RequestView::new(),
+            text_editor: TextEditor::new(),
             results_view: ResultsView::new(),
             selected_file: None,
             selected_request_index: None,
@@ -59,6 +70,7 @@ impl HttpRunnerApp {
             font_size,
             environment_selector_open: false,
             last_saved_window_size: state.window_size,
+            view_mode: ViewMode::TextEditor, // Default to text editor for new files
         };
 
         // Apply the loaded font size to the UI context
@@ -75,6 +87,7 @@ impl HttpRunnerApp {
                 app.selected_file = Some(saved_file.clone());
                 app.load_environments(&saved_file);
                 app.request_view.load_file(&saved_file);
+                app.text_editor.load_file(&saved_file); // Load into text editor too
 
                 // Restore selected environment if it's still valid
                 if let Some(saved_env) = state.selected_environment {
@@ -166,6 +179,11 @@ impl HttpRunnerApp {
             return KeyboardAction::SwitchEnvironment;
         }
 
+        // Check for Ctrl+T (toggle between Text Editor and Request Details)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::T)) {
+            return KeyboardAction::ToggleView;
+        }
+
         KeyboardAction::None
     }
 
@@ -202,6 +220,9 @@ impl HttpRunnerApp {
                                 self.file_tree = FileTree::new(self.root_directory.clone());
                                 self.selected_file = Some(path.clone());
                                 self.request_view.load_file(&path);
+                                self.text_editor.load_file(&path);
+                                // Switch to text editor view for new files
+                                self.view_mode = ViewMode::TextEditor;
                                 self.save_state();
                             }
                         }
@@ -351,6 +372,13 @@ impl eframe::App for HttpRunnerApp {
                     self.save_state();
                 }
             }
+            KeyboardAction::ToggleView => {
+                // Toggle between text editor and request details view
+                self.view_mode = match self.view_mode {
+                    ViewMode::TextEditor => ViewMode::RequestDetails,
+                    ViewMode::RequestDetails => ViewMode::TextEditor,
+                };
+            }
             KeyboardAction::None => {}
         }
 
@@ -372,15 +400,16 @@ impl eframe::App for HttpRunnerApp {
                     // Load environments for this file
                     self.load_environments(&selected);
 
-                    // Update request view
+                    // Update both request view and text editor
                     self.request_view.load_file(&selected);
+                    self.text_editor.load_file(&selected);
 
                     // Save state after file selection
                     self.save_state();
                 }
             });
 
-        // Right panel - Results
+        // Right panel - Results (from main branch)
         egui::SidePanel::right("results_panel")
             .resizable(true)
             .default_width(500.0)
@@ -402,74 +431,139 @@ impl eframe::App for HttpRunnerApp {
                     });
             });
 
-        // Center panel - Request Details
+        // Center panel - Text Editor or Request Details (from this branch)
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
-                ui.heading("Request Details");
+                // Tab selection
+                ui.horizontal(|ui| {
+                    ui.selectable_value(&mut self.view_mode, ViewMode::TextEditor, "📝 Text Editor");
+                    ui.selectable_value(&mut self.view_mode, ViewMode::RequestDetails, "📋 Request Details");
+                    ui.label("(Ctrl+T to toggle)");
+                });
                 ui.separator();
 
                 // Use available space minus the button area
                 let available_height = ui.available_height() - 40.0; // Reserve space for buttons
 
-                // Wrap the request view in a scroll area with fixed height
-                egui::ScrollArea::vertical()
-                    .id_salt("request_details_scroll")
-                    .max_height(available_height)
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        match self.request_view.show(ui, &self.selected_file) {
-                            RequestViewAction::RunRequest(idx) => {
-                                self.selected_request_index = Some(idx);
-                                // When a request button is clicked, run it immediately
-                                if let Some(file) = &self.selected_file {
-                                    self.results_view.run_single_request(
-                                        file,
-                                        idx,
-                                        self.selected_environment.as_deref(),
-                                    );
+                // Show either text editor or request details based on view mode
+                match self.view_mode {
+                    ViewMode::TextEditor => {
+                        // Wrap the text editor in a scroll area with fixed height
+                        egui::ScrollArea::vertical()
+                            .id_salt("text_editor_scroll")
+                            .max_height(available_height)
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                match self.text_editor.show(ui, &self.selected_file) {
+                                    TextEditorAction::RunRequest(idx) => {
+                                        self.selected_request_index = Some(idx);
+                                        // When run request is clicked, run it immediately
+                                        if let Some(file) = &self.selected_file {
+                                            self.results_view.run_single_request(
+                                                file,
+                                                idx,
+                                                self.selected_environment.as_deref(),
+                                            );
+                                        }
+                                    }
+                                    TextEditorAction::None => {}
                                 }
+                            });
+
+                        ui.separator();
+
+                        // Additional buttons for text editor view
+                        ui.horizontal(|ui| {
+                            let run_all_enabled =
+                                self.selected_file.is_some() && !self.text_editor.has_changes();
+
+                            if ui
+                                .add_enabled(
+                                    run_all_enabled,
+                                    egui::Button::new("▶ Run All Requests"),
+                                )
+                                .clicked()
+                                && let Some(file) = &self.selected_file
+                            {
+                                self.results_view
+                                    .run_file(file, self.selected_environment.as_deref());
                             }
-                            RequestViewAction::SaveFile => {
-                                // Save the file
-                                if let Err(e) = self.request_view.save_to_file() {
-                                    eprintln!("Failed to save file: {}", e);
-                                } else {
-                                    // Refresh the file tree to show any new files
-                                    self.file_tree =
-                                        FileTree::new(self.root_directory.clone());
+
+                            // Show save indicator if there are unsaved changes
+                            if self.text_editor.has_changes() {
+                                ui.colored_label(
+                                    egui::Color32::from_rgb(255, 165, 0),
+                                    "● Unsaved changes",
+                                );
+                            }
+                        });
+                    }
+                    ViewMode::RequestDetails => {
+                        // Wrap the request view in a scroll area with fixed height
+                        egui::ScrollArea::vertical()
+                            .id_salt("request_details_scroll")
+                            .max_height(available_height)
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                match self.request_view.show(ui, &self.selected_file) {
+                                    RequestViewAction::RunRequest(idx) => {
+                                        self.selected_request_index = Some(idx);
+                                        // When a request button is clicked, run it immediately
+                                        if let Some(file) = &self.selected_file {
+                                            self.results_view.run_single_request(
+                                                file,
+                                                idx,
+                                                self.selected_environment.as_deref(),
+                                            );
+                                        }
+                                    }
+                                    RequestViewAction::SaveFile => {
+                                        // Save the file and reload both views
+                                        if let Err(e) = self.request_view.save_to_file() {
+                                            eprintln!("Failed to save file: {}", e);
+                                        } else {
+                                            // Refresh the file tree to show any new files
+                                            self.file_tree =
+                                                FileTree::new(self.root_directory.clone());
+                                            // Reload text editor with updated content
+                                            if let Some(file) = &self.selected_file {
+                                                self.text_editor.load_file(file);
+                                            }
+                                        }
+                                    }
+                                    RequestViewAction::None => {}
                                 }
+                            });
+
+                        ui.separator();
+
+                        // Run buttons - always visible at bottom
+                        ui.horizontal(|ui| {
+                            let run_all_enabled =
+                                self.selected_file.is_some() && !self.request_view.has_changes();
+
+                            if ui
+                                .add_enabled(
+                                    run_all_enabled,
+                                    egui::Button::new("▶ Run All Requests"),
+                                )
+                                .clicked()
+                                && let Some(file) = &self.selected_file
+                            {
+                                self.results_view
+                                    .run_file(file, self.selected_environment.as_deref());
                             }
-                            RequestViewAction::None => {}
-                        }
-                    });
 
-                ui.separator();
-
-                // Run buttons - always visible at bottom
-                ui.horizontal(|ui| {
-                    let run_all_enabled =
-                        self.selected_file.is_some() && !self.request_view.has_changes();
-
-                    if ui
-                        .add_enabled(
-                            run_all_enabled,
-                            egui::Button::new("▶ Run All Requests"),
-                        )
-                        .clicked()
-                        && let Some(file) = &self.selected_file
-                    {
-                        self.results_view
-                            .run_file(file, self.selected_environment.as_deref());
+                            // Show save indicator if there are unsaved changes
+                            if self.request_view.has_changes() {
+                                ui.colored_label(
+                                    egui::Color32::from_rgb(255, 165, 0),
+                                    "● Unsaved changes",
+                                );
+                            }
+                        });
                     }
-
-                    // Show save indicator if there are unsaved changes
-                    if self.request_view.has_changes() {
-                        ui.colored_label(
-                            egui::Color32::from_rgb(255, 165, 0),
-                            "● Unsaved changes",
-                        );
-                    }
-                });
+                }
             });
         });
 
