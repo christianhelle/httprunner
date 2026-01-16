@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Persist file tree visibility preference across application restarts [\#134](https://github.com/christianhelle/httprunner/pull/134) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add keyboard shortcuts: Ctrl+B to toggle file tree, Ctrl+S to save [\#133](https://github.com/christianhelle/httprunner/pull/133) ([christianhelle](https://github.com/christianhelle))
 - Add state persistence to GUI application [\#121](https://github.com/christianhelle/httprunner/pull/121) ([christianhelle](https://github.com/christianhelle))
 - Add keyboard shortcuts to GUI app \(F5, Ctrl+O, Ctrl+Q, Ctrl+E\) [\#118](https://github.com/christianhelle/httprunner/pull/118) ([christianhelle](https://github.com/christianhelle))
