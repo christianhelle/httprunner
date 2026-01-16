@@ -108,9 +108,14 @@ The GUI shares the core logic with the CLI through the `httprunner` library, ens
 ## Keyboard Shortcuts
 
 - **F5**: Run all requests in the selected file
+- **Ctrl+R** / **Cmd+R**: Run all requests in the selected file
 - **Ctrl+O** / **Cmd+O**: Open directory
 - **Ctrl+Q** / **Cmd+Q**: Quit application
 - **Ctrl+E** / **Cmd+E**: Cycle through environments
+- **Ctrl+T** / **Cmd+T**: Toggle between Text Editor and Request Details view
+- **Ctrl+B** / **Cmd+B**: Toggle file tree visibility
+- **Ctrl+D** / **Cmd+D**: Toggle results view (Compact/Verbose)
+- **Ctrl+S** / **Cmd+S**: Save file
 - **Ctrl+Plus** / **Cmd+Plus**: Zoom in (increase font size)
 - **Ctrl+Minus** / **Cmd+Minus**: Zoom out (decrease font size)
 - **Ctrl+0** / **Cmd+0**: Reset font size to default

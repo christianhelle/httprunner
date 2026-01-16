@@ -222,14 +222,14 @@ impl ResultsView {
         ui.horizontal(|ui| {
             if ui
                 .selectable_label(self.compact_mode, "📋 Compact")
-                .on_hover_text("Show compact results")
+                .on_hover_text("Show compact results (Ctrl+D to toggle)")
                 .clicked()
             {
                 self.compact_mode = true;
             }
             if ui
                 .selectable_label(!self.compact_mode, "📄 Verbose")
-                .on_hover_text("Show verbose results")
+                .on_hover_text("Show verbose results (Ctrl+D to toggle)")
                 .clicked()
             {
                 self.compact_mode = false;

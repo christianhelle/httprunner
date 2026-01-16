@@ -15,6 +15,7 @@ enum KeyboardAction {
     SwitchEnvironment,
     ToggleView,
     ToggleFileTree,
+    ToggleResultsView,
     SaveFile,
 }
 
@@ -198,6 +199,11 @@ impl HttpRunnerApp {
         // Check for Ctrl+B (toggle file tree visibility)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
             return KeyboardAction::ToggleFileTree;
+        }
+
+        // Check for Ctrl+D (toggle results view mode: compact/verbose)
+        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::D)) {
+            return KeyboardAction::ToggleResultsView;
         }
 
         // Check for Ctrl+S (save file)
@@ -412,6 +418,12 @@ impl eframe::App for HttpRunnerApp {
                 self.file_tree_visible = !self.file_tree_visible;
                 self.save_state();
             }
+            KeyboardAction::ToggleResultsView => {
+                // Toggle results view mode between compact and verbose
+                self.results_view
+                    .set_compact_mode(!self.results_view.is_compact_mode());
+                self.save_state();
+            }
             KeyboardAction::SaveFile => {
                 // Save file based on current view mode
                 match self.view_mode {
@@ -506,7 +518,7 @@ impl eframe::App for HttpRunnerApp {
                         ViewMode::RequestDetails,
                         "📋 Request Details",
                     );
-                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree)");
+                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree | Ctrl+D to toggle results view)");
                 });
                 ui.separator();
 
