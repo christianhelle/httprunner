@@ -406,8 +406,11 @@ impl eframe::App for HttpRunnerApp {
                 // Save file based on current view mode
                 match self.view_mode {
                     ViewMode::TextEditor => {
-                        if let Err(e) = self.text_editor.save_to_file() {
-                            eprintln!("Failed to save file: {}", e);
+                        // Only attempt to save when a file is currently selected
+                        if self.selected_file.is_some() {
+                            if let Err(e) = self.text_editor.save_to_file() {
+                                eprintln!("Failed to save file: {}", e);
+                            }
                         }
                     }
                     ViewMode::RequestDetails => {
