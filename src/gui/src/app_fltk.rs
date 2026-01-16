@@ -9,9 +9,8 @@ use fltk::{
     browser::HoldBrowser,
     button::Button,
     menu::Choice,
-    enums::{Align, Color, Font, FrameType, Key, Shortcut},
+    enums::{Align, Color, Font, FrameType, Shortcut},
     frame::Frame,
-    group::{Pack, PackType},
     menu::{MenuBar, MenuFlag},
     prelude::*,
     text::{TextBuffer, TextDisplay, WrapMode},
@@ -111,7 +110,7 @@ impl HttpRunnerApp {
 
     fn build_ui(
         wind: &mut DoubleWindow,
-        file_tree: &FileTree,
+        _file_tree: &FileTree,
         root_directory: &Path,
         environments: &[String],
     ) -> (HoldBrowser, TextBuffer, TextBuffer, TextBuffer, Choice) {
@@ -365,10 +364,6 @@ impl HttpRunnerApp {
         self.save_state();
     }
 
-    pub fn get_handle(&self) -> AppHandle {
-        AppHandle
-    }
-
     pub fn handle_messages(&mut self, r: &app::Receiver<Message>) {
         if let Some(msg) = r.recv() {
             match msg {
@@ -454,14 +449,6 @@ pub enum Message {
     SelectEnvironment,
     RunAllRequests,
     FileSelected,
-}
-
-pub struct AppHandle;
-
-impl AppHandle {
-    pub fn save_state(&self) {
-        // Called from callback
-    }
 }
 
 impl HttpRunnerApp {

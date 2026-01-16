@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 pub struct FileTree {
+    #[allow(dead_code)]
     root_path: PathBuf,
     http_files: Vec<PathBuf>,
 }
