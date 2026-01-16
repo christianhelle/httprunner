@@ -3,6 +3,8 @@
 [![Build Linux](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-linux.yml)
 [![Build macOS](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml)
 [![Build Windows](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml)
+[![SonarCloud Analysis](https://github.com/christianhelle/httprunner/actions/workflows/sonarcloud.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/sonarcloud.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=christianhelle_httprunner&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=christianhelle_httprunner)
 [![codecov](https://codecov.io/gh/christianhelle/httprunner/branch/main/graph/badge.svg)](https://codecov.io/gh/christianhelle/httprunner)
 [![Rust Version](https://img.shields.io/badge/rust-1.92-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
