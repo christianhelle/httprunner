@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Add keyboard shortcuts: Ctrl+B to toggle file tree, Ctrl+S to save [\#133](https://github.com/christianhelle/httprunner/pull/133) ([christianhelle](https://github.com/christianhelle))
 - Add state persistence to GUI application [\#121](https://github.com/christianhelle/httprunner/pull/121) ([christianhelle](https://github.com/christianhelle))
 - Add keyboard shortcuts to GUI app \(F5, Ctrl+O, Ctrl+Q, Ctrl+E\) [\#118](https://github.com/christianhelle/httprunner/pull/118) ([christianhelle](https://github.com/christianhelle))
 - Add support for running individual requests from GUI app [\#115](https://github.com/christianhelle/httprunner/pull/115) ([Copilot](https://github.com/apps/copilot-swe-agent))
