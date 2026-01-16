@@ -535,15 +535,27 @@ impl eframe::App for HttpRunnerApp {
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
                                 match self.text_editor.show(ui, &self.selected_file) {
-                                    TextEditorAction::RunRequest(idx) => {
-                                        self.selected_request_index = Some(idx);
-                                        // When run request is clicked, run it immediately
+                                    TextEditorAction::RunRequests(indices) => {
+                                        // Run selected request(s) immediately
                                         if let Some(file) = &self.selected_file {
-                                            self.results_view.run_single_request(
-                                                file,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                            );
+                                            // If single request, run it individually
+                                            if indices.len() == 1 {
+                                                self.selected_request_index = Some(indices[0]);
+                                                self.results_view.run_single_request(
+                                                    file,
+                                                    indices[0],
+                                                    self.selected_environment.as_deref(),
+                                                );
+                                            } else {
+                                                // For multiple requests, run each one
+                                                for &idx in &indices {
+                                                    self.results_view.run_single_request(
+                                                        file,
+                                                        idx,
+                                                        self.selected_environment.as_deref(),
+                                                    );
+                                                }
+                                            }
                                         }
                                     }
                                     TextEditorAction::None => {}
