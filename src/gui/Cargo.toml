@@ -22,9 +22,9 @@ path = "src/main.rs"
 
 [dependencies]
 httprunner-lib = { path = "../lib" }
-eframe = { workspace = true }
-egui = { workspace = true }
-rfd = { workspace = true }
+fltk = { workspace = true }
+fltk-theme = { workspace = true }
+native-dialog = { workspace = true }
 env_logger = { workspace = true }
 anyhow = { workspace = true }
 walkdir = { workspace = true }
