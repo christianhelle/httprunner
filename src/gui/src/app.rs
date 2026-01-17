@@ -518,7 +518,7 @@ impl eframe::App for HttpRunnerApp {
                         ViewMode::RequestDetails,
                         "📋 Request Details",
                     );
-                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree | Ctrl+D to toggle results view)");
+                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree)");
                 });
                 ui.separator();
 
