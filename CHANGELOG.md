@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Move Results View toggle shortcut help text in GUI app [\#138](https://github.com/christianhelle/httprunner/pull/138) ([christianhelle](https://github.com/christianhelle))
 - Remove Run First Request button from Text Editor [\#137](https://github.com/christianhelle/httprunner/pull/137) ([christianhelle](https://github.com/christianhelle))
 - Add compact/verbose mode toggle in GUI app Results section [\#135](https://github.com/christianhelle/httprunner/pull/135) ([christianhelle](https://github.com/christianhelle))
 - Persist file tree visibility preference across application restarts [\#134](https://github.com/christianhelle/httprunner/pull/134) ([Copilot](https://github.com/apps/copilot-swe-agent))
