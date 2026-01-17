@@ -1,5 +1,5 @@
 name: httprunner
-base: core24
+base: core22
 version: v0.5.36
 summary: Execute HTTP requests from .http files with colored output
 description: |
@@ -44,6 +44,10 @@ parts:
   httprunner:
     plugin: rust
     source: .
+    override-build: |
+      set -eux
+      cd src/cli
+      cargo install --locked --path . --root $SNAPCRAFT_PART_INSTALL --force
     build-packages:
       - libssl-dev
       - pkg-config
@@ -51,3 +55,22 @@ parts:
     stage-packages:
       - libssl3
       - ca-certificates
+  httprunner-gui:
+    plugin: rust
+    source: .
+    override-build: |
+      set -eux
+      cd src/gui
+      cargo install --locked --path . --root $SNAPCRAFT_PART_INSTALL --force
+    build-packages:
+      - libssl-dev
+      - pkg-config
+      - git
+    stage-packages:
+      - libssl3
+      - ca-certificates
+  rust-deps:
+    plugin: nil
+    build-packages:
+      - cargo
+      - rustc
