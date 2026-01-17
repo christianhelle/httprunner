@@ -98,11 +98,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
 
-      - name: Build CLI release binary
-        run: cargo build --release --target ${{ matrix.target }} -p httprunner
-
-      - name: Build GUI release binary
-        run: cargo build --release --target ${{ matrix.target }} -p httprunner-gui
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Create release archive (Linux/macOS)
         if: matrix.os != 'windows-latest'
