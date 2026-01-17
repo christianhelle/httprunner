@@ -30,6 +30,15 @@ apps:
     plugs:
       - network
       - home
+  httprunner-gui:
+    command: bin/httprunner-gui
+    plugs:
+      - network
+      - home
+      - x11
+      - wayland
+      - desktop
+      - desktop-legacy
 
 parts:
   httprunner:
