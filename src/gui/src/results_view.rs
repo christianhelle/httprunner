@@ -238,7 +238,7 @@ impl ResultsView {
             // Add visible hint for keyboard shortcut
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(
-                    egui::RichText::new("(Ctrl+D to toggle results view)")
+                    egui::RichText::new("(Ctrl+D to toggle compact/verbose)")
                         .small()
                         .color(egui::Color32::from_rgb(128, 128, 128)),
                 );
