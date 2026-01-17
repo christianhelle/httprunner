@@ -4,8 +4,7 @@ on:
   push:
     paths:      
       - '**/*.rs'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
+      - '**/Cargo.toml'
       - '.github/workflows/build-macos.yml'
 
 jobs:
