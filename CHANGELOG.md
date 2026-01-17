@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.6.37](https://github.com/christianhelle/httprunner/tree/0.6.37) (2026-01-17)
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.36...0.6.37)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.36...HEAD)
 
 **Implemented enhancements:**
 
@@ -24,6 +24,7 @@
 
 **Merged pull requests:**
 
+- Fix cargo publish failure: add version requirement to httprunner-lib dependency [\#139](https://github.com/christianhelle/httprunner/pull/139) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add text editor with syntax highlighting for .http files [\#132](https://github.com/christianhelle/httprunner/pull/132) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add CTRL+R keyboard shortcut to run all requests [\#126](https://github.com/christianhelle/httprunner/pull/126) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Move GUI Results panel from bottom to right side [\#125](https://github.com/christianhelle/httprunner/pull/125) ([Copilot](https://github.com/apps/copilot-swe-agent))
