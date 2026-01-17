@@ -533,9 +533,7 @@ impl eframe::App for HttpRunnerApp {
                             .id_salt("text_editor_scroll")
                             .max_height(available_height)
                             .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                self.text_editor.show(ui, &self.selected_file)
-                            });
+                            .show(ui, |ui| self.text_editor.show(ui, &self.selected_file));
 
                         ui.separator();
 

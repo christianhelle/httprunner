@@ -4,6 +4,17 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+/// Parameters for displaying verbose success results
+struct VerboseSuccessParams<'a> {
+    result_idx: usize,
+    method: &'a str,
+    url: &'a str,
+    status: u16,
+    duration_ms: u64,
+    response_body: &'a str,
+    assertion_results: &'a [AssertionResult],
+}
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ExecutionResult {
     Success {
@@ -281,13 +292,15 @@ impl ResultsView {
                         } else {
                             self.show_verbose_success(
                                 ui,
-                                result_idx,
-                                method,
-                                url,
-                                *status,
-                                *duration_ms,
-                                response_body,
-                                assertion_results,
+                                VerboseSuccessParams {
+                                    result_idx,
+                                    method,
+                                    url,
+                                    status: *status,
+                                    duration_ms: *duration_ms,
+                                    response_body,
+                                    assertion_results,
+                                },
                             );
                         }
                     }
@@ -385,28 +398,18 @@ impl ResultsView {
         ui.separator();
     }
 
-    fn show_verbose_success(
-        &self,
-        ui: &mut egui::Ui,
-        result_idx: usize,
-        method: &str,
-        url: &str,
-        status: u16,
-        duration_ms: u64,
-        response_body: &str,
-        assertion_results: &[AssertionResult],
-    ) {
+    fn show_verbose_success(&self, ui: &mut egui::Ui, params: VerboseSuccessParams) {
         ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
-        ui.monospace(format!("{} {}", method, url));
-        ui.label(format!("Status: {}", status));
-        ui.label(format!("Duration: {} ms", duration_ms));
+        ui.monospace(format!("{} {}", params.method, params.url));
+        ui.label(format!("Status: {}", params.status));
+        ui.label(format!("Duration: {} ms", params.duration_ms));
 
         // Display assertion results if any
-        if !assertion_results.is_empty() {
+        if !params.assertion_results.is_empty() {
             ui.separator();
             ui.label("🔍 Assertion Results:");
 
-            for assertion_result in assertion_results {
+            for assertion_result in params.assertion_results {
                 let assertion_type_str = match assertion_result.assertion.assertion_type {
                     httprunner_lib::types::AssertionType::Status => "Status Code",
                     httprunner_lib::types::AssertionType::Body => "Response Body",
@@ -460,10 +463,10 @@ impl ResultsView {
         ui.separator();
         ui.label("Response:");
         egui::ScrollArea::vertical()
-            .id_salt(format!("response_body_{}", result_idx))
+            .id_salt(format!("response_body_{}", params.result_idx))
             .max_height(300.0)
             .show(ui, |ui| {
-                ui.monospace(response_body);
+                ui.monospace(params.response_body);
             });
         ui.separator();
     }
