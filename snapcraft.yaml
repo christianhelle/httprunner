@@ -44,7 +44,6 @@ parts:
   httprunner:
     plugin: rust
     source: .
-    rust-channel: stable
     build-packages:
       - libssl-dev
       - pkg-config
