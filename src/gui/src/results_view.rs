@@ -1,4 +1,4 @@
-use httprunner_lib::types::AssertionResult;
+use httprunner::types::AssertionResult;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -99,7 +99,7 @@ impl ResultsView {
             if let Some(path_str) = path.to_str() {
                 // Use processor::process_http_files for consistent behavior with CLI
                 let files = vec![path_str.to_string()];
-                match httprunner_lib::processor::process_http_files(
+                match httprunner::processor::process_http_files(
                     &files,
                     false, // verbose
                     None,  // log_filename
@@ -189,7 +189,7 @@ impl ResultsView {
             // Parse the file
             if let Some(path_str) = path.to_str() {
                 if let Ok(requests) =
-                    httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
+                    httprunner::parser::parse_http_file(path_str, env.as_deref())
                 {
                     if let Some(request) = requests.get(index) {
                         let result = execute_request(request.clone());
@@ -340,9 +340,9 @@ impl ResultsView {
         if !assertion_results.is_empty() {
             for assertion_result in assertion_results {
                 let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_lib::types::AssertionType::Status => "Status Code",
-                    httprunner_lib::types::AssertionType::Body => "Response Body",
-                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                    httprunner::types::AssertionType::Status => "Status Code",
+                    httprunner::types::AssertionType::Body => "Response Body",
+                    httprunner::types::AssertionType::Headers => "Response Headers",
                 };
 
                 if assertion_result.passed {
@@ -411,9 +411,9 @@ impl ResultsView {
 
             for assertion_result in params.assertion_results {
                 let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_lib::types::AssertionType::Status => "Status Code",
-                    httprunner_lib::types::AssertionType::Body => "Response Body",
-                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                    httprunner::types::AssertionType::Status => "Status Code",
+                    httprunner::types::AssertionType::Body => "Response Body",
+                    httprunner::types::AssertionType::Headers => "Response Headers",
                 };
 
                 if assertion_result.passed {
@@ -479,13 +479,13 @@ impl ResultsView {
     }
 }
 
-fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
+fn execute_request(request: httprunner::HttpRequest) -> ExecutionResult {
     use std::time::Instant;
 
     let start = Instant::now();
 
     // Execute the request using the runner
-    match httprunner_lib::runner::execute_http_request(&request, false, false) {
+    match httprunner::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;
 

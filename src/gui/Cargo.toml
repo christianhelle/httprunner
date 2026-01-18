@@ -21,7 +21,7 @@ name = "httprunner-gui"
 path = "src/main.rs"
 
 [dependencies]
-httprunner-lib = { path = "../lib" }
+httprunner = { path = "../cli" }
 eframe = { workspace = true }
 egui = { workspace = true }
 rfd = { workspace = true }
