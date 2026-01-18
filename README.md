@@ -99,23 +99,13 @@ Download the latest release for your platform from the [GitHub Releases page](ht
 
 Extract the archive and add the binary to your PATH.
 
-### Option 3: Install from Crates.io
-
-If you have Rust tooling installed, you can install httprunner directly from Crates.io:
-
-```bash
-cargo install httprunner
-```
-
-This will download, compile, and install the latest version of httprunner. The binary will be installed to `~/.cargo/bin/` (or `%USERPROFILE%\.cargo\bin\` on Windows), which should already be in your PATH if you installed Rust via rustup.
-
-### Option 4: Install from Snap Store
+### Option 3: Install from Snap Store
 
 ```bash
 sudo snap install httprunner
 ```
 
-### Option 5: Build from Source
+### Option 4: Build from Source
 
 Make sure you have Rust installed (version 1.92 or later).
 
@@ -2072,8 +2062,7 @@ The project is organized as a Cargo workspace with the following structure:
 ```
 httprunner/
 ├── src/
-│   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
-│   ├── cli/         # CLI application (httprunner) - builds httprunner binary
+│   ├── cli/         # CLI application and core library (httprunner) - builds httprunner binary
 │   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary
 ├── examples/
 ├── docs/
@@ -2084,6 +2073,8 @@ httprunner/
 - `cargo build --release` - Build both CLI and GUI (default)
 - `cargo build --release -p httprunner` - Build CLI only
 - `cargo build --release -p httprunner-gui` - Build GUI only
+
+**Note:** The CLI package (`httprunner`) now serves as both the command-line tool and the core library that the GUI depends on.
 
 ## Legacy Zig Implementation
 
