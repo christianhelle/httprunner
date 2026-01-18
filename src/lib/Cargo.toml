@@ -8,6 +8,7 @@ repository.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 description = "HTTP File Runner - Core library for executing HTTP requests from .http files"
+readme = "README.md"
 keywords = ["http", "rest", "api", "testing"]
 categories = [
   "development-tools",
