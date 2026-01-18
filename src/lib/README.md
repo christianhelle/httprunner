@@ -36,8 +36,10 @@ httprunner-lib = "0.1"
 
 ## Quick Start
 
+### Low-level API (Parse and Execute)
+
 ```rust
-use httprunner_lib::{parse_http_file, run_http_request, HttpRequest};
+use httprunner_lib::{parser::parse_http_file, runner::execute_http_request};
 use std::collections::HashMap;
 
 fn main() -> anyhow::Result<()> {
@@ -47,10 +49,35 @@ fn main() -> anyhow::Result<()> {
     
     // Execute the first request
     if let Some(request) = requests.first() {
-        let result = run_http_request(request, false)?;
+        let result = execute_http_request(request, false, false)?;
         println!("Status: {}", result.status_code);
         println!("Body: {}", result.body);
     }
+    
+    Ok(())
+}
+```
+
+### High-level API (Process Multiple Files)
+
+```rust
+use httprunner_lib::processor::process_http_files;
+
+fn main() -> anyhow::Result<()> {
+    // Process one or more .http files
+    let files = vec!["example.http".to_string()];
+    let results = process_http_files(
+        &files,
+        false,  // verbose
+        None,   // log_filename
+        None,   // environment
+        false,  // insecure
+        false,  // pretty_json
+    )?;
+    
+    println!("Total requests: {}", results.total_success_count + results.total_failure_count);
+    println!("Success: {}", results.total_success_count);
+    println!("Failed: {}", results.total_failure_count);
     
     Ok(())
 }
