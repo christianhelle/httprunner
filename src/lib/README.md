@@ -73,9 +73,12 @@ fn main() -> anyhow::Result<()> {
         false,  // pretty_json
     )?;
     
-    println!("Total requests: {}", results.total_success_count + results.total_failure_count);
-    println!("Success: {}", results.total_success_count);
-    println!("Failed: {}", results.total_failure_count);
+    // Calculate totals from file results
+    let total_success: u32 = results.files.iter().map(|f| f.success_count).sum();
+    let total_failed: u32 = results.files.iter().map(|f| f.failed_count).sum();
+    let total_skipped: u32 = results.files.iter().map(|f| f.skipped_count).sum();
+    
+    println!("Success: {}, Failed: {}, Skipped: {}", total_success, total_failed, total_skipped);
     
     Ok(())
 }
