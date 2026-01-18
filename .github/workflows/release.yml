@@ -250,9 +250,14 @@ jobs:
       - name: Update Version
         shell: pwsh
         run: |
-          # Update workspace version
-          $rootToml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
-          $rootToml | Set-Content -Path Cargo.toml
+          $toml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml | Set-Content -Path Cargo.toml
+          $toml = (Get-Content -Path src/lib/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml | Set-Content -Path src/lib/Cargo.toml
+          $toml = (Get-Content -Path src/cli/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml | Set-Content -Path src/cli/Cargo.toml
+          $toml = (Get-Content -Path src/gui/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml | Set-Content -Path src/gui/Cargo.toml
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
