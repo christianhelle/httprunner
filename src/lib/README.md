@@ -31,7 +31,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-httprunner-lib = "0.1"
+httprunner-lib = "0.1.0"
 ```
 
 ## Quick Start
@@ -40,12 +40,10 @@ httprunner-lib = "0.1"
 
 ```rust
 use httprunner_lib::{parser::parse_http_file, runner::execute_http_request};
-use std::collections::HashMap;
 
 fn main() -> anyhow::Result<()> {
     // Parse an .http file
-    let content = std::fs::read_to_string("example.http")?;
-    let requests = parse_http_file(&content, &HashMap::new())?;
+    let requests = parse_http_file("example.http", None)?;
     
     // Execute the first request
     if let Some(request) = requests.first() {
