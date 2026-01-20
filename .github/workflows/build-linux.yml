@@ -29,16 +29,16 @@ jobs:
         toolchain: stable
         cache: true
 
+    - name: Install Linux dependencies for GUI
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+
     - name: Run Clippy
       run: cargo clippy -- -D warnings
 
     - name: Build
       run: cargo build
-
-    - name: Install Linux dependencies for GUI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
 
     - name: Run tests
       run: cargo test
