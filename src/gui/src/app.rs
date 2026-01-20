@@ -558,8 +558,12 @@ impl eframe::App for HttpRunnerApp {
 
                         // Additional buttons for text editor view
                         ui.horizontal(|ui| {
+                            #[cfg(not(target_arch = "wasm32"))]
                             let run_all_enabled =
                                 self.selected_file.is_some() && !self.text_editor.has_changes();
+
+                            #[cfg(target_arch = "wasm32")]
+                            let run_all_enabled = !self.text_editor.get_content().trim().is_empty();
 
                             if ui
                                 .add_enabled(
@@ -567,18 +571,23 @@ impl eframe::App for HttpRunnerApp {
                                     egui::Button::new("▶ Run All Requests"),
                                 )
                                 .clicked()
-                                && let Some(file) = &self.selected_file
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
-                                self.results_view
-                                    .run_file(file, self.selected_environment.as_deref());
+                                if let Some(file) = &self.selected_file {
+                                    self.results_view
+                                        .run_file(file, self.selected_environment.as_deref());
+                                }
 
                                 #[cfg(target_arch = "wasm32")]
-                                self.results_view.run_file_async(
-                                    file,
-                                    self.selected_environment.as_deref(),
-                                    ctx,
-                                );
+                                {
+                                    // On WASM, run from in-memory content
+                                    let content = self.text_editor.get_content().to_string();
+                                    self.results_view.run_content_async(
+                                        content,
+                                        self.selected_environment.as_deref(),
+                                        ctx,
+                                    );
+                                }
                             }
 
                             // Show save indicator if there are unsaved changes

@@ -23,6 +23,7 @@ impl TextEditor {
     }
 
     /// Load a .http file into the editor
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn load_file(&mut self, path: &Path) {
         match std::fs::read_to_string(path) {
             Ok(content) => {
@@ -37,7 +38,26 @@ impl TextEditor {
         }
     }
 
+    /// Set content directly (for WASM where file loading doesn't work)
+    #[cfg(target_arch = "wasm32")]
+    pub fn load_file(&mut self, _path: &Path) {
+        // On WASM, we can't actually load from file system
+        // Content is set via direct editing
+    }
+
+    /// Set content programmatically
+    pub fn set_content(&mut self, content: String) {
+        self.content = content;
+        self.has_changes = true;
+    }
+
+    /// Get current content
+    pub fn get_content(&self) -> &str {
+        &self.content
+    }
+
     /// Save the current content to the loaded file
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn save_to_file(&mut self) -> anyhow::Result<()> {
         if let Some(path) = &self.current_file {
             std::fs::write(path, &self.content)?;
@@ -48,11 +68,32 @@ impl TextEditor {
         }
     }
 
+    /// Save is a no-op on WASM (content is already in memory)
+    #[cfg(target_arch = "wasm32")]
+    pub fn save_to_file(&mut self) -> anyhow::Result<()> {
+        self.has_changes = false;
+        Ok(())
+    }
+
     /// Display the text editor UI and handle user interactions
     pub fn show(&mut self, ui: &mut egui::Ui, file: &Option<PathBuf>) {
+        #[cfg(not(target_arch = "wasm32"))]
         if file.is_none() {
             ui.label("No file selected. Select a .http file from the left panel.");
             return;
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        if file.is_none() && self.content.is_empty() {
+            ui.vertical(|ui| {
+                ui.heading("✏️ Paste your HTTP requests here");
+                ui.add_space(10.0);
+                ui.label("You can paste the contents of an .http file below:");
+                ui.label("Example:");
+                ui.monospace("GET https://api.example.com/users");
+                ui.monospace("Accept: application/json");
+                ui.add_space(10.0);
+            });
         }
 
         // Store original content to detect changes

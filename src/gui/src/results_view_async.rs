@@ -1,9 +1,71 @@
 // WASM-specific async execution for results view
 use crate::results_view::{ExecutionResult, ResultsView};
+use httprunner_lib::parser;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 impl ResultsView {
+    pub fn run_content_async(
+        &mut self,
+        content: String,
+        environment: Option<&str>,
+        ctx: &egui::Context,
+    ) {
+        let results: Arc<Mutex<Vec<ExecutionResult>>> = Arc::clone(&self.results);
+        let is_running: Arc<Mutex<bool>> = Arc::clone(&self.is_running);
+        let ctx = ctx.clone();
+        let env = environment.map(|s| s.to_string());
+
+        // Clear previous results
+        if let Ok(mut r) = results.lock() {
+            r.clear();
+            r.push(ExecutionResult::Running {
+                message: "Parsing and running requests from content...".to_string(),
+            });
+        }
+
+        if let Ok(mut running) = is_running.lock() {
+            *running = true;
+        }
+
+        wasm_bindgen_futures::spawn_local(async move {
+            // Parse the content
+            let parse_result = parser::parse_http_content(&content, env.as_deref());
+
+            match parse_result {
+                Ok(requests) => {
+                    if let Ok(mut r) = results.lock() {
+                        r.clear();
+                    }
+
+                    for request in requests {
+                        let result = execute_request_async(request).await;
+                        if let Ok(mut r) = results.lock() {
+                            r.push(result);
+                        }
+                        ctx.request_repaint();
+                    }
+                }
+                Err(e) => {
+                    if let Ok(mut r) = results.lock() {
+                        r.clear();
+                        r.push(ExecutionResult::Failure {
+                            method: "PARSE".to_string(),
+                            url: "".to_string(),
+                            error: format!("Failed to parse content: {}", e),
+                        });
+                    }
+                    ctx.request_repaint();
+                }
+            }
+
+            if let Ok(mut running) = is_running.lock() {
+                *running = false;
+            }
+            ctx.request_repaint();
+        });
+    }
+
     pub fn run_file_async(&mut self, path: &Path, environment: Option<&str>, ctx: &egui::Context) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
