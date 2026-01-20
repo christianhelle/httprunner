@@ -485,15 +485,13 @@ impl ResultsView {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
-    #[cfg(not(target_arch = "wasm32"))]
     use std::time::Instant;
 
-    #[cfg(not(target_arch = "wasm32"))]
     let start = Instant::now();
 
     // Execute the request using the runner
-    #[cfg(not(target_arch = "wasm32"))]
     match httprunner_lib::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;
@@ -522,12 +520,5 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
             url: request.url,
             error: e.to_string(),
         },
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    ExecutionResult::Failure {
-        method: request.method,
-        url: request.url,
-        error: "Sync execution not available on WASM".to_string(),
     }
 }

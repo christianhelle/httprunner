@@ -12,7 +12,7 @@ use web_time::Instant;
 pub async fn execute_http_request_async(
     request: &HttpRequest,
     verbose: bool,
-    _insecure: bool,
+    insecure: bool,
 ) -> Result<HttpResult> {
     let start_time = Instant::now();
     let has_assertions = !request.assertions.is_empty();
@@ -32,7 +32,7 @@ pub async fn execute_http_request_async(
             .connect_timeout(std::time::Duration::from_millis(connection_timeout))
             .timeout(std::time::Duration::from_millis(read_timeout));
 
-        if _insecure {
+        if insecure {
             client_builder = client_builder
                 .danger_accept_invalid_hostnames(true)
                 .danger_accept_invalid_certs(true);

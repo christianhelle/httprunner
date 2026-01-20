@@ -378,8 +378,8 @@ impl eframe::App for HttpRunnerApp {
                         .run_file(file, self.selected_environment.as_deref());
 
                     #[cfg(target_arch = "wasm32")]
-                    self.results_view.run_file_async(
-                        file,
+                    self.results_view.run_content_async(
+                        self.text_editor.get_content(),
                         self.selected_environment.as_deref(),
                         ctx,
                     );
@@ -619,12 +619,18 @@ impl eframe::App for HttpRunnerApp {
                                             );
 
                                             #[cfg(target_arch = "wasm32")]
-                                            self.results_view.run_single_request_async(
-                                                file,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                                ctx,
-                                            );
+                                            {
+                                                // On WASM we cannot read from the filesystem,
+                                                // so execute the single request from the
+                                                // current text editor content instead of a file path.
+                                                let editor_content = self.text_editor.get_content();
+                                                self.results_view.run_single_request_async(
+                                                    &editor_content,
+                                                    idx,
+                                                    self.selected_environment.as_deref(),
+                                                    ctx,
+                                                );
+                                            }
                                         }
                                     }
                                     RequestViewAction::SaveFile => {
@@ -665,8 +671,8 @@ impl eframe::App for HttpRunnerApp {
                                     .run_file(file, self.selected_environment.as_deref());
 
                                 #[cfg(target_arch = "wasm32")]
-                                self.results_view.run_file_async(
-                                    file,
+                                self.results_view.run_content_async(
+                                    self.text_editor.get_content(),
                                     self.selected_environment.as_deref(),
                                     ctx,
                                 );

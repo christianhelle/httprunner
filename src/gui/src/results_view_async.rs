@@ -237,12 +237,12 @@ impl ResultsView {
 
     pub fn run_single_request_async(
         &mut self,
-        path: &Path,
+        content: &str,
         index: usize,
         environment: Option<&str>,
         ctx: &egui::Context,
     ) {
-        let path = path.to_path_buf();
+        let content = content.to_string();
         let env = environment.map(|s| s.to_string());
         let results: Arc<Mutex<Vec<ExecutionResult>>> = Arc::clone(&self.results);
         let is_running: Arc<Mutex<bool>> = Arc::clone(&self.is_running);
@@ -252,7 +252,7 @@ impl ResultsView {
         if let Ok(mut r) = results.lock() {
             r.clear();
             r.push(ExecutionResult::Running {
-                message: format!("Running request {} from {}...", index + 1, path.display()),
+                message: format!("Running request {}...", index + 1),
             });
         }
 
@@ -261,39 +261,30 @@ impl ResultsView {
         }
 
         wasm_bindgen_futures::spawn_local(async move {
-            // Parse the file
-            if let Some(path_str) = path.to_str() {
-                if let Ok(requests) =
-                    httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
-                {
-                    if let Some(request) = requests.get(index) {
-                        let result = execute_request_async(request.clone()).await;
-                        if let Ok(mut r) = results.lock() {
-                            r.clear();
-                            r.push(result);
-                        }
-                    } else if let Ok(mut r) = results.lock() {
+            // Parse the content
+            if let Ok(requests) =
+                httprunner_lib::parser::parse_http_content(&content, env.as_deref())
+            {
+                if let Some(request) = requests.get(index) {
+                    let result = execute_request_async(request.clone()).await;
+                    if let Ok(mut r) = results.lock() {
                         r.clear();
-                        r.push(ExecutionResult::Failure {
-                            method: "INDEX".to_string(),
-                            url: path.display().to_string(),
-                            error: format!("Request index {} not found", index),
-                        });
+                        r.push(result);
                     }
                 } else if let Ok(mut r) = results.lock() {
                     r.clear();
                     r.push(ExecutionResult::Failure {
-                        method: "PARSE".to_string(),
-                        url: path.display().to_string(),
-                        error: "Failed to parse HTTP file".to_string(),
+                        method: "INDEX".to_string(),
+                        url: "content".to_string(),
+                        error: format!("Request index {} not found", index),
                     });
                 }
             } else if let Ok(mut r) = results.lock() {
                 r.clear();
                 r.push(ExecutionResult::Failure {
-                    method: "READ".to_string(),
-                    url: path.display().to_string(),
-                    error: "Invalid file path".to_string(),
+                    method: "PARSE".to_string(),
+                    url: "content".to_string(),
+                    error: "Failed to parse HTTP content".to_string(),
                 });
             }
 
