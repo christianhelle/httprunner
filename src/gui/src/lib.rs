@@ -13,7 +13,6 @@ mod text_editor;
 #[cfg(target_arch = "wasm32")]
 mod results_view_async;
 
-
 // When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;

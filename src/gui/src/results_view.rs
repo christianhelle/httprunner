@@ -519,7 +519,7 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
             error: e.to_string(),
         },
     }
-    
+
     #[cfg(target_arch = "wasm32")]
     ExecutionResult::Failure {
         method: request.method,

@@ -240,25 +240,25 @@ impl HttpRunnerApp {
                             {
                                 // Create an empty .http file
                                 if let Err(e) = std::fs::write(
-                                &path,
-                                "### New Request\nGET https://httpbin.org/get\n",
-                            ) {
-                                eprintln!("Failed to create file: {}", e);
-                            } else {
-                                // Refresh file tree and select the new file
-                                self.file_tree = FileTree::new(self.root_directory.clone());
-                                self.selected_file = Some(path.clone());
-                                self.request_view.load_file(&path);
-                                self.text_editor.load_file(&path);
-                                // Switch to text editor view for new files
-                                self.view_mode = ViewMode::TextEditor;
-                                self.save_state();
+                                    &path,
+                                    "### New Request\nGET https://httpbin.org/get\n",
+                                ) {
+                                    eprintln!("Failed to create file: {}", e);
+                                } else {
+                                    // Refresh file tree and select the new file
+                                    self.file_tree = FileTree::new(self.root_directory.clone());
+                                    self.selected_file = Some(path.clone());
+                                    self.request_view.load_file(&path);
+                                    self.text_editor.load_file(&path);
+                                    // Switch to text editor view for new files
+                                    self.view_mode = ViewMode::TextEditor;
+                                    self.save_state();
+                                }
                             }
+                            ui.close();
                         }
-                        ui.close();
                     }
-                    }
-                    
+
                     #[cfg(target_arch = "wasm32")]
                     {
                         ui.label("📁 File operations not available in web version");
@@ -376,13 +376,17 @@ impl eframe::App for HttpRunnerApp {
                     #[cfg(not(target_arch = "wasm32"))]
                     self.results_view
                         .run_file(file, self.selected_environment.as_deref());
-                    
+
                     #[cfg(target_arch = "wasm32")]
-                    self.results_view
-                        .run_file_async(file, self.selected_environment.as_deref(), ctx);
+                    self.results_view.run_file_async(
+                        file,
+                        self.selected_environment.as_deref(),
+                        ctx,
+                    );
                 }
             }
-            KeyboardAction::OpenFolder => {
+            KeyboardAction::OpenFolder =>
+            {
                 #[cfg(not(target_arch = "wasm32"))]
                 if let Some(path) = rfd::FileDialog::new().pick_folder() {
                     self.root_directory = path.clone();
@@ -596,7 +600,7 @@ impl eframe::App for HttpRunnerApp {
                                                 idx,
                                                 self.selected_environment.as_deref(),
                                             );
-                                            
+
                                             #[cfg(target_arch = "wasm32")]
                                             self.results_view.run_single_request_async(
                                                 file,
@@ -642,10 +646,13 @@ impl eframe::App for HttpRunnerApp {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 self.results_view
                                     .run_file(file, self.selected_environment.as_deref());
-                                
+
                                 #[cfg(target_arch = "wasm32")]
-                                self.results_view
-                                    .run_file_async(file, self.selected_environment.as_deref(), ctx);
+                                self.results_view.run_file_async(
+                                    file,
+                                    self.selected_environment.as_deref(),
+                                    ctx,
+                                );
                             }
 
                             // Show save indicator if there are unsaved changes

@@ -56,7 +56,7 @@ pub async fn execute_http_request_async(
         Ok(resp) => resp,
         Err(e) => {
             let duration_ms = start_time.elapsed().as_millis() as u64;
-            
+
             return Ok(HttpResult {
                 request_name: request.name.clone(),
                 status_code: 0,
