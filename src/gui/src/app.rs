@@ -379,7 +379,7 @@ impl eframe::App for HttpRunnerApp {
 
                     #[cfg(target_arch = "wasm32")]
                     self.results_view.run_content_async(
-                        self.text_editor.get_content(),
+                        self.text_editor.get_content().to_string(),
                         self.selected_environment.as_deref(),
                         ctx,
                     );
@@ -672,7 +672,7 @@ impl eframe::App for HttpRunnerApp {
 
                                 #[cfg(target_arch = "wasm32")]
                                 self.results_view.run_content_async(
-                                    self.text_editor.get_content(),
+                                    self.text_editor.get_content().to_string(),
                                     self.selected_environment.as_deref(),
                                     ctx,
                                 );
