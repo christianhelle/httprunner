@@ -4,10 +4,12 @@
 
 A native cross-platform graphical user interface for HTTP Runner built with Rust and egui.
 
+> **🌐 Web Version Available**: The GUI can also run in the browser using WebAssembly! See [BUILD_WEB.md](BUILD_WEB.md) for instructions.
+
 ## Features
 
 - 🎨 **Native UI** - Pure Rust, no web technologies
-- 🌐 **Cross-platform** - Works on Windows, macOS, and Linux
+- 🌐 **Cross-platform** - Works on Windows, macOS, Linux, and **Web (WASM)**
 - 📁 **File Tree View** - Browse and select .http files with folder navigation
 - 📋 **Request Inspector** - View request details including method, URL, headers, and body
 - ▶️ **Run Requests** - Execute individual requests or entire files
@@ -17,7 +19,11 @@ A native cross-platform graphical user interface for HTTP Runner built with Rust
 
 ## Building
 
-### Prerequisites
+> **⚠️ Web Version Status**: The WASM/web version infrastructure is set up but HTTP execution is not yet functional due to blocking I/O limitations. See [WASM_STATUS.md](WASM_STATUS.md) for details.
+
+### Native Application
+
+#### Prerequisites
 
 - Rust 1.92 or later
 - Development libraries for your platform:
@@ -48,6 +54,25 @@ cargo build --bin httprunner-gui --features gui --release
 # No additional dependencies needed (PowerShell or CMD)
 cargo build --bin httprunner-gui --features gui --release
 ```
+
+### Web Application (WASM)
+
+To build and run the web version:
+
+```bash
+# Install prerequisites
+rustup target add wasm32-unknown-unknown
+cargo install --locked trunk
+
+# Development server
+cd src/gui
+trunk serve
+
+# Production build
+trunk build --release
+```
+
+For detailed instructions, deployment options, and troubleshooting, see [BUILD_WEB.md](BUILD_WEB.md).
 
 ## Running
 
