@@ -29,17 +29,42 @@ impl ResultsView {
         }
 
         wasm_bindgen_futures::spawn_local(async move {
-            // Parse the content
+            #[cfg(target_arch = "wasm32")]
+            {
+                use web_sys::console;
+                console::log_1(&"Starting async execution".into());
+            }
+
+            // Parse the content (this is CPU-bound but should be fast for small files)
             let parse_result = parser::parse_http_content(&content, env.as_deref());
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                use web_sys::console;
+                console::log_1(&format!("Parse result: {:?}", parse_result.is_ok()).into());
+            }
 
             match parse_result {
                 Ok(requests) => {
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        use web_sys::console;
+                        console::log_1(&format!("Found {} requests", requests.len()).into());
+                    }
+
                     if let Ok(mut r) = results.lock() {
                         r.clear();
                     }
 
-                    for request in requests {
+                    for (idx, request) in requests.into_iter().enumerate() {
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            use web_sys::console;
+                            console::log_1(&format!("Executing request {}: {} {}", idx + 1, request.method, request.url).into());
+                        }
+
                         let result = execute_request_async(request).await;
+                        
                         if let Ok(mut r) = results.lock() {
                             r.push(result);
                         }
@@ -47,6 +72,12 @@ impl ResultsView {
                     }
                 }
                 Err(e) => {
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        use web_sys::console;
+                        console::error_1(&format!("Parse error: {}", e).into());
+                    }
+
                     if let Ok(mut r) = results.lock() {
                         r.clear();
                         r.push(ExecutionResult::Failure {
@@ -63,6 +94,12 @@ impl ResultsView {
                 *running = false;
             }
             ctx.request_repaint();
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                use web_sys::console;
+                console::log_1(&"Execution complete".into());
+            }
         });
     }
 
