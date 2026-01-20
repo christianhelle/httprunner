@@ -8,6 +8,9 @@ mod results_view;
 mod state;
 mod text_editor;
 
+#[cfg(target_arch = "wasm32")]
+mod results_view_async;
+
 use app::HttpRunnerApp;
 
 // When compiling to web using trunk:

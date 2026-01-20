@@ -218,26 +218,28 @@ impl HttpRunnerApp {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("Open Directory...").clicked() {
-                        if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                            self.root_directory = path.clone();
-                            self.file_tree = FileTree::new(path);
-                            self.selected_file = None;
-                            self.selected_request_index = None;
-                            self.save_state();
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        if ui.button("Open Directory...").clicked() {
+                            if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                self.root_directory = path.clone();
+                                self.file_tree = FileTree::new(path);
+                                self.selected_file = None;
+                                self.selected_request_index = None;
+                                self.save_state();
+                            }
+                            ui.close();
                         }
-                        ui.close();
-                    }
 
-                    if ui.button("New .http File...").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
-                            .set_directory(&self.root_directory)
-                            .add_filter("HTTP Files", &["http"])
-                            .set_file_name("new.http")
-                            .save_file()
-                        {
-                            // Create an empty .http file
-                            if let Err(e) = std::fs::write(
+                        if ui.button("New .http File...").clicked() {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_directory(&self.root_directory)
+                                .add_filter("HTTP Files", &["http"])
+                                .set_file_name("new.http")
+                                .save_file()
+                            {
+                                // Create an empty .http file
+                                if let Err(e) = std::fs::write(
                                 &path,
                                 "### New Request\nGET https://httpbin.org/get\n",
                             ) {
@@ -254,6 +256,13 @@ impl HttpRunnerApp {
                             }
                         }
                         ui.close();
+                    }
+                    }
+                    
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        ui.label("📁 File operations not available in web version");
+                        ui.label("💡 Paste your .http file content in the text editor");
                     }
 
                     ui.separator();
@@ -364,11 +373,17 @@ impl eframe::App for HttpRunnerApp {
                 if !self.request_view.has_changes()
                     && let Some(file) = &self.selected_file
                 {
+                    #[cfg(not(target_arch = "wasm32"))]
                     self.results_view
                         .run_file(file, self.selected_environment.as_deref());
+                    
+                    #[cfg(target_arch = "wasm32")]
+                    self.results_view
+                        .run_file_async(file, self.selected_environment.as_deref(), ctx);
                 }
             }
             KeyboardAction::OpenFolder => {
+                #[cfg(not(target_arch = "wasm32"))]
                 if let Some(path) = rfd::FileDialog::new().pick_folder() {
                     self.root_directory = path.clone();
                     self.file_tree = FileTree::new(path);
@@ -575,10 +590,19 @@ impl eframe::App for HttpRunnerApp {
                                         self.selected_request_index = Some(idx);
                                         // When a request button is clicked, run it immediately
                                         if let Some(file) = &self.selected_file {
+                                            #[cfg(not(target_arch = "wasm32"))]
                                             self.results_view.run_single_request(
                                                 file,
                                                 idx,
                                                 self.selected_environment.as_deref(),
+                                            );
+                                            
+                                            #[cfg(target_arch = "wasm32")]
+                                            self.results_view.run_single_request_async(
+                                                file,
+                                                idx,
+                                                self.selected_environment.as_deref(),
+                                                ctx,
                                             );
                                         }
                                     }
@@ -615,8 +639,13 @@ impl eframe::App for HttpRunnerApp {
                                 .clicked()
                                 && let Some(file) = &self.selected_file
                             {
+                                #[cfg(not(target_arch = "wasm32"))]
                                 self.results_view
                                     .run_file(file, self.selected_environment.as_deref());
+                                
+                                #[cfg(target_arch = "wasm32")]
+                                self.results_view
+                                    .run_file_async(file, self.selected_environment.as_deref(), ctx);
                             }
 
                             // Show save indicator if there are unsaved changes

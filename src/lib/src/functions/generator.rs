@@ -10,8 +10,10 @@ impl FunctionSubstitutor for GuidSubstitutor {
     fn generate(&self) -> String {
         use rand::Rng;
         // Generate a UUID v4-like string without the uuid crate
-        let mut rng = rand::rng();
-        let bytes: [u8; 16] = rng.random();
+        let mut rng = rand::thread_rng();
+        // Use gen::<Type>() explicit turbofish syntax to avoid keyword issues
+        let mut bytes = [0u8; 16];
+        rng.fill(&mut bytes);
         format!(
             "{:08x}{:04x}{:04x}{:04x}{:012x}",
             u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
@@ -33,9 +35,9 @@ impl FunctionSubstitutor for StringSubstitutor {
 
     fn generate(&self) -> String {
         use rand::Rng;
-        use rand::distr::Alphanumeric;
+        use rand::distributions::Alphanumeric;
 
-        rand::rng()
+        rand::thread_rng()
             .sample_iter(&Alphanumeric)
             .take(20)
             .map(char::from)
@@ -52,7 +54,7 @@ impl FunctionSubstitutor for NumberSubstitutor {
     fn generate(&self) -> String {
         use rand::Rng;
 
-        rand::rng().random_range(0..=100).to_string()
+        rand::thread_rng().gen_range(0..=100).to_string()
     }
 }
 

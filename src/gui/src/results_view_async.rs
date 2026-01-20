@@ -1,0 +1,176 @@
+// WASM-specific async execution for results view
+use crate::results_view::{ExecutionResult, ResultsView};
+use std::path::Path;
+use std::sync::{Arc, Mutex};
+
+impl ResultsView {
+    pub fn run_file_async(&mut self, path: &Path, environment: Option<&str>, ctx: &egui::Context) {
+        let path = path.to_path_buf();
+        let env = environment.map(|s| s.to_string());
+        let results = Arc::clone(&self.results);
+        let is_running = Arc::clone(&self.is_running);
+        let ctx = ctx.clone();
+
+        // Clear previous results
+        if let Ok(mut r) = results.lock() {
+            r.clear();
+            r.push(ExecutionResult::Running {
+                message: format!("Running all requests from {}...", path.display()),
+            });
+        }
+
+        if let Ok(mut running) = is_running.lock() {
+            *running = true;
+        }
+
+        // Spawn async task for WASM
+        wasm_bindgen_futures::spawn_local(async move {
+            if let Some(path_str) = path.to_str() {
+                // Parse the file
+                match httprunner_lib::parser::parse_http_file(path_str, env.as_deref()) {
+                    Ok(requests) => {
+                        if let Ok(mut r) = results.lock() {
+                            r.clear();
+                        }
+
+                        for request in requests {
+                            let result = execute_request_async(request).await;
+                            if let Ok(mut r) = results.lock() {
+                                r.push(result);
+                            }
+                            ctx.request_repaint();
+                        }
+                    }
+                    Err(e) => {
+                        if let Ok(mut r) = results.lock() {
+                            r.clear();
+                            r.push(ExecutionResult::Failure {
+                                method: "PARSE".to_string(),
+                                url: path.display().to_string(),
+                                error: e.to_string(),
+                            });
+                        }
+                    }
+                }
+            } else if let Ok(mut r) = results.lock() {
+                r.clear();
+                r.push(ExecutionResult::Failure {
+                    method: "READ".to_string(),
+                    url: path.display().to_string(),
+                    error: "Failed to convert path to string".to_string(),
+                });
+            }
+
+            if let Ok(mut running) = is_running.lock() {
+                *running = false;
+            }
+            ctx.request_repaint();
+        });
+    }
+
+    pub fn run_single_request_async(
+        &mut self,
+        path: &Path,
+        index: usize,
+        environment: Option<&str>,
+        ctx: &egui::Context,
+    ) {
+        let path = path.to_path_buf();
+        let env = environment.map(|s| s.to_string());
+        let results = Arc::clone(&self.results);
+        let is_running = Arc::clone(&self.is_running);
+        let ctx = ctx.clone();
+
+        // Clear previous results
+        if let Ok(mut r) = results.lock() {
+            r.clear();
+            r.push(ExecutionResult::Running {
+                message: format!("Running request {} from {}...", index + 1, path.display()),
+            });
+        }
+
+        if let Ok(mut running) = is_running.lock() {
+            *running = true;
+        }
+
+        wasm_bindgen_futures::spawn_local(async move {
+            // Parse the file
+            if let Some(path_str) = path.to_str() {
+                if let Ok(requests) =
+                    httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
+                {
+                    if let Some(request) = requests.get(index) {
+                        let result = execute_request_async(request.clone()).await;
+                        if let Ok(mut r) = results.lock() {
+                            r.clear();
+                            r.push(result);
+                        }
+                    } else if let Ok(mut r) = results.lock() {
+                        r.clear();
+                        r.push(ExecutionResult::Failure {
+                            method: "INDEX".to_string(),
+                            url: path.display().to_string(),
+                            error: format!("Request index {} not found", index),
+                        });
+                    }
+                } else if let Ok(mut r) = results.lock() {
+                    r.clear();
+                    r.push(ExecutionResult::Failure {
+                        method: "PARSE".to_string(),
+                        url: path.display().to_string(),
+                        error: "Failed to parse HTTP file".to_string(),
+                    });
+                }
+            } else if let Ok(mut r) = results.lock() {
+                r.clear();
+                r.push(ExecutionResult::Failure {
+                    method: "READ".to_string(),
+                    url: path.display().to_string(),
+                    error: "Invalid file path".to_string(),
+                });
+            }
+
+            if let Ok(mut running) = is_running.lock() {
+                *running = false;
+            }
+            ctx.request_repaint();
+        });
+    }
+}
+
+async fn execute_request_async(request: httprunner_lib::HttpRequest) -> ExecutionResult {
+    use std::time::Instant;
+
+    let start = Instant::now();
+
+    // Execute the request using the async runner
+    match httprunner_lib::execute_http_request_async(&request, false, false).await {
+        Ok(result) => {
+            let duration_ms = start.elapsed().as_millis() as u64;
+
+            if result.success {
+                ExecutionResult::Success {
+                    method: request.method,
+                    url: request.url,
+                    status: result.status_code,
+                    duration_ms,
+                    response_body: result.response_body.unwrap_or_default(),
+                    assertion_results: result.assertion_results.clone(),
+                }
+            } else {
+                ExecutionResult::Failure {
+                    method: request.method,
+                    url: request.url,
+                    error: result
+                        .error_message
+                        .unwrap_or_else(|| "Unknown error".to_string()),
+                }
+            }
+        }
+        Err(e) => ExecutionResult::Failure {
+            method: request.method,
+            url: request.url,
+            error: e.to_string(),
+        },
+    }
+}

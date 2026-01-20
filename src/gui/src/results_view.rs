@@ -2,6 +2,8 @@ use httprunner_lib::types::AssertionResult;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+
+#[cfg(not(target_arch = "wasm32"))]
 use std::thread;
 
 /// Parameters for displaying verbose success results
@@ -77,6 +79,7 @@ impl ResultsView {
         self.compact_mode
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn run_file(&mut self, path: &Path, environment: Option<&str>) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
@@ -167,6 +170,7 @@ impl ResultsView {
         });
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn run_single_request(&mut self, path: &Path, index: usize, environment: Option<&str>) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
@@ -485,6 +489,7 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
     let start = Instant::now();
 
     // Execute the request using the runner
+    #[cfg(not(target_arch = "wasm32"))]
     match httprunner_lib::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;
@@ -513,5 +518,12 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
             url: request.url,
             error: e.to_string(),
         },
+    }
+    
+    #[cfg(target_arch = "wasm32")]
+    ExecutionResult::Failure {
+        method: request.method,
+        url: request.url,
+        error: "Sync execution not available on WASM".to_string(),
     }
 }
