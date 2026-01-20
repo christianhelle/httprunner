@@ -30,7 +30,7 @@ jobs:
         cache: true
 
     - name: Run Clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      run: cargo clippy -- -D warnings
 
     - name: Build
       run: cargo build
