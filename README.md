@@ -212,7 +212,7 @@ irm https://christianhelle.com/httprunner/install.ps1 | iex
 
 ## Usage
 
-### If installed via Snap
+### If installed via install script, crates.io, or snap
 
 ```bash
 # Run a single .http file
@@ -585,10 +585,7 @@ GET http://{{hostname}}:8080/api/users
   "local": {
     "hostname": "localhost"
   },
-  "docker-mac": {
-    "hostname": "host.docker.internal"
-  },
-  "docker-linux": {
+  "docker": {
     "hostname": "host.docker.internal"
   }
 }
@@ -602,12 +599,12 @@ httprunner test.http --env local
 
 # In Docker on macOS/Windows
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" \
-  christianhelle/httprunner test.http --env docker-mac
+  christianhelle/httprunner test.http --env docker
 
 # In Docker on Linux (with host gateway)
 docker run -it --add-host=host.docker.internal:host-gateway \
   --mount "type=bind,source=${PWD},target=/app,readonly" \
-  christianhelle/httprunner test.http --env docker-linux
+  christianhelle/httprunner test.http --env docker
 ```
 
 #### Quick Reference
