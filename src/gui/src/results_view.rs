@@ -1,7 +1,9 @@
 use httprunner_lib::types::AssertionResult;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use std::sync::{Arc, Mutex};
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::Path;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::thread;
@@ -101,7 +103,7 @@ impl ResultsView {
         thread::spawn(move || {
             if let Some(path_str) = path.to_str() {
                 // Use processor::process_http_files for consistent behavior with CLI
-                let files = vec![path_str.to_string()];
+                let files: Vec<String> = vec![path_str.to_string()];
                 match httprunner_lib::processor::process_http_files(
                     &files,
                     false, // verbose
@@ -484,8 +486,10 @@ impl ResultsView {
 }
 
 fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
+    #[cfg(not(target_arch = "wasm32"))]
     use std::time::Instant;
 
+    #[cfg(not(target_arch = "wasm32"))]
     let start = Instant::now();
 
     // Execute the request using the runner

@@ -1,7 +1,12 @@
+#[cfg(not(target_arch = "wasm32"))]
 use crate::assertions;
+#[cfg(not(target_arch = "wasm32"))]
 use crate::types::{HttpRequest, HttpResult};
+#[cfg(not(target_arch = "wasm32"))]
 use anyhow::Result;
+#[cfg(not(target_arch = "wasm32"))]
 use std::collections::HashMap;
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
