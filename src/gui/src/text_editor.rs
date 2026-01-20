@@ -40,9 +40,14 @@ impl TextEditor {
 
     /// Set content directly (for WASM where file loading doesn't work)
     #[cfg(target_arch = "wasm32")]
-    pub fn load_file(&mut self, _path: &Path) {
-        // On WASM, we can't actually load from file system
-        // Content is set via direct editing
+    pub fn load_file(&mut self, path: &Path) {
+        // On WASM, we can't actually load from the file system.
+        // Log a warning so callers understand that this is a no-op.
+        eprintln!(
+            "load_file is not supported on WebAssembly; attempted to load '{}', but this is a no-op",
+            path.display()
+        );
+        // Content must be set via direct editing or `set_content`.
     }
 
     /// Set content programmatically

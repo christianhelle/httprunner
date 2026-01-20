@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-// Modules are used by binary, not lib directly
+// Modules are conditionally used across native and WASM builds; some appear unused
+// in certain configurations, so we suppress dead_code warnings for them.
 #![allow(dead_code)]
 
 mod app;

@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-// Modules are used by binary, not lib directly
+// Allow dead_code because some modules are only used in specific build configurations (binary vs lib, native vs WASM)
 #![allow(dead_code)]
 
 mod app;
@@ -56,8 +56,12 @@ fn load_icon() -> std::sync::Arc<egui::IconData> {
     }
 }
 
-// WASM entry point - empty since lib.rs handles WASM
+// WASM entry point - actual initialization is handled in lib.rs
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    // WASM entry point is in lib.rs
+    panic!(
+        "This binary is not meant to be run directly for wasm32 targets.\n\
+         The WebAssembly entry point is defined in lib.rs and should be loaded via \
+         a WASM bundler (e.g. `trunk serve` or `trunk build`), not via `cargo run`."
+    );
 }

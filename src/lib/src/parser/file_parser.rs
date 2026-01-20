@@ -18,17 +18,18 @@ pub fn parse_http_file(
     parse_http_content_with_vars(&content, env_variables)
 }
 
+/// Parse HTTP requests from in-memory content.
+///
+/// Note: Environment loading is **not** supported when parsing content directly.
+/// The `environment_name` parameter is currently ignored. If you need environment
+/// support, use [`parse_http_file`] instead so that the environment loader can
+/// locate the associated environment file on disk.
 pub fn parse_http_content(
     content: &str,
-    environment_name: Option<&str>,
+    _environment_name: Option<&str>,
 ) -> Result<Vec<HttpRequest>> {
-    // For content-based parsing without a file, use empty env vars
-    let env_variables = if let Some(_env_name) = environment_name {
-        // TODO: Could support loading env from a separate mechanism
-        Vec::new()
-    } else {
-        Vec::new()
-    };
+    // For content-based parsing without a file, environments are not applied.
+    let env_variables = Vec::new();
 
     parse_http_content_with_vars(content, env_variables)
 }
