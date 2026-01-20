@@ -16,12 +16,6 @@ impl ResultsView {
         let ctx = ctx.clone();
         let env = environment.map(|s| s.to_string());
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            use web_sys::console;
-            console::log_1(&"run_content_async called!".into());
-        }
-
         // Clear previous results
         if let Ok(mut r) = results.lock() {
             r.clear();
@@ -34,33 +28,10 @@ impl ResultsView {
             *running = true;
         }
 
-        #[cfg(target_arch = "wasm32")]
-        {
-            use web_sys::console;
-            console::log_1(&"About to spawn_local...".into());
-            console::log_1(&format!("Content length: {} bytes", content.len()).into());
-        }
-
         wasm_bindgen_futures::spawn_local(async move {
-            #[cfg(target_arch = "wasm32")]
-            {
-                use web_sys::console;
-                console::log_1(&"Inside spawn_local - starting parse...".into());
-            }
 
             // Parse the content
             let parse_result = parser::parse_http_content(&content, env.as_deref());
-
-            #[cfg(target_arch = "wasm32")]
-            {
-                use web_sys::console;
-                match &parse_result {
-                    Ok(requests) => console::log_1(
-                        &format!("Parse OK - found {} requests", requests.len()).into(),
-                    ),
-                    Err(e) => console::error_1(&format!("Parse ERROR: {}", e).into()),
-                }
-            }
 
             match parse_result {
                 Ok(requests) => {
@@ -70,21 +41,6 @@ impl ResultsView {
 
                     let total = requests.len();
                     for (idx, request) in requests.into_iter().enumerate() {
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            use web_sys::console;
-                            console::log_1(
-                                &format!(
-                                    "Request {}/{}: {} {}",
-                                    idx + 1,
-                                    total,
-                                    request.method,
-                                    request.url
-                                )
-                                .into(),
-                            );
-                        }
-
                         // Show running status
                         if let Ok(mut r) = results.lock() {
                             r.push(ExecutionResult::Running {
@@ -126,20 +82,8 @@ impl ResultsView {
                         }
                         ctx.request_repaint();
                     }
-
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        use web_sys::console;
-                        console::log_1(&"All requests complete!".into());
-                    }
                 }
                 Err(e) => {
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        use web_sys::console;
-                        console::error_1(&format!("Parse error: {}", e).into());
-                    }
-
                     if let Ok(mut r) = results.lock() {
                         r.clear();
                         r.push(ExecutionResult::Failure {
@@ -156,21 +100,10 @@ impl ResultsView {
                 *running = false;
             }
             ctx.request_repaint();
-
-            #[cfg(target_arch = "wasm32")]
-            {
-                use web_sys::console;
-                console::log_1(&"Execution complete - setting is_running=false".into());
-            }
         });
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            use web_sys::console;
-            console::log_1(&"spawn_local returned".into());
-        }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn run_file_async(&mut self, path: &Path, environment: Option<&str>, ctx: &egui::Context) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
