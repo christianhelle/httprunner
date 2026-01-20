@@ -20,7 +20,7 @@ The GUI is also available as a web application that runs in your browser - no in
 - ▶️ **Run Requests** - Execute individual requests or entire files
 - 🌍 **Environment Support** - Select environments for variable substitution
 - 📊 **Live Results** - See execution results in real-time
-- 🚀 **Fast & Responsive** - Thread-based async execution
+- 🚀 **Fast & Responsive** - Desktop: thread-based async execution; Web: browser event-loop async
 
 ---
 
