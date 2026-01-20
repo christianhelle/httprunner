@@ -486,7 +486,7 @@ impl ResultsView {
 fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
     use std::time::Instant;
 
-    let _start = Instant::now();
+    let start = Instant::now();
 
     // Execute the request using the runner
     #[cfg(not(target_arch = "wasm32"))]
