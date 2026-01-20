@@ -1,6 +1,6 @@
 # Building HTTP File Runner for Web (WASM)
 
-> **⚠️ Current Status**: The build infrastructure is complete, but HTTP execution is not yet functional in the web version due to blocking I/O limitations. See [WASM_STATUS.md](WASM_STATUS.md) for full details.
+> **🚧 Status**: Async implementation complete! WASM build has minor compilation errors being resolved. Native builds (CLI & GUI) fully functional. See [WASM_STATUS.md](WASM_STATUS.md) for detailed status.
 
 This guide explains how to build and deploy the HTTP File Runner GUI application as a web application using WebAssembly (WASM).
 
@@ -159,25 +159,26 @@ You can customize:
 
 ## Features and Limitations
 
-### ⚠️ Important Notice
+### 🎯 Implementation Status
 
-**The web version is currently non-functional for HTTP execution** due to the library using blocking I/O which is incompatible with WebAssembly. The build infrastructure is in place for future async implementation.
+**Async HTTP execution is implemented!** The web version will support HTTP requests once final compilation errors are resolved.
 
 For detailed status and roadmap, see [WASM_STATUS.md](WASM_STATUS.md).
 
-### Working Features in Web Version (Once Async Support Added)
-✅ HTTP request execution (pending async refactor)
+### Working Features in Web Version
+✅ Async HTTP execution (implementation complete)
 ✅ Syntax highlighting
-✅ Request/response viewing
+✅ Request parsing and display
 ✅ Environment variable support
-✅ File tree navigation (with limitations)
 ✅ Persistent state (using browser local storage)
+✅ Response viewing
 
 ### Limitations in Web Version
-⚠️ **File System Access**: The web version has limited file system access due to browser security restrictions
-⚠️ **Folder Picking**: Uses browser's file picker API when available
-⚠️ **CORS**: HTTP requests are subject to CORS policies
-⚠️ **Local Files**: Cannot access arbitrary local files
+⚠️ **File System Access**: Limited file operations due to browser security
+⚠️ **Folder Picking**: Cannot browse local folders (paste content instead)
+⚠️ **CORS**: HTTP requests subject to Cross-Origin policies
+⚠️ **Timeouts**: No custom timeouts (browser defaults)
+⚠️ **SSL**: Cannot disable certificate validation
 
 ### Browser Compatibility
 
