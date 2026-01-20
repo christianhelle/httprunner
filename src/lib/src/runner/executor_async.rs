@@ -9,6 +9,10 @@ use std::time::Instant;
 #[cfg(target_arch = "wasm32")]
 use web_time::Instant;
 
+// Note: There is significant code duplication between this file (executor_async.rs) and
+// executor.rs. Consider extracting common response processing logic into a shared helper
+// module to improve maintainability and reduce the risk of inconsistent bugs.
+
 pub async fn execute_http_request_async(
     request: &HttpRequest,
     verbose: bool,

@@ -12,6 +12,10 @@ use std::time::Instant;
 #[cfg(not(target_arch = "wasm32"))]
 use reqwest::blocking::Client;
 
+// Note: There is significant code duplication between this file (executor.rs) and
+// executor_async.rs. Consider extracting common response processing logic into
+// a shared helper module to improve maintainability.
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn execute_http_request(
     request: &HttpRequest,
