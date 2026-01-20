@@ -49,9 +49,10 @@ impl AppState {
     pub fn load() -> Self {
         if let Some(storage) = Self::get_local_storage()
             && let Ok(Some(state_str)) = storage.get_item(Self::LOCAL_STORAGE_KEY)
-                && let Ok(state) = serde_json::from_str::<AppState>(&state_str) {
-                    return state;
-                }
+            && let Ok(state) = serde_json::from_str::<AppState>(&state_str)
+        {
+            return state;
+        }
         Self::default()
     }
 

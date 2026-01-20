@@ -55,7 +55,9 @@ impl ResultsView {
             {
                 use web_sys::console;
                 match &parse_result {
-                    Ok(requests) => console::log_1(&format!("Parse OK - found {} requests", requests.len()).into()),
+                    Ok(requests) => console::log_1(
+                        &format!("Parse OK - found {} requests", requests.len()).into(),
+                    ),
                     Err(e) => console::error_1(&format!("Parse ERROR: {}", e).into()),
                 }
             }
@@ -71,13 +73,28 @@ impl ResultsView {
                         #[cfg(target_arch = "wasm32")]
                         {
                             use web_sys::console;
-                            console::log_1(&format!("Request {}/{}: {} {}", idx + 1, total, request.method, request.url).into());
+                            console::log_1(
+                                &format!(
+                                    "Request {}/{}: {} {}",
+                                    idx + 1,
+                                    total,
+                                    request.method,
+                                    request.url
+                                )
+                                .into(),
+                            );
                         }
 
                         // Show running status
                         if let Ok(mut r) = results.lock() {
                             r.push(ExecutionResult::Running {
-                                message: format!("Executing {}/{}: {} {}", idx + 1, total, request.method, request.url),
+                                message: format!(
+                                    "Executing {}/{}: {} {}",
+                                    idx + 1,
+                                    total,
+                                    request.method,
+                                    request.url
+                                ),
                             });
                         }
                         ctx.request_repaint();
@@ -89,11 +106,13 @@ impl ResultsView {
                         }
 
                         let result = execute_request_async(request).await;
-                        
+
                         #[cfg(target_arch = "wasm32")]
                         {
                             use web_sys::console;
-                            console::log_1(&format!("Request {}/{} complete", idx + 1, total).into());
+                            console::log_1(
+                                &format!("Request {}/{} complete", idx + 1, total).into(),
+                            );
                         }
 
                         if let Ok(mut r) = results.lock() {
@@ -287,10 +306,10 @@ impl ResultsView {
 }
 
 async fn execute_request_async(request: httprunner_lib::HttpRequest) -> ExecutionResult {
-    #[cfg(target_arch = "wasm32")]
-    use web_time::Instant;
     #[cfg(not(target_arch = "wasm32"))]
     use std::time::Instant;
+    #[cfg(target_arch = "wasm32")]
+    use web_time::Instant;
 
     let start = Instant::now();
 

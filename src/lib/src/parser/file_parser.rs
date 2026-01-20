@@ -29,7 +29,7 @@ pub fn parse_http_content(
     } else {
         Vec::new()
     };
-    
+
     parse_http_content_with_vars(content, env_variables)
 }
 
