@@ -287,6 +287,9 @@ impl ResultsView {
 }
 
 async fn execute_request_async(request: httprunner_lib::HttpRequest) -> ExecutionResult {
+    #[cfg(target_arch = "wasm32")]
+    use web_time::Instant;
+    #[cfg(not(target_arch = "wasm32"))]
     use std::time::Instant;
 
     let start = Instant::now();
