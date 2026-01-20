@@ -17,6 +17,7 @@
             </div>            <ul class="nav-menu">
                 <li><a href="#home" class="nav-link">Home</a></li>
                 <li><a href="#gui" class="nav-link">GUI</a></li>
+                <li><a href="app/" class="nav-link">🌐 Web App</a></li>
                 <li><a href="#features" class="nav-link">Features</a></li>
                 <li><a href="install.html" class="nav-link">Installation</a></li>
                 <li><a href="#usage" class="nav-link">Usage</a></li>
@@ -48,7 +49,8 @@
                         <em>Originally written in Zig, ported to Rust due to limitations in Zig's standard library HTTP client APIs for configuring insecure HTTPS connections.</em>
                     </p>
                     <div class="hero-buttons">
-                        <a href="install.html" class="btn btn-primary">Get Started</a>
+                        <a href="app/" class="btn btn-primary">🌐 Try Web App</a>
+                        <a href="install.html" class="btn btn-secondary">💻 Install Desktop App</a>
                         <a href="https://github.com/christianhelle/httprunner" class="btn btn-secondary">View on GitHub</a>
                     </div>
                     <div class="badges">
@@ -101,15 +103,22 @@
         <section id="gui" class="gui-section" style="padding: 4rem 0; background: var(--bg-secondary);">
             <div class="container">
                 <h2 class="section-title">Graphical User Interface</h2>
+                <div style="max-width: 800px; margin: 0 auto 1.5rem; padding: 1rem; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                    <p style="margin: 0; color: #1e40af;">
+                        <strong>🌐 Try it Now:</strong> The GUI is now available as a web application! 
+                        <a href="app/" style="color: #2563eb; text-decoration: underline;">Launch the Web App →</a>
+                        No installation required - runs directly in your browser.
+                    </p>
+                </div>
                 <div style="max-width: 800px; margin: 0 auto 1.5rem; padding: 1rem; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
                     <p style="margin: 0; color: #92400e;">
-                        <strong>⚠️ Experimental:</strong> The GUI application is currently in an experimental phase. 
-                        Features and interface may change. For production use, we recommend the stable CLI version.
+                        <strong>⚠️ Note:</strong> The web version is subject to browser CORS restrictions.
+                        For testing localhost/private APIs, use the desktop GUI. The desktop version is currently in an experimental phase. 
                     </p>
                 </div>
                 <p style="text-align: center; max-width: 800px; margin: 0 auto 2rem; color: var(--text-secondary);">
-                    HTTP Runner is available in two interfaces: a powerful CLI for automation and scripting, 
-                    and a native GUI application for visual workflow and interactive testing.
+                    HTTP Runner is available in three interfaces: a powerful CLI for automation and scripting, 
+                    a native desktop GUI for local development, and a web-based GUI for quick testing and collaboration.
                 </p>
                 <div style="max-width: 1200px; margin: 0 auto;">
                     <img src="../images/gui.png" alt="HTTP Runner GUI" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">

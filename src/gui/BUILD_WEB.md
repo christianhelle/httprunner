@@ -4,6 +4,24 @@
 
 This guide explains how to build and deploy the HTTP File Runner GUI application as a web application using WebAssembly (WASM).
 
+## Deployment
+
+The web app is automatically deployed to GitHub Pages at: **https://christianhelle.github.io/httprunner/app/**
+
+The deployment is integrated with the documentation site - the unified workflow (`docs.yml`) builds and deploys both:
+- **Documentation**: https://christianhelle.github.io/httprunner/
+- **Web App**: https://christianhelle.github.io/httprunner/app/
+
+### How It Works
+
+The `.github/workflows/docs.yml` workflow:
+1. Builds the WASM app with `trunk build --release --public-url /httprunner/app/`
+2. Copies documentation from `docs/` to `_site/`
+3. Copies WASM app from `src/gui/dist/` to `_site/app/`
+4. Deploys the combined site to GitHub Pages
+
+This ensures both docs and the web app are always in sync.
+
 ## Prerequisites
 
 1. **Rust**: Install Rust 1.92 or later from [rustup.rs](https://rustup.rs/)
