@@ -29,6 +29,9 @@ jobs:
         toolchain: stable
         cache: true
 
+    - name: Run Clippy
+      run: cargo clippy -- -D warnings
+
     - name: Build
       run: cargo build
 
