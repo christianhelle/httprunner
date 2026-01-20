@@ -1,7 +1,6 @@
 // WASM-specific async execution for results view
 use crate::results_view::{ExecutionResult, ResultsView};
 use httprunner_lib::parser;
-use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 impl ResultsView {

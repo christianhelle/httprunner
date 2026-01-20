@@ -370,14 +370,18 @@ impl eframe::App for HttpRunnerApp {
         // Process keyboard actions
         match keyboard_action {
             KeyboardAction::RunAllRequests => {
+                #[cfg(not(target_arch = "wasm32"))]
                 if !self.request_view.has_changes()
                     && let Some(file) = &self.selected_file
                 {
-                    #[cfg(not(target_arch = "wasm32"))]
                     self.results_view
                         .run_file(file, self.selected_environment.as_deref());
+                }
 
-                    #[cfg(target_arch = "wasm32")]
+                #[cfg(target_arch = "wasm32")]
+                if !self.request_view.has_changes()
+                    && self.selected_file.is_some()
+                {
                     self.results_view.run_content_async(
                         self.text_editor.get_content().to_string(),
                         self.selected_environment.as_deref(),
@@ -610,27 +614,27 @@ impl eframe::App for HttpRunnerApp {
                                     RequestViewAction::RunRequest(idx) => {
                                         self.selected_request_index = Some(idx);
                                         // When a request button is clicked, run it immediately
+                                        #[cfg(not(target_arch = "wasm32"))]
                                         if let Some(file) = &self.selected_file {
-                                            #[cfg(not(target_arch = "wasm32"))]
                                             self.results_view.run_single_request(
                                                 file,
                                                 idx,
                                                 self.selected_environment.as_deref(),
                                             );
+                                        }
 
-                                            #[cfg(target_arch = "wasm32")]
-                                            {
-                                                // On WASM we cannot read from the filesystem,
-                                                // so execute the single request from the
-                                                // current text editor content instead of a file path.
-                                                let editor_content = self.text_editor.get_content();
-                                                self.results_view.run_single_request_async(
-                                                    &editor_content,
-                                                    idx,
-                                                    self.selected_environment.as_deref(),
-                                                    ctx,
-                                                );
-                                            }
+                                        #[cfg(target_arch = "wasm32")]
+                                        if self.selected_file.is_some() {
+                                            // On WASM we cannot read from the filesystem,
+                                            // so execute the single request from the
+                                            // current text editor content instead of a file path.
+                                            let editor_content = self.text_editor.get_content();
+                                            self.results_view.run_single_request_async(
+                                                &editor_content,
+                                                idx,
+                                                self.selected_environment.as_deref(),
+                                                ctx,
+                                            );
                                         }
                                     }
                                     RequestViewAction::SaveFile => {
@@ -664,18 +668,21 @@ impl eframe::App for HttpRunnerApp {
                                     egui::Button::new("▶ Run All Requests"),
                                 )
                                 .clicked()
-                                && let Some(file) = &self.selected_file
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
-                                self.results_view
-                                    .run_file(file, self.selected_environment.as_deref());
+                                if let Some(file) = &self.selected_file {
+                                    self.results_view
+                                        .run_file(file, self.selected_environment.as_deref());
+                                }
 
                                 #[cfg(target_arch = "wasm32")]
-                                self.results_view.run_content_async(
-                                    self.text_editor.get_content().to_string(),
-                                    self.selected_environment.as_deref(),
-                                    ctx,
-                                );
+                                if self.selected_file.is_some() {
+                                    self.results_view.run_content_async(
+                                        self.text_editor.get_content().to_string(),
+                                        self.selected_environment.as_deref(),
+                                        ctx,
+                                    );
+                                }
                             }
 
                             // Show save indicator if there are unsaved changes

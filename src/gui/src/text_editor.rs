@@ -40,12 +40,11 @@ impl TextEditor {
 
     /// Set content directly (for WASM where file loading doesn't work)
     #[cfg(target_arch = "wasm32")]
-    pub fn load_file(&mut self, path: &Path) {
+    pub fn load_file(&mut self, _path: &Path) {
         // Try to load from LocalStorage first
-        use wasm_bindgen::JsValue;
         use web_sys::window;
 
-        let loaded_from_storage = if let Some(window) = window() {
+        let _loaded_from_storage = if let Some(window) = window() {
             if let Ok(Some(storage)) = window.local_storage() {
                 if let Ok(Some(saved_content)) = storage.get_item("httprunner_editor_content") {
                     self.content = saved_content;
@@ -59,13 +58,6 @@ impl TextEditor {
         } else {
             false
         };
-
-        if !loaded_from_storage {
-            eprintln!(
-                "load_file: attempted to load '{}', but file system access is not available on WebAssembly",
-                path.display()
-            );
-        }
     }
 
     /// Set content programmatically
@@ -94,13 +86,14 @@ impl TextEditor {
     /// Save editor content to LocalStorage on WASM
     #[cfg(target_arch = "wasm32")]
     pub fn save_to_file(&mut self) -> anyhow::Result<()> {
-        use wasm_bindgen::JsValue;
         use web_sys::window;
 
         if let Some(window) = window() {
-            if let Some(storage) = window.local_storage()? {
+            if let Ok(Some(storage)) = window.local_storage() {
                 // Save editor content to LocalStorage under a specific key
-                storage.set_item("httprunner_editor_content", &self.content)?;
+                storage
+                    .set_item("httprunner_editor_content", &self.content)
+                    .map_err(|e| anyhow::anyhow!("Failed to save to LocalStorage: {:?}", e))?;
                 self.has_changes = false;
                 Ok(())
             } else {
