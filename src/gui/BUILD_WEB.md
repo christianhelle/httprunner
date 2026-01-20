@@ -1,6 +1,6 @@
 # Building HTTP File Runner for Web (WASM)
 
-> **🚧 Status**: Async implementation complete! WASM build has minor compilation errors being resolved. Native builds (CLI & GUI) fully functional. See [WASM_STATUS.md](WASM_STATUS.md) for detailed status.
+> **✅ Status**: WORKING! WASM build successful, dev server running. See [WASM_STATUS.md](WASM_STATUS.md) for details.
 
 This guide explains how to build and deploy the HTTP File Runner GUI application as a web application using WebAssembly (WASM).
 
