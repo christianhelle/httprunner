@@ -1,4 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// Modules are used by binary, not lib directly
+#![allow(dead_code)]
 
 mod app;
 mod file_tree;
@@ -11,11 +13,13 @@ mod text_editor;
 #[cfg(target_arch = "wasm32")]
 mod results_view_async;
 
-use app::HttpRunnerApp;
 
 // When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+
+#[cfg(target_arch = "wasm32")]
+use app::HttpRunnerApp;
 
 /// Entry point for Web Assembly (WASM)
 #[cfg(target_arch = "wasm32")]

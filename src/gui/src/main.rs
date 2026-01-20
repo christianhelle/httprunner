@@ -1,4 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// Modules are used by binary, not lib directly
+#![allow(dead_code)]
 
 mod app;
 mod file_tree;
