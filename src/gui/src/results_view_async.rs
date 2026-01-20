@@ -208,7 +208,7 @@ impl ResultsView {
                     r.push(ExecutionResult::Failure {
                         method: "INDEX".to_string(),
                         url: "content".to_string(),
-                        error: format!("Request index {} not found", index),
+                        error: format!("Request index {} not found", index + 1),
                     });
                 }
             } else if let Ok(mut r) = results.lock() {
