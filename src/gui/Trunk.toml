@@ -7,6 +7,8 @@ dist = "dist"
 public_url = "/"
 # Disable file hashing for simpler output
 filehash = false
+# Disable integrity hashes to avoid SRI errors during development
+no_sri = true
 # Cargo arguments - only build library for WASM
 cargo_args = ["--lib"]
 
