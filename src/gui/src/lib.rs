@@ -33,9 +33,20 @@ pub fn start() -> Result<(), JsValue> {
     let web_options = eframe::WebOptions::default();
 
     wasm_bindgen_futures::spawn_local(async {
+        // Get the canvas element
+        let document = web_sys::window()
+            .expect("no global `window` exists")
+            .document()
+            .expect("should have a document on window");
+        let canvas = document
+            .get_element_by_id("httprunner_canvas")
+            .expect("failed to find canvas")
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .expect("element is not a canvas");
+
         let start_result = eframe::WebRunner::new()
             .start(
-                "httprunner_canvas", // hardcoded canvas ID
+                canvas,
                 web_options,
                 Box::new(|cc| Ok(Box::new(HttpRunnerApp::new(cc)))),
             )

@@ -38,8 +38,8 @@ pub enum ExecutionResult {
 }
 
 pub struct ResultsView {
-    results: Arc<Mutex<Vec<ExecutionResult>>>,
-    is_running: Arc<Mutex<bool>>,
+    pub(crate) results: Arc<Mutex<Vec<ExecutionResult>>>,
+    pub(crate) is_running: Arc<Mutex<bool>>,
     compact_mode: bool,
 }
 
@@ -486,7 +486,7 @@ impl ResultsView {
 fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
     use std::time::Instant;
 
-    let start = Instant::now();
+    let _start = Instant::now();
 
     // Execute the request using the runner
     #[cfg(not(target_arch = "wasm32"))]

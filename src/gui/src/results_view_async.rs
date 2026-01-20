@@ -7,8 +7,8 @@ impl ResultsView {
     pub fn run_file_async(&mut self, path: &Path, environment: Option<&str>, ctx: &egui::Context) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
-        let results = Arc::clone(&self.results);
-        let is_running = Arc::clone(&self.is_running);
+        let results: Arc<Mutex<Vec<ExecutionResult>>> = Arc::clone(&self.results);
+        let is_running: Arc<Mutex<bool>> = Arc::clone(&self.is_running);
         let ctx = ctx.clone();
 
         // Clear previous results
@@ -77,8 +77,8 @@ impl ResultsView {
     ) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
-        let results = Arc::clone(&self.results);
-        let is_running = Arc::clone(&self.is_running);
+        let results: Arc<Mutex<Vec<ExecutionResult>>> = Arc::clone(&self.results);
+        let is_running: Arc<Mutex<bool>> = Arc::clone(&self.is_running);
         let ctx = ctx.clone();
 
         // Clear previous results

@@ -13,8 +13,11 @@ mod text_editor;
 #[cfg(target_arch = "wasm32")]
 mod results_view_async;
 
+#[cfg(not(target_arch = "wasm32"))]
 use app::HttpRunnerApp;
 
+// Native binary entry point
+#[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
@@ -40,6 +43,7 @@ fn main() -> eframe::Result<()> {
     )
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn load_icon() -> std::sync::Arc<egui::IconData> {
     let icon_bytes = include_bytes!("../../../images/icon.png");
     match eframe::icon_data::from_png_bytes(icon_bytes) {
@@ -50,4 +54,10 @@ fn load_icon() -> std::sync::Arc<egui::IconData> {
             std::sync::Arc::new(egui::IconData::default())
         }
     }
+}
+
+// WASM entry point - empty since lib.rs handles WASM
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    // WASM entry point is in lib.rs
 }

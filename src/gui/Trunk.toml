@@ -1,8 +1,3 @@
-[[hooks]]
-stage = "pre_build"
-command = "echo"
-command_arguments = ["Building WASM..."]
-
 [build]
 # The index HTML file to drive the bundling process.
 target = "index.html"
@@ -10,6 +5,10 @@ target = "index.html"
 dist = "dist"
 # The public URL from which assets are to be served.
 public_url = "/"
+# Disable file hashing for simpler output
+filehash = false
+# Cargo arguments - only build library for WASM
+cargo_args = ["--lib"]
 
 [watch]
 # Paths to watch. The `build.target`'s parent folder is watched by default.

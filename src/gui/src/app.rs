@@ -569,8 +569,13 @@ impl eframe::App for HttpRunnerApp {
                                 .clicked()
                                 && let Some(file) = &self.selected_file
                             {
+                                #[cfg(not(target_arch = "wasm32"))]
                                 self.results_view
                                     .run_file(file, self.selected_environment.as_deref());
+                                
+                                #[cfg(target_arch = "wasm32")]
+                                self.results_view
+                                    .run_file_async(file, self.selected_environment.as_deref(), ctx);
                             }
 
                             // Show save indicator if there are unsaved changes
