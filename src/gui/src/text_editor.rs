@@ -41,13 +41,31 @@ impl TextEditor {
     /// Set content directly (for WASM where file loading doesn't work)
     #[cfg(target_arch = "wasm32")]
     pub fn load_file(&mut self, path: &Path) {
-        // On WASM, we can't actually load from the file system.
-        // Log a warning so callers understand that this is a no-op.
-        eprintln!(
-            "load_file is not supported on WebAssembly; attempted to load '{}', but this is a no-op",
-            path.display()
-        );
-        // Content must be set via direct editing or `set_content`.
+        // Try to load from LocalStorage first
+        use wasm_bindgen::JsValue;
+        use web_sys::window;
+
+        let loaded_from_storage = if let Some(window) = window() {
+            if let Ok(Some(storage)) = window.local_storage() {
+                if let Ok(Some(saved_content)) = storage.get_item("httprunner_editor_content") {
+                    self.content = saved_content;
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+
+        if !loaded_from_storage {
+            eprintln!(
+                "load_file: attempted to load '{}', but file system access is not available on WebAssembly",
+                path.display()
+            );
+        }
     }
 
     /// Set content programmatically
@@ -73,11 +91,24 @@ impl TextEditor {
         }
     }
 
-    /// Save is a no-op on WASM (content is already in memory)
+    /// Save editor content to LocalStorage on WASM
     #[cfg(target_arch = "wasm32")]
     pub fn save_to_file(&mut self) -> anyhow::Result<()> {
-        self.has_changes = false;
-        Ok(())
+        use wasm_bindgen::JsValue;
+        use web_sys::window;
+
+        if let Some(window) = window() {
+            if let Some(storage) = window.local_storage()? {
+                // Save editor content to LocalStorage under a specific key
+                storage.set_item("httprunner_editor_content", &self.content)?;
+                self.has_changes = false;
+                Ok(())
+            } else {
+                Err(anyhow::anyhow!("LocalStorage is not available"))
+            }
+        } else {
+            Err(anyhow::anyhow!("Window object is not available"))
+        }
     }
 
     /// Display the text editor UI and handle user interactions
