@@ -16,6 +16,12 @@ impl ResultsView {
         let ctx = ctx.clone();
         let env = environment.map(|s| s.to_string());
 
+        #[cfg(target_arch = "wasm32")]
+        {
+            use web_sys::console;
+            console::log_1(&"run_content_async called!".into());
+        }
+
         // Clear previous results
         if let Ok(mut r) = results.lock() {
             r.clear();
@@ -28,7 +34,46 @@ impl ResultsView {
             *running = true;
         }
 
+        #[cfg(target_arch = "wasm32")]
+        {
+            use web_sys::console;
+            console::log_1(&"About to spawn_local...".into());
+        }
+
         wasm_bindgen_futures::spawn_local(async move {
+            #[cfg(target_arch = "wasm32")]
+            {
+                use web_sys::console;
+                console::log_1(&"Inside spawn_local!".into());
+            }
+
+            // Simple test - just wait a bit and show success
+            #[cfg(target_arch = "wasm32")]
+            {
+                use web_sys::console;
+                console::log_1(&"Testing without actual HTTP call...".into());
+                
+                if let Ok(mut r) = results.lock() {
+                    r.clear();
+                    r.push(ExecutionResult::Success {
+                        method: "TEST".to_string(),
+                        url: "Test passed - async works!".to_string(),
+                        status: 200,
+                        duration_ms: 0,
+                        response_body: "This message confirms async execution is working".to_string(),
+                        assertion_results: vec![],
+                    });
+                }
+                
+                if let Ok(mut running) = is_running.lock() {
+                    *running = false;
+                }
+                ctx.request_repaint();
+                
+                console::log_1(&"Test complete!".into());
+                return;
+            }
+
             #[cfg(target_arch = "wasm32")]
             {
                 use web_sys::console;
@@ -101,6 +146,12 @@ impl ResultsView {
                 console::log_1(&"Execution complete".into());
             }
         });
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            use web_sys::console;
+            console::log_1(&"spawn_local returned (function continues)".into());
+        }
     }
 
     pub fn run_file_async(&mut self, path: &Path, environment: Option<&str>, ctx: &egui::Context) {
