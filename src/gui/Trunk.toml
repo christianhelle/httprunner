@@ -10,6 +10,11 @@ filehash = false
 # Cargo arguments - only build library for WASM
 cargo_args = ["--lib"]
 
+# Configure wasm-bindgen
+[[build.wasm_bindgen]]
+# Enable reference types and bulk memory
+reference_types = true
+
 [watch]
 # Paths to watch. The `build.target`'s parent folder is watched by default.
 watch = ["src"]
