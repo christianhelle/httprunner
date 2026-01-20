@@ -79,3 +79,6 @@ lcov.info
 *.profraw
 *.profdata
 coverage/html
+
+# Web build artifacts
+src/gui/dist/
