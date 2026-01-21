@@ -1,6 +1,4 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-// Modules are conditionally used across native and WASM builds; some appear unused
-// in certain configurations, so we suppress dead_code warnings for them.
 #![allow(dead_code)]
 
 mod app;
@@ -14,27 +12,22 @@ mod text_editor;
 #[cfg(target_arch = "wasm32")]
 mod results_view_async;
 
-// When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 #[cfg(target_arch = "wasm32")]
 use app::HttpRunnerApp;
 
-/// Entry point for Web Assembly (WASM)
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
-    // Setup panic hook for better error messages in the browser console
     console_error_panic_hook::set_once();
 
-    // Setup tracing for web
     tracing_wasm::set_as_global_default();
 
     let web_options = eframe::WebOptions::default();
 
     wasm_bindgen_futures::spawn_local(async {
-        // Get the canvas element
         let document = web_sys::window()
             .expect("no global `window` exists")
             .document()
@@ -53,7 +46,6 @@ pub fn start() -> Result<(), JsValue> {
             )
             .await;
 
-        // Remove the loading text and spinner:
         let loading_text = web_sys::window()
             .and_then(|w| w.document())
             .and_then(|d| d.get_element_by_id("loading_text"));

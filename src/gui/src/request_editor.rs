@@ -152,13 +152,11 @@ impl RequestEditor {
             let new_request = editable.to_http_request();
 
             if let Some(index) = self.editing_index {
-                // Update existing request
                 if index < self.requests.len() {
                     self.requests[index] = new_request;
                     self.has_changes = true;
                 }
             } else {
-                // Add new request
                 self.requests.push(new_request);
                 self.has_changes = true;
             }

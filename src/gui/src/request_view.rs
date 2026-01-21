@@ -36,7 +36,6 @@ impl RequestView {
             return action;
         }
 
-        // Clone requests to avoid borrowing issues
         let requests: Vec<_> = self.editor.get_requests().to_vec();
 
         if requests.is_empty() {

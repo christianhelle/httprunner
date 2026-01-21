@@ -104,10 +104,8 @@ where
         for request in requests {
             request_count += 1;
 
-            // Clone request for processing
             let mut processed_request = request.clone();
 
-            // Check if dependencies are met
             if let Some(dep_name) = processed_request.depends_on.as_ref()
                 && !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts)
             {
@@ -131,16 +129,13 @@ where
                 continue;
             }
 
-            // Check if conditions are met
             if !processed_request.conditions.is_empty() {
                 if verbose {
-                    // Use verbose evaluation to get detailed results
                     match conditions::evaluate_conditions_verbose(
                         &processed_request.conditions,
                         &request_contexts,
                     ) {
                         Ok((conditions_met, evaluation_results)) => {
-                            // Log condition evaluation details in assertion-like format
                             log.writeln(&format!("\n{} Condition Evaluation:", colors::blue("🔍")));
 
                             for (condition, eval_result) in processed_request
@@ -291,7 +286,6 @@ where
                 }
             }
 
-            // Substitute request variables and built-in functions
             substitute_request_variables_in_request(&mut processed_request, &request_contexts)?;
             substitute_functions_in_request(&mut processed_request)?;
 

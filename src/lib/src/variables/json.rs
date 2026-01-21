@@ -6,17 +6,14 @@ pub fn extract_json_property(json_body: &str, property: &str) -> Result<Option<S
     let mut current_json = json_body.to_string();
 
     for part in parts {
-        // Check if this part contains array indexing like "data[0]"
         if let Some(bracket_pos) = part.find('[') {
             let property_name = &part[..bracket_pos];
             let index_part = &part[bracket_pos..];
 
-            // Extract the property first
             match extract_simple_json_property(&current_json, property_name) {
                 Ok(Some(value)) => {
                     current_json = value;
 
-                    // Now handle array indexing
                     if let Some(index_value) = parse_array_index(index_part) {
                         match extract_array_element(&current_json, index_value) {
                             Ok(Some(element)) => current_json = element,
@@ -135,12 +132,10 @@ fn extract_simple_json_property(json_body: &str, property: &str) -> Result<Optio
             return Ok(None);
         }
 
-        // Check if value is a string (starts with ")
         if chars[pos] == '"' {
             pos += 1;
             let value_start = pos;
 
-            // Find closing quote, handling escaped quotes
             let mut escape_next = false;
             while pos < chars.len() {
                 if escape_next {

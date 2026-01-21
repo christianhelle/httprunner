@@ -8,7 +8,6 @@ pub fn run_upgrade() -> Result<()> {
         colors::blue("🚀")
     );
 
-    // Check if installed via snap
     let is_snap = Command::new("snap")
         .args(["list", "httprunner"])
         .output()

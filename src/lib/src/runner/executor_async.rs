@@ -24,11 +24,8 @@ pub async fn execute_http_request_async(
     #[allow(unused_mut)]
     let mut client_builder = Client::builder();
 
-    // Timeouts are not supported in WASM/browser environment
     #[cfg(not(target_arch = "wasm32"))]
     {
-        // Default timeouts: 30 seconds for connection, 60 seconds for read
-        // Timeouts are stored in milliseconds
         let connection_timeout = request.connection_timeout.unwrap_or(30_000);
         let read_timeout = request.timeout.unwrap_or(60_000);
 
@@ -50,17 +47,14 @@ pub async fn execute_http_request_async(
 
     let mut req_builder = client.request(method, &request.url);
 
-    // Add headers
     for header in &request.headers {
         req_builder = req_builder.header(&header.name, &header.value);
     }
 
-    // Add body if present
     if let Some(ref body) = request.body {
         req_builder = req_builder.body(body.clone());
     }
 
-    // Execute request
     let response = match req_builder.send().await {
         Ok(resp) => resp,
         Err(e) => {
@@ -85,13 +79,8 @@ pub async fn execute_http_request_async(
     let mut response_headers: Option<HashMap<String, String>> = None;
     let mut response_body: Option<String> = None;
 
-    // Collect response data if:
-    // - Verbose mode is enabled (for display)
-    // - Request has assertions (for assertion evaluation)
-    // - Request is named (might be referenced by conditions in subsequent requests)
     let is_named = request.name.is_some();
     if verbose || has_assertions || is_named {
-        // Collect headers
         let mut headers = HashMap::new();
         for (name, value) in response.headers() {
             if let Ok(value_str) = value.to_str() {
@@ -100,7 +89,6 @@ pub async fn execute_http_request_async(
         }
         response_headers = Some(headers);
 
-        // Collect body
         if let Ok(body) = response.text().await {
             response_body = Some(body);
         }
@@ -123,7 +111,6 @@ pub async fn execute_http_request_async(
 
         assertion_results = assertions::evaluate_assertions(&request.assertions, &temp_result);
 
-        // Check if all assertions passed
         let all_assertions_passed = assertion_results.iter().all(|r| r.passed);
         success = success && all_assertions_passed;
     }

@@ -7,51 +7,38 @@ use std::path::Path;
 pub fn serialize_http_request(request: &HttpRequest) -> String {
     let mut output = String::new();
 
-    // Add separator
     output.push_str("###\n");
 
-    // Add name if present
     if let Some(name) = &request.name {
         output.push_str(&format!("# @name {}\n", name));
     }
 
-    // Add timeout if present
-    // Note: Internal representation is always in milliseconds, so we use "ms" suffix
-    // The parser handles ms/s/m suffixes correctly
     if let Some(timeout) = request.timeout {
         output.push_str(&format!("# @timeout {}ms\n", timeout));
     }
 
-    // Add connection timeout if present
-    // Note: Internal representation is always in milliseconds, so we use "ms" suffix
     if let Some(connection_timeout) = request.connection_timeout {
         output.push_str(&format!("# @connection-timeout {}ms\n", connection_timeout));
     }
 
-    // Add dependsOn if present
     if let Some(depends_on) = &request.depends_on {
         output.push_str(&format!("# @dependsOn {}\n", depends_on));
     }
 
-    // Add conditions if present
     for condition in &request.conditions {
         output.push_str(&format!("# @if {}\n", format_condition(condition)));
     }
 
-    // Add assertions if present
     for assertion in &request.assertions {
         output.push_str(&format!("# @assert {}\n", format_assertion(assertion)));
     }
 
-    // Add request line (method and URL)
     output.push_str(&format!("{} {}\n", request.method, request.url));
 
-    // Add headers
     for header in &request.headers {
         output.push_str(&format!("{}: {}\n", header.name, header.value));
     }
 
-    // Add body if present
     if let Some(body) = &request.body {
         output.push('\n');
         output.push_str(body);
@@ -192,7 +179,6 @@ mod integration_tests {
 
     #[test]
     fn test_roundtrip_serialization() {
-        // Create a test file
         let test_content = r#"### Test Request
 # @name my-test
 GET https://httpbin.org/get
@@ -212,31 +198,26 @@ Authorization: Bearer token123
         let test_file = temp_dir.join("test_roundtrip_integration.http");
         fs::write(&test_file, test_content).unwrap();
 
-        // Parse
         let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 2);
 
-        // First request
         assert_eq!(requests[0].name, Some("my-test".to_string()));
         assert_eq!(requests[0].method, "GET");
         assert_eq!(requests[0].url, "https://httpbin.org/get");
         assert_eq!(requests[0].headers.len(), 1);
         assert_eq!(requests[0].headers[0].name, "Content-Type");
 
-        // Second request
         assert_eq!(requests[1].method, "POST");
         assert_eq!(requests[1].url, "https://httpbin.org/post");
         assert_eq!(requests[1].headers.len(), 2);
         assert!(requests[1].body.is_some());
 
-        // Serialize
         let serialized = serialize_http_requests(&requests);
         assert!(serialized.contains("# @name my-test"));
         assert!(serialized.contains("GET https://httpbin.org/get"));
         assert!(serialized.contains("POST https://httpbin.org/post"));
         assert!(serialized.contains("Content-Type: application/json"));
 
-        // Write and re-parse
         let output_file = temp_dir.join("test_roundtrip_output.http");
         write_http_file(&output_file, &requests).unwrap();
 
@@ -245,7 +226,6 @@ Authorization: Bearer token123
         assert_eq!(reparsed[0].method, "GET");
         assert_eq!(reparsed[1].method, "POST");
 
-        // Cleanup test files
         let _ = fs::remove_file(&test_file);
         let _ = fs::remove_file(&output_file);
     }
@@ -270,13 +250,11 @@ GET https://httpbin.org/get
         let test_file = temp_dir.join("test_timeout.http");
         fs::write(&test_file, test_content).unwrap();
 
-        // Parse
         let requests = parse_http_file(test_file.to_str().unwrap(), None).unwrap();
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0].timeout, Some(5000));
         assert_eq!(requests[0].connection_timeout, Some(3000));
 
-        // Serialize and re-parse
         let serialized = serialize_http_requests(&requests);
         println!("Serialized:\n{}", serialized);
 
@@ -288,7 +266,6 @@ GET https://httpbin.org/get
         assert_eq!(reparsed[0].timeout, Some(5000));
         assert_eq!(reparsed[0].connection_timeout, Some(3000));
 
-        // Cleanup
         let _ = fs::remove_file(&test_file);
         let _ = fs::remove_file(&output_file);
     }

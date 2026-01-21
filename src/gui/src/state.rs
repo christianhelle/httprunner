@@ -23,12 +23,10 @@ impl AppState {
 
     #[cfg(not(target_arch = "wasm32"))]
     fn get_state_file_path() -> Option<PathBuf> {
-        // Use platform-specific config directory
         if let Some(config_dir) = dirs::config_dir() {
             let app_config_dir = config_dir.join("httprunner");
             Some(app_config_dir.join(Self::STATE_FILE_NAME))
         } else {
-            // Fallback to current directory
             Some(PathBuf::from(Self::STATE_FILE_NAME))
         }
     }
@@ -64,7 +62,6 @@ impl AppState {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&self) -> anyhow::Result<()> {
         if let Some(state_path) = Self::get_state_file_path() {
-            // Create parent directory if it doesn't exist
             if let Some(parent) = state_path.parent() {
                 std::fs::create_dir_all(parent)?;
             }

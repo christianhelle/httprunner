@@ -170,7 +170,6 @@ async fn execute_request_async(request: httprunner_lib::HttpRequest) -> Executio
 
     let start = Instant::now();
 
-    // Execute the request using the async runner
     match httprunner_lib::execute_http_request_async(&request, false, false).await {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;

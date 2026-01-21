@@ -61,7 +61,6 @@ fn generate_html_has_proper_structure() {
     let filename = generate_html(&results).unwrap();
     let content = fs::read_to_string(&filename).unwrap();
 
-    // Check HTML structure
     assert!(content.contains("<!DOCTYPE html>"));
     assert!(content.contains("<html lang=\"en\">"));
     assert!(content.contains("<head>"));
@@ -86,7 +85,6 @@ fn generate_html_includes_css_styles() {
     let filename = generate_html(&results).unwrap();
     let content = fs::read_to_string(&filename).unwrap();
 
-    // Check for CSS variables and styles
     assert!(content.contains(":root"));
     assert!(content.contains("--primary-color"));
     assert!(content.contains("--success-color"));
@@ -230,12 +228,10 @@ fn generate_html_escapes_special_characters() {
     let filename = generate_html(&results).unwrap();
     let content = fs::read_to_string(&filename).unwrap();
 
-    // Check HTML escaping
     assert!(content.contains("test&lt;script&gt;"));
     assert!(content.contains("https://example.com?foo=bar&amp;baz=qux"));
     assert!(content.contains("&lt;html&gt;&lt;body&gt;test&lt;/body&gt;&lt;/html&gt;"));
 
-    // Should NOT contain unescaped HTML
     assert!(!content.contains("test<script>") || content.contains("&lt;script&gt;"));
 
     fs::remove_file(filename).ok();

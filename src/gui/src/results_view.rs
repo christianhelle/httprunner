@@ -102,15 +102,14 @@ impl ResultsView {
 
         thread::spawn(move || {
             if let Some(path_str) = path.to_str() {
-                // Use processor::process_http_files for consistent behavior with CLI
                 let files: Vec<String> = vec![path_str.to_string()];
                 match httprunner_lib::processor::process_http_files(
                     &files,
-                    false, // verbose
-                    None,  // log_filename
+                    false,
+                    None,
                     env.as_deref(),
-                    false, // insecure
-                    false, // pretty_json
+                    false,
+                    false,
                 ) {
                     Ok(processor_results) => {
                         if let Ok(mut r) = results.lock() {
@@ -235,7 +234,6 @@ impl ResultsView {
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
-        // Add toggle button with visible keyboard hint
         ui.horizontal(|ui| {
             if ui
                 .selectable_label(self.compact_mode, "📋 Compact")
@@ -252,7 +250,6 @@ impl ResultsView {
                 self.compact_mode = false;
             }
 
-            // Add visible hint for keyboard shortcut
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(
                     egui::RichText::new("(Ctrl+D to toggle compact/verbose)")
@@ -491,7 +488,6 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
 
     let start = Instant::now();
 
-    // Execute the request using the runner
     match httprunner_lib::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;

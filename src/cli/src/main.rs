@@ -21,7 +21,6 @@ fn main() -> anyhow::Result<()> {
         }
         discovered
     } else if cli_args.files.is_empty() {
-        // Show help when no arguments are provided
         let mut cmd = cli::Cli::command();
         cmd.print_help()?;
         std::process::exit(0);

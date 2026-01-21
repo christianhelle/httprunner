@@ -49,19 +49,15 @@ impl HttpRunnerApp {
     const FONT_SIZE_STEP: f32 = 1.0;
 
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // Load saved state
         let state = AppState::load();
 
-        // Use saved root directory or fall back to current directory
         let root_directory = state
             .root_directory
             .and_then(|p| if p.exists() { Some(p) } else { None })
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
-        // Use saved font size or default
         let font_size = state.font_size.unwrap_or(Self::DEFAULT_FONT_SIZE);
 
-        // Use saved file tree visibility or default to true
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
 
         let mut app = Self {
@@ -81,28 +77,23 @@ impl HttpRunnerApp {
             file_tree_visible,
         };
 
-        // Apply the loaded font size to the UI context
         app.update_font_size(&cc.egui_ctx);
 
-        // Restore last results if available
         if let Some(last_results) = state.last_results {
             app.results_view.restore_results(last_results);
         }
 
-        // Restore results compact mode preference (default to compact)
         app.results_view
             .set_compact_mode(state.results_compact_mode.unwrap_or(true));
 
-        // Restore selected file if it still exists
         if let Some(saved_file) = state.selected_file
             && saved_file.exists()
         {
             app.selected_file = Some(saved_file.clone());
             app.load_environments(&saved_file);
             app.request_view.load_file(&saved_file);
-            app.text_editor.load_file(&saved_file); // Load into text editor too
+            app.text_editor.load_file(&saved_file);
 
-            // Restore selected environment if it's still valid
             if let Some(saved_env) = state.selected_environment
                 && app.environments.contains(&saved_env)
             {
@@ -116,7 +107,6 @@ impl HttpRunnerApp {
     fn update_font_size(&mut self, ctx: &egui::Context) {
         let mut style = (*ctx.style()).clone();
 
-        // Update all text styles with the new font size
         let base_size = self.font_size;
         style.text_styles = [
             (
@@ -143,7 +133,6 @@ impl HttpRunnerApp {
     }
 
     fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) -> KeyboardAction {
-        // Check for Ctrl + Plus (zoom in)
         if ctx.input(|i| {
             i.modifiers.ctrl && (i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals))
         }) {
@@ -152,63 +141,52 @@ impl HttpRunnerApp {
             self.save_state();
         }
 
-        // Check for Ctrl + Minus (zoom out)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Minus)) {
             self.font_size = (self.font_size - Self::FONT_SIZE_STEP).max(Self::MIN_FONT_SIZE);
             self.update_font_size(ctx);
             self.save_state();
         }
 
-        // Check for Ctrl + 0 (reset to default)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Num0)) {
             self.font_size = Self::DEFAULT_FONT_SIZE;
             self.update_font_size(ctx);
             self.save_state();
         }
 
-        // Check for F5 (run all requests for selected file)
         if ctx.input(|i| i.key_pressed(egui::Key::F5)) {
             return KeyboardAction::RunAllRequests;
         }
 
-        // Check for Ctrl+R (run all requests for selected file)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::R)) {
             return KeyboardAction::RunAllRequests;
         }
 
-        // Check for Ctrl+O (open folder)
         #[cfg(not(target_arch = "wasm32"))]
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::O)) {
             return KeyboardAction::OpenFolder;
         }
 
-        // Check for Ctrl+Q (quit)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Q)) {
             return KeyboardAction::Quit;
         }
 
-        // Check for Ctrl+E (switch environment)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::E)) {
             return KeyboardAction::SwitchEnvironment;
         }
 
-        // Check for Ctrl+T (toggle between Text Editor and Request Details)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::T)) {
             return KeyboardAction::ToggleView;
         }
 
-        // Check for Ctrl+B (toggle file tree visibility)
         #[cfg(not(target_arch = "wasm32"))]
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
             return KeyboardAction::ToggleFileTree;
         }
 
-        // Check for Ctrl+D (toggle results view mode: compact/verbose)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::D)) {
             return KeyboardAction::ToggleResultsView;
         }
 
-        // Check for Ctrl+S (save file)
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::S)) {
             return KeyboardAction::SaveFile;
         }
@@ -240,7 +218,6 @@ impl HttpRunnerApp {
                             .set_file_name("new.http")
                             .save_file()
                         {
-                            // Create an empty .http file
                             if let Err(e) = std::fs::write(
                                 &path,
                                 "### New Request\nGET https://httpbin.org/get\n",
@@ -508,10 +485,8 @@ impl eframe::App for HttpRunnerApp {
                 ui.heading("Results");
                 ui.separator();
 
-                // Use all available height for results scroll area
                 let available_height = ui.available_height();
 
-                // Wrap results in a scroll area with explicit height
                 egui::ScrollArea::vertical()
                     .id_salt("results_scroll")
                     .max_height(available_height)
@@ -521,10 +496,8 @@ impl eframe::App for HttpRunnerApp {
                     });
             });
 
-        // Center panel - Text Editor or Request Details (from this branch)
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
-                // Tab selection
                 ui.horizontal(|ui| {
                     ui.selectable_value(
                         &mut self.view_mode,
@@ -545,13 +518,10 @@ impl eframe::App for HttpRunnerApp {
                 });
                 ui.separator();
 
-                // Use available space minus the button area
-                let available_height = ui.available_height() - 40.0; // Reserve space for buttons
+                let available_height = ui.available_height() - 40.0;
 
-                // Show either text editor or request details based on view mode
                 match self.view_mode {
                     ViewMode::TextEditor => {
-                        // Wrap the text editor in a scroll area with fixed height
                         egui::ScrollArea::vertical()
                             .id_salt("text_editor_scroll")
                             .max_height(available_height)
@@ -560,7 +530,6 @@ impl eframe::App for HttpRunnerApp {
 
                         ui.separator();
 
-                        // Additional buttons for text editor view
                         ui.horizontal(|ui| {
                             #[cfg(not(target_arch = "wasm32"))]
                             let run_all_enabled =

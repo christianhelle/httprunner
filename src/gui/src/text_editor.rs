@@ -119,10 +119,8 @@ impl TextEditor {
             });
         }
 
-        // Store original content to detect changes
         let original_content = self.content.clone();
 
-        // Use egui_code_editor for syntax highlighting
         CodeEditor::default()
             .with_rows(30)
             .with_fontsize(14.0)
@@ -131,12 +129,10 @@ impl TextEditor {
             .with_numlines(true)
             .show(ui, &mut self.content);
 
-        // Detect changes
         if self.content != original_content {
             self.has_changes = true;
         }
 
-        // Add buttons below the editor
         ui.separator();
         ui.horizontal(|ui| {
             if ui.button("💾 Save").clicked()

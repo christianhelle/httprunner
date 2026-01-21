@@ -672,7 +672,6 @@ Content-Type: application/json
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        // Use a unique base name for the log file
         let log_base = "test_log_executor";
 
         let result = process_http_files_with_executor(
