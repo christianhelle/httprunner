@@ -1,8 +1,20 @@
 # Changelog
 
-## [0.6.38](https://github.com/christianhelle/httprunner/tree/0.6.38) (2026-01-17)
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
 
-[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.36...0.6.38)
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.6.45...HEAD)
+
+**Implemented enhancements:**
+
+- Add WebAssembly \(WASM\) support for GUI app [\#143](https://github.com/christianhelle/httprunner/pull/143) ([christianhelle](https://github.com/christianhelle))
+
+**Merged pull requests:**
+
+- Add Clippy verification to build workflows [\#142](https://github.com/christianhelle/httprunner/pull/142) ([christianhelle](https://github.com/christianhelle))
+
+## [0.6.45](https://github.com/christianhelle/httprunner/tree/0.6.45) (2026-01-18)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.5.36...0.6.45)
 
 **Implemented enhancements:**
 
@@ -24,6 +36,7 @@
 
 **Merged pull requests:**
 
+- Add README to library package for crates.io [\#140](https://github.com/christianhelle/httprunner/pull/140) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Fix cargo publish failure: add version requirement to httprunner-lib dependency [\#139](https://github.com/christianhelle/httprunner/pull/139) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add text editor with syntax highlighting for .http files [\#132](https://github.com/christianhelle/httprunner/pull/132) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add CTRL+R keyboard shortcut to run all requests [\#126](https://github.com/christianhelle/httprunner/pull/126) ([Copilot](https://github.com/apps/copilot-swe-agent))
