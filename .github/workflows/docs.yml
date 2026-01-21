@@ -47,7 +47,7 @@ jobs:
 
       - name: Build WASM app
         working-directory: src/gui
-        run: TRUNK_WASM_OPT="--enable-bulk-memory --enable-bulk-memory-opt --enable-nontrapping-float-to-int" trunk build --release --public-url /${{ github.event.repository.name }}/app/
+        run: trunk build --release --public-url /${{ github.event.repository.name }}/app/
 
       - name: Prepare deployment directory
         run: |
