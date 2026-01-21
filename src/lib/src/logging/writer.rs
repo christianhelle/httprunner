@@ -43,22 +43,31 @@ fn create_log_file(base_filename: &str) -> Result<File> {
 fn strip_ansi_codes(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     let mut chars = s.chars();
-    
+
     while let Some(ch) = chars.next() {
         if ch == '\x1b' {
-            // Skip the escape character and the following sequence
-            if let Some('[') = chars.next() {
-                // Skip until we find a letter (the command character)
-                for next_ch in chars.by_ref() {
-                    if next_ch.is_ascii_alphabetic() {
-                        break;
+            // Look at the next character to determine if this is an ANSI CSI sequence
+            match chars.next() {
+                Some('[') => {
+                    // Skip until we find a letter (the command character)
+                    for next_ch in chars.by_ref() {
+                        if next_ch.is_ascii_alphabetic() {
+                            break;
+                        }
                     }
+                }
+                Some(other) => {
+                    // Not a recognized ANSI sequence: preserve both the escape and the following character
+                    result.push(ch);
+                    result.push(other);
+                }
+                None => {
+                    // Stray escape at end of string: ignore it
                 }
             }
         } else {
             result.push(ch);
         }
     }
-    
     result
 }
