@@ -28,7 +28,6 @@ impl ResultsView {
         }
 
         wasm_bindgen_futures::spawn_local(async move {
-
             // Parse the content
             let parse_result = parser::parse_http_content(&content, env.as_deref());
 
