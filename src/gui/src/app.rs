@@ -177,6 +177,7 @@ impl HttpRunnerApp {
         }
 
         // Check for Ctrl+O (open folder)
+        #[cfg(not(target_arch = "wasm32"))]
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::O)) {
             return KeyboardAction::OpenFolder;
         }
@@ -197,6 +198,7 @@ impl HttpRunnerApp {
         }
 
         // Check for Ctrl+B (toggle file tree visibility)
+        #[cfg(not(target_arch = "wasm32"))]
         if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
             return KeyboardAction::ToggleFileTree;
         }
@@ -214,55 +216,48 @@ impl HttpRunnerApp {
         KeyboardAction::None
     }
 
+    #[allow(unused_variables)]
     fn show_top_panel(&mut self, ctx: &egui::Context) {
+        #[cfg(not(target_arch = "wasm32"))]
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    #[cfg(not(target_arch = "wasm32"))]
-                    {
-                        if ui.button("Open Directory...").clicked() {
-                            if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                                self.root_directory = path.clone();
-                                self.file_tree = FileTree::new(path);
-                                self.selected_file = None;
-                                self.selected_request_index = None;
-                                self.save_state();
-                            }
-                            ui.close();
+                    if ui.button("Open Directory...").clicked() {
+                        if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                            self.root_directory = path.clone();
+                            self.file_tree = FileTree::new(path);
+                            self.selected_file = None;
+                            self.selected_request_index = None;
+                            self.save_state();
                         }
-
-                        if ui.button("New .http File...").clicked() {
-                            if let Some(path) = rfd::FileDialog::new()
-                                .set_directory(&self.root_directory)
-                                .add_filter("HTTP Files", &["http"])
-                                .set_file_name("new.http")
-                                .save_file()
-                            {
-                                // Create an empty .http file
-                                if let Err(e) = std::fs::write(
-                                    &path,
-                                    "### New Request\nGET https://httpbin.org/get\n",
-                                ) {
-                                    eprintln!("Failed to create file: {}", e);
-                                } else {
-                                    // Refresh file tree and select the new file
-                                    self.file_tree = FileTree::new(self.root_directory.clone());
-                                    self.selected_file = Some(path.clone());
-                                    self.request_view.load_file(&path);
-                                    self.text_editor.load_file(&path);
-                                    // Switch to text editor view for new files
-                                    self.view_mode = ViewMode::TextEditor;
-                                    self.save_state();
-                                }
-                            }
-                            ui.close();
-                        }
+                        ui.close();
                     }
 
-                    #[cfg(target_arch = "wasm32")]
-                    {
-                        ui.label("📁 File operations not available in web version");
-                        ui.label("💡 Paste your .http file content in the text editor");
+                    if ui.button("New .http File...").clicked() {
+                        if let Some(path) = rfd::FileDialog::new()
+                            .set_directory(&self.root_directory)
+                            .add_filter("HTTP Files", &["http"])
+                            .set_file_name("new.http")
+                            .save_file()
+                        {
+                            // Create an empty .http file
+                            if let Err(e) = std::fs::write(
+                                &path,
+                                "### New Request\nGET https://httpbin.org/get\n",
+                            ) {
+                                eprintln!("Failed to create file: {}", e);
+                            } else {
+                                // Refresh file tree and select the new file
+                                self.file_tree = FileTree::new(self.root_directory.clone());
+                                self.selected_file = Some(path.clone());
+                                self.request_view.load_file(&path);
+                                self.text_editor.load_file(&path);
+                                // Switch to text editor view for new files
+                                self.view_mode = ViewMode::TextEditor;
+                                self.save_state();
+                            }
+                        }
+                        ui.close();
                     }
 
                     ui.separator();
@@ -478,7 +473,8 @@ impl eframe::App for HttpRunnerApp {
         self.show_top_panel(ctx);
         self.show_bottom_panel(ctx);
 
-        // Left panel - File tree (only show if visible)
+        // Left panel - File tree (only show if visible and not WASM)
+        #[cfg(not(target_arch = "wasm32"))]
         if self.file_tree_visible {
             egui::SidePanel::left("file_tree_panel")
                 .resizable(true)
@@ -541,7 +537,12 @@ impl eframe::App for HttpRunnerApp {
                         ViewMode::RequestDetails,
                         "📋 Request Details",
                     );
+                    
+                    #[cfg(not(target_arch = "wasm32"))]
                     ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree)");
+                    
+                    #[cfg(target_arch = "wasm32")]
+                    ui.label("(Ctrl+T to toggle | Ctrl+S to save)");
                 });
                 ui.separator();
 
