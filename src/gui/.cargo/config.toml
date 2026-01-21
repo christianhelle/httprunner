@@ -1,0 +1,5 @@
+# Note: We intentionally do not set a default target here.
+# For WebAssembly builds, run:
+#   cargo build --target wasm32-unknown-unknown
+# For native builds, use the default host target or specify one explicitly, e.g.:
+#   cargo build --target x86_64-unknown-linux-gnu

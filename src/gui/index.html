@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HTTP File Runner - Execute HTTP requests from .http files">
+    <title>HTTP File Runner</title>
+    
+    <!-- Tell trunk to build only the library, not the binary -->
+    <link data-trunk rel="rust" data-target-name="httprunner_gui" />
+    
+    <style>
+        html {
+            /* Remove touch delay: */
+            touch-action: manipulation;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        #httprunner_canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #loading_text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .spinner {
+            margin: 20px auto;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Make the canvas fill the entire screen */
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading_text">
+        <h1>HTTP File Runner</h1>
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+    
+    <!-- The canvas where the egui app will be rendered -->
+    <canvas id="httprunner_canvas"></canvas>
+    
+    <!-- 
+        The WASM module will be loaded by trunk automatically
+        when running `trunk serve` or building with `trunk build`
+    -->
+</body>
+</html>

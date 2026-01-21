@@ -1,43 +1,46 @@
-#[cfg(not(target_arch = "wasm32"))]
 use crate::assertions;
-#[cfg(not(target_arch = "wasm32"))]
 use crate::types::{HttpRequest, HttpResult};
-#[cfg(not(target_arch = "wasm32"))]
 use anyhow::Result;
-#[cfg(not(target_arch = "wasm32"))]
+use reqwest::Client;
 use std::collections::HashMap;
+
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
+#[cfg(target_arch = "wasm32")]
+use web_time::Instant;
 
-#[cfg(not(target_arch = "wasm32"))]
-use reqwest::blocking::Client;
+// Note: There is significant code duplication between this file (executor_async.rs) and
+// executor.rs. Consider extracting common response processing logic into a shared helper
+// module to improve maintainability and reduce the risk of inconsistent bugs.
 
-// Note: There is significant code duplication between this file (executor.rs) and
-// executor_async.rs. Consider extracting common response processing logic into
-// a shared helper module to improve maintainability.
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn execute_http_request(
+pub async fn execute_http_request_async(
     request: &HttpRequest,
     verbose: bool,
-    insecure: bool,
+    _insecure: bool,
 ) -> Result<HttpResult> {
     let start_time = Instant::now();
     let has_assertions = !request.assertions.is_empty();
 
-    // Default timeouts: 30 seconds for connection, 60 seconds for read
-    // Timeouts are stored in milliseconds
-    let connection_timeout = request.connection_timeout.unwrap_or(30_000);
-    let read_timeout = request.timeout.unwrap_or(60_000);
+    #[allow(unused_mut)]
+    let mut client_builder = Client::builder();
 
-    let mut client_builder = Client::builder()
-        .connect_timeout(std::time::Duration::from_millis(connection_timeout))
-        .timeout(std::time::Duration::from_millis(read_timeout));
+    // Timeouts are not supported in WASM/browser environment
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Default timeouts: 30 seconds for connection, 60 seconds for read
+        // Timeouts are stored in milliseconds
+        let connection_timeout = request.connection_timeout.unwrap_or(30_000);
+        let read_timeout = request.timeout.unwrap_or(60_000);
 
-    if insecure {
         client_builder = client_builder
-            .danger_accept_invalid_hostnames(true)
-            .danger_accept_invalid_certs(true);
+            .connect_timeout(std::time::Duration::from_millis(connection_timeout))
+            .timeout(std::time::Duration::from_millis(read_timeout));
+
+        if _insecure {
+            client_builder = client_builder
+                .danger_accept_invalid_hostnames(true)
+                .danger_accept_invalid_certs(true);
+        }
     }
 
     let client = client_builder.build()?;
@@ -58,23 +61,16 @@ pub fn execute_http_request(
     }
 
     // Execute request
-    let response = match req_builder.send() {
+    let response = match req_builder.send().await {
         Ok(resp) => resp,
         Err(e) => {
             let duration_ms = start_time.elapsed().as_millis() as u64;
-            let error_message = if e.is_connect() {
-                "Connection error"
-            } else if e.is_timeout() {
-                "Request timeout"
-            } else {
-                "Request failed"
-            };
 
             return Ok(HttpResult {
                 request_name: request.name.clone(),
                 status_code: 0,
                 success: false,
-                error_message: Some(error_message.to_string()),
+                error_message: Some(format!("Request failed: {}", e)),
                 duration_ms,
                 response_headers: None,
                 response_body: None,
@@ -105,7 +101,7 @@ pub fn execute_http_request(
         response_headers = Some(headers);
 
         // Collect body
-        if let Ok(body) = response.text() {
+        if let Ok(body) = response.text().await {
             response_body = Some(body);
         }
     }

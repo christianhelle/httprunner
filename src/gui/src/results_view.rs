@@ -1,7 +1,11 @@
 use httprunner_lib::types::AssertionResult;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use std::sync::{Arc, Mutex};
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::Path;
+
+#[cfg(not(target_arch = "wasm32"))]
 use std::thread;
 
 /// Parameters for displaying verbose success results
@@ -36,8 +40,8 @@ pub enum ExecutionResult {
 }
 
 pub struct ResultsView {
-    results: Arc<Mutex<Vec<ExecutionResult>>>,
-    is_running: Arc<Mutex<bool>>,
+    pub(crate) results: Arc<Mutex<Vec<ExecutionResult>>>,
+    pub(crate) is_running: Arc<Mutex<bool>>,
     compact_mode: bool,
 }
 
@@ -77,6 +81,7 @@ impl ResultsView {
         self.compact_mode
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn run_file(&mut self, path: &Path, environment: Option<&str>) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
@@ -98,7 +103,7 @@ impl ResultsView {
         thread::spawn(move || {
             if let Some(path_str) = path.to_str() {
                 // Use processor::process_http_files for consistent behavior with CLI
-                let files = vec![path_str.to_string()];
+                let files: Vec<String> = vec![path_str.to_string()];
                 match httprunner_lib::processor::process_http_files(
                     &files,
                     false, // verbose
@@ -167,6 +172,7 @@ impl ResultsView {
         });
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn run_single_request(&mut self, path: &Path, index: usize, environment: Option<&str>) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
@@ -479,6 +485,7 @@ impl ResultsView {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
     use std::time::Instant;
 

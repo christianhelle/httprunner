@@ -14,8 +14,31 @@ pub fn parse_http_file(
     let content = fs::read_to_string(file_path)
         .with_context(|| format!("Failed to read file: {}", file_path))?;
 
-    let mut requests = Vec::new();
     let env_variables = environment::load_environment_file(file_path, environment_name)?;
+    parse_http_content_with_vars(&content, env_variables)
+}
+
+/// Parse HTTP requests from in-memory content.
+///
+/// Note: Environment loading is **not** supported when parsing content directly.
+/// The `environment_name` parameter is currently ignored. If you need environment
+/// support, use [`parse_http_file`] instead so that the environment loader can
+/// locate the associated environment file on disk.
+pub fn parse_http_content(
+    content: &str,
+    _environment_name: Option<&str>,
+) -> Result<Vec<HttpRequest>> {
+    // For content-based parsing without a file, environments are not applied.
+    let env_variables = Vec::new();
+
+    parse_http_content_with_vars(content, env_variables)
+}
+
+fn parse_http_content_with_vars(
+    content: &str,
+    env_variables: Vec<Variable>,
+) -> Result<Vec<HttpRequest>> {
+    let mut requests = Vec::new();
     let mut variables = env_variables.clone();
 
     let lines: Vec<&str> = content.lines().collect();

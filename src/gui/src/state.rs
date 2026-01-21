@@ -18,7 +18,10 @@ pub struct AppState {
 
 impl AppState {
     const STATE_FILE_NAME: &'static str = "httprunner-gui-state.json";
+    #[cfg(target_arch = "wasm32")]
+    const LOCAL_STORAGE_KEY: &'static str = "httprunner-gui-state";
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn get_state_file_path() -> Option<PathBuf> {
         // Use platform-specific config directory
         if let Some(config_dir) = dirs::config_dir() {
@@ -30,6 +33,7 @@ impl AppState {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn load() -> Self {
         if let Some(state_path) = Self::get_state_file_path()
             && state_path.exists()
@@ -41,6 +45,23 @@ impl AppState {
         Self::default()
     }
 
+    #[cfg(target_arch = "wasm32")]
+    pub fn load() -> Self {
+        if let Some(storage) = Self::get_local_storage()
+            && let Ok(Some(state_str)) = storage.get_item(Self::LOCAL_STORAGE_KEY)
+            && let Ok(state) = serde_json::from_str::<AppState>(&state_str)
+        {
+            return state;
+        }
+        Self::default()
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn get_local_storage() -> Option<web_sys::Storage> {
+        web_sys::window()?.local_storage().ok()?
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&self) -> anyhow::Result<()> {
         if let Some(state_path) = Self::get_state_file_path() {
             // Create parent directory if it doesn't exist
@@ -50,6 +71,17 @@ impl AppState {
 
             let json = serde_json::to_string_pretty(self)?;
             std::fs::write(state_path, json)?;
+        }
+        Ok(())
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn save(&self) -> anyhow::Result<()> {
+        if let Some(storage) = Self::get_local_storage() {
+            let json = serde_json::to_string(self)?;
+            storage
+                .set_item(Self::LOCAL_STORAGE_KEY, &json)
+                .map_err(|e| anyhow::anyhow!("Failed to save to local storage: {:?}", e))?;
         }
         Ok(())
     }
