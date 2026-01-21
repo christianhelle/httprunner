@@ -21,7 +21,8 @@ impl Log {
     pub fn writeln(&mut self, message: &str) {
         println!("{}", message);
         if let Some(ref mut file) = self.log_file {
-            let _ = writeln!(file, "{}", message);
+            let clean_message = strip_ansi_codes(message);
+            let _ = writeln!(file, "{}", clean_message);
         }
     }
 }
@@ -36,4 +37,28 @@ fn create_log_file(base_filename: &str) -> Result<File> {
         .open(&log_filename)?;
 
     Ok(file)
+}
+
+/// Strip ANSI escape codes from a string
+fn strip_ansi_codes(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut chars = s.chars();
+    
+    while let Some(ch) = chars.next() {
+        if ch == '\x1b' {
+            // Skip the escape character and the following sequence
+            if let Some('[') = chars.next() {
+                // Skip until we find a letter (the command character)
+                for next_ch in chars.by_ref() {
+                    if next_ch.is_ascii_alphabetic() {
+                        break;
+                    }
+                }
+            }
+        } else {
+            result.push(ch);
+        }
+    }
+    
+    result
 }
