@@ -379,9 +379,7 @@ impl eframe::App for HttpRunnerApp {
                 }
 
                 #[cfg(target_arch = "wasm32")]
-                if !self.request_view.has_changes()
-                    && self.selected_file.is_some()
-                {
+                if !self.request_view.has_changes() && self.selected_file.is_some() {
                     self.results_view.run_content_async(
                         self.text_editor.get_content().to_string(),
                         self.selected_environment.as_deref(),
