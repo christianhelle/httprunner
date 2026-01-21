@@ -398,6 +398,7 @@ impl eframe::App for HttpRunnerApp {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
             KeyboardAction::SwitchEnvironment => {
+                #[cfg(not(target_arch = "wasm32"))]
                 if !self.environment_selector_open {
                     // Cycle through environments
                     if self.environments.is_empty() {
