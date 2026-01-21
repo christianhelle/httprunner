@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Optimize GUI for WASM by hiding file system UI elements [\#146](https://github.com/christianhelle/httprunner/pull/146) ([christianhelle](https://github.com/christianhelle))
 - Add WebAssembly \(WASM\) support for GUI app [\#143](https://github.com/christianhelle/httprunner/pull/143) ([christianhelle](https://github.com/christianhelle))
 
 **Merged pull requests:**
