@@ -21,6 +21,7 @@ name = "httprunner-gui"
 path = "src/main.rs"
 
 [lib]
+name = "httprunner_gui_lib"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
