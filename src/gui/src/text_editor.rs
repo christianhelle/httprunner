@@ -128,8 +128,13 @@ impl TextEditor {
             ColorTheme::GITHUB_LIGHT
         };
 
+        // Calculate the number of rows needed to fill available space
+        let available_height = ui.available_height();
+        let line_height = ui.text_style_height(&egui::TextStyle::Monospace);
+        let rows = ((available_height - 100.0) / line_height).max(10.0) as usize;
+
         CodeEditor::default()
-            .with_rows(30)
+            .with_rows(rows)
             .with_fontsize(14.0)
             .with_theme(theme)
             .with_syntax(http_syntax())
