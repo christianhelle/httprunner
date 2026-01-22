@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Fix text editor theme adaptation to system theme [\#149](https://github.com/christianhelle/httprunner/pull/149) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Strip ANSI color codes from log file output [\#147](https://github.com/christianhelle/httprunner/pull/147) ([christianhelle](https://github.com/christianhelle))
 - Optimize GUI for WASM by hiding file system UI elements [\#146](https://github.com/christianhelle/httprunner/pull/146) ([christianhelle](https://github.com/christianhelle))
 - Add WebAssembly \(WASM\) support for GUI app [\#143](https://github.com/christianhelle/httprunner/pull/143) ([christianhelle](https://github.com/christianhelle))
