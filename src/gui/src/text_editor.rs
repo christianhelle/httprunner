@@ -121,10 +121,17 @@ impl TextEditor {
 
         let original_content = self.content.clone();
 
+        // Detect system theme and use appropriate color scheme
+        let theme = if ui.visuals().dark_mode {
+            ColorTheme::GITHUB_DARK
+        } else {
+            ColorTheme::GITHUB_LIGHT
+        };
+
         CodeEditor::default()
             .with_rows(30)
             .with_fontsize(14.0)
-            .with_theme(ColorTheme::GITHUB_DARK)
+            .with_theme(theme)
             .with_syntax(http_syntax())
             .with_numlines(true)
             .show(ui, &mut self.content);
