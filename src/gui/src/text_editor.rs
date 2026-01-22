@@ -128,8 +128,15 @@ impl TextEditor {
             ColorTheme::GITHUB_LIGHT
         };
 
+        // Calculate the number of rows needed to fill available space
+        let available_height = ui.available_height();
+        let line_height = ui.text_style_height(&egui::TextStyle::Monospace);
+        // Reserve space for separator (2px) + button row (~30px) + spacing (~10px)
+        let reserved_space = 45.0;
+        let rows = ((available_height - reserved_space) / line_height).max(10.0) as usize;
+
         CodeEditor::default()
-            .with_rows(30)
+            .with_rows(rows)
             .with_fontsize(14.0)
             .with_theme(theme)
             .with_syntax(http_syntax())
