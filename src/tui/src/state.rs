@@ -29,9 +29,10 @@ impl AppState {
 
         if state_file.exists()
             && let Ok(content) = std::fs::read_to_string(&state_file)
-                && let Ok(state) = serde_json::from_str(&content) {
-                    return state;
-                }
+            && let Ok(state) = serde_json::from_str(&content)
+        {
+            return state;
+        }
 
         Self {
             root_directory: None,
