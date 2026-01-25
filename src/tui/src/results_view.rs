@@ -53,24 +53,14 @@ impl ResultsView {
     pub fn passed_count(&self) -> usize {
         self.results
             .as_ref()
-            .map(|r| {
-                r.files
-                    .iter()
-                    .map(|f| f.success_count as usize)
-                    .sum()
-            })
+            .map(|r| r.files.iter().map(|f| f.success_count as usize).sum())
             .unwrap_or(0)
     }
 
     pub fn failed_count(&self) -> usize {
         self.results
             .as_ref()
-            .map(|r| {
-                r.files
-                    .iter()
-                    .map(|f| f.failed_count as usize)
-                    .sum()
-            })
+            .map(|r| r.files.iter().map(|f| f.failed_count as usize).sum())
             .unwrap_or(0)
     }
 }

@@ -134,27 +134,27 @@ impl App {
         self.selected_file = Some(path.clone());
         self.load_environments(&path);
         self.request_view.load_file(&path);
-        
+
         if let Some(error) = self.request_view.error_message() {
             self.status_message = error.clone();
         } else {
             self.status_message = format!("Loaded: {}", path.display());
         }
-        
+
         self.save_state();
     }
 
     fn load_environments(&mut self, file: &std::path::Path) {
         if let Some(file_str) = file.to_str() {
-            if let Ok(Some(env_file)) =
-                httprunner_lib::environment::find_environment_file(file_str)
+            if let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
             {
                 if let Ok(env_config) =
                     httprunner_lib::environment::parse_environment_file(&env_file)
                 {
                     self.environments = env_config.keys().cloned().collect();
                     self.environments.sort();
-                    self.status_message = format!("Loaded {} environments", self.environments.len());
+                    self.status_message =
+                        format!("Loaded {} environments", self.environments.len());
                     return;
                 }
                 self.status_message = format!("Warning: Failed to parse environment file");
@@ -167,9 +167,9 @@ impl App {
     fn run_all_requests(&mut self) {
         if let Some(file) = &self.selected_file {
             self.status_message = format!("Running all requests from {}", file.display());
-            
+
             let file_str = file.to_string_lossy().to_string();
-            
+
             let env = self.selected_environment.as_deref();
             match httprunner_lib::processor::process_http_files(
                 &[file_str],

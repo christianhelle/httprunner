@@ -1,10 +1,10 @@
 use crate::app::{App, FocusedPane};
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
-    Frame,
 };
 
 pub fn render(f: &mut Frame, app: &App) {
@@ -148,10 +148,7 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
                     Span::raw(" "),
                     Span::raw(name),
                 ]),
-                Line::from(Span::styled(
-                    &req.url,
-                    Style::default().fg(Color::Gray),
-                )),
+                Line::from(Span::styled(&req.url, Style::default().fg(Color::Gray))),
             ];
 
             let style = if i == app.request_view.selected_index() {
@@ -200,7 +197,10 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 
         // Summary
         lines.push(Line::from(vec![
-            Span::styled("Total Files: ", Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(
+                "Total Files: ",
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
             Span::raw(format!("{} | ", total_files)),
             Span::styled("Passed: ", Style::default().fg(Color::Green)),
             Span::raw(format!("{} | ", total_passed)),
@@ -221,7 +221,11 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 
             lines.push(Line::from(vec![
                 Span::styled(
-                    if file_result.failed_count == 0 { "✓" } else { "✗" },
+                    if file_result.failed_count == 0 {
+                        "✓"
+                    } else {
+                        "✗"
+                    },
                     Style::default().fg(status_color),
                 ),
                 Span::raw(" "),
