@@ -1,6 +1,6 @@
 [workspace]
-members = ["src/lib", "src/cli", "src/gui"]
-default-members = ["src/lib", "src/cli", "src/gui"]
+members = ["src/lib", "src/cli", "src/gui", "src/tui"]
+default-members = ["src/lib", "src/cli", "src/gui", "src/tui"]
 resolver = "2"
 
 [workspace.package]

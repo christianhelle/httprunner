@@ -1,0 +1,33 @@
+[package]
+name = "httprunner-tui"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+description = "HTTP File Runner - TUI application for executing HTTP requests from .http files"
+readme = "README.md"
+keywords = ["http", "rest", "api", "testing", "tui"]
+categories = [
+  "command-line-utilities",
+  "development-tools",
+  "web-programming::http-client",
+]
+
+[[bin]]
+name = "httprunner-tui"
+path = "src/main.rs"
+
+[dependencies]
+httprunner-lib = { path = "../lib" }
+anyhow = { workspace = true }
+walkdir = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { workspace = true }
+dirs = "6.0"
+
+# TUI dependencies
+ratatui = "0.29"
+crossterm = "0.28"
