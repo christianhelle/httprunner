@@ -30,6 +30,8 @@ eframe = { workspace = true, default-features = false, features = [
     "accesskit",
     "default_fonts",
     "glow",
+    "wayland",
+    "x11",
 ] }
 egui = { workspace = true }
 env_logger = { workspace = true }
