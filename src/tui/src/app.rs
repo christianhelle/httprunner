@@ -48,11 +48,10 @@ impl App {
             status_message: String::from("Ready"),
         };
 
-        if let Some(saved_file) = state.selected_file {
-            if saved_file.exists() {
+        if let Some(saved_file) = state.selected_file
+            && saved_file.exists() {
                 app.select_file(saved_file);
             }
-        }
 
         Ok(app)
     }
@@ -145,8 +144,8 @@ impl App {
     }
 
     fn load_environments(&mut self, file: &std::path::Path) {
-        if let Some(file_str) = file.to_str() {
-            if let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
+        if let Some(file_str) = file.to_str()
+            && let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
             {
                 if let Ok(env_config) =
                     httprunner_lib::environment::parse_environment_file(&env_file)
@@ -157,9 +156,8 @@ impl App {
                         format!("Loaded {} environments", self.environments.len());
                     return;
                 }
-                self.status_message = format!("Warning: Failed to parse environment file");
+                self.status_message = "Warning: Failed to parse environment file".to_string();
             }
-        }
         self.environments.clear();
         self.selected_environment = None;
     }
@@ -198,14 +196,13 @@ impl App {
         // Note: Running individual requests requires library support for single-request execution
         // Currently, the library's process_http_files function processes all requests in a file
         // This would need to be enhanced in httprunner-lib to support executing a single request by index
-        if let Some(file) = &self.selected_file {
-            if self.request_view.get_selected_index().is_some() {
+        if let Some(file) = &self.selected_file
+            && self.request_view.get_selected_index().is_some() {
                 self.status_message = format!(
                     "Running individual requests not yet supported. Use F5/Ctrl+R to run all requests in {}",
                     file.file_name().unwrap_or_default().to_string_lossy()
                 );
             }
-        }
     }
 
     fn save_state(&self) {

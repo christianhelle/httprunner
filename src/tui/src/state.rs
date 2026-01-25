@@ -27,13 +27,11 @@ impl AppState {
 
         let state_file = config_dir.join("tui_state.json");
 
-        if state_file.exists() {
-            if let Ok(content) = std::fs::read_to_string(&state_file) {
-                if let Ok(state) = serde_json::from_str(&content) {
+        if state_file.exists()
+            && let Ok(content) = std::fs::read_to_string(&state_file)
+                && let Ok(state) = serde_json::from_str(&content) {
                     return state;
                 }
-            }
-        }
 
         Self {
             root_directory: None,

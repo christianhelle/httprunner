@@ -51,8 +51,8 @@ fn run_app<B: ratatui::backend::Backend>(
     loop {
         terminal.draw(|f| ui::render(f, app))?;
 
-        if event::poll(std::time::Duration::from_millis(100))? {
-            if let Event::Key(key) = event::read()? {
+        if event::poll(std::time::Duration::from_millis(100))?
+            && let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         return Ok(());
@@ -65,7 +65,6 @@ fn run_app<B: ratatui::backend::Backend>(
                     }
                 }
             }
-        }
 
         if app.should_quit {
             return Ok(());
