@@ -134,7 +134,13 @@ impl App {
         self.selected_file = Some(path.clone());
         self.load_environments(&path);
         self.request_view.load_file(&path);
-        self.status_message = format!("Loaded: {}", path.display());
+        
+        if let Some(error) = self.request_view.error_message() {
+            self.status_message = error.clone();
+        } else {
+            self.status_message = format!("Loaded: {}", path.display());
+        }
+        
         self.save_state();
     }
 
@@ -148,8 +154,10 @@ impl App {
                 {
                     self.environments = env_config.keys().cloned().collect();
                     self.environments.sort();
+                    self.status_message = format!("Loaded {} environments", self.environments.len());
                     return;
                 }
+                self.status_message = format!("Warning: Failed to parse environment file");
             }
         }
         self.environments.clear();
@@ -160,10 +168,8 @@ impl App {
         if let Some(file) = &self.selected_file {
             self.status_message = format!("Running all requests from {}", file.display());
             
-            // Convert PathBuf to String
             let file_str = file.to_string_lossy().to_string();
             
-            // Execute all requests from the file
             let env = self.selected_environment.as_deref();
             match httprunner_lib::processor::process_http_files(
                 &[file_str],

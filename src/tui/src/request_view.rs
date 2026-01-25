@@ -7,6 +7,7 @@ pub struct RequestView {
     requests: Vec<HttpRequest>,
     selected_index: usize,
     run_request: bool,
+    error_message: Option<String>,
 }
 
 impl RequestView {
@@ -15,20 +16,25 @@ impl RequestView {
             requests: Vec::new(),
             selected_index: 0,
             run_request: false,
+            error_message: None,
         }
     }
 
     pub fn load_file(&mut self, path: &Path) {
+        self.error_message = None;
         if let Some(path_str) = path.to_str() {
             match parse_http_file(path_str, None) {
                 Ok(requests) => {
                     self.requests = requests;
                     self.selected_index = 0;
                 }
-                Err(_) => {
+                Err(e) => {
                     self.requests.clear();
+                    self.error_message = Some(format!("Failed to parse file: {}", e));
                 }
             }
+        } else {
+            self.error_message = Some("Invalid file path".to_string());
         }
     }
 
@@ -71,5 +77,9 @@ impl RequestView {
 
     pub fn should_run_request(&self) -> bool {
         self.run_request
+    }
+
+    pub fn error_message(&self) -> Option<&String> {
+        self.error_message.as_ref()
     }
 }
