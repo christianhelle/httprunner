@@ -2,7 +2,9 @@ mod executor;
 mod formatter;
 mod substitution;
 
-pub use executor::process_http_files;
+pub use executor::{
+    process_http_files, process_http_files_with_executor, process_http_files_with_silent,
+};
 
 #[cfg(test)]
 mod tests;

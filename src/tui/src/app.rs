@@ -169,13 +169,14 @@ impl App {
             let file_str = file.to_string_lossy().to_string();
 
             let env = self.selected_environment.as_deref();
-            match httprunner_lib::processor::process_http_files(
+            match httprunner_lib::processor::process_http_files_with_silent(
                 &[file_str],
                 false,
                 None,
                 env,
                 false,
                 false,
+                true, // silent mode - no console output
             ) {
                 Ok(results) => {
                     self.results_view.set_results(results);

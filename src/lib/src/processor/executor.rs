@@ -37,13 +37,34 @@ pub fn process_http_files(
     insecure: bool,
     pretty_json: bool,
 ) -> Result<ProcessorResults> {
-    process_http_files_with_executor(
+    process_http_files_with_silent(
         files,
         verbose,
         log_filename,
         environment,
         insecure,
         pretty_json,
+        false,
+    )
+}
+
+pub fn process_http_files_with_silent(
+    files: &[String],
+    verbose: bool,
+    log_filename: Option<&str>,
+    environment: Option<&str>,
+    insecure: bool,
+    pretty_json: bool,
+    silent: bool,
+) -> Result<ProcessorResults> {
+    process_http_files_with_executor_and_silent(
+        files,
+        verbose,
+        log_filename,
+        environment,
+        insecure,
+        pretty_json,
+        silent,
         &|request, verbose, insecure| runner::execute_http_request(request, verbose, insecure),
     )
 }
@@ -60,7 +81,32 @@ pub fn process_http_files_with_executor<F>(
 where
     F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
 {
-    let mut log = Log::new(log_filename)?;
+    process_http_files_with_executor_and_silent(
+        files,
+        verbose,
+        log_filename,
+        environment,
+        insecure,
+        pretty_json,
+        false,
+        executor,
+    )
+}
+
+pub fn process_http_files_with_executor_and_silent<F>(
+    files: &[String],
+    verbose: bool,
+    log_filename: Option<&str>,
+    environment: Option<&str>,
+    insecure: bool,
+    pretty_json: bool,
+    silent: bool,
+    executor: &F,
+) -> Result<ProcessorResults>
+where
+    F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
+{
+    let mut log = Log::new_with_silent(log_filename, silent)?;
     let mut http_file_results = Vec::<HttpFileResults>::new();
 
     let mut total_success_count = 0;
