@@ -192,22 +192,28 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
     if let Some(results) = results {
         let mut lines = Vec::new();
 
+        // Calculate totals
+        let total_files = results.files.len();
+        let total_passed: u32 = results.files.iter().map(|f| f.success_count).sum();
+        let total_failed: u32 = results.files.iter().map(|f| f.failed_count).sum();
+        let total_skipped: u32 = results.files.iter().map(|f| f.skipped_count).sum();
+
         // Summary
         lines.push(Line::from(vec![
-            Span::styled("Total: ", Style::default().add_modifier(Modifier::BOLD)),
-            Span::raw(format!("{} | ", results.total_files)),
+            Span::styled("Total Files: ", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(format!("{} | ", total_files)),
             Span::styled("Passed: ", Style::default().fg(Color::Green)),
-            Span::raw(format!("{} | ", results.total_passed)),
+            Span::raw(format!("{} | ", total_passed)),
             Span::styled("Failed: ", Style::default().fg(Color::Red)),
-            Span::raw(format!("{} | ", results.total_failed)),
+            Span::raw(format!("{} | ", total_failed)),
             Span::styled("Skipped: ", Style::default().fg(Color::Yellow)),
-            Span::raw(format!("{}", results.total_skipped)),
+            Span::raw(format!("{}", total_skipped)),
         ]));
         lines.push(Line::from(""));
 
         // File results
-        for file_result in &results.file_results {
-            let status_color = if file_result.success {
+        for file_result in &results.files {
+            let status_color = if file_result.failed_count == 0 {
                 Color::Green
             } else {
                 Color::Red
@@ -215,35 +221,46 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 
             lines.push(Line::from(vec![
                 Span::styled(
-                    if file_result.success { "✓" } else { "✗" },
+                    if file_result.failed_count == 0 { "✓" } else { "✗" },
                     Style::default().fg(status_color),
                 ),
                 Span::raw(" "),
-                Span::raw(&file_result.file),
+                Span::raw(&file_result.filename),
             ]));
 
-            for result in &file_result.results {
-                let result_color = if result.success {
-                    Color::Green
-                } else {
-                    Color::Red
-                };
+            for context in &file_result.result_contexts {
+                if let Some(result) = &context.result {
+                    let result_color = if result.success {
+                        Color::Green
+                    } else {
+                        Color::Red
+                    };
 
-                let name = result.name.as_deref().unwrap_or("Unnamed");
-                lines.push(Line::from(vec![
-                    Span::raw("  "),
-                    Span::styled(
-                        if result.success { "✓" } else { "✗" },
-                        Style::default().fg(result_color),
-                    ),
-                    Span::raw(" "),
-                    Span::raw(format!("{} {}", result.method, name)),
-                ]));
-
-                if let Some(error) = &result.error {
+                    let method = &context.request.method;
                     lines.push(Line::from(vec![
-                        Span::raw("    "),
-                        Span::styled(error, Style::default().fg(Color::Red)),
+                        Span::raw("  "),
+                        Span::styled(
+                            if result.success { "✓" } else { "✗" },
+                            Style::default().fg(result_color),
+                        ),
+                        Span::raw(" "),
+                        Span::raw(format!("{} {}", method, &context.name)),
+                    ]));
+
+                    if let Some(error) = &result.error_message {
+                        lines.push(Line::from(vec![
+                            Span::raw("    "),
+                            Span::styled(error, Style::default().fg(Color::Red)),
+                        ]));
+                    }
+                } else {
+                    // Skipped request
+                    lines.push(Line::from(vec![
+                        Span::raw("  "),
+                        Span::styled("-", Style::default().fg(Color::Yellow)),
+                        Span::raw(" "),
+                        Span::styled(&context.name, Style::default().fg(Color::Gray)),
+                        Span::raw(" (skipped)"),
                     ]));
                 }
             }

@@ -20,7 +20,7 @@ impl RequestView {
 
     pub fn load_file(&mut self, path: &Path) {
         if let Some(path_str) = path.to_str() {
-            match parse_http_file(path_str) {
+            match parse_http_file(path_str, None) {
                 Ok(requests) => {
                     self.requests = requests;
                     self.selected_index = 0;

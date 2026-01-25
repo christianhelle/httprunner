@@ -1,8 +1,8 @@
 use crossterm::event::{KeyCode, KeyEvent};
-use httprunner_lib::report::DiscoveryResults;
+use httprunner_lib::types::ProcessorResults;
 
 pub struct ResultsView {
-    results: Option<DiscoveryResults>,
+    results: Option<ProcessorResults>,
     scroll_offset: usize,
 }
 
@@ -14,7 +14,7 @@ impl ResultsView {
         }
     }
 
-    pub fn set_results(&mut self, results: DiscoveryResults) {
+    pub fn set_results(&mut self, results: ProcessorResults) {
         self.results = Some(results);
         self.scroll_offset = 0;
     }
@@ -42,7 +42,7 @@ impl ResultsView {
         }
     }
 
-    pub fn results(&self) -> Option<&DiscoveryResults> {
+    pub fn results(&self) -> Option<&ProcessorResults> {
         self.results.as_ref()
     }
 
@@ -53,14 +53,24 @@ impl ResultsView {
     pub fn passed_count(&self) -> usize {
         self.results
             .as_ref()
-            .map(|r| r.total_passed)
+            .map(|r| {
+                r.files
+                    .iter()
+                    .map(|f| f.success_count as usize)
+                    .sum()
+            })
             .unwrap_or(0)
     }
 
     pub fn failed_count(&self) -> usize {
         self.results
             .as_ref()
-            .map(|r| r.total_failed)
+            .map(|r| {
+                r.files
+                    .iter()
+                    .map(|f| f.failed_count as usize)
+                    .sum()
+            })
             .unwrap_or(0)
     }
 }

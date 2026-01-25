@@ -160,10 +160,13 @@ impl App {
         if let Some(file) = &self.selected_file {
             self.status_message = format!("Running all requests from {}", file.display());
             
+            // Convert PathBuf to String
+            let file_str = file.to_string_lossy().to_string();
+            
             // Execute all requests from the file
             let env = self.selected_environment.as_deref();
             match httprunner_lib::processor::process_http_files(
-                &[file.clone()],
+                &[file_str],
                 false,
                 None,
                 env,
