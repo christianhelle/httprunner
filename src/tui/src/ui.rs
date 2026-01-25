@@ -170,7 +170,7 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
         Block::default()
             .borders(Borders::ALL)
             .title(format!(
-                "Requests ({}) [Enter to run]",
+                "Requests ({}) [F5/Ctrl+R to run all]",
                 requests.len()
             ))
             .border_style(border_style),

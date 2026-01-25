@@ -6,10 +6,16 @@ pub struct AppState {
     pub root_directory: Option<PathBuf>,
     pub selected_file: Option<PathBuf>,
     pub selected_environment: Option<String>,
+    // GUI-specific fields (kept for potential future TUI features)
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub window_size: Option<(f32, f32)>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub font_size: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub file_tree_visible: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub results_compact_mode: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub last_results: Option<String>,
 }
 
