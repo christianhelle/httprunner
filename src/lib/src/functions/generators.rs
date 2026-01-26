@@ -91,43 +91,58 @@ impl FunctionSubstitutor for NameSubstitutor {
 
     fn generate(&self) -> String {
         let names = vec![
+            // A
             "Aaron", "Abigail", "Adrian", "Alexander", "Alice", "Amy", "Andrew", "Angelica", "Anthony", "Ava",
-            "Axel", "Ayden", "Bella", "Benjamin", "Brandi", "Brandon", "Brenda", "Brendan", "Brennan", "Brice",
-            "Brianna", "Bridget", "Bridgette", "Britney", "Brooks", "Bruce", "Bruno", "Bryan", "Bryce", "Bryson",
-            "Bud", "Buddy", "Caden", "Caldwell", "Caleb", "Camila", "Cameron", "Campbell", "Candace", "Candice",
-            "Candy", "Cannon", "Canton", "Carmelita", "Carmen", "Carmichael", "Carol", "Carole", "Caroline", "Carolyn",
-            "Carrie", "Carroll", "Carson", "Carter", "Carver", "Casandra", "Casey", "Cassandra", "Cassidy", "Cassie",
-            "Castillo", "Casual", "Catalina", "Catarina", "Catherine", "Cathleen", "Cathrine", "Cathryn", "Cathy", "Catriel",
-            "Catrina", "Catriona", "Cecelia", "Cecil", "Cecilia", "Cedric", "Celena", "Celesta", "Celeste", "Celia",
-            "Celina", "Celine", "Celsa", "Celt", "Cena", "Cerise", "Cerys", "Cesar", "Chad", "Chadwick",
-            "Chai", "Chakra", "Chalina", "Champ", "Chance", "Chandler", "Chandra", "Chandrika", "Chanel", "Chanelle",
-            "Chang", "Chaney", "Channa", "Channing", "Charlie", "Connor", "Dakota", "Daphne", "David", "Diana",
-            "Dina", "Earl", "Ebony", "Eddie", "Edgar", "Edison", "Edith", "Edmund", "Eduardo", "Edward",
-            "Edwin", "Eileen", "Elaina", "Elaine", "Elbert", "Eldon", "Eleanor", "Eleazar", "Electra", "Elena",
-            "Eleni", "Eleonora", "Eleonore", "Elesa", "Eleta", "Elfreda", "Elias", "Elida", "Elidah", "Elide",
-            "Elie", "Eliel", "Eligio", "Elihu", "Elijah", "Elinor", "Elinore", "Eliot", "Elis", "Elisa",
-            "Elisabeth", "Elisabet", "Elise", "Elisha", "Elisheba", "Elissa", "Elizabet", "Elizabeth", "Elizebeth", "Ella",
-            "Elladine", "Elle", "Ellena", "Ellery", "Ellie", "Elliot", "Elliott", "Ellis", "Ellison", "Ellsworth",
-            "Elma", "Elmara", "Elmer", "Elmira", "Elmyra", "Eloise", "Eloita", "Elon", "Elonah", "Elora",
-            "Elouise", "Elsa", "Elsbert", "Else", "Elseda", "Elsha", "Elspeth", "Elston", "Elsy", "Elsworth",
-            "Elta", "Elva", "Elvedin", "Elven", "Elvena", "Elverina", "Elvern", "Elverta", "Elvester", "Elvet",
-            "Elvia", "Elvid", "Elvie", "Elvina", "Elvine", "Elvis", "Elvy", "Elwen", "Elwood", "Elwyn",
-            "Elydia", "Elysee", "Elysia", "Elysse", "Emaid", "Emaily", "Emala", "Emalia", "Emaline", "Emam",
-            "Eman", "Emanda", "Emaree", "Emari", "Emari", "Emaria", "Emariee", "Emario", "Emaris", "Emary",
-            "Emasree", "Emasyl", "Ematen", "Ematine", "Emaud", "Emax", "Emazine", "Ember", "Emberly", "Embla",
-            "Emblyn", "Emelda", "Emelia", "Emelina", "Emelie", "Emelina", "Emelinda", "Emelio", "Emeline", "Emelita",
-            "Emeline", "Emelia", "Emelie", "Emelia", "Emelina", "Emelio", "Emeline", "Emelita", "Emelya", "Emelyane",
-            "Emelyn", "Emelyne", "Emend", "Emer", "Emerald", "Emerge", "Emerson", "Emery", "Emese", "Emesta",
-            "Emette", "Emetus", "Emeuta", "Emeutha", "Emeutus", "Emid", "Emida", "Emidia", "Emil", "Emile",
-            "Emilia", "Emilian", "Emiliana", "Emiliano", "Emilie", "Emilina", "Emiline", "Emilinia", "Emily", "Emilynn",
-            "Eminence", "Eminent", "Emir", "Emira", "Emirate", "Emirene", "Emiretta", "Emiritus", "Emiritus", "Emirsino",
-            "Emisco", "Emison", "Emita", "Emitress", "Emitrice", "Emitus", "Emitya", "Emity", "Emixth", "Emizthia",
-            "Emizthian", "Emizthiel", "Emizthine", "Emizthis", "Emizthus", "Emjad", "Emjay", "Emjean", "Emjee", "Emjena",
-            "Emjene", "Emjenee", "Emjey", "Emjorie", "Emjoye", "Emjoyed", "Emjoy", "Emjoye", "Emjoyed", "Emjoyee",
-            "Emjoyia", "Emjoyna", "Emjoyne", "Emjoyner", "Emjoys", "Emjoyu", "Emjoyue", "Emjoyus", "Emjud", "Emjude",
-            "Emjudea", "Emjuder", "Emjudess", "Emjudic", "Emjudie", "Emjudin", "Emjudina", "Emjudine", "Emjudith", "Emjudits",
-            "Emjudix", "Emjuds", "Emjudus", "Emjudy", "Emjudya", "Emjudye", "Emjudyn", "Emjuel", "Emjuele", "Emjuelena",
-            "Emjuelia", "Emjueline", "Emjuell", "Emjuella", "Emjuelle", "Emjuelles", "Emjuelly", "Emjuelly", "Emjuellyn", "Emjuelly",
+            // B
+            "Benjamin", "Bella", "Bob", "Brandon", "Brenda", "Brendan", "Bridget", "Bruce", "Bryan", "Bradley",
+            // C
+            "Caleb", "Cameron", "Camila", "Candace", "Carter", "Casey", "Catherine", "Charlie", "Christopher", "Connor",
+            // D
+            "Dakota", "Daniel", "David", "Danielle", "Daphne", "Deborah", "Derek", "Diana", "Donna", "Dorothy",
+            // E
+            "Ethan", "Eleanor", "Elijah", "Elizabeth", "Emily", "Emma", "Eric", "Evelyn", "Edward", "Elliott",
+            // F
+            "Fiona", "Felix", "Frank", "Francesca", "Faye", "Finn", "Felicity", "Frederick", "Freya", "Francis",
+            // G
+            "George", "Grace", "Gabriella", "Gregory", "Grayson", "Gwendolyn", "Gavin", "Garrett", "Gary", "Gail",
+            // H
+            "Hannah", "Henry", "Harrison", "Heidi", "Helen", "Hector", "Hazel", "Howard", "Harold", "Henrietta",
+            // I
+            "Ian", "Isaac", "Isabella", "Iris", "Ivan", "Irene", "Ingrid", "Igor", "Imogen", "Isadora",
+            // J
+            "Jack", "James", "Jayden", "Jessica", "Jerome", "Janet", "Jasmine", "Jared", "Jennifer", "Josephine",
+            // K
+            "Kevin", "Kathryn", "Keisha", "Kyle", "Keith", "Kimberley", "Kirk", "Kayla", "Kenneth", "Katherine",
+            // L
+            "Lily", "Liam", "Landon", "Lena", "Leo", "Lisa", "Lionel", "Lucia", "Logan", "Lydia",
+            // M
+            "Michael", "Melanie", "Marcus", "Melissa", "Martin", "Marcella", "Matthew", "Monica", "Magnolia", "Michelle",
+            // N
+            "Natalie", "Nathan", "Nathaniel", "Nancy", "Nicholas", "Natasha", "Nelson", "Nicole", "Noah", "Norman",
+            // O
+            "Oliver", "Olivia", "Oscar", "Opal", "Owen", "Ophelia", "Otto", "Octavia", "Orson", "Olive",
+            // P
+            "Patricia", "Patrick", "Parker", "Paisley", "Peter", "Pamela", "Paul", "Phillip", "Phoebe", "Patrice",
+            // Q
+            "Quentin", "Quinn", "Quinton", "Quincy", "Quinlan", "Quinley", "Quill", "Queenie", "Quest", "Quinby",
+            // R
+            "Rebecca", "Rachel", "Rosa", "Rhonda", "Richard", "Robert", "Raymond", "Randall", "Rita", "Ryan",
+            // S
+            "Samuel", "Stephen", "Sebastian", "Stella", "Sophia", "Susan", "Steven", "Sarah", "Scott", "Sandra",
+            // T
+            "Thomas", "Tanya", "Teresa", "Tabitha", "Timothy", "Theodore", "Theresa", "Tina", "Tyler", "Terrence",
+            // U
+            "Uriel", "Ulysses", "Ulrich", "Upton", "Uma", "Urban", "Unique", "Udo", "Usher", "Unity",
+            // V
+            "Victoria", "Valerie", "Vanessa", "Vincent", "Victor", "Violet", "Vernon", "Vivian", "Vaughn", "Valencia",
+            // W
+            "William", "Warren", "Wesley", "Wyatt", "Walter", "Winona", "Wayne", "Willow", "Winston", "Wanda",
+            // X
+            "Xavier", "Xena", "Ximena", "Xiomara", "Xander", "Xanthe", "Xavi", "Xenia", "Xiaowen", "Xyla",
+            // Y
+            "Yvonne", "Yolanda", "Yasmine", "Yancy", "Yara", "York", "Yusuf", "Yannick", "Yosef", "Yuri",
+            // Z
+            "Zachary", "Zoe", "Zelda", "Zara", "Zeke", "Zena", "Ziggy", "Zola", "Zuri", "Zane",
         ];
         use rand::Rng;
         let mut rng = rand::thread_rng();
