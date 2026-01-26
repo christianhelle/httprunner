@@ -283,6 +283,66 @@ Content-Type: application/json
 }</code>
                     </div>
 
+                    <h4>name() - Generate Full Name</h4>
+                    <p>Generates a random full name (first name + last name).</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "fullName": "name()",
+  "displayName": "NAME()"
+}</code>
+                    </div>
+
+                    <h4>first_name() - Generate First Name</h4>
+                    <p>Generates a random first name.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "firstName": "first_name()",
+  "givenName": "FIRST_NAME()"
+}</code>
+                    </div>
+
+                    <h4>last_name() - Generate Last Name</h4>
+                    <p>Generates a random last name.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "lastName": "last_name()",
+  "surname": "LAST_NAME()"
+}</code>
+                    </div>
+
+                    <h4>address() - Generate Address</h4>
+                    <p>Generates a random street address.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "streetAddress": "address()",
+  "mailingAddress": "ADDRESS()"
+}</code>
+                    </div>
+
+                    <h4>email() - Generate Email Address</h4>
+                    <p>Generates a random email address in the format firstname.lastname@domain.com.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "email": "email()",
+  "contactEmail": "EMAIL()"
+}</code>
+                    </div>
+
                     <h3>Function Features</h3>
                     <ul>
                         <li><strong>Case-insensitive</strong>: guid(), GUID(), and Guid() all work identically</li>
