@@ -30,7 +30,7 @@ A powerful command-line tool, Terminal UI (TUI), and native GUI application writ
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`)
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
@@ -835,6 +835,58 @@ Content-Type: application/json
 }
 ```
 
+#### `getdate()` - Get Current Date
+Returns the current local date in `YYYY-MM-DD` format.
+
+```http
+POST https://api.example.com/events
+Content-Type: application/json
+
+{
+  "eventDate": "getdate()",
+  "createdDate": "GETDATE()"
+}
+```
+
+#### `gettime()` - Get Current Time
+Returns the current local time in `HH:MM:SS` format (24-hour).
+
+```http
+POST https://api.example.com/logs
+Content-Type: application/json
+
+{
+  "timestamp": "gettime()",
+  "logTime": "GETTIME()"
+}
+```
+
+#### `getdatetime()` - Get Current Date and Time
+Returns the current local date and time in `YYYY-MM-DD HH:MM:SS` format.
+
+```http
+POST https://api.example.com/records
+Content-Type: application/json
+
+{
+  "createdAt": "getdatetime()",
+  "timestamp": "GETDATETIME()"
+}
+```
+
+#### `getutcdatetime()` - Get Current UTC Date and Time
+Returns the current UTC date and time in `YYYY-MM-DD HH:MM:SS` format.
+
+```http
+POST https://api.example.com/records
+Content-Type: application/json
+
+{
+  "utcTimestamp": "getutcdatetime()",
+  "serverTime": "GETUTCDATETIME()"
+}
+```
+
 ### Function Features
 
 - ✅ **Case-insensitive**: `guid()`, `GUID()`, and `Guid()` all work identically
@@ -1518,7 +1570,7 @@ The `examples/` directory contains several sample `.http` files:
 - **`status-codes.http`** - Tests different HTTP status codes (15 requests)
 - **`request-variables.http`** - Demonstrates request chaining with variables (5 requests)
 - **`variables.http`** - Shows variable usage and environment files
-- **`functions.http`** - Demonstrates built-in functions (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`)
+- **`functions.http`** - Demonstrates built-in functions (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - **`asserts.http`** - Response assertion examples
 - **`assertion-variables.http`** - Variable substitution in assertions
 - **`pagination-variables.http`** - Pagination scenarios with variable assertions
