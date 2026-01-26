@@ -15,7 +15,7 @@ A powerful Rust library for parsing and executing HTTP requests from `.http` fil
 - 🌐 Support for all standard HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
 - 📝 Custom headers and request bodies
 - 🔧 **Variables** with substitution in URLs, headers, and bodies
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`)
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`)
 - 🔗 **Request variables** for chaining requests and passing data between calls
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔀 **Conditional execution** with `@dependsOn` and `@if` directives
@@ -183,7 +183,9 @@ Content-Type: application/json
   "id": "guid()",
   "sessionKey": "string()",
   "randomValue": "number()",
-  "credentials": "base64_encode('username:password')"
+  "credentials": "base64_encode('username:password')",
+  "upperText": "upper('hello, world')",
+  "lowerText": "lower('HELLO, WORLD')"
 }
 ```
 
