@@ -1,4 +1,4 @@
-use crate::functions::generator::{
+use crate::functions::generators::{
     Base64EncodeSubstitutor, GuidSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
 use anyhow::Result;
