@@ -137,3 +137,17 @@ impl FunctionSubstitutor for AddressSubstitutor {
         values::ADDRESSES[index].to_string()
     }
 }
+
+pub struct JobTitleSubstitutor {}
+impl FunctionSubstitutor for JobTitleSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\bjob_title\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let index = rng.gen_range(0..values::JOB_TITLES.len());
+        values::JOB_TITLES[index].to_string()
+    }
+}

@@ -919,3 +919,26 @@ pub static ADDRESSES: &[&str] = &[
     "606 Chestnut Rd, National City, TX 75001, USA",
     "707 Spruce Dr, Fawcett City, OH 43085, USA",
 ];
+
+pub static JOB_TITLES: &[&str] = &[
+    "Software Engineer",
+    "Data Scientist",
+    "Product Manager",
+    "Graphic Designer",
+    "Marketing Specialist",
+    "Sales Representative",
+    "Human Resources Manager",
+    "Financial Analyst",
+    "Customer Service Representative",
+    "Operations Manager",
+    "Business Analyst",
+    "Content Writer",
+    "UX/UI Designer",
+    "Project Coordinator",
+    "Quality Assurance Tester",
+    "Social Media Manager",
+    "IT Support Specialist",
+    "Accountant",
+    "Web Developer",
+    "Digital Marketing Manager",
+];
