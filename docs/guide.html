@@ -320,7 +320,7 @@ Content-Type: application/json
                     </div>
 
                     <h4>address() - Generate Address</h4>
-                    <p>Generates a random street address.</p>
+                    <p>Generates a random full mailing address (street, city, postal code, country).</p>
                     <div class="code-block">
                         <code>POST https://api.example.com/users
 Content-Type: application/json
@@ -340,6 +340,18 @@ Content-Type: application/json
 {
   "email": "email()",
   "contactEmail": "EMAIL()"
+}</code>
+                    </div>
+
+                    <h4>job_title() - Generate Job Title</h4>
+                    <p>Generates a random job title.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "title": "job_title()",
+  "position": "JOB_TITLE()"
 }</code>
                     </div>
 

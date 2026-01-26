@@ -165,8 +165,9 @@ Available functions:
 - `name()` - Generate random full name (e.g., "John Smith")
 - `first_name()` - Generate random first name (e.g., "Sarah")
 - `last_name()` - Generate random last name (e.g., "Johnson")
-- `address()` - Generate random address (e.g., "123 Main Street")
+- `address()` - Generate random full mailing address (street, city, postal code, country), e.g., "123 Main Street, Springfield, 12345, USA"
 - `email()` - Generate random email address (e.g., "john.smith@example.com")
+- `job_title()` - Generate random job title (e.g., "Senior Software Engineer")
 
 All functions are case-insensitive and can be used in URLs, headers, and request bodies.
 

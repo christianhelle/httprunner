@@ -92,13 +92,13 @@ Example output: `Johnson`
 
 ### Address Generation
 
-Generates a random address:
+Generates a random full mailing address (street, city, postal code, country):
 
 ```
 {{address()}}
 ```
 
-Example output: `123 Main Street`
+Example output: `123 Main Street, Springfield, 12345, USA`
 
 ### Email Generation
 
@@ -109,6 +109,16 @@ Generates a random email address:
 ```
 
 Example output: `john.smith@example.com`
+
+### Job Title Generation
+
+Generates a random job title:
+
+```
+{{job_title()}}
+```
+
+Example output: `Senior Software Engineer`
 
 ## Implementation Details
 
