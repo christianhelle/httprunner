@@ -110,3 +110,17 @@ impl FunctionSubstitutor for FirstNameSubstitutor {
         values::FIRST_NAMES[index].to_string()
     }
 }
+
+pub struct LastNameSubstitutor {}
+impl FunctionSubstitutor for LastNameSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\blast_name\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let index = rng.gen_range(0..values::LAST_NAMES.len());
+        values::LAST_NAMES[index].to_string()
+    }
+}
