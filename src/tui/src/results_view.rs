@@ -120,7 +120,11 @@ impl ResultsView {
         let inc_passed = self
             .incremental_results
             .lock()
-            .map(|g| g.iter().filter(|r| matches!(r, ExecutionResult::Success { .. })).count())
+            .map(|g| {
+                g.iter()
+                    .filter(|r| matches!(r, ExecutionResult::Success { .. }))
+                    .count()
+            })
             .unwrap_or(0);
 
         if inc_passed > 0 {
@@ -139,7 +143,11 @@ impl ResultsView {
         let inc_failed = self
             .incremental_results
             .lock()
-            .map(|g| g.iter().filter(|r| matches!(r, ExecutionResult::Failure { .. })).count())
+            .map(|g| {
+                g.iter()
+                    .filter(|r| matches!(r, ExecutionResult::Failure { .. }))
+                    .count()
+            })
             .unwrap_or(0);
 
         if inc_failed > 0 || self.is_running() {
