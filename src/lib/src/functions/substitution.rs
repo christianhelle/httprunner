@@ -2,11 +2,11 @@ use crate::functions::date_functions::{
     GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
 };
 use crate::functions::generator_functions::{
-    AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
-    GuidSubstitutor, JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
+    AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor, GuidSubstitutor,
+    JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
     StringSubstitutor,
 };
-use crate::functions::transform_functions::Base64EncodeSubstitutor;
+use crate::functions::transform_functions::{Base64EncodeSubstitutor, UpperSubstitutor};
 use anyhow::Result;
 use regex::RegexBuilder;
 
@@ -29,6 +29,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &StringSubstitutor {},
         &NumberSubstitutor {},
         &Base64EncodeSubstitutor {},
+        &UpperSubstitutor {},
         &NameSubstitutor {},
         &FirstNameSubstitutor {},
         &LastNameSubstitutor {},
