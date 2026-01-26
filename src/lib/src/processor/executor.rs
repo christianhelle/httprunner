@@ -91,6 +91,323 @@ fn add_skipped_request_context(
     });
 }
 
+/// Check if request dependencies are met. Returns true if request should be skipped.
+fn should_skip_due_to_dependency(
+    processed_request: &HttpRequest,
+    request_contexts: &[RequestContext],
+    log: &mut Log,
+    _request_count: u32,
+) -> bool {
+    if let Some(dep_name) = processed_request.depends_on.as_ref() {
+        if !conditions::check_dependency(&Some(dep_name.clone()), request_contexts) {
+            let name_str = format_request_name(&processed_request.name);
+
+            log.writeln(&format!(
+                "{} {} {} {} - Skipped: dependency '{}' not met (must succeed with HTTP 2xx)",
+                colors::yellow("⏭️"),
+                name_str,
+                processed_request.method,
+                processed_request.url,
+                dep_name
+            ));
+
+            return true;
+        }
+    }
+    false
+}
+
+/// Evaluate conditions and log results. Returns true if request should be skipped.
+fn should_skip_due_to_conditions(
+    processed_request: &HttpRequest,
+    request_contexts: &[RequestContext],
+    log: &mut Log,
+    verbose: bool,
+) -> bool {
+    if processed_request.conditions.is_empty() {
+        return false;
+    }
+
+    if verbose {
+        match conditions::evaluate_conditions_verbose(
+            &processed_request.conditions,
+            request_contexts,
+        ) {
+            Ok((conditions_met, evaluation_results)) => {
+                log.writeln(&format!("\n{} Condition Evaluation:", colors::blue("🔍")));
+
+                for (condition, eval_result) in processed_request
+                    .conditions
+                    .iter()
+                    .zip(evaluation_results.iter())
+                {
+                    let directive = if eval_result.negated {
+                        "@if-not"
+                    } else {
+                        "@if"
+                    };
+                    let request_ref = if condition.request_name.is_empty() {
+                        "<unnamed>"
+                    } else {
+                        condition.request_name.as_str()
+                    };
+
+                    if eval_result.condition_met {
+                        log.writeln(&format!(
+                            "{}   ✅ {}: {}.response.{}",
+                            colors::green(""),
+                            directive,
+                            request_ref,
+                            eval_result.condition_type
+                        ));
+                        log.writeln(&format!(
+                            "{}      Expected: {} \"{}\"",
+                            colors::green(""),
+                            if eval_result.negated { "!=" } else { "==" },
+                            eval_result.expected_value
+                        ));
+                        log.writeln(&format!(
+                            "{}      Actual: \"{}\"",
+                            colors::green(""),
+                            eval_result.actual_value.as_deref().unwrap_or("<unknown>")
+                        ));
+                    } else {
+                        log.writeln(&format!(
+                            "{}   ❌ {}: {}.response.{}",
+                            colors::red(""),
+                            directive,
+                            request_ref,
+                            eval_result.condition_type
+                        ));
+                        log.writeln(&format!(
+                            "{}      Expected: {} \"{}\"",
+                            colors::yellow(""),
+                            if eval_result.negated { "!=" } else { "==" },
+                            eval_result.expected_value
+                        ));
+                        log.writeln(&format!(
+                            "{}      Actual: \"{}\"",
+                            colors::yellow(""),
+                            eval_result.actual_value.as_deref().unwrap_or("<unknown>")
+                        ));
+                    }
+                }
+
+                if !conditions_met {
+                    let name_str = format_request_name(&processed_request.name);
+                    log.writeln(&format!(
+                        "\n{} {} {} {} - Skipped: conditions not met\n",
+                        colors::yellow("⏭️"),
+                        name_str,
+                        processed_request.method,
+                        processed_request.url
+                    ));
+
+                    return true;
+                }
+                log.writeln(""); // Empty line for readability
+            }
+            Err(e) => {
+                let name_str = format_request_name(&processed_request.name);
+                log.writeln(&format!(
+                    "{} {} {} {} - Error evaluating conditions: {}\n",
+                    colors::red("❌"),
+                    name_str,
+                    processed_request.method,
+                    processed_request.url,
+                    e
+                ));
+
+                return true;
+            }
+        }
+    } else {
+        // Non-verbose mode: simple evaluation
+        match conditions::evaluate_conditions(&processed_request.conditions, request_contexts) {
+            Ok(conditions_met) => {
+                if !conditions_met {
+                    let name_str = format_request_name(&processed_request.name);
+
+                    log.writeln(&format!(
+                        "{} {} {} {} - Skipped: conditions not met",
+                        colors::yellow("⏭️"),
+                        name_str,
+                        processed_request.method,
+                        processed_request.url
+                    ));
+
+                    return true;
+                }
+            }
+            Err(e) => {
+                let name_str = format_request_name(&processed_request.name);
+
+                log.writeln(&format!(
+                    "{} {} {} {} - Error evaluating conditions: {}",
+                    colors::red("❌"),
+                    name_str,
+                    processed_request.method,
+                    processed_request.url,
+                    e
+                ));
+
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+/// Log request details in verbose mode
+fn log_request_details(request: &HttpRequest, log: &mut Log, pretty_json: bool) {
+    log.writeln(&format!("\n{} Request Details:", colors::blue("📤")));
+    if let Some(ref name) = request.name {
+        log.writeln(&format!("Name: {}", name));
+    }
+    log.writeln(&format!("Method: {}", request.method));
+    log.writeln(&format!("URL: {}", request.url));
+
+    if !request.headers.is_empty() {
+        log.writeln("Headers:");
+        for header in &request.headers {
+            log.writeln(&format!("  {}: {}", header.name, header.value));
+        }
+    }
+
+    if let Some(ref body) = request.body {
+        let formatted_body = if pretty_json {
+            format_json_if_valid(body)
+        } else {
+            body.clone()
+        };
+        log.writeln(&format!("Body:\n{}", formatted_body));
+    }
+    log.writeln(&"-".repeat(30));
+}
+
+/// Log execution result
+fn log_execution_result(
+    result: &HttpResult,
+    processed_request: &HttpRequest,
+    log: &mut Log,
+) {
+    if result.success {
+        let name_prefix = result
+            .request_name
+            .as_ref()
+            .map(|n| format!("{}: ", n))
+            .unwrap_or_default();
+
+        log.writeln(&format!(
+            "{} {} {} {} - Status: {} - {}ms",
+            colors::green("✅"),
+            name_prefix,
+            processed_request.method,
+            processed_request.url,
+            result.status_code,
+            result.duration_ms
+        ));
+    } else {
+        let name_prefix = result
+            .request_name
+            .as_ref()
+            .map(|n| format!("{}: ", n))
+            .unwrap_or_default();
+
+        if let Some(ref msg) = result.error_message {
+            log.writeln(&format!(
+                "{} {} {} {} - Status: {} - {}ms - Error: {}",
+                colors::red("❌"),
+                name_prefix,
+                processed_request.method,
+                processed_request.url,
+                result.status_code,
+                result.duration_ms,
+                msg
+            ));
+        } else {
+            log.writeln(&format!(
+                "{} {} {} {} - Status: {} - {}ms",
+                colors::red("❌"),
+                name_prefix,
+                processed_request.method,
+                processed_request.url,
+                result.status_code,
+                result.duration_ms
+            ));
+        }
+    }
+}
+
+/// Log response details in verbose mode
+fn log_response_details(result: &HttpResult, log: &mut Log, pretty_json: bool) {
+    log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
+    log.writeln(&format!("Status: {}", result.status_code));
+    log.writeln(&format!("Duration: {}ms", result.duration_ms));
+
+    if let Some(ref headers) = result.response_headers {
+        log.writeln("Headers:");
+        for (name, value) in headers {
+            log.writeln(&format!("  {}: {}", name, value));
+        }
+    }
+
+    if let Some(ref body) = result.response_body {
+        let formatted_body = if pretty_json {
+            format_json_if_valid(body)
+        } else {
+            body.clone()
+        };
+        log.writeln(&format!("Body:\n{}", formatted_body));
+    }
+    log.writeln(&"-".repeat(30));
+}
+
+/// Log assertion results
+fn log_assertion_results(result: &HttpResult, log: &mut Log) {
+    log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
+    for assertion_result in &result.assertion_results {
+        let assertion_type_str = match assertion_result.assertion.assertion_type {
+            AssertionType::Status => "Status Code",
+            AssertionType::Body => "Response Body",
+            AssertionType::Headers => "Response Headers",
+        };
+
+        if assertion_result.passed {
+            log.writeln(&format!(
+                "{}   ✅ {}: Expected '{}'",
+                colors::green(""),
+                assertion_type_str,
+                assertion_result.assertion.expected_value
+            ));
+        } else {
+            log.writeln(&format!(
+                "{}   ❌ {}: {}",
+                colors::red(""),
+                assertion_type_str,
+                assertion_result
+                    .error_message
+                    .as_ref()
+                    .unwrap_or(&"Failed".to_string())
+            ));
+            if let Some(ref actual) = assertion_result.actual_value {
+                log.writeln(&format!(
+                    "{}      Expected: '{}'",
+                    colors::yellow(""),
+                    assertion_result.assertion.expected_value
+                ));
+                log.writeln(&format!(
+                    "{}      Actual: '{}'",
+                    colors::yellow(""),
+                    actual
+                ));
+            }
+        }
+    }
+    log.writeln(&"-".repeat(30));
+}
+
 pub fn process_http_files(
     files: &[String],
     verbose: bool,
@@ -209,20 +526,7 @@ where
 
             let mut processed_request = request.clone();
 
-            if let Some(dep_name) = processed_request.depends_on.as_ref()
-                && !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts)
-            {
-                let name_str = format_request_name(&processed_request.name);
-
-                log.writeln(&format!(
-                    "{} {} {} {} - Skipped: dependency '{}' not met (must succeed with HTTP 2xx)",
-                    colors::yellow("⏭️"),
-                    name_str,
-                    processed_request.method,
-                    processed_request.url,
-                    dep_name
-                ));
-
+            if should_skip_due_to_dependency(&processed_request, &request_contexts, &mut log, request_count) {
                 add_skipped_request_context(
                     &mut request_contexts,
                     processed_request,
@@ -232,190 +536,21 @@ where
                 continue;
             }
 
-            if !processed_request.conditions.is_empty() {
-                if config.verbose {
-                    match conditions::evaluate_conditions_verbose(
-                        &processed_request.conditions,
-                        &request_contexts,
-                    ) {
-                        Ok((conditions_met, evaluation_results)) => {
-                            log.writeln(&format!("\n{} Condition Evaluation:", colors::blue("🔍")));
-
-                            for (condition, eval_result) in processed_request
-                                .conditions
-                                .iter()
-                                .zip(evaluation_results.iter())
-                            {
-                                let directive = if eval_result.negated {
-                                    "@if-not"
-                                } else {
-                                    "@if"
-                                };
-                                let request_ref = if condition.request_name.is_empty() {
-                                    "<unnamed>"
-                                } else {
-                                    condition.request_name.as_str()
-                                };
-
-                                if eval_result.condition_met {
-                                    log.writeln(&format!(
-                                        "{}   ✅ {}: {}.response.{}",
-                                        colors::green(""),
-                                        directive,
-                                        request_ref,
-                                        eval_result.condition_type
-                                    ));
-                                    log.writeln(&format!(
-                                        "{}      Expected: {} \"{}\"",
-                                        colors::green(""),
-                                        if eval_result.negated { "!=" } else { "==" },
-                                        eval_result.expected_value
-                                    ));
-                                    log.writeln(&format!(
-                                        "{}      Actual: \"{}\"",
-                                        colors::green(""),
-                                        eval_result.actual_value.as_deref().unwrap_or("<unknown>")
-                                    ));
-                                } else {
-                                    log.writeln(&format!(
-                                        "{}   ❌ {}: {}.response.{}",
-                                        colors::red(""),
-                                        directive,
-                                        request_ref,
-                                        eval_result.condition_type
-                                    ));
-                                    log.writeln(&format!(
-                                        "{}      Expected: {} \"{}\"",
-                                        colors::yellow(""),
-                                        if eval_result.negated { "!=" } else { "==" },
-                                        eval_result.expected_value
-                                    ));
-                                    log.writeln(&format!(
-                                        "{}      Actual: \"{}\"",
-                                        colors::yellow(""),
-                                        eval_result.actual_value.as_deref().unwrap_or("<unknown>")
-                                    ));
-                                }
-                            }
-
-                            if !conditions_met {
-                                let name_str = format_request_name(&processed_request.name);
-                                log.writeln(&format!(
-                                    "\n{} {} {} {} - Skipped: conditions not met\n",
-                                    colors::yellow("⏭️"),
-                                    name_str,
-                                    processed_request.method,
-                                    processed_request.url
-                                ));
-
-                                add_skipped_request_context(
-                                    &mut request_contexts,
-                                    processed_request,
-                                    request_count,
-                                );
-                                skipped_count += 1;
-                                continue;
-                            }
-                            log.writeln(""); // Empty line for readability
-                        }
-                        Err(e) => {
-                            let name_str = format_request_name(&processed_request.name);
-                            log.writeln(&format!(
-                                "{} {} {} {} - Error evaluating conditions: {}\n",
-                                colors::red("❌"),
-                                name_str,
-                                processed_request.method,
-                                processed_request.url,
-                                e
-                            ));
-
-                            add_skipped_request_context(
-                                &mut request_contexts,
-                                processed_request,
-                                request_count,
-                            );
-                            skipped_count += 1;
-                            continue;
-                        }
-                    }
-                } else {
-                    // Non-verbose mode: simple evaluation
-                    match conditions::evaluate_conditions(
-                        &processed_request.conditions,
-                        &request_contexts,
-                    ) {
-                        Ok(conditions_met) => {
-                            if !conditions_met {
-                                let name_str = format_request_name(&processed_request.name);
-
-                                log.writeln(&format!(
-                                    "{} {} {} {} - Skipped: conditions not met",
-                                    colors::yellow("⏭️"),
-                                    name_str,
-                                    processed_request.method,
-                                    processed_request.url
-                                ));
-
-                                add_skipped_request_context(
-                                    &mut request_contexts,
-                                    processed_request,
-                                    request_count,
-                                );
-                                skipped_count += 1;
-                                continue;
-                            }
-                        }
-                        Err(e) => {
-                            let name_str = format_request_name(&processed_request.name);
-
-                            log.writeln(&format!(
-                                "{} {} {} {} - Error evaluating conditions: {}",
-                                colors::red("❌"),
-                                name_str,
-                                processed_request.method,
-                                processed_request.url,
-                                e
-                            ));
-
-                            add_skipped_request_context(
-                                &mut request_contexts,
-                                processed_request,
-                                request_count,
-                            );
-                            skipped_count += 1;
-                            continue;
-                        }
-                    }
-                }
+            if should_skip_due_to_conditions(&processed_request, &request_contexts, &mut log, config.verbose) {
+                add_skipped_request_context(
+                    &mut request_contexts,
+                    processed_request,
+                    request_count,
+                );
+                skipped_count += 1;
+                continue;
             }
 
             substitute_request_variables_in_request(&mut processed_request, &request_contexts)?;
             substitute_functions_in_request(&mut processed_request)?;
 
             if config.verbose {
-                log.writeln(&format!("\n{} Request Details:", colors::blue("📤")));
-                if let Some(ref name) = processed_request.name {
-                    log.writeln(&format!("Name: {}", name));
-                }
-                log.writeln(&format!("Method: {}", processed_request.method));
-                log.writeln(&format!("URL: {}", processed_request.url));
-
-                if !processed_request.headers.is_empty() {
-                    log.writeln("Headers:");
-                    for header in &processed_request.headers {
-                        log.writeln(&format!("  {}: {}", header.name, header.value));
-                    }
-                }
-
-                if let Some(ref body) = processed_request.body {
-                    let formatted_body = if config.pretty_json {
-                        format_json_if_valid(body)
-                    } else {
-                        body.clone()
-                    };
-                    log.writeln(&format!("Body:\n{}", formatted_body));
-                }
-                log.writeln(&"-".repeat(30));
+                log_request_details(&processed_request, &mut log, config.pretty_json);
             }
 
             let result = match executor(&processed_request, config.verbose, config.insecure) {
@@ -446,52 +581,11 @@ where
 
             if result.success {
                 success_count += 1;
-                let name_prefix = result
-                    .request_name
-                    .as_ref()
-                    .map(|n| format!("{}: ", n))
-                    .unwrap_or_default();
-
-                log.writeln(&format!(
-                    "{} {} {} {} - Status: {} - {}ms",
-                    colors::green("✅"),
-                    name_prefix,
-                    processed_request.method,
-                    processed_request.url,
-                    result.status_code,
-                    result.duration_ms
-                ));
             } else {
                 failed_count += 1;
-                let name_prefix = result
-                    .request_name
-                    .as_ref()
-                    .map(|n| format!("{}: ", n))
-                    .unwrap_or_default();
-
-                if let Some(ref msg) = result.error_message {
-                    log.writeln(&format!(
-                        "{} {} {} {} - Status: {} - {}ms - Error: {}",
-                        colors::red("❌"),
-                        name_prefix,
-                        processed_request.method,
-                        processed_request.url,
-                        result.status_code,
-                        result.duration_ms,
-                        msg
-                    ));
-                } else {
-                    log.writeln(&format!(
-                        "{} {} {} {} - Status: {} - {}ms",
-                        colors::red("❌"),
-                        name_prefix,
-                        processed_request.method,
-                        processed_request.url,
-                        result.status_code,
-                        result.duration_ms
-                    ));
-                }
             }
+
+            log_execution_result(&result, &processed_request, &mut log);
 
             let context_name = processed_request
                 .name
@@ -508,72 +602,14 @@ where
                 && let Some(ctx) = request_contexts.last()
                 && let Some(ref result) = ctx.result
             {
-                log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
-                log.writeln(&format!("Status: {}", result.status_code));
-                log.writeln(&format!("Duration: {}ms", result.duration_ms));
-
-                if let Some(ref headers) = result.response_headers {
-                    log.writeln("Headers:");
-                    for (name, value) in headers {
-                        log.writeln(&format!("  {}: {}", name, value));
-                    }
-                }
-
-                if let Some(ref body) = result.response_body {
-                    let formatted_body = if config.pretty_json {
-                        format_json_if_valid(body)
-                    } else {
-                        body.clone()
-                    };
-                    log.writeln(&format!("Body:\n{}", formatted_body));
-                }
-                log.writeln(&"-".repeat(30));
+                log_response_details(result, &mut log, config.pretty_json);
             }
 
             if !processed_request.assertions.is_empty()
                 && let Some(ctx) = request_contexts.last()
                 && let Some(ref result) = ctx.result
             {
-                log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
-                for assertion_result in &result.assertion_results {
-                    let assertion_type_str = match assertion_result.assertion.assertion_type {
-                        AssertionType::Status => "Status Code",
-                        AssertionType::Body => "Response Body",
-                        AssertionType::Headers => "Response Headers",
-                    };
-
-                    if assertion_result.passed {
-                        log.writeln(&format!(
-                            "{}   ✅ {}: Expected '{}'",
-                            colors::green(""),
-                            assertion_type_str,
-                            assertion_result.assertion.expected_value
-                        ));
-                    } else {
-                        log.writeln(&format!(
-                            "{}   ❌ {}: {}",
-                            colors::red(""),
-                            assertion_type_str,
-                            assertion_result
-                                .error_message
-                                .as_ref()
-                                .unwrap_or(&"Failed".to_string())
-                        ));
-                        if let Some(ref actual) = assertion_result.actual_value {
-                            log.writeln(&format!(
-                                "{}      Expected: '{}'",
-                                colors::yellow(""),
-                                assertion_result.assertion.expected_value
-                            ));
-                            log.writeln(&format!(
-                                "{}      Actual: '{}'",
-                                colors::yellow(""),
-                                actual
-                            ));
-                        }
-                    }
-                }
-                log.writeln(&"-".repeat(30));
+                log_assertion_results(result, &mut log);
             }
         }
 
