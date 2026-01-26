@@ -66,7 +66,7 @@ Example: `{{base64_encode('username:password')}}` → `dXNlcm5hbWU6cGFzc3dvcmQ=`
 
 Converts a string to uppercase:
 
-```
+```text
 {{upper('text to convert')}}
 ```
 
@@ -76,7 +76,7 @@ Example: `{{upper('hello, world')}}` → `HELLO, WORLD`
 
 Converts a string to lowercase:
 
-```
+```text
 {{lower('TEXT TO CONVERT')}}
 ```
 
