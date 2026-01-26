@@ -18,7 +18,11 @@ Content-Type: application/json
     "name": "name()",
     "address": "address()",
     "job_title": "job_title()",
-    "email": "email()"
+    "email": "email()",
+    "getdate": "getdate()",
+    "gettime": "gettime()",
+    "getdatetime": "getdatetime()",
+    "getutcdatetime": "getutcdatetime()"
 }
 
 #
@@ -50,5 +54,9 @@ Content-Type: application/json
     "name": "name()",
     "address": "address()",
     "job_title": "job_title()",
-    "email": "email()"
+    "email": "email()",
+    "getdate": "getdate()",
+    "gettime": "gettime()",
+    "getdatetime": "getdatetime()",
+    "getutcdatetime": "getutcdatetime()"
 }
