@@ -26,3 +26,47 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
             .to_string())
     }
 }
+
+pub struct UpperSubstitutor {}
+impl FunctionSubstitutor for UpperSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"(?!)"
+    }
+
+    fn generate(&self) -> String {
+        String::new()
+    }
+
+    fn replace(&self, input: &str) -> Result<String, regex::Error> {
+        use regex::RegexBuilder;
+
+        let re = RegexBuilder::new(r"\bupper\(\s*'((?:[^'\\]|\\.)*)'\s*\)")
+            .case_insensitive(true)
+            .build()?;
+        Ok(re
+            .replace_all(input, |caps: &regex::Captures| caps[1].to_uppercase())
+            .to_string())
+    }
+}
+
+pub struct LowerSubstitutor {}
+impl FunctionSubstitutor for LowerSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"(?!)"
+    }
+
+    fn generate(&self) -> String {
+        String::new()
+    }
+
+    fn replace(&self, input: &str) -> Result<String, regex::Error> {
+        use regex::RegexBuilder;
+
+        let re = RegexBuilder::new(r"\blower\(\s*'((?:[^'\\]|\\.)*)'\s*\)")
+            .case_insensitive(true)
+            .build()?;
+        Ok(re
+            .replace_all(input, |caps: &regex::Captures| caps[1].to_lowercase())
+            .to_string())
+    }
+}

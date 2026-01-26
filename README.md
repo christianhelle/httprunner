@@ -30,7 +30,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
@@ -757,6 +757,32 @@ Content-Type: application/json
 }
 ```
 
+#### `upper()` - Convert to Uppercase
+Converts a string to uppercase. The string must be enclosed in single quotes.
+
+```http
+POST https://api.example.com/data
+Content-Type: application/json
+
+{
+  "code": "upper('hello, world')",
+  "shout": "UPPER('quiet text')"
+}
+```
+
+#### `lower()` - Convert to Lowercase
+Converts a string to lowercase. The string must be enclosed in single quotes.
+
+```http
+POST https://api.example.com/data
+Content-Type: application/json
+
+{
+  "normalized": "lower('HELLO, WORLD')",
+  "lowercase": "LOWER('Mixed Case Text')"
+}
+```
+
 #### `name()` - Generate Full Name
 Generates a random full name (first name + last name).
 
@@ -911,6 +937,8 @@ Content-Type: application/json
   "NUMBER": "NUMBER()",
   "to_base64": "base64_encode('Hello, World!')",
   "TO_BASE64": "BASE64_ENCODE('Hello, World!')",
+  "upper": "upper('hello, world')",
+  "lower": "lower('HELLO, WORLD')",
   "first_name": "first_name()",
   "last_name": "last_name()",
   "name": "name()",
@@ -1570,7 +1598,7 @@ The `examples/` directory contains several sample `.http` files:
 - **`status-codes.http`** - Tests different HTTP status codes (15 requests)
 - **`request-variables.http`** - Demonstrates request chaining with variables (5 requests)
 - **`variables.http`** - Shows variable usage and environment files
-- **`functions.http`** - Demonstrates built-in functions (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
+- **`functions.http`** - Demonstrates built-in functions (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - **`asserts.http`** - Response assertion examples
 - **`assertion-variables.http`** - Variable substitution in assertions
 - **`pagination-variables.http`** - Pagination scenarios with variable assertions

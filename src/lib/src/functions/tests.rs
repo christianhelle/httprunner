@@ -2,11 +2,13 @@ use crate::functions::date_functions::{
     GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
 };
 use crate::functions::generator_functions::{
-    AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
-    GuidSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor, StringSubstitutor,
+    AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor, GuidSubstitutor,
+    LastNameSubstitutor, NameSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
-use crate::functions::transform_functions::Base64EncodeSubstitutor;
 use crate::functions::substitution::FunctionSubstitutor;
+use crate::functions::transform_functions::{
+    Base64EncodeSubstitutor, LowerSubstitutor, UpperSubstitutor,
+};
 use regex::Regex;
 
 #[test]
@@ -2832,3 +2834,494 @@ Content-Type: application/json
     let time_pattern = Regex::new(r"\d{2}:\d{2}:\d{2}").unwrap();
     assert!(time_pattern.is_match(&result));
 }
+
+// ========== UPPER TRANSFORM FUNCTION TESTS ==========
+
+#[test]
+fn test_upper_basic() {
+    let result = UpperSubstitutor {}.replace(&String::from("upper('hello, world')"));
+    assert!(result.is_ok(), "Expected Ok result, got {:?}", result);
+    assert_eq!(result.unwrap(), "HELLO, WORLD");
+}
+
+#[test]
+fn test_upper_substitutor_single_quote() {
+    let sub = UpperSubstitutor {};
+    let input = "Code: upper('hello')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "Code: HELLO");
+}
+
+#[test]
+fn test_upper_substitutor_with_spaces() {
+    let sub = UpperSubstitutor {};
+    let input = "upper( 'test text' )";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "TEST TEXT");
+}
+
+#[test]
+fn test_upper_substitutor_case_insensitive() {
+    let sub = UpperSubstitutor {};
+
+    let input1 = "UPPER('hello')";
+    let result1 = sub.replace(input1).unwrap();
+    assert_eq!(result1, "HELLO");
+
+    let input2 = "Upper('hello')";
+    let result2 = sub.replace(input2).unwrap();
+    assert_eq!(result2, "HELLO");
+
+    let input3 = "uPpEr('hello')";
+    let result3 = sub.replace(input3).unwrap();
+    assert_eq!(result3, "HELLO");
+}
+
+#[test]
+fn test_upper_substitutor_empty_string() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "");
+}
+
+#[test]
+fn test_upper_substitutor_special_chars() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('hello, world!')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "HELLO, WORLD!");
+}
+
+#[test]
+fn test_upper_substitutor_multiple() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('foo') and upper('bar')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "FOO and BAR");
+}
+
+#[test]
+fn test_upper_substitutor_no_match() {
+    let sub = UpperSubstitutor {};
+    let input = "no transformation here";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "no transformation here");
+}
+
+#[test]
+fn test_upper_substitutor_json_body() {
+    let sub = UpperSubstitutor {};
+    let input = r#"{"code": "upper('abc123')"}"#;
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, r#"{"code": "ABC123"}"#);
+}
+
+#[test]
+fn test_upper_with_numbers() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('test123abc')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "TEST123ABC");
+}
+
+#[test]
+fn test_upper_already_uppercase() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('ALREADY UPPERCASE')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "ALREADY UPPERCASE");
+}
+
+#[test]
+fn test_upper_mixed_case() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('MiXeD CaSe TeXt')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "MIXED CASE TEXT");
+}
+
+#[test]
+fn test_upper_with_unicode() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('hello café')";
+    let result = sub.replace(input).unwrap();
+
+    // Should properly handle unicode
+    assert!(!result.contains("upper"));
+    assert!(result.contains("HELLO"));
+}
+
+#[test]
+fn test_upper_in_substitute_functions() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"text": "upper('hello')", "shout": "UPPER('world')"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("upper"));
+    assert!(result.contains("HELLO"));
+    assert!(result.contains("WORLD"));
+}
+
+#[test]
+fn test_upper_consecutive_calls() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"a": "upper('test1')", "b": "upper('test2')", "c": "upper('test3')"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("upper"));
+    assert!(result.contains("TEST1"));
+    assert!(result.contains("TEST2"));
+    assert!(result.contains("TEST3"));
+}
+
+#[test]
+fn test_upper_with_single_quote_in_value() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('he\\'s here')";
+    let result = sub.replace(input).unwrap();
+
+    assert!(!result.contains("upper"));
+}
+
+#[test]
+fn test_upper_regex_word_boundaries() {
+    let sub = UpperSubstitutor {};
+    let input1 = "upper('test')";
+    let result1 = sub.replace(input1).unwrap();
+    assert!(!result1.contains("upper"));
+
+    // Prefix should not prevent matching
+    let input2 = "use upper('test') here";
+    let result2 = sub.replace(input2).unwrap();
+    assert!(!result2.contains("upper"));
+}
+
+#[test]
+fn test_upper_consistency() {
+    let sub = UpperSubstitutor {};
+    let input = "upper('consistent')";
+
+    let result1 = sub.replace(input).unwrap();
+    let result2 = sub.replace(input).unwrap();
+
+    assert_eq!(result1, result2, "Upper transformation should be consistent");
+    assert_eq!(result1, "CONSISTENT");
+}
+
+// ========== LOWER TRANSFORM FUNCTION TESTS ==========
+
+#[test]
+fn test_lower_basic() {
+    let result = LowerSubstitutor {}.replace(&String::from("lower('HELLO, WORLD')"));
+    assert!(result.is_ok(), "Expected Ok result, got {:?}", result);
+    assert_eq!(result.unwrap(), "hello, world");
+}
+
+#[test]
+fn test_lower_substitutor_single_quote() {
+    let sub = LowerSubstitutor {};
+    let input = "Code: lower('HELLO')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "Code: hello");
+}
+
+#[test]
+fn test_lower_substitutor_with_spaces() {
+    let sub = LowerSubstitutor {};
+    let input = "lower( 'TEST TEXT' )";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "test text");
+}
+
+#[test]
+fn test_lower_substitutor_case_insensitive() {
+    let sub = LowerSubstitutor {};
+
+    let input1 = "LOWER('HELLO')";
+    let result1 = sub.replace(input1).unwrap();
+    assert_eq!(result1, "hello");
+
+    let input2 = "Lower('HELLO')";
+    let result2 = sub.replace(input2).unwrap();
+    assert_eq!(result2, "hello");
+
+    let input3 = "lOwEr('HELLO')";
+    let result3 = sub.replace(input3).unwrap();
+    assert_eq!(result3, "hello");
+}
+
+#[test]
+fn test_lower_substitutor_empty_string() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "");
+}
+
+#[test]
+fn test_lower_substitutor_special_chars() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('HELLO, WORLD!')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "hello, world!");
+}
+
+#[test]
+fn test_lower_substitutor_multiple() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('FOO') and lower('BAR')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "foo and bar");
+}
+
+#[test]
+fn test_lower_substitutor_no_match() {
+    let sub = LowerSubstitutor {};
+    let input = "no transformation here";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "no transformation here");
+}
+
+#[test]
+fn test_lower_substitutor_json_body() {
+    let sub = LowerSubstitutor {};
+    let input = r#"{"code": "lower('ABC123')"}"#;
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, r#"{"code": "abc123"}"#);
+}
+
+#[test]
+fn test_lower_with_numbers() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('TEST123ABC')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "test123abc");
+}
+
+#[test]
+fn test_lower_already_lowercase() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('already lowercase')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "already lowercase");
+}
+
+#[test]
+fn test_lower_mixed_case() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('MiXeD CaSe TeXt')";
+    let result = sub.replace(input).unwrap();
+
+    assert_eq!(result, "mixed case text");
+}
+
+#[test]
+fn test_lower_with_unicode() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('HELLO CAFÉ')";
+    let result = sub.replace(input).unwrap();
+
+    // Should properly handle unicode
+    assert!(!result.contains("lower"));
+    assert!(result.contains("hello"));
+}
+
+#[test]
+fn test_lower_in_substitute_functions() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"text": "lower('HELLO')", "whisper": "LOWER('WORLD')"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("lower("));
+    assert!(result.contains("hello"));
+    assert!(result.contains("world"));
+}
+
+#[test]
+fn test_lower_consecutive_calls() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"a": "lower('TEST1')", "b": "lower('TEST2')", "c": "lower('TEST3')"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("lower"));
+    assert!(result.contains("test1"));
+    assert!(result.contains("test2"));
+    assert!(result.contains("test3"));
+}
+
+#[test]
+fn test_lower_with_single_quote_in_value() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('HE\\'S HERE')";
+    let result = sub.replace(input).unwrap();
+
+    assert!(!result.contains("lower"));
+}
+
+#[test]
+fn test_lower_regex_word_boundaries() {
+    let sub = LowerSubstitutor {};
+    let input1 = "lower('TEST')";
+    let result1 = sub.replace(input1).unwrap();
+    assert!(!result1.contains("lower"));
+
+    // Prefix should not prevent matching
+    let input2 = "use lower('TEST') here";
+    let result2 = sub.replace(input2).unwrap();
+    assert!(!result2.contains("lower"));
+}
+
+#[test]
+fn test_lower_consistency() {
+    let sub = LowerSubstitutor {};
+    let input = "lower('CONSISTENT')";
+
+    let result1 = sub.replace(input).unwrap();
+    let result2 = sub.replace(input).unwrap();
+
+    assert_eq!(result1, result2, "Lower transformation should be consistent");
+    assert_eq!(result1, "consistent");
+}
+
+// ========== COMBINED UPPER AND LOWER TESTS ==========
+
+#[test]
+fn test_upper_and_lower_together() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"upper": "upper('hello')", "lower": "lower('WORLD')"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("upper("));
+    assert!(!result.contains("lower("));
+    assert!(result.contains("HELLO"));
+    assert!(result.contains("world"));
+}
+
+#[test]
+fn test_upper_and_lower_multiple_in_json() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{
+        "id": "guid()",
+        "code": "upper('test123')",
+        "name": "lower('JOHN DOE')",
+        "email": "email()",
+        "shout": "upper('hello')"
+    }"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("upper("));
+    assert!(!result.contains("lower("));
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("email()"));
+    assert!(result.contains("TEST123"));
+    assert!(result.contains("john doe"));
+    assert!(result.contains("HELLO"));
+}
+
+#[test]
+fn test_upper_and_lower_in_http_request() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"POST /api/data HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+
+{"code": "upper('abc123')", "normalized": "lower('MIXED Case')", "id": "guid()"}"#;
+
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("upper("));
+    assert!(!result.contains("lower("));
+    assert!(!result.contains("guid()"));
+    assert!(result.contains("ABC123"));
+    assert!(result.contains("mixed case"));
+    assert!(result.contains("POST"));
+}
+
+#[test]
+fn test_transform_with_base64() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"encoded": "base64_encode('hello')", "upper": "upper('world')", "lower": "lower('TEST')"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("base64_encode"));
+    assert!(!result.contains("upper("));
+    assert!(!result.contains("lower("));
+    assert!(result.contains("aGVsbG8="));
+    assert!(result.contains("WORLD"));
+    assert!(result.contains("test"));
+}
+
+#[test]
+fn test_upper_lower_idempotency() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"upper": "upper('test')", "lower": "lower('TEST')"}"#;
+    
+    let result1 = substitute_functions(input).unwrap();
+    let result2 = substitute_functions(&result1).unwrap();
+    
+    // Second substitution should not change anything
+    assert_eq!(result1, result2);
+    assert!(result1.contains("TEST"));
+    assert!(result1.contains("test"));
+}
+
+#[test]
+fn test_upper_lower_with_variables_notation() {
+    use crate::functions::substitute_functions;
+
+    // Simulates using transform functions with request variable values
+    let input = r#"{"normalized": "lower('USER@EXAMPLE.COM')", "shouting": "upper('important message')"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(result.contains("user@example.com"));
+    assert!(result.contains("IMPORTANT MESSAGE"));
+}
+
+#[test]
+fn test_upper_lower_very_long_strings() {
+    let sub_upper = UpperSubstitutor {};
+    let sub_lower = LowerSubstitutor {};
+    
+    let long_lower = "a".repeat(1000);
+    let long_upper = "A".repeat(1000);
+    
+    let input_upper = format!("upper('{}')", long_lower);
+    let result_upper = sub_upper.replace(&input_upper).unwrap();
+    assert!(!result_upper.contains("upper"));
+    assert_eq!(result_upper, long_upper);
+    
+    let input_lower = format!("lower('{}')", long_upper);
+    let result_lower = sub_lower.replace(&input_lower).unwrap();
+    assert!(!result_lower.contains("lower"));
+    assert_eq!(result_lower, long_lower);
+}
+

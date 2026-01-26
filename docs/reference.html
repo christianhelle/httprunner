@@ -324,6 +324,16 @@ GET {{baseUrl}}/users</code>
                                 <td>dGV4dA==</td>
                             </tr>
                             <tr>
+                                <td><code>upper('text')</code></td>
+                                <td>Convert string to uppercase</td>
+                                <td>TEXT</td>
+                            </tr>
+                            <tr>
+                                <td><code>lower('TEXT')</code></td>
+                                <td>Convert string to lowercase</td>
+                                <td>text</td>
+                            </tr>
+                            <tr>
                                 <td><code>name()</code></td>
                                 <td>Generate random full name</td>
                                 <td>John Smith</td>
@@ -382,7 +392,7 @@ GET {{baseUrl}}/users</code>
                         <li>Can be used in URLs, headers, and request bodies</li>
                         <li>Values are generated dynamically for each request</li>
                         <li>Can be combined with variables</li>
-                        <li><code>base64_encode()</code> requires single-quoted string argument</li>
+                        <li><code>base64_encode()</code>, <code>upper()</code>, and <code>lower()</code> require single-quoted string arguments</li>
                     </ul>
 
                     <h3>Example</h3>

@@ -283,6 +283,30 @@ Content-Type: application/json
 }</code>
                     </div>
 
+                    <h4>upper() - Convert to Uppercase</h4>
+                    <p>Converts a string to uppercase. The string must be enclosed in single quotes.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/data
+Content-Type: application/json
+
+{
+  "code": "upper('hello, world')",
+  "shout": "UPPER('quiet text')"
+}</code>
+                    </div>
+
+                    <h4>lower() - Convert to Lowercase</h4>
+                    <p>Converts a string to lowercase. The string must be enclosed in single quotes.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/data
+Content-Type: application/json
+
+{
+  "normalized": "lower('HELLO, WORLD')",
+  "lowercase": "LOWER('Mixed Case Text')"
+}</code>
+                    </div>
+
                     <h4>name() - Generate Full Name</h4>
                     <p>Generates a random full name (first name + last name).</p>
                     <div class="code-block">

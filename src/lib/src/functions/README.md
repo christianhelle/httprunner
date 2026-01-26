@@ -62,6 +62,26 @@ Encodes a string value to Base64:
 
 Example: `{{base64_encode('username:password')}}` → `dXNlcm5hbWU6cGFzc3dvcmQ=`
 
+### Uppercase Transformation
+
+Converts a string to uppercase:
+
+```text
+{{upper('text to convert')}}
+```
+
+Example: `{{upper('hello, world')}}` → `HELLO, WORLD`
+
+### Lowercase Transformation
+
+Converts a string to lowercase:
+
+```text
+{{lower('TEXT TO CONVERT')}}
+```
+
+Example: `{{lower('HELLO, WORLD')}}` → `hello, world`
+
 ### Name Generation
 
 Generates a random full name (first name + last name):
