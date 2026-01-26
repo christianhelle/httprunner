@@ -208,3 +208,16 @@ impl FunctionSubstitutor for GetDateTimeSubstitutor {
         local.format("%Y-%m-%d %H:%M:%S").to_string()
     }
 }
+
+pub struct GetUtcDateTimeSubstitutor {}
+impl FunctionSubstitutor for GetUtcDateTimeSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\bgetutcdatetime\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use chrono::prelude::*;
+        let utc: DateTime<Utc> = Utc::now();
+        utc.format("%Y-%m-%d %H:%M:%S").to_string()
+    }
+}
