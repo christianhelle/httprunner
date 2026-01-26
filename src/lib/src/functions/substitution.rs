@@ -9,7 +9,7 @@ use crate::functions::generators::{
 use anyhow::Result;
 use regex::RegexBuilder;
 
-pub trait FunctionSubstitutor {
+pub trait FunctionSubstitutor: Sync {
     fn get_regex(&self) -> &str;
     fn generate(&self) -> String;
     fn replace(&self, input: &str) -> std::result::Result<String, regex::Error> {
@@ -23,7 +23,7 @@ pub trait FunctionSubstitutor {
 }
 
 pub fn substitute_functions(input: &str) -> Result<String> {
-    let substitutors: &[&dyn FunctionSubstitutor] = &[
+    static SUBSTITUTORS: &[&dyn FunctionSubstitutor] = &[
         &GuidSubstitutor {},
         &StringSubstitutor {},
         &NumberSubstitutor {},
@@ -41,7 +41,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
     ];
 
     let mut result = input.to_string();
-    for substitutor in substitutors {
+    for substitutor in SUBSTITUTORS {
         result = substitutor.replace(&result)?;
     }
 
