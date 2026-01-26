@@ -182,3 +182,16 @@ fn normalize_name_for_email(name: String) -> String {
         .collect::<String>()
         .to_lowercase()
 }
+
+pub struct GetTimeSubstitutor {}
+impl FunctionSubstitutor for GetTimeSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\bgettime\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use chrono::prelude::*;
+        let local: DateTime<Local> = Local::now();
+        local.format("%H:%M:%S").to_string()
+    }
+}
