@@ -17,7 +17,8 @@ Content-Type: application/json
     "last_name": "last_name()",
     "name": "name()",
     "address": "address()",
-    "job_title": "job_title()"
+    "job_title": "job_title()",
+    "email": "email()"
 }
 
 #
@@ -48,5 +49,6 @@ Content-Type: application/json
     "last_name": "last_name()",
     "name": "name()",
     "address": "address()",
-    "job_title": "job_title()"
+    "job_title": "job_title()",
+    "email": "email()"
 }

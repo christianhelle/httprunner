@@ -942,3 +942,16 @@ pub static JOB_TITLES: &[&str] = &[
     "Web Developer",
     "Digital Marketing Manager",
 ];
+
+pub static EMAIL_DOMAINS: &[&str] = &[
+    "example.com",
+    "mail.com",
+    "test.org",
+    "demo.net",
+    "sample.co",
+    "mydomain.io",
+    "webmail.com",
+    "inbox.org",
+    "email.net",
+    "domain.co",
+];

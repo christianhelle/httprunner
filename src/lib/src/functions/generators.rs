@@ -151,3 +151,26 @@ impl FunctionSubstitutor for JobTitleSubstitutor {
         values::JOB_TITLES[index].to_string()
     }
 }
+
+pub struct EmailSubstitutor {}
+impl FunctionSubstitutor for EmailSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\bemail\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let index = rng.gen_range(0..values::EMAIL_DOMAINS.len());
+        let domain = values::EMAIL_DOMAINS[index].to_string();
+        let first_name = FirstNameSubstitutor {}.generate();
+        let last_name = LastNameSubstitutor {}.generate();
+        format!(
+            "{}.{}@{}",
+            first_name.to_lowercase(),
+            last_name.to_lowercase(),
+            domain
+        )
+        .to_string()
+    }
+}
