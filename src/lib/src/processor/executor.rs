@@ -106,10 +106,9 @@ pub fn process_http_files(
         .with_insecure(insecure)
         .with_pretty_json(pretty_json);
 
-    process_http_files_with_config(
-        &config,
-        &|request, verbose, insecure| runner::execute_http_request(request, verbose, insecure),
-    )
+    process_http_files_with_config(&config, &|request, verbose, insecure| {
+        runner::execute_http_request(request, verbose, insecure)
+    })
 }
 
 pub fn process_http_files_with_silent(
@@ -129,10 +128,9 @@ pub fn process_http_files_with_silent(
         .with_pretty_json(pretty_json)
         .with_silent(silent);
 
-    process_http_files_with_config(
-        &config,
-        &|request, verbose, insecure| runner::execute_http_request(request, verbose, insecure),
-    )
+    process_http_files_with_config(&config, &|request, verbose, insecure| {
+        runner::execute_http_request(request, verbose, insecure)
+    })
 }
 
 pub fn process_http_files_with_executor<F>(
@@ -153,30 +151,6 @@ where
         .with_environment(environment)
         .with_insecure(insecure)
         .with_pretty_json(pretty_json);
-
-    process_http_files_with_config(&config, executor)
-}
-
-pub fn process_http_files_with_executor_and_silent<F>(
-    files: &[String],
-    verbose: bool,
-    log_filename: Option<&str>,
-    environment: Option<&str>,
-    insecure: bool,
-    pretty_json: bool,
-    silent: bool,
-    executor: &F,
-) -> Result<ProcessorResults>
-where
-    F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
-{
-    let config = ProcessorConfig::new(files)
-        .with_verbose(verbose)
-        .with_log_filename(log_filename)
-        .with_environment(environment)
-        .with_insecure(insecure)
-        .with_pretty_json(pretty_json)
-        .with_silent(silent);
 
     process_http_files_with_config(&config, executor)
 }
