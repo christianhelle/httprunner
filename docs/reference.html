@@ -353,6 +353,26 @@ GET {{baseUrl}}/users</code>
                                 <td>Generate random job title</td>
                                 <td>Senior Software Engineer</td>
                             </tr>
+                            <tr>
+                                <td><code>getdate()</code></td>
+                                <td>Get current local date (YYYY-MM-DD)</td>
+                                <td>2026-01-26</td>
+                            </tr>
+                            <tr>
+                                <td><code>gettime()</code></td>
+                                <td>Get current local time (HH:MM:SS)</td>
+                                <td>15:38:26</td>
+                            </tr>
+                            <tr>
+                                <td><code>getdatetime()</code></td>
+                                <td>Get current local date and time (YYYY-MM-DD HH:MM:SS)</td>
+                                <td>2026-01-26 15:38:26</td>
+                            </tr>
+                            <tr>
+                                <td><code>getutcdatetime()</code></td>
+                                <td>Get current UTC date and time (YYYY-MM-DD HH:MM:SS)</td>
+                                <td>2026-01-26 15:38:26</td>
+                            </tr>
                         </tbody>
                     </table>
 
@@ -377,7 +397,10 @@ Content-Type: application/json
   "auth": "base64_encode('user:pass')",
   "name": "name()",
   "email": "email()",
-  "address": "address()"
+  "address": "address()",
+  "eventDate": "getdate()",
+  "timestamp": "getdatetime()",
+  "utcTime": "getutcdatetime()"
 }</code>
                     </div>
                 </section>

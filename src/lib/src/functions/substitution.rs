@@ -1,12 +1,16 @@
-use crate::functions::generators::{
-    AddressSubstitutor, Base64EncodeSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
+use crate::functions::date_functions::{
+    GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
+};
+use crate::functions::generator_functions::{
+    AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
     GuidSubstitutor, JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
     StringSubstitutor,
 };
+use crate::functions::transform_functions::Base64EncodeSubstitutor;
 use anyhow::Result;
 use regex::RegexBuilder;
 
-pub trait FunctionSubstitutor {
+pub trait FunctionSubstitutor: Sync {
     fn get_regex(&self) -> &str;
     fn generate(&self) -> String;
     fn replace(&self, input: &str) -> std::result::Result<String, regex::Error> {
@@ -20,7 +24,7 @@ pub trait FunctionSubstitutor {
 }
 
 pub fn substitute_functions(input: &str) -> Result<String> {
-    let substitutors: &[&dyn FunctionSubstitutor] = &[
+    static SUBSTITUTORS: &[&dyn FunctionSubstitutor] = &[
         &GuidSubstitutor {},
         &StringSubstitutor {},
         &NumberSubstitutor {},
@@ -31,10 +35,14 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &AddressSubstitutor {},
         &JobTitleSubstitutor {},
         &EmailSubstitutor {},
+        &GetDateSubstitutor {},
+        &GetTimeSubstitutor {},
+        &GetDateTimeSubstitutor {},
+        &GetUtcDateTimeSubstitutor {},
     ];
 
     let mut result = input.to_string();
-    for substitutor in substitutors {
+    for substitutor in SUBSTITUTORS {
         result = substitutor.replace(&result)?;
     }
 

@@ -355,6 +355,54 @@ Content-Type: application/json
 }</code>
                     </div>
 
+                    <h4>getdate() - Get Current Date</h4>
+                    <p>Returns the current local date in <code>YYYY-MM-DD</code> format.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/events
+Content-Type: application/json
+
+{
+  "eventDate": "getdate()",
+  "createdDate": "GETDATE()"
+}</code>
+                    </div>
+
+                    <h4>gettime() - Get Current Time</h4>
+                    <p>Returns the current local time in <code>HH:MM:SS</code> format (24-hour).</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/logs
+Content-Type: application/json
+
+{
+  "timestamp": "gettime()",
+  "logTime": "GETTIME()"
+}</code>
+                    </div>
+
+                    <h4>getdatetime() - Get Current Date and Time</h4>
+                    <p>Returns the current local date and time in <code>YYYY-MM-DD HH:MM:SS</code> format.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/records
+Content-Type: application/json
+
+{
+  "createdAt": "getdatetime()",
+  "timestamp": "GETDATETIME()"
+}</code>
+                    </div>
+
+                    <h4>getutcdatetime() - Get Current UTC Date and Time</h4>
+                    <p>Returns the current UTC date and time in <code>YYYY-MM-DD HH:MM:SS</code> format.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/records
+Content-Type: application/json
+
+{
+  "utcTimestamp": "getutcdatetime()",
+  "serverTime": "GETUTCDATETIME()"
+}</code>
+                    </div>
+
                     <h3>Function Features</h3>
                     <ul>
                         <li><strong>Case-insensitive</strong>: guid(), GUID(), and Guid() all work identically</li>
