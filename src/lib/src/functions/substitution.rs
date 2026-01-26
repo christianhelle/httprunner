@@ -1,5 +1,6 @@
 use crate::functions::generators::{
     AddressSubstitutor, Base64EncodeSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
+    GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
     GuidSubstitutor, JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
     StringSubstitutor,
 };
@@ -31,6 +32,10 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &AddressSubstitutor {},
         &JobTitleSubstitutor {},
         &EmailSubstitutor {},
+        &GetDateSubstitutor {},
+        &GetTimeSubstitutor {},
+        &GetDateTimeSubstitutor {},
+        &GetUtcDateTimeSubstitutor {},
     ];
 
     let mut result = input.to_string();
