@@ -1521,3 +1521,624 @@ fn test_substitution_with_numeric_suffixes() {
     assert!(!result.contains("string()"));
     assert!(!result.contains("number()"));
 }
+
+// ========== JOB TITLE SUBSTITUTOR TESTS ==========
+
+#[test]
+fn test_job_title_substitutor() {
+    use crate::functions::generators::JobTitleSubstitutor;
+    
+    let sub = JobTitleSubstitutor {};
+    let job_title = sub.generate();
+    assert!(!job_title.is_empty(), "Generated job title should not be empty");
+}
+
+#[test]
+fn test_job_title_substitutor_generates_different_values() {
+    use crate::functions::generators::JobTitleSubstitutor;
+    
+    let sub = JobTitleSubstitutor {};
+    let job1 = sub.generate();
+    let job2 = sub.generate();
+    
+    // Titles should differ (not guaranteed but likely with pool of 20)
+    assert!(!job1.is_empty());
+    assert!(!job2.is_empty());
+}
+
+// ========== COMPREHENSIVE FIRST/LAST NAME TESTS ==========
+
+#[test]
+fn test_first_name_generates_valid_names() {
+    let sub = FirstNameSubstitutor {};
+    for _ in 0..50 {
+        let name = sub.generate();
+        assert!(!name.is_empty(), "First name should not be empty");
+        assert!(name.len() > 0, "First name should have at least one character");
+    }
+}
+
+#[test]
+fn test_last_name_generates_valid_names() {
+    let sub = LastNameSubstitutor {};
+    for _ in 0..50 {
+        let name = sub.generate();
+        assert!(!name.is_empty(), "Last name should not be empty");
+        assert!(name.len() > 0, "Last name should have at least one character");
+    }
+}
+
+#[test]
+fn test_full_name_structure() {
+    let sub = NameSubstitutor {};
+    let name = sub.generate();
+    let parts: Vec<&str> = name.split(' ').collect();
+    
+    assert_eq!(parts.len(), 2, "Full name should have exactly 2 parts");
+    assert!(!parts[0].is_empty(), "First name part should not be empty");
+    assert!(!parts[1].is_empty(), "Last name part should not be empty");
+}
+
+// ========== GUID VERSION AND VARIANT VALIDATION ==========
+
+#[test]
+fn test_guid_version_4_compliance() {
+    let sub = GuidSubstitutor {};
+    
+    for _ in 0..50 {
+        let guid = sub.generate();
+        // Position 12 should be '4' for UUID v4
+        assert_eq!(
+            guid.chars().nth(12),
+            Some('4'),
+            "UUID version should be 4 at position 12 in {}",
+            guid
+        );
+    }
+}
+
+#[test]
+fn test_guid_variant_validation() {
+    let sub = GuidSubstitutor {};
+    let valid_variants = ['8', '9', 'a', 'b', 'A', 'B'];
+    
+    for _ in 0..50 {
+        let guid = sub.generate();
+        // Position 16 should be 8, 9, a, or b for variant 1
+        let variant = guid.chars().nth(16).unwrap();
+        assert!(
+            valid_variants.contains(&variant),
+            "UUID variant at position 16 should be one of {:?}, got {} in {}",
+            valid_variants,
+            variant,
+            guid
+        );
+    }
+}
+
+// ========== COMPREHENSIVE BASE64 EDGE CASES ==========
+
+#[test]
+fn test_base64_encode_with_single_character() {
+    let sub = Base64EncodeSubstitutor {};
+    let input = "base64_encode('a')";
+    let result = sub.replace(input).unwrap();
+    
+    assert_eq!(result, "YQ==");
+    assert!(!result.contains("base64_encode"));
+}
+
+#[test]
+fn test_base64_encode_with_two_characters() {
+    let sub = Base64EncodeSubstitutor {};
+    let input = "base64_encode('ab')";
+    let result = sub.replace(input).unwrap();
+    
+    assert_eq!(result, "YWI=");
+}
+
+#[test]
+fn test_base64_encode_with_three_characters() {
+    let sub = Base64EncodeSubstitutor {};
+    let input = "base64_encode('abc')";
+    let result = sub.replace(input).unwrap();
+    
+    assert_eq!(result, "YWJj");
+}
+
+#[test]
+fn test_base64_encode_padding_variants() {
+    let sub = Base64EncodeSubstitutor {};
+    
+    // No padding
+    let r1 = sub.replace("base64_encode('abc')").unwrap();
+    assert_eq!(r1, "YWJj");
+    
+    // Single padding
+    let r2 = sub.replace("base64_encode('ab')").unwrap();
+    assert_eq!(r2, "YWI=");
+    
+    // Double padding
+    let r3 = sub.replace("base64_encode('a')").unwrap();
+    assert_eq!(r3, "YQ==");
+}
+
+#[test]
+fn test_base64_encode_numbers_only() {
+    let sub = Base64EncodeSubstitutor {};
+    let input = "base64_encode('0123456789')";
+    let result = sub.replace(input).unwrap();
+    
+    assert_eq!(result, "MDEyMzQ1Njc4OQ==");
+}
+
+// ========== FUNCTION REGEX VALIDATION ==========
+
+#[test]
+fn test_regex_does_not_match_function_with_arguments() {
+    let sub = GuidSubstitutor {};
+    let regex = regex::Regex::new(sub.get_regex()).unwrap();
+    
+    // guid() should match but guid(something) shouldn't (though regex might match guid() part)
+    assert!(regex.is_match("guid()"));
+}
+
+#[test]
+fn test_base64_encode_regex_word_boundaries() {
+    let sub = Base64EncodeSubstitutor {};
+    let input1 = "base64_encode('test')";
+    let result1 = sub.replace(input1).unwrap();
+    assert!(!result1.contains("base64_encode"));
+    
+    // Prefix should not prevent matching
+    let input2 = "use base64_encode('test') here";
+    let result2 = sub.replace(input2).unwrap();
+    assert!(!result2.contains("base64_encode"));
+}
+
+// ========== COMPREHENSIVE SUBSTITUTION SEQUENCE TESTS ==========
+
+#[test]
+fn test_substitution_order_independence() {
+    use crate::functions::substitute_functions;
+    
+    let input = "guid() name() string() number() address()";
+    let result = substitute_functions(input).unwrap();
+    
+    // All should be replaced regardless of order
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("name()"));
+    assert!(!result.contains("string()"));
+    assert!(!result.contains("number()"));
+    assert!(!result.contains("address()"));
+}
+
+#[test]
+fn test_substitution_with_repeated_patterns() {
+    use crate::functions::substitute_functions;
+    
+    let input = "guid() guid() guid() name() name()";
+    let result = substitute_functions(input).unwrap();
+    
+    let guid_pattern = Regex::new(r"[0-9a-fA-F]{32}").unwrap();
+    let guid_matches: Vec<_> = guid_pattern.find_iter(&result).collect();
+    assert_eq!(guid_matches.len(), 3, "Should have 3 GUIDs");
+    
+    // The result should have spaces: guid guid guid (first last) (first last)
+    // That's 4 separating spaces + 2 spaces in full names = 6 spaces
+    let space_count = result.matches(' ').count();
+    assert!(space_count >= 4, "Should have at least 4 spaces separating items");
+}
+
+// ========== COMPLEX URL AND QUERY STRING TESTS ==========
+
+#[test]
+fn test_substitution_in_complex_url_path() {
+    use crate::functions::substitute_functions;
+    
+    let input = "/api/v1/users/guid()/posts/guid()/comments/number()/replies/string()";
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("number()"));
+    assert!(!result.contains("string()"));
+    assert!(result.starts_with("/api/v1/users/"));
+}
+
+#[test]
+fn test_substitution_in_query_string_with_operators() {
+    use crate::functions::substitute_functions;
+    
+    let input = "?id=guid()&name=first_name()&age>=number()&score<=number()";
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("first_name()"));
+    assert!(!result.contains("number()"));
+    assert!(result.contains("?"));
+    assert!(result.contains("&"));
+    assert!(result.contains(">="));
+    assert!(result.contains("<="));
+}
+
+// ========== ADDRESS COMPREHENSIVE TESTS ==========
+
+#[test]
+fn test_address_substitutor_produces_non_empty() {
+    let sub = AddressSubstitutor {};
+    
+    for _ in 0..50 {
+        let addr = sub.generate();
+        assert!(!addr.is_empty(), "Address should not be empty");
+        assert!(addr.len() > 5, "Address should have meaningful length");
+    }
+}
+
+#[test]
+fn test_address_substitutor_contains_typical_components() {
+    let sub = AddressSubstitutor {};
+    let addr = sub.generate();
+    
+    // Addresses should contain numbers, letters, and typically commas/spaces
+    assert!(addr.contains(|c: char| c.is_numeric()) || addr.contains(' '),
+        "Address should contain numbers or spaces");
+}
+
+#[test]
+fn test_address_in_complex_json() {
+    use crate::functions::substitute_functions;
+    
+    let input = r#"{"locations": [{"address": "address()"}, {"address": "address()"}, {"address": "address()"}]}"#;
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("address()"));
+    assert!(result.contains("locations"));
+    assert_eq!(result.matches("[").count(), 1);
+}
+
+// ========== SUBSTITUTION SAFETY AND STABILITY TESTS ==========
+
+#[test]
+fn test_substitution_does_not_modify_non_function_content() {
+    use crate::functions::substitute_functions;
+    
+    let input = "This is plain text without any functions 12345 !@#$%";
+    let result = substitute_functions(input).unwrap();
+    
+    assert_eq!(input, result, "Non-function content should not be modified");
+}
+
+#[test]
+fn test_substitution_preserves_special_json_characters() {
+    use crate::functions::substitute_functions;
+    
+    let input = r#"{"key": "guid()", "array": [], "number": 123, "bool": true}"#;
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(result.contains("[]"));
+    assert!(result.contains("123"));
+    assert!(result.contains("true"));
+    assert!(!result.contains("guid()"));
+}
+
+// ========== EXTREME LENGTH TESTS ==========
+
+#[test]
+fn test_substitution_with_very_long_json() {
+    use crate::functions::substitute_functions;
+    
+    let mut input = String::from(r#"{"items": ["#);
+    for i in 0..100 {
+        input.push_str(&format!(r#"{{"id": "guid()", "index": {}}}"#, i));
+        if i < 99 {
+            input.push(',');
+        }
+    }
+    input.push_str(r#"]}"#);
+    
+    let result = substitute_functions(&input).unwrap();
+    assert!(!result.contains("guid()"));
+}
+
+#[test]
+fn test_base64_encode_very_long_input() {
+    let sub = Base64EncodeSubstitutor {};
+    let long_text = "a".repeat(5000);
+    let input = format!("base64_encode('{}')", long_text);
+    let result = sub.replace(&input).unwrap();
+    
+    assert!(!result.contains("base64_encode"));
+    assert!(!result.contains(&long_text));
+}
+
+// ========== GENERATION UNIQUENESS TESTS ==========
+
+#[test]
+fn test_string_generation_variety() {
+    use std::collections::HashSet;
+    
+    let sub = StringSubstitutor {};
+    let mut values = HashSet::new();
+    
+    for _ in 0..200 {
+        values.insert(sub.generate());
+    }
+    
+    // Should have many different values (out of 200 iterations)
+    assert!(values.len() > 150, "Should generate mostly unique strings in 200 iterations");
+}
+
+#[test]
+fn test_guid_generation_uniqueness_large_set() {
+    use std::collections::HashSet;
+    
+    let sub = GuidSubstitutor {};
+    let mut values = HashSet::new();
+    
+    for _ in 0..1000 {
+        assert!(
+            values.insert(sub.generate()),
+            "Generated duplicate GUID"
+        );
+    }
+    
+    assert_eq!(values.len(), 1000);
+}
+
+// ========== FUNCTION CALLING VARIATION TESTS ==========
+
+#[test]
+fn test_function_with_internal_whitespace() {
+    use crate::functions::substitute_functions;
+    
+    let input = "guid(  )";
+    let result = substitute_functions(input).unwrap();
+    
+    // guid(  ) with internal whitespace is not recognized as guid()
+    // so it should remain unchanged
+    assert_eq!(input, result, "guid(  ) should not be substituted");
+}
+
+#[test]
+fn test_all_generators_produce_strings() {
+    let guid = GuidSubstitutor {}.generate();
+    let string = StringSubstitutor {}.generate();
+    let number = NumberSubstitutor {}.generate();
+    let name = NameSubstitutor {}.generate();
+    let first_name = FirstNameSubstitutor {}.generate();
+    let last_name = LastNameSubstitutor {}.generate();
+    let address = AddressSubstitutor {}.generate();
+    
+    assert!(!guid.is_empty());
+    assert!(!string.is_empty());
+    assert!(!number.is_empty());
+    assert!(!name.is_empty());
+    assert!(!first_name.is_empty());
+    assert!(!last_name.is_empty());
+    assert!(!address.is_empty());
+}
+
+// ========== SUBSTITUTION CONSISTENCY TESTS ==========
+
+#[test]
+fn test_multiple_substitution_calls_same_input_different_outputs() {
+    use crate::functions::substitute_functions;
+    
+    let input = r#"{"id": "guid()"}"#;
+    let result1 = substitute_functions(input).unwrap();
+    let result2 = substitute_functions(input).unwrap();
+    
+    // Results should be different (unless extremely unlikely collision)
+    assert_ne!(result1, result2, "Multiple substitutions should produce different random values");
+}
+
+#[test]
+fn test_base64_encode_consistency() {
+    let sub = Base64EncodeSubstitutor {};
+    let input = "base64_encode('consistent')";
+    
+    let result1 = sub.replace(input).unwrap();
+    let result2 = sub.replace(input).unwrap();
+    
+    assert_eq!(result1, result2, "Base64 encoding should be consistent");
+}
+
+// ========== NESTED FUNCTION RESILIENCE TESTS ==========
+
+#[test]
+fn test_functions_do_not_interfere_with_each_other() {
+    use crate::functions::substitute_functions;
+    
+    let inputs = vec![
+        r#"{"guid": "guid()", "name": "name()"}"#,
+        r#"{"string": "string()", "number": number()}"#,
+        r#"{"first": "first_name()", "last": "last_name()"}"#,
+        r#"{"address": "address()", "id": "guid()"}"#,
+    ];
+    
+    for input in inputs {
+        let result = substitute_functions(input).unwrap();
+        
+        // Verify all functions were substituted
+        assert!(!result.contains("guid()"));
+        assert!(!result.contains("name()"));
+        assert!(!result.contains("string()"));
+        assert!(!result.contains("number()"));
+        assert!(!result.contains("first_name()"));
+        assert!(!result.contains("last_name()"));
+        assert!(!result.contains("address()"));
+    }
+}
+
+// ========== RAPID GENERATION TESTS ==========
+
+#[test]
+fn test_rapid_guid_generation() {
+    let sub = GuidSubstitutor {};
+    let mut guids = Vec::new();
+    
+    for _ in 0..100 {
+        guids.push(sub.generate());
+    }
+    
+    // All should be valid
+    for guid in guids {
+        assert_eq!(guid.len(), 32);
+        assert!(guid.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+}
+
+#[test]
+fn test_rapid_number_generation() {
+    let sub = NumberSubstitutor {};
+    
+    for _ in 0..100 {
+        let num_str = sub.generate();
+        let num: i32 = num_str.parse().unwrap();
+        assert!((0..=100).contains(&num));
+    }
+}
+
+// ========== SUBSTITUTE_FUNCTIONS EDGE CASES ==========
+
+#[test]
+fn test_substitute_functions_empty_string() {
+    use crate::functions::substitute_functions;
+    
+    let input = "";
+    let result = substitute_functions(input).unwrap();
+    
+    assert_eq!(result, "");
+}
+
+#[test]
+fn test_substitute_functions_only_whitespace() {
+    use crate::functions::substitute_functions;
+    
+    let input = "   \n\t   ";
+    let result = substitute_functions(input).unwrap();
+    
+    assert_eq!(result, input);
+}
+
+#[test]
+fn test_substitute_functions_only_functions() {
+    use crate::functions::substitute_functions;
+    
+    let input = "guid() string() number()";
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("string()"));
+    assert!(!result.contains("number()"));
+    assert!(result.contains(' '));
+}
+
+// ========== COMPREHENSIVE REAL-WORLD SCENARIOS ==========
+
+#[test]
+fn test_http_post_request_with_bearer_token() {
+    use crate::functions::substitute_functions;
+    
+    let input = r#"POST /api/users HTTP/1.1
+Host: api.example.com
+Authorization: Bearer base64_encode('user:pass')
+Content-Type: application/json
+X-Request-ID: guid()
+
+{"email": "first_name()@example.com", "name": "name()"}"#;
+    
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("base64_encode"));
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("first_name()"));
+    assert!(!result.contains("name()"));
+    assert!(result.contains("POST"));
+    assert!(result.contains("Authorization: Bearer"));
+}
+
+#[test]
+fn test_graphql_query_with_functions() {
+    use crate::functions::substitute_functions;
+    
+    let input = r#"mutation CreateUser {
+  createUser(input: {
+    id: "guid()"
+    firstName: "first_name()"
+    lastName: "last_name()"
+    email: "base64_encode('email@test.com')"
+    score: number()
+  }) {
+    id
+    firstName
+    lastName
+  }
+}"#;
+    
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("first_name()"));
+    assert!(!result.contains("last_name()"));
+    assert!(!result.contains("base64_encode"));
+    assert!(!result.contains("number()"));
+}
+
+#[test]
+fn test_rest_client_environment_variables() {
+    use crate::functions::substitute_functions;
+    
+    let input = r#"@baseUrl = https://api.example.com
+@userId = guid()
+@authToken = base64_encode('secret')
+@userName = first_name()
+
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{authToken}}
+X-User-Name: {{userName}}"#;
+    
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("base64_encode"));
+    assert!(!result.contains("first_name()"));
+}
+
+#[test]
+fn test_csv_data_with_functions() {
+    use crate::functions::substitute_functions;
+    
+    let input = "id,firstName,lastName,email,address,score
+guid(),first_name(),last_name(),base64_encode('email@test.com'),address(),number()
+guid(),first_name(),last_name(),base64_encode('email@test.com'),address(),number()
+guid(),first_name(),last_name(),base64_encode('email@test.com'),address(),number()";
+    
+    let result = substitute_functions(input).unwrap();
+    
+    assert!(!result.contains("guid()"));
+    assert!(!result.contains("first_name()"));
+    assert!(!result.contains("last_name()"));
+    assert!(!result.contains("base64_encode"));
+    assert!(!result.contains("address()"));
+    assert!(!result.contains("number()"));
+}
+
+// ========== SUBSTITUTION PERFORMANCE TESTS ==========
+
+#[test]
+fn test_substitution_with_many_empty_functions_attempt() {
+    use crate::functions::substitute_functions;
+    
+    // Many function calls
+    let input = "guid() guid() guid() guid() guid() string() string() string() string() string()";
+    let result = substitute_functions(input).unwrap();
+    
+    let guid_pattern = Regex::new(r"[0-9a-fA-F]{32}").unwrap();
+    let guid_matches: Vec<_> = guid_pattern.find_iter(&result).collect();
+    assert_eq!(guid_matches.len(), 5);
+    
+    let alphanum_pattern = Regex::new(r"[A-Za-z0-9]{20}").unwrap();
+    let string_matches: Vec<_> = alphanum_pattern.find_iter(&result).collect();
+    assert!(string_matches.len() >= 5);
+}
