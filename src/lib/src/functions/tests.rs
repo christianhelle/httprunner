@@ -2646,7 +2646,7 @@ Content-Type: application/json
 fn test_getdate() {
     let sub = GetDateSubstitutor {};
     let date = sub.generate();
-    
+
     // Validate format YYYY-MM-DD
     let date_pattern = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
     assert!(
@@ -2654,7 +2654,7 @@ fn test_getdate() {
         "Date '{}' does not match pattern YYYY-MM-DD",
         date
     );
-    
+
     // Verify it can be parsed as a valid date
     use chrono::NaiveDate;
     assert!(
@@ -2668,7 +2668,7 @@ fn test_getdate() {
 fn test_gettime() {
     let sub = GetTimeSubstitutor {};
     let time = sub.generate();
-    
+
     // Validate format HH:MM:SS
     let time_pattern = Regex::new(r"^\d{2}:\d{2}:\d{2}$").unwrap();
     assert!(
@@ -2676,7 +2676,7 @@ fn test_gettime() {
         "Time '{}' does not match pattern HH:MM:SS",
         time
     );
-    
+
     // Verify it can be parsed as a valid time
     use chrono::NaiveTime;
     assert!(
@@ -2690,7 +2690,7 @@ fn test_gettime() {
 fn test_getdatetime() {
     let sub = GetDateTimeSubstitutor {};
     let datetime = sub.generate();
-    
+
     // Validate format YYYY-MM-DD HH:MM:SS
     let datetime_pattern = Regex::new(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$").unwrap();
     assert!(
@@ -2698,7 +2698,7 @@ fn test_getdatetime() {
         "DateTime '{}' does not match pattern YYYY-MM-DD HH:MM:SS",
         datetime
     );
-    
+
     // Verify it can be parsed as a valid datetime
     use chrono::NaiveDateTime;
     assert!(
@@ -2712,7 +2712,7 @@ fn test_getdatetime() {
 fn test_getutcdatetime() {
     let sub = GetUtcDateTimeSubstitutor {};
     let utc_datetime = sub.generate();
-    
+
     // Validate format YYYY-MM-DD HH:MM:SS
     let datetime_pattern = Regex::new(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$").unwrap();
     assert!(
@@ -2720,7 +2720,7 @@ fn test_getutcdatetime() {
         "UTC DateTime '{}' does not match pattern YYYY-MM-DD HH:MM:SS",
         utc_datetime
     );
-    
+
     // Verify it can be parsed as a valid datetime
     use chrono::NaiveDateTime;
     assert!(
@@ -2788,7 +2788,8 @@ fn test_substitute_functions_datetime_case_insensitivity() {
 fn test_substitute_functions_utcdatetime_case_insensitivity() {
     use crate::functions::substitute_functions;
 
-    let input = r#"{"utc1": "getutcdatetime()", "utc2": "GETUTCDATETIME()", "utc3": "GetUtcDateTime()"}"#;
+    let input =
+        r#"{"utc1": "getutcdatetime()", "utc2": "GETUTCDATETIME()", "utc3": "GetUtcDateTime()"}"#;
     let result = substitute_functions(input).unwrap();
 
     // All three should be substituted
@@ -2820,11 +2821,11 @@ Content-Type: application/json
     assert!(!result.contains("getutcdatetime()"));
     assert!(result.contains("POST"));
     assert!(result.contains("Content-Type:"));
-    
+
     // Verify dates and times were substituted
     let date_pattern = Regex::new(r"\d{4}-\d{2}-\d{2}").unwrap();
     assert!(date_pattern.is_match(&result));
-    
+
     let time_pattern = Regex::new(r"\d{2}:\d{2}:\d{2}").unwrap();
     assert!(time_pattern.is_match(&result));
 }
