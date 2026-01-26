@@ -72,8 +72,17 @@ fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
         Style::default()
     };
 
+    let is_discovering = app.file_tree.is_discovering();
+    let discovered_count = app.file_tree.discovered_count();
+
+    let title = if is_discovering {
+        format!("Files [Discovering... {}]", discovered_count)
+    } else {
+        "Files [Tab to switch]".to_string()
+    };
+
     let files = app.file_tree.files();
-    let items: Vec<ListItem> = files
+    let mut items: Vec<ListItem> = files
         .iter()
         .enumerate()
         .map(|(i, path)| {
@@ -95,10 +104,24 @@ fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
         })
         .collect();
 
+    // Add discovering indicator at the top if still scanning
+    if is_discovering {
+        items.insert(
+            0,
+            ListItem::new(Line::from(vec![
+                Span::styled("⏳ ", Style::default().fg(Color::Yellow)),
+                Span::styled(
+                    "Scanning for .http files...",
+                    Style::default().fg(Color::Gray),
+                ),
+            ])),
+        );
+    }
+
     let list = List::new(items).block(
         Block::default()
             .borders(Borders::ALL)
-            .title("Files [Tab to switch]")
+            .title(title)
             .border_style(border_style),
     );
 
@@ -177,12 +200,107 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
+    use crate::results_view::ExecutionResult;
+
     let is_focused = app.focused_pane == FocusedPane::ResultsView;
     let border_style = if is_focused {
         Style::default().fg(Color::Cyan)
     } else {
         Style::default()
     };
+
+    let is_running = app.results_view.is_running();
+    let incremental_results = app.results_view.get_incremental_results();
+
+    // Check if we have incremental results (from async execution)
+    if !incremental_results.is_empty() || is_running {
+        let mut lines = Vec::new();
+
+        // Show running indicator
+        if is_running {
+            lines.push(Line::from(vec![
+                Span::styled("⏳ ", Style::default().fg(Color::Yellow)),
+                Span::styled("Executing requests...", Style::default().fg(Color::Cyan)),
+            ]));
+            lines.push(Line::from(""));
+        }
+
+        // Show incremental results
+        for result in &incremental_results {
+            match result {
+                ExecutionResult::Success {
+                    method,
+                    url,
+                    status,
+                    duration_ms,
+                    ..
+                } => {
+                    lines.push(Line::from(vec![
+                        Span::styled("✓ ", Style::default().fg(Color::Green)),
+                        Span::raw(format!("{} {} ", method, url)),
+                        Span::styled(
+                            format!("[{} - {}ms]", status, duration_ms),
+                            Style::default().fg(Color::Gray),
+                        ),
+                    ]));
+                }
+                ExecutionResult::Failure { method, url, error } => {
+                    lines.push(Line::from(vec![
+                        Span::styled("✗ ", Style::default().fg(Color::Red)),
+                        Span::raw(format!("{} {}", method, url)),
+                    ]));
+                    lines.push(Line::from(vec![
+                        Span::raw("  "),
+                        Span::styled(error, Style::default().fg(Color::Red)),
+                    ]));
+                }
+                ExecutionResult::Running { message } => {
+                    lines.push(Line::from(vec![
+                        Span::styled("⏳ ", Style::default().fg(Color::Yellow)),
+                        Span::styled(message, Style::default().fg(Color::Cyan)),
+                    ]));
+                }
+            }
+        }
+
+        // Summary at the bottom
+        if !is_running && !incremental_results.is_empty() {
+            lines.push(Line::from(""));
+            let passed = incremental_results
+                .iter()
+                .filter(|r| matches!(r, ExecutionResult::Success { .. }))
+                .count();
+            let failed = incremental_results
+                .iter()
+                .filter(|r| matches!(r, ExecutionResult::Failure { .. }))
+                .count();
+            lines.push(Line::from(vec![
+                Span::styled("Passed: ", Style::default().fg(Color::Green)),
+                Span::raw(format!("{} | ", passed)),
+                Span::styled("Failed: ", Style::default().fg(Color::Red)),
+                Span::raw(format!("{}", failed)),
+            ]));
+        }
+
+        let title = if is_running {
+            "Results [Running...]"
+        } else {
+            "Results"
+        };
+
+        let paragraph = Paragraph::new(lines)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(title)
+                    .border_style(border_style),
+            )
+            .wrap(Wrap { trim: true })
+            .scroll((app.results_view.scroll_offset() as u16, 0));
+
+        f.render_widget(paragraph, area);
+        return;
+    }
 
     let results = app.results_view.results();
 
