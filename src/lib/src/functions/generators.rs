@@ -175,7 +175,6 @@ impl FunctionSubstitutor for EmailSubstitutor {
         .to_string()
     }
 }
-
 fn normalize_name_for_email(name: String) -> String {
     name.chars()
         .filter(|c| c.is_ascii_alphanumeric())

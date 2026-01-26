@@ -1,3 +1,4 @@
+mod date_functions;
 mod generators;
 mod substitution;
 mod values;
