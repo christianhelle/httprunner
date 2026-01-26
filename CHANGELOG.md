@@ -6,6 +6,8 @@
 
 **Implemented enhancements:**
 
+- Fix GUI app on Ubuntu [\#152](https://github.com/christianhelle/httprunner/pull/152) ([christianhelle](https://github.com/christianhelle))
+- Add Terminal UI \(TUI\) application using Ratatui [\#151](https://github.com/christianhelle/httprunner/pull/151) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Resize text editor in GUI app to vertically fill the area [\#150](https://github.com/christianhelle/httprunner/pull/150) ([christianhelle](https://github.com/christianhelle))
 - Fix text editor theme adaptation to system theme [\#149](https://github.com/christianhelle/httprunner/pull/149) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Strip ANSI color codes from log file output [\#147](https://github.com/christianhelle/httprunner/pull/147) ([christianhelle](https://github.com/christianhelle))
