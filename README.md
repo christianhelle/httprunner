@@ -797,7 +797,7 @@ Content-Type: application/json
 ```
 
 #### `address()` - Generate Address
-Generates a random street address.
+Generates a random full mailing address (street, city, postal code, country).
 
 ```http
 POST https://api.example.com/users
@@ -819,6 +819,19 @@ Content-Type: application/json
 {
   "email": "email()",
   "contactEmail": "EMAIL()"
+}
+```
+
+#### `job_title()` - Generate Job Title
+Generates a random job title.
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "title": "job_title()",
+  "position": "JOB_TITLE()"
 }
 ```
 
