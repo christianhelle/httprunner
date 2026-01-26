@@ -4,6 +4,8 @@ use crate::functions::generators::{
 use crate::functions::substitution::FunctionSubstitutor;
 use regex::Regex;
 
+use super::generators::NameSubstitutor;
+
 #[test]
 fn test_generate_guid() {
     let guid = GuidSubstitutor {}.generate();
@@ -353,4 +355,11 @@ fn test_base64_encode_substitutor_json_body() {
     let result = sub.replace(input).unwrap();
 
     assert_eq!(result, r#"{"auth": "dXNlcjpwYXNz"}"#);
+}
+
+#[test]
+fn test_name_substitutor() {
+    let sub = NameSubstitutor {};
+    let name = sub.generate();
+    assert!(!name.is_empty(), "Generated name should not be empty");
 }
