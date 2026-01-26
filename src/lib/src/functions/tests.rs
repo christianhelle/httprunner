@@ -2,9 +2,10 @@ use crate::functions::date_functions::{
     GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
 };
 use crate::functions::generator_functions::{
-    AddressSubstitutor, Base64EncodeSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
+    AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
     GuidSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
+use crate::functions::transform_functions::Base64EncodeSubstitutor;
 use crate::functions::substitution::FunctionSubstitutor;
 use regex::Regex;
 
