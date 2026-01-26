@@ -6,7 +6,9 @@ use crate::functions::generator_functions::{
     JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
     StringSubstitutor,
 };
-use crate::functions::transform_functions::{Base64EncodeSubstitutor, UpperSubstitutor};
+use crate::functions::transform_functions::{
+    Base64EncodeSubstitutor, LowerSubstitutor, UpperSubstitutor,
+};
 use anyhow::Result;
 use regex::RegexBuilder;
 
@@ -30,6 +32,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &NumberSubstitutor {},
         &Base64EncodeSubstitutor {},
         &UpperSubstitutor {},
+        &LowerSubstitutor {},
         &NameSubstitutor {},
         &FirstNameSubstitutor {},
         &LastNameSubstitutor {},
