@@ -1,7 +1,7 @@
 use crate::functions::date_functions::{
     GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
 };
-use crate::functions::generators::{
+use crate::functions::generator_functions::{
     AddressSubstitutor, Base64EncodeSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
     GuidSubstitutor, JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
     StringSubstitutor,

@@ -1,7 +1,7 @@
 use crate::functions::date_functions::{
     GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
 };
-use crate::functions::generators::{
+use crate::functions::generator_functions::{
     AddressSubstitutor, Base64EncodeSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
     GuidSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
@@ -1542,7 +1542,7 @@ fn test_substitution_with_numeric_suffixes() {
 
 #[test]
 fn test_job_title_substitutor() {
-    use crate::functions::generators::JobTitleSubstitutor;
+    use crate::functions::generator_functions::JobTitleSubstitutor;
 
     let sub = JobTitleSubstitutor {};
     let job_title = sub.generate();
@@ -1554,7 +1554,7 @@ fn test_job_title_substitutor() {
 
 #[test]
 fn test_job_title_substitutor_generates_different_values() {
-    use crate::functions::generators::JobTitleSubstitutor;
+    use crate::functions::generator_functions::JobTitleSubstitutor;
 
     let sub = JobTitleSubstitutor {};
     let job1 = sub.generate();
