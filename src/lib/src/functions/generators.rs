@@ -165,10 +165,19 @@ impl FunctionSubstitutor for EmailSubstitutor {
         let domain = values::EMAIL_DOMAINS[index].to_string();
         let first_name = FirstNameSubstitutor {}.generate();
         let last_name = LastNameSubstitutor {}.generate();
+
+        // Normalize names for email: remove apostrophes, hyphens, and non-ASCII characters
+        let normalize = |s: String| -> String {
+            s.chars()
+                .filter(|c| c.is_ascii_alphanumeric())
+                .collect::<String>()
+                .to_lowercase()
+        };
+
         format!(
             "{}.{}@{}",
-            first_name.to_lowercase(),
-            last_name.to_lowercase(),
+            normalize(first_name),
+            normalize(last_name),
             domain
         )
         .to_string()

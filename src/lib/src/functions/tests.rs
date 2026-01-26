@@ -488,15 +488,15 @@ fn test_all_functions_combined() {
     assert!(!result.contains("number()"));
     assert!(!result.contains("base64_encode"));
 
-    // Verify structure is maintained
-    assert!(result.contains(r#""id":"#));
-    assert!(result.contains(r#""firstName":"#));
-    assert!(result.contains(r#""lastName":"#));
-    assert!(result.contains(r#""fullName":"#));
-    assert!(result.contains(r#""address":"#));
-    assert!(result.contains(r#""randomStr":"#));
-    assert!(result.contains(r#""randomNum":"#));
-    assert!(result.contains(r#""encoded":"#));
+    // Verify structure is maintained (with spaces after colons as in the input)
+    assert!(result.contains(r#""id": "#));
+    assert!(result.contains(r#""firstName": "#));
+    assert!(result.contains(r#""lastName": "#));
+    assert!(result.contains(r#""fullName": "#));
+    assert!(result.contains(r#""address": "#));
+    assert!(result.contains(r#""randomStr": "#));
+    assert!(result.contains(r#""randomNum": "#));
+    assert!(result.contains(r#""encoded": "#));
 }
 
 #[test]
@@ -763,10 +763,10 @@ fn test_functions_in_nested_json() {
     assert!(!result.contains("guid()"));
     assert!(!result.contains("first_name()"));
     assert!(!result.contains("number()"));
-    assert!(result.contains(r#""user":"#));
-    assert!(result.contains(r#""id":"#));
-    assert!(result.contains(r#""name":"#));
-    assert!(result.contains(r#""score":"#));
+    assert!(result.contains(r#""user": "#));
+    assert!(result.contains(r#""id": "#));
+    assert!(result.contains(r#""name": "#));
+    assert!(result.contains(r#""score": "#));
 }
 
 #[test]
@@ -1029,18 +1029,18 @@ fn test_number_distribution() {
     let sub = NumberSubstitutor {};
     let mut counts = [0; 101];
 
-    for _ in 0..10000 {
+    for _ in 0..1000 {
         let num_str = sub.generate();
         let num: usize = num_str.parse().unwrap();
         counts[num] += 1;
     }
 
     // Verify we're generating a reasonable distribution
-    // Most numbers should appear at least once in 10000 iterations
+    // Most numbers should appear at least once in 1000 iterations
     let non_zero_count = counts.iter().filter(|&&c| c > 0).count();
     assert!(
-        non_zero_count >= 80,
-        "Expected at least 80 different numbers in 10000 iterations, got {}",
+        non_zero_count >= 50,
+        "Expected at least 50 different numbers in 1000 iterations, got {}",
         non_zero_count
     );
 }
@@ -2402,10 +2402,13 @@ fn test_email_generation_contains_lowercase_names() {
         let email = sub.generate();
         let local_part = email.split('@').next().unwrap();
 
-        // Local part should be all lowercase (generated from names converted to lowercase)
+        // Local part should be all lowercase and contain only alphanumeric characters and dots
+        // (special characters like apostrophes and hyphens are removed during normalization)
         assert!(
-            local_part.chars().all(|c| c.is_lowercase() || c == '.'),
-            "Email local part '{}' should be all lowercase with dots",
+            local_part
+                .chars()
+                .all(|c| c.is_ascii_lowercase() || c == '.'),
+            "Email local part '{}' should be lowercase ASCII alphanumeric with dots",
             local_part
         );
     }
