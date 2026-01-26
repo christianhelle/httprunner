@@ -5,21 +5,28 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Log {
     log_file: Option<File>,
+    silent: bool,
 }
 
 impl Log {
     pub fn new(base_filename: Option<&str>) -> Result<Self> {
+        Self::new_with_silent(base_filename, false)
+    }
+
+    pub fn new_with_silent(base_filename: Option<&str>, silent: bool) -> Result<Self> {
         let log_file = if let Some(filename) = base_filename {
             Some(create_log_file(filename)?)
         } else {
             None
         };
 
-        Ok(Log { log_file })
+        Ok(Log { log_file, silent })
     }
 
     pub fn writeln(&mut self, message: &str) {
-        println!("{}", message);
+        if !self.silent {
+            println!("{}", message);
+        }
         if let Some(ref mut file) = self.log_file {
             let clean_message = strip_ansi_codes(message);
             let _ = writeln!(file, "{}", clean_message);

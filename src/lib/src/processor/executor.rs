@@ -12,6 +12,68 @@ use crate::types::{
 };
 use anyhow::Result;
 
+/// Configuration for processing HTTP files
+pub struct ProcessorConfig<'a> {
+    pub files: &'a [String],
+    pub verbose: bool,
+    pub log_filename: Option<&'a str>,
+    pub environment: Option<&'a str>,
+    pub insecure: bool,
+    pub pretty_json: bool,
+    pub silent: bool,
+}
+
+impl<'a> ProcessorConfig<'a> {
+    /// Create a new ProcessorConfig with the provided files and default settings
+    pub fn new(files: &'a [String]) -> Self {
+        Self {
+            files,
+            verbose: false,
+            log_filename: None,
+            environment: None,
+            insecure: false,
+            pretty_json: false,
+            silent: false,
+        }
+    }
+
+    /// Enable verbose output
+    pub fn with_verbose(mut self, verbose: bool) -> Self {
+        self.verbose = verbose;
+        self
+    }
+
+    /// Set log filename
+    pub fn with_log_filename(mut self, log_filename: Option<&'a str>) -> Self {
+        self.log_filename = log_filename;
+        self
+    }
+
+    /// Set environment name
+    pub fn with_environment(mut self, environment: Option<&'a str>) -> Self {
+        self.environment = environment;
+        self
+    }
+
+    /// Enable insecure HTTPS
+    pub fn with_insecure(mut self, insecure: bool) -> Self {
+        self.insecure = insecure;
+        self
+    }
+
+    /// Enable pretty JSON formatting
+    pub fn with_pretty_json(mut self, pretty_json: bool) -> Self {
+        self.pretty_json = pretty_json;
+        self
+    }
+
+    /// Enable silent mode (suppress console output)
+    pub fn with_silent(mut self, silent: bool) -> Self {
+        self.silent = silent;
+        self
+    }
+}
+
 fn add_skipped_request_context(
     request_contexts: &mut Vec<RequestContext>,
     processed_request: HttpRequest,
@@ -37,15 +99,38 @@ pub fn process_http_files(
     insecure: bool,
     pretty_json: bool,
 ) -> Result<ProcessorResults> {
-    process_http_files_with_executor(
-        files,
-        verbose,
-        log_filename,
-        environment,
-        insecure,
-        pretty_json,
-        &|request, verbose, insecure| runner::execute_http_request(request, verbose, insecure),
-    )
+    let config = ProcessorConfig::new(files)
+        .with_verbose(verbose)
+        .with_log_filename(log_filename)
+        .with_environment(environment)
+        .with_insecure(insecure)
+        .with_pretty_json(pretty_json);
+
+    process_http_files_with_config(&config, &|request, verbose, insecure| {
+        runner::execute_http_request(request, verbose, insecure)
+    })
+}
+
+pub fn process_http_files_with_silent(
+    files: &[String],
+    verbose: bool,
+    log_filename: Option<&str>,
+    environment: Option<&str>,
+    insecure: bool,
+    pretty_json: bool,
+    silent: bool,
+) -> Result<ProcessorResults> {
+    let config = ProcessorConfig::new(files)
+        .with_verbose(verbose)
+        .with_log_filename(log_filename)
+        .with_environment(environment)
+        .with_insecure(insecure)
+        .with_pretty_json(pretty_json)
+        .with_silent(silent);
+
+    process_http_files_with_config(&config, &|request, verbose, insecure| {
+        runner::execute_http_request(request, verbose, insecure)
+    })
 }
 
 pub fn process_http_files_with_executor<F>(
@@ -60,7 +145,25 @@ pub fn process_http_files_with_executor<F>(
 where
     F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
 {
-    let mut log = Log::new(log_filename)?;
+    let config = ProcessorConfig::new(files)
+        .with_verbose(verbose)
+        .with_log_filename(log_filename)
+        .with_environment(environment)
+        .with_insecure(insecure)
+        .with_pretty_json(pretty_json);
+
+    process_http_files_with_config(&config, executor)
+}
+
+/// Process HTTP files with a configuration struct and custom executor
+pub fn process_http_files_with_config<F>(
+    config: &ProcessorConfig,
+    executor: &F,
+) -> Result<ProcessorResults>
+where
+    F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
+{
+    let mut log = Log::new_with_silent(config.log_filename, config.silent)?;
     let mut http_file_results = Vec::<HttpFileResults>::new();
 
     let mut total_success_count = 0;
@@ -68,7 +171,7 @@ where
     let mut total_skipped_count = 0;
     let mut files_processed = 0;
 
-    for http_file in files {
+    for http_file in config.files {
         log.writeln(&format!(
             "{} HTTP File Runner - Processing file: {}",
             colors::blue("🚀"),
@@ -76,7 +179,7 @@ where
         ));
         log.writeln(&"=".repeat(50));
 
-        let requests = match parser::parse_http_file(http_file, environment) {
+        let requests = match parser::parse_http_file(http_file, config.environment) {
             Ok(reqs) => reqs,
             Err(e) => {
                 log.writeln(&format!("{} Error parsing file: {}", colors::red("❌"), e));
@@ -130,7 +233,7 @@ where
             }
 
             if !processed_request.conditions.is_empty() {
-                if verbose {
+                if config.verbose {
                     match conditions::evaluate_conditions_verbose(
                         &processed_request.conditions,
                         &request_contexts,
@@ -289,7 +392,7 @@ where
             substitute_request_variables_in_request(&mut processed_request, &request_contexts)?;
             substitute_functions_in_request(&mut processed_request)?;
 
-            if verbose {
+            if config.verbose {
                 log.writeln(&format!("\n{} Request Details:", colors::blue("📤")));
                 if let Some(ref name) = processed_request.name {
                     log.writeln(&format!("Name: {}", name));
@@ -305,7 +408,7 @@ where
                 }
 
                 if let Some(ref body) = processed_request.body {
-                    let formatted_body = if pretty_json {
+                    let formatted_body = if config.pretty_json {
                         format_json_if_valid(body)
                     } else {
                         body.clone()
@@ -315,7 +418,7 @@ where
                 log.writeln(&"-".repeat(30));
             }
 
-            let result = match executor(&processed_request, verbose, insecure) {
+            let result = match executor(&processed_request, config.verbose, config.insecure) {
                 Ok(res) => res,
                 Err(e) => {
                     log.writeln(&format!(
@@ -401,7 +504,7 @@ where
                 result: Some(result),
             });
 
-            if verbose
+            if config.verbose
                 && let Some(ctx) = request_contexts.last()
                 && let Some(ref result) = ctx.result
             {
@@ -417,7 +520,7 @@ where
                 }
 
                 if let Some(ref body) = result.response_body {
-                    let formatted_body = if pretty_json {
+                    let formatted_body = if config.pretty_json {
                         format_json_if_valid(body)
                     } else {
                         body.clone()

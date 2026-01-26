@@ -7,7 +7,7 @@
 [![Rust Version](https://img.shields.io/badge/rust-1.92-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A powerful command-line tool and native GUI application written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
+A powerful command-line tool, Terminal UI (TUI), and native GUI application written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
 > **Note**: This project was originally written in Zig. The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now contains only the Rust implementation, which is actively maintained and recommended for all use cases.
 
@@ -2012,6 +2012,64 @@ HTTP Runner is available in two interfaces:
 - **CLI (Command-Line Interface)** - The traditional terminal-based tool (binary: `httprunner`)
 - **GUI (Graphical User Interface)** - A native cross-platform desktop application (binary: `httprunner-gui`)
 
+## User Interfaces
+
+HTTP Runner provides three interfaces to suit different workflows:
+
+1. **Command-Line Interface (CLI)** - Best for automation, CI/CD pipelines, and scripting
+2. **Terminal User Interface (TUI)** - Interactive terminal-based UI for quick testing and browsing
+3. **Graphical User Interface (GUI)** - Full-featured desktop and web application
+
+### TUI (Terminal User Interface)
+
+The TUI provides an interactive terminal-based interface built with Ratatui.
+
+**Features:**
+- 📁 File tree navigation for browsing .http files
+- 📋 Request viewer with syntax highlighting
+- ▶️ Execute individual or all requests
+- 🌍 Environment selection
+- 📊 Live results with color-coded success/failure
+- ⌨️ Keyboard-driven navigation
+- 🚀 Minimal resource usage, perfect for SSH sessions
+
+**Quick Start:**
+```bash
+# Build and run
+cargo build --bin httprunner-tui --release
+./target/release/httprunner-tui
+
+# Or run directly from source
+cargo run --bin httprunner-tui
+```
+
+**Keyboard Shortcuts:**
+- **Tab** - Switch between panes (File Tree → Request View → Results)
+- **↑/↓** or **k/j** - Navigate within current pane
+- **Enter** - Run selected request (in Request View pane)
+- **F5** or **Ctrl+R** - Run all requests in the selected file
+- **Ctrl+E** - Cycle through available environments
+- **Ctrl+Q** or **Ctrl+C** - Quit application
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────────┐
+│ HTTP File Runner - TUI                              │
+│ Environment: production                             │
+├──────────┬──────────────────┬───────────────────────┤
+│ Files    │ Requests         │ Results               │
+│          │                  │                       │
+│ ▶ api/   │ GET /users       │ ✓ Passed: 5           │
+│   test.http│ POST /users   │ ✗ Failed: 1           │
+│   auth.http│ PUT /users/:id│ - Skipped: 0          │
+│          │                  │                       │
+└──────────┴──────────────────┴───────────────────────┘
+│ Status: Ready | Tab=Switch | F5=Run All | Ctrl+Q=Quit│
+└─────────────────────────────────────────────────────┘
+```
+
+See [src/tui/README.md](src/tui/README.md) for detailed documentation.
+
 ### GUI Application
 
 > **⚠️ Experimental**: The GUI application is currently in an experimental phase. Features and interface may change. For production use, we recommend the stable CLI version.
@@ -2071,6 +2129,7 @@ httprunner/
 ├── src/
 │   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
 │   ├── cli/         # CLI application (httprunner) - builds httprunner binary
+│   ├── tui/         # TUI application (httprunner-tui) - builds httprunner-tui binary
 │   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary
 ├── examples/
 ├── docs/
@@ -2078,8 +2137,9 @@ httprunner/
 ```
 
 **Building:**
-- `cargo build --release` - Build both CLI and GUI (default)
+- `cargo build --release` - Build all applications (CLI, TUI, and GUI)
 - `cargo build --release -p httprunner` - Build CLI only
+- `cargo build --release -p httprunner-tui` - Build TUI only
 - `cargo build --release -p httprunner-gui` - Build GUI only
 
 ## Legacy Zig Implementation
