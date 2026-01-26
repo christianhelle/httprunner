@@ -4,6 +4,8 @@ use crate::functions::generators::{
 use anyhow::Result;
 use regex::RegexBuilder;
 
+use super::generators::FirstNameSubstitutor;
+
 pub trait FunctionSubstitutor {
     fn get_regex(&self) -> &str;
     fn generate(&self) -> String;
@@ -24,6 +26,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &NumberSubstitutor {},
         &Base64EncodeSubstitutor {},
         &NameSubstitutor {},
+        &FirstNameSubstitutor {},
     ];
 
     let mut result = input.to_string();

@@ -1,5 +1,6 @@
 use crate::functions::generators::{
-    Base64EncodeSubstitutor, GuidSubstitutor, NumberSubstitutor, StringSubstitutor,
+    Base64EncodeSubstitutor, FirstNameSubstitutor, GuidSubstitutor, NumberSubstitutor,
+    StringSubstitutor,
 };
 use crate::functions::substitution::FunctionSubstitutor;
 use regex::Regex;
@@ -362,4 +363,11 @@ fn test_name_substitutor() {
     let sub = NameSubstitutor {};
     let name = sub.generate();
     assert!(!name.is_empty(), "Generated name should not be empty");
+}
+
+#[test]
+fn test_first_name_substitutor() {
+    let sub = FirstNameSubstitutor {};
+    let first_name = sub.generate();
+    assert!(!first_name.is_empty(), "Generated name should not be empty");
 }
