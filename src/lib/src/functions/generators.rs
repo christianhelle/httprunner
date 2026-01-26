@@ -123,3 +123,17 @@ impl FunctionSubstitutor for LastNameSubstitutor {
         values::LAST_NAMES[index].to_string()
     }
 }
+
+pub struct AddressSubstitutor {}
+impl FunctionSubstitutor for AddressSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\baddress\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let index = rng.gen_range(0..values::ADDRESSES.len());
+        values::ADDRESSES[index].to_string()
+    }
+}
