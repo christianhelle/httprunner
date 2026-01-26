@@ -92,7 +92,7 @@ impl ResultsView {
         if let Ok(mut r) = results.lock() {
             r.clear();
             r.push(ExecutionResult::Running {
-                message: format!("Running all requests from {}...", path.display()),
+                message: format!("Parsing {}...", path.display()),
             });
         }
 
@@ -102,46 +102,43 @@ impl ResultsView {
 
         thread::spawn(move || {
             if let Some(path_str) = path.to_str() {
-                let files: Vec<String> = vec![path_str.to_string()];
-                match httprunner_lib::processor::process_http_files(
-                    &files,
-                    false,
-                    None,
-                    env.as_deref(),
-                    false,
-                    false,
-                ) {
-                    Ok(processor_results) => {
+                // Parse the file first to get all requests
+                match httprunner_lib::parser::parse_http_file(path_str, env.as_deref()) {
+                    Ok(requests) => {
+                        let total = requests.len();
+
+                        // Clear running message
                         if let Ok(mut r) = results.lock() {
                             r.clear();
-                            // Convert ProcessorResults to ExecutionResults
-                            for file_result in processor_results.files {
-                                for request_context in file_result.result_contexts {
-                                    if let Some(http_result) = request_context.result {
-                                        if http_result.success {
-                                            r.push(ExecutionResult::Success {
-                                                method: request_context.request.method,
-                                                url: request_context.request.url,
-                                                status: http_result.status_code,
-                                                duration_ms: http_result.duration_ms,
-                                                response_body: http_result
-                                                    .response_body
-                                                    .unwrap_or_default(),
-                                                assertion_results: http_result
-                                                    .assertion_results
-                                                    .clone(),
-                                            });
-                                        } else {
-                                            r.push(ExecutionResult::Failure {
-                                                method: request_context.request.method,
-                                                url: request_context.request.url,
-                                                error: http_result
-                                                    .error_message
-                                                    .unwrap_or_else(|| "Unknown error".to_string()),
-                                            });
-                                        }
-                                    }
+                        }
+
+                        // Execute each request individually for immediate feedback
+                        for (idx, request) in requests.into_iter().enumerate() {
+                            // Show progress for current request
+                            if let Ok(mut r) = results.lock() {
+                                r.push(ExecutionResult::Running {
+                                    message: format!(
+                                        "Running {}/{}: {} {}",
+                                        idx + 1,
+                                        total,
+                                        request.method,
+                                        request.url
+                                    ),
+                                });
+                            }
+
+                            // Execute the request
+                            let result = execute_request(request);
+
+                            // Remove running message and add result
+                            if let Ok(mut r) = results.lock() {
+                                // Remove the running message we just added
+                                if let Some(last) = r.last()
+                                    && matches!(last, ExecutionResult::Running { .. })
+                                {
+                                    r.pop();
                                 }
+                                r.push(result);
                             }
                         }
                     }
@@ -149,9 +146,9 @@ impl ResultsView {
                         if let Ok(mut r) = results.lock() {
                             r.clear();
                             r.push(ExecutionResult::Failure {
-                                method: "PROCESS".to_string(),
+                                method: "PARSE".to_string(),
                                 url: path.display().to_string(),
-                                error: e.to_string(),
+                                error: format!("Failed to parse file: {}", e),
                             });
                         }
                     }
