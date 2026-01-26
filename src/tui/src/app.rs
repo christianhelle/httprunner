@@ -162,32 +162,100 @@ impl App {
 
     fn run_all_requests(&mut self) {
         if let Some(file) = &self.selected_file {
-            self.status_message = format!("Running all requests from {}", file.display());
+            self.status_message = format!("Running requests from {}", file.display());
 
-            let file_str = file.to_string_lossy().to_string();
+            let file_path = file.clone();
+            let env = self.selected_environment.clone();
+            let incremental_results = self.results_view.incremental_results();
+            let is_running = self.results_view.is_running_arc();
 
-            let env = self.selected_environment.as_deref();
-            match httprunner_lib::processor::process_http_files_with_silent(
-                &[file_str],
-                false,
-                None,
-                env,
-                false,
-                false,
-                true, // silent mode - no console output
-            ) {
-                Ok(results) => {
-                    self.results_view.set_results(results);
-                    self.status_message = format!(
-                        "Completed: {} passed, {} failed",
-                        self.results_view.passed_count(),
-                        self.results_view.failed_count()
-                    );
+            // Clear for async run
+            self.results_view.clear_for_async_run();
+
+            // Spawn background thread for async execution
+            std::thread::spawn(move || {
+                let path_str = file_path.to_string_lossy().to_string();
+
+                // Parse the file first
+                match httprunner_lib::parser::parse_http_file(&path_str, env.as_deref()) {
+                    Ok(requests) => {
+                        let total = requests.len();
+
+                        for (idx, request) in requests.into_iter().enumerate() {
+                            // Show running status
+                            if let Ok(mut results) = incremental_results.lock() {
+                                results.push(crate::results_view::ExecutionResult::Running {
+                                    message: format!(
+                                        "Running {}/{}: {} {}",
+                                        idx + 1,
+                                        total,
+                                        request.method,
+                                        request.url
+                                    ),
+                                });
+                            }
+
+                            // Execute the request
+                            let result = match httprunner_lib::runner::execute_http_request(
+                                &request, false, false,
+                            ) {
+                                Ok(http_result) => {
+                                    if http_result.success {
+                                        crate::results_view::ExecutionResult::Success {
+                                            method: request.method,
+                                            url: request.url,
+                                            status: http_result.status_code,
+                                            duration_ms: http_result.duration_ms,
+                                            assertion_results: http_result.assertion_results,
+                                        }
+                                    } else {
+                                        crate::results_view::ExecutionResult::Failure {
+                                            method: request.method,
+                                            url: request.url,
+                                            error: http_result
+                                                .error_message
+                                                .unwrap_or_else(|| "Unknown error".to_string()),
+                                        }
+                                    }
+                                }
+                                Err(e) => crate::results_view::ExecutionResult::Failure {
+                                    method: request.method,
+                                    url: request.url,
+                                    error: e.to_string(),
+                                },
+                            };
+
+                            // Remove running message and add result
+                            if let Ok(mut results) = incremental_results.lock() {
+                                // Remove the last running message
+                                if let Some(last) = results.last()
+                                    && matches!(
+                                        last,
+                                        crate::results_view::ExecutionResult::Running { .. }
+                                    )
+                                {
+                                    results.pop();
+                                }
+                                results.push(result);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        if let Ok(mut results) = incremental_results.lock() {
+                            results.push(crate::results_view::ExecutionResult::Failure {
+                                method: "PARSE".to_string(),
+                                url: path_str,
+                                error: format!("Failed to parse file: {}", e),
+                            });
+                        }
+                    }
                 }
-                Err(e) => {
-                    self.status_message = format!("Error: {}", e);
+
+                // Mark as complete
+                if let Ok(mut running) = is_running.lock() {
+                    *running = false;
                 }
-            }
+            });
         }
     }
 
