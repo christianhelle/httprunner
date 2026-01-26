@@ -6,7 +6,9 @@ This module handles the substitution of dynamic function calls in HTTP request f
 
 - `mod.rs` - Module entry point and public API
 - `substitution.rs` - Function substitution trait and orchestration
-- `generators.rs` - Built-in function implementations
+- `generator_functions.rs` - Built-in generator function implementations
+- `date_functions.rs` - Built-in date function implementations
+- `transform_functions.rs` - Built-in transformation function implementations
 - `tests.rs` - Test suite
 
 ## Usage
