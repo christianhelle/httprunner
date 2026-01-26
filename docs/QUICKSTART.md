@@ -162,6 +162,12 @@ Available functions:
 - `string()` - Generate random alphanumeric string (20 chars)
 - `number()` - Generate random number (0-100)
 - `base64_encode('text')` - Encode string to Base64
+- `name()` - Generate random full name (e.g., "John Smith")
+- `first_name()` - Generate random first name (e.g., "Sarah")
+- `last_name()` - Generate random last name (e.g., "Johnson")
+- `address()` - Generate random full mailing address (street, city, postal code, country), e.g., "123 Main Street, Springfield, 12345, USA"
+- `email()` - Generate random email address (e.g., "john.smith@example.com")
+- `job_title()` - Generate random job title (e.g., "Senior Software Engineer")
 
 All functions are case-insensitive and can be used in URLs, headers, and request bodies.
 
@@ -349,7 +355,7 @@ EXPECTED_RESPONSE_STATUS 500
 5. **JSONPath**: Use `$.property.nested` for extracting JSON values
 6. **Headers**: Multiple headers can be specified, one per line after the request line
 7. **Pretty JSON**: Use `--verbose --pretty-json` to format JSON payloads for easier reading and debugging
-8. **Built-in Functions**: Use `guid()`, `string()`, `number()`, and `base64_encode()` for dynamic values
+8. **Built-in Functions**: Use `guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, and `email()` for dynamic values
 
 ## Troubleshooting
 

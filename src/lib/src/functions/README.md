@@ -60,6 +60,66 @@ Encodes a string value to Base64:
 
 Example: `{{base64_encode('username:password')}}` → `dXNlcm5hbWU6cGFzc3dvcmQ=`
 
+### Name Generation
+
+Generates a random full name (first name + last name):
+
+```
+{{name()}}
+```
+
+Example output: `John Smith`
+
+### First Name Generation
+
+Generates a random first name:
+
+```
+{{first_name()}}
+```
+
+Example output: `Sarah`
+
+### Last Name Generation
+
+Generates a random last name:
+
+```
+{{last_name()}}
+```
+
+Example output: `Johnson`
+
+### Address Generation
+
+Generates a random full mailing address (street, city, postal code, country):
+
+```
+{{address()}}
+```
+
+Example output: `123 Main Street, Springfield, 12345, USA`
+
+### Email Generation
+
+Generates a random email address:
+
+```
+{{email()}}
+```
+
+Example output: `john.smith@example.com`
+
+### Job Title Generation
+
+Generates a random job title:
+
+```
+{{job_title()}}
+```
+
+Example output: `Senior Software Engineer`
+
 ## Implementation Details
 
 Functions are case-insensitive and processed through the `FunctionSubstitutor` trait, which provides:

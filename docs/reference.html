@@ -323,6 +323,36 @@ GET {{baseUrl}}/users</code>
                                 <td>Base64 encode a string</td>
                                 <td>dGV4dA==</td>
                             </tr>
+                            <tr>
+                                <td><code>name()</code></td>
+                                <td>Generate random full name</td>
+                                <td>John Smith</td>
+                            </tr>
+                            <tr>
+                                <td><code>first_name()</code></td>
+                                <td>Generate random first name</td>
+                                <td>Sarah</td>
+                            </tr>
+                            <tr>
+                                <td><code>last_name()</code></td>
+                                <td>Generate random last name</td>
+                                <td>Johnson</td>
+                            </tr>
+                            <tr>
+                                <td><code>address()</code></td>
+                                <td>Generate random full mailing address (street, city, postal code, country)</td>
+                                <td>123 Main Street, Springfield, 12345, USA</td>
+                            </tr>
+                            <tr>
+                                <td><code>email()</code></td>
+                                <td>Generate random email address</td>
+                                <td>john.smith@example.com</td>
+                            </tr>
+                            <tr>
+                                <td><code>job_title()</code></td>
+                                <td>Generate random job title</td>
+                                <td>Senior Software Engineer</td>
+                            </tr>
                         </tbody>
                     </table>
 
@@ -344,7 +374,10 @@ Content-Type: application/json
   "id": "guid()",
   "key": "string()",
   "value": "number()",
-  "auth": "base64_encode('user:pass')"
+  "auth": "base64_encode('user:pass')",
+  "name": "name()",
+  "email": "email()",
+  "address": "address()"
 }</code>
                     </div>
                 </section>

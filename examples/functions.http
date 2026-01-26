@@ -12,7 +12,13 @@ Content-Type: application/json
     "number": "number()",
     "NUMBER": "NUMBER()",
     "to_base64": "base64_encode('Hello, World!')",
-    "TO_BASE64": "BASE64_ENCODE('Hello, World!')"
+    "TO_BASE64": "BASE64_ENCODE('Hello, World!')",
+    "first_name": "first_name()",
+    "last_name": "last_name()",
+    "name": "name()",
+    "address": "address()",
+    "job_title": "job_title()",
+    "email": "email()"
 }
 
 #
@@ -38,5 +44,11 @@ Content-Type: application/json
     "number": "number()",
     "NUMBER": "NUMBER()",
     "to_base64": "base64_encode('{{request1.response.body.$.json.guid}}')",
-    "TO_BASE64": "BASE64_ENCODE('{{request1.response.body.$.json.guid}}')"
+    "TO_BASE64": "BASE64_ENCODE('{{request1.response.body.$.json.guid}}')",
+    "first_name": "first_name()",
+    "last_name": "last_name()",
+    "name": "name()",
+    "address": "address()",
+    "job_title": "job_title()",
+    "email": "email()"
 }

@@ -30,7 +30,7 @@ A powerful command-line tool, Terminal UI (TUI), and native GUI application writ
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`)
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`)
 - 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
@@ -757,6 +757,84 @@ Content-Type: application/json
 }
 ```
 
+#### `name()` - Generate Full Name
+Generates a random full name (first name + last name).
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "fullName": "name()",
+  "displayName": "NAME()"
+}
+```
+
+#### `first_name()` - Generate First Name
+Generates a random first name.
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "firstName": "first_name()",
+  "givenName": "FIRST_NAME()"
+}
+```
+
+#### `last_name()` - Generate Last Name
+Generates a random last name.
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "lastName": "last_name()",
+  "surname": "LAST_NAME()"
+}
+```
+
+#### `address()` - Generate Address
+Generates a random full mailing address (street, city, postal code, country).
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "streetAddress": "address()",
+  "mailingAddress": "ADDRESS()"
+}
+```
+
+#### `email()` - Generate Email Address
+Generates a random email address in the format firstname.lastname@domain.com.
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "email": "email()",
+  "contactEmail": "EMAIL()"
+}
+```
+
+#### `job_title()` - Generate Job Title
+Generates a random job title.
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "title": "job_title()",
+  "position": "JOB_TITLE()"
+}
+```
+
 ### Function Features
 
 - ✅ **Case-insensitive**: `guid()`, `GUID()`, and `Guid()` all work identically
@@ -780,7 +858,12 @@ Content-Type: application/json
   "number": "number()",
   "NUMBER": "NUMBER()",
   "to_base64": "base64_encode('Hello, World!')",
-  "TO_BASE64": "BASE64_ENCODE('Hello, World!')"
+  "TO_BASE64": "BASE64_ENCODE('Hello, World!')",
+  "first_name": "first_name()",
+  "last_name": "last_name()",
+  "name": "name()",
+  "address": "address()",
+  "email": "email()"
 }
 ```
 
@@ -1435,7 +1518,7 @@ The `examples/` directory contains several sample `.http` files:
 - **`status-codes.http`** - Tests different HTTP status codes (15 requests)
 - **`request-variables.http`** - Demonstrates request chaining with variables (5 requests)
 - **`variables.http`** - Shows variable usage and environment files
-- **`functions.http`** - Demonstrates built-in functions (`guid()`, `string()`, `number()`, `base64_encode()`)
+- **`functions.http`** - Demonstrates built-in functions (`guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`)
 - **`asserts.http`** - Response assertion examples
 - **`assertion-variables.http`** - Variable substitution in assertions
 - **`pagination-variables.http`** - Pagination scenarios with variable assertions
