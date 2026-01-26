@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Introduce new built-in transformation functions: upper\(\) and lower\(\) [\#159](https://github.com/christianhelle/httprunner/pull/159) ([christianhelle](https://github.com/christianhelle))
 - Async file discovery and request execution for GUI/TUI [\#158](https://github.com/christianhelle/httprunner/pull/158) ([christianhelle](https://github.com/christianhelle))
 - Introduce built-in date functions: getdate\(\), gettime\(\), getdatetime\(\), getutcdatetime\(\) [\#157](https://github.com/christianhelle/httprunner/pull/157) ([christianhelle](https://github.com/christianhelle))
 - Introduce new built-in functions: name\(\), first\_name\(\), last\_name\(\), address\(\), email\(\), job\_title\(\) [\#155](https://github.com/christianhelle/httprunner/pull/155) ([christianhelle](https://github.com/christianhelle))
