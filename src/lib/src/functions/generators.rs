@@ -153,15 +153,6 @@ impl FunctionSubstitutor for JobTitleSubstitutor {
 }
 
 pub struct EmailSubstitutor {}
-
-/// Normalize a name for use in email addresses by removing special characters
-fn normalize_name_for_email(name: String) -> String {
-    name.chars()
-        .filter(|c| c.is_ascii_alphanumeric())
-        .collect::<String>()
-        .to_lowercase()
-}
-
 impl FunctionSubstitutor for EmailSubstitutor {
     fn get_regex(&self) -> &str {
         r"\bemail\(\)"
@@ -183,4 +174,11 @@ impl FunctionSubstitutor for EmailSubstitutor {
         )
         .to_string()
     }
+}
+
+fn normalize_name_for_email(name: String) -> String {
+    name.chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_lowercase()
 }
