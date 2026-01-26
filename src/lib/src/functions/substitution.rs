@@ -1,5 +1,5 @@
 use crate::functions::generators::{
-    Base64EncodeSubstitutor, GuidSubstitutor, NumberSubstitutor, StringSubstitutor,
+    Base64EncodeSubstitutor, GuidSubstitutor, NameSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
 use anyhow::Result;
 use regex::RegexBuilder;
@@ -23,6 +23,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &StringSubstitutor {},
         &NumberSubstitutor {},
         &Base64EncodeSubstitutor {},
+        &NameSubstitutor {},
     ];
 
     let mut result = input.to_string();

@@ -82,3 +82,21 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
             .to_string())
     }
 }
+
+pub struct NameSubstitutor {}
+impl FunctionSubstitutor for NameSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\bname\(\)"
+    }
+
+    fn generate(&self) -> String {
+        let names = vec![
+            // TODO: Add 100 random names
+            "Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona", "George", "Hannah", "Ian", "Julia",
+        ];
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let index = rng.gen_range(0..names.len());
+        names[index].to_string()
+    }
+}
