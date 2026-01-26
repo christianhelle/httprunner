@@ -363,6 +363,11 @@ fn test_name_substitutor() {
     let sub = NameSubstitutor {};
     let name = sub.generate();
     assert!(!name.is_empty(), "Generated name should not be empty");
+    assert!(
+        name.contains(' '),
+        "Generated name '{}' should contain a space between first and last name",
+        name
+    );
 }
 
 #[test]
