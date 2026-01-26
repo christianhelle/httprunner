@@ -44,7 +44,7 @@ impl FunctionSubstitutor for UpperSubstitutor {
             .case_insensitive(true)
             .build()?;
         Ok(re
-            .replace_all(input, |caps: &regex::Captures| (caps[1]).to_uppercase())
+            .replace_all(input, |caps: &regex::Captures| caps[1].to_uppercase())
             .to_string())
     }
 }
