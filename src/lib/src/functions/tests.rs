@@ -1,5 +1,6 @@
 use crate::functions::generators::{
     AddressSubstitutor, Base64EncodeSubstitutor, EmailSubstitutor, FirstNameSubstitutor,
+    GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
     GuidSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor, StringSubstitutor,
 };
 use crate::functions::substitution::FunctionSubstitutor;
@@ -2639,4 +2640,191 @@ Content-Type: application/json
     assert!(!result.contains("last_name()"));
     assert!(result.contains("POST"));
     assert!(result.contains("Content-Type:"));
+}
+
+#[test]
+fn test_getdate() {
+    let sub = GetDateSubstitutor {};
+    let date = sub.generate();
+    
+    // Validate format YYYY-MM-DD
+    let date_pattern = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
+    assert!(
+        date_pattern.is_match(&date),
+        "Date '{}' does not match pattern YYYY-MM-DD",
+        date
+    );
+    
+    // Verify it can be parsed as a valid date
+    use chrono::NaiveDate;
+    assert!(
+        NaiveDate::parse_from_str(&date, "%Y-%m-%d").is_ok(),
+        "Date '{}' could not be parsed",
+        date
+    );
+}
+
+#[test]
+fn test_gettime() {
+    let sub = GetTimeSubstitutor {};
+    let time = sub.generate();
+    
+    // Validate format HH:MM:SS
+    let time_pattern = Regex::new(r"^\d{2}:\d{2}:\d{2}$").unwrap();
+    assert!(
+        time_pattern.is_match(&time),
+        "Time '{}' does not match pattern HH:MM:SS",
+        time
+    );
+    
+    // Verify it can be parsed as a valid time
+    use chrono::NaiveTime;
+    assert!(
+        NaiveTime::parse_from_str(&time, "%H:%M:%S").is_ok(),
+        "Time '{}' could not be parsed",
+        time
+    );
+}
+
+#[test]
+fn test_getdatetime() {
+    let sub = GetDateTimeSubstitutor {};
+    let datetime = sub.generate();
+    
+    // Validate format YYYY-MM-DD HH:MM:SS
+    let datetime_pattern = Regex::new(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$").unwrap();
+    assert!(
+        datetime_pattern.is_match(&datetime),
+        "DateTime '{}' does not match pattern YYYY-MM-DD HH:MM:SS",
+        datetime
+    );
+    
+    // Verify it can be parsed as a valid datetime
+    use chrono::NaiveDateTime;
+    assert!(
+        NaiveDateTime::parse_from_str(&datetime, "%Y-%m-%d %H:%M:%S").is_ok(),
+        "DateTime '{}' could not be parsed",
+        datetime
+    );
+}
+
+#[test]
+fn test_getutcdatetime() {
+    let sub = GetUtcDateTimeSubstitutor {};
+    let utc_datetime = sub.generate();
+    
+    // Validate format YYYY-MM-DD HH:MM:SS
+    let datetime_pattern = Regex::new(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$").unwrap();
+    assert!(
+        datetime_pattern.is_match(&utc_datetime),
+        "UTC DateTime '{}' does not match pattern YYYY-MM-DD HH:MM:SS",
+        utc_datetime
+    );
+    
+    // Verify it can be parsed as a valid datetime
+    use chrono::NaiveDateTime;
+    assert!(
+        NaiveDateTime::parse_from_str(&utc_datetime, "%Y-%m-%d %H:%M:%S").is_ok(),
+        "UTC DateTime '{}' could not be parsed",
+        utc_datetime
+    );
+}
+
+#[test]
+fn test_substitute_functions_date_case_insensitivity() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"date1": "getdate()", "date2": "GETDATE()", "date3": "GetDate()"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    // All three should be substituted
+    assert!(!result.contains("getdate()"));
+    assert!(!result.contains("GETDATE()"));
+    assert!(!result.contains("GetDate()"));
+
+    // Verify the result contains valid dates (YYYY-MM-DD)
+    let date_pattern = Regex::new(r"\d{4}-\d{2}-\d{2}").unwrap();
+    let matches: Vec<_> = date_pattern.find_iter(&result).collect();
+    assert_eq!(matches.len(), 3, "Should have 3 date values");
+}
+
+#[test]
+fn test_substitute_functions_time_case_insensitivity() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"time1": "gettime()", "time2": "GETTIME()", "time3": "GetTime()"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    // All three should be substituted
+    assert!(!result.contains("gettime()"));
+    assert!(!result.contains("GETTIME()"));
+    assert!(!result.contains("GetTime()"));
+
+    // Verify the result contains valid times (HH:MM:SS)
+    let time_pattern = Regex::new(r"\d{2}:\d{2}:\d{2}").unwrap();
+    let matches: Vec<_> = time_pattern.find_iter(&result).collect();
+    assert_eq!(matches.len(), 3, "Should have 3 time values");
+}
+
+#[test]
+fn test_substitute_functions_datetime_case_insensitivity() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"dt1": "getdatetime()", "dt2": "GETDATETIME()", "dt3": "GetDateTime()"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    // All three should be substituted
+    assert!(!result.contains("getdatetime()"));
+    assert!(!result.contains("GETDATETIME()"));
+    assert!(!result.contains("GetDateTime()"));
+
+    // Verify the result contains valid datetimes (YYYY-MM-DD HH:MM:SS)
+    let datetime_pattern = Regex::new(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}").unwrap();
+    let matches: Vec<_> = datetime_pattern.find_iter(&result).collect();
+    assert_eq!(matches.len(), 3, "Should have 3 datetime values");
+}
+
+#[test]
+fn test_substitute_functions_utcdatetime_case_insensitivity() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"utc1": "getutcdatetime()", "utc2": "GETUTCDATETIME()", "utc3": "GetUtcDateTime()"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    // All three should be substituted
+    assert!(!result.contains("getutcdatetime()"));
+    assert!(!result.contains("GETUTCDATETIME()"));
+    assert!(!result.contains("GetUtcDateTime()"));
+
+    // Verify the result contains valid UTC datetimes
+    let datetime_pattern = Regex::new(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}").unwrap();
+    let matches: Vec<_> = datetime_pattern.find_iter(&result).collect();
+    assert_eq!(matches.len(), 3, "Should have 3 UTC datetime values");
+}
+
+#[test]
+fn test_datetime_in_real_world_rest_request() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"POST /api/events HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+
+{"eventDate": "getdate()", "eventTime": "gettime()", "createdAt": "getdatetime()", "updatedAt": "getutcdatetime()"}"#;
+
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.contains("getdate()"));
+    assert!(!result.contains("gettime()"));
+    assert!(!result.contains("getdatetime()"));
+    assert!(!result.contains("getutcdatetime()"));
+    assert!(result.contains("POST"));
+    assert!(result.contains("Content-Type:"));
+    
+    // Verify dates and times were substituted
+    let date_pattern = Regex::new(r"\d{4}-\d{2}-\d{2}").unwrap();
+    assert!(date_pattern.is_match(&result));
+    
+    let time_pattern = Regex::new(r"\d{2}:\d{2}:\d{2}").unwrap();
+    assert!(time_pattern.is_match(&result));
 }
