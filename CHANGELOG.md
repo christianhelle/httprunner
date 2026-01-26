@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Introduce built-in date functions: getdate\(\), gettime\(\), getdatetime\(\), getutcdatetime\(\) [\#157](https://github.com/christianhelle/httprunner/pull/157) ([christianhelle](https://github.com/christianhelle))
 - Introduce new built-in functions: name\(\), first\_name\(\), last\_name\(\), address\(\), email\(\), job\_title\(\) [\#155](https://github.com/christianhelle/httprunner/pull/155) ([christianhelle](https://github.com/christianhelle))
 - Fix GUI app on Ubuntu [\#152](https://github.com/christianhelle/httprunner/pull/152) ([christianhelle](https://github.com/christianhelle))
 - Add Terminal UI \(TUI\) application using Ratatui [\#151](https://github.com/christianhelle/httprunner/pull/151) ([Copilot](https://github.com/apps/copilot-swe-agent))
