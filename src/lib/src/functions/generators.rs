@@ -195,3 +195,16 @@ impl FunctionSubstitutor for GetTimeSubstitutor {
         local.format("%H:%M:%S").to_string()
     }
 }
+
+pub struct GetDateTimeSubstitutor {}
+impl FunctionSubstitutor for GetDateTimeSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\bgetdatetime\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use chrono::prelude::*;
+        let local: DateTime<Local> = Local::now();
+        local.format("%Y-%m-%d %H:%M:%S").to_string()
+    }
+}
