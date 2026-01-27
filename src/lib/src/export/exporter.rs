@@ -86,7 +86,7 @@ fn write_http_response(
         && let Some(response_body) = &result.response_body
     {
         if pretty_json {
-            let body = format!("{}\r\n", format_json_if_valid(&response_body));
+            let body = format!("{}\r\n", format_json_if_valid(response_body));
             file.write_all(body.as_bytes())?;
         } else {
             let body = format!("{}\r\n", response_body);
@@ -104,7 +104,7 @@ fn write_http_request(
     write_http_headers(test_results, ExportType::Request, &file)?;
     if let Some(request_body) = &test_results.request.body {
         if pretty_json {
-            let body = format!("{}\r\n", format_json_if_valid(&request_body));
+            let body = format!("{}\r\n", format_json_if_valid(request_body));
             file.write_all(body.as_bytes())?;
         } else {
             let body = format!("{}\r\n", request_body);
