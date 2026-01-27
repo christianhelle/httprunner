@@ -7,6 +7,8 @@ pub use executor::{
     process_http_files_with_executor, process_http_files_with_silent,
 };
 
+pub use formatter::format_json_if_valid;
+
 #[cfg(test)]
 mod tests;
 

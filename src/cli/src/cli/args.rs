@@ -64,6 +64,10 @@ pub struct Cli {
     /// Generate summary report (default=markdown)
     #[arg(long, value_name = "FORMAT", num_args = 0..=1, default_missing_value = "markdown")]
     pub report: Option<ReportFormat>,
+
+    /// Export requests and responses to files
+    #[arg(long)]
+    pub export: bool,
 }
 
 impl Cli {

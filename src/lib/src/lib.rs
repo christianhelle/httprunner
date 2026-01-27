@@ -3,6 +3,7 @@ pub mod colors;
 pub mod conditions;
 pub mod discovery;
 pub mod environment;
+pub mod export;
 pub mod functions;
 pub mod logging;
 pub mod parser;

@@ -85,6 +85,7 @@ httprunner --discover</code>
                         <li><strong>Verbose (<code>--verbose</code>):</strong> Shows detailed request/response information</li>
                         <li><strong>Logging (<code>--log</code>):</strong> Saves output to a file for analysis</li>
                         <li><strong>Report (<code>--report [format]</code>):</strong> Generates summary report in markdown or html format. Defaults to markdown if no format specified</li>
+                        <li><strong>Export (<code>--export</code>):</strong> Saves individual HTTP requests and responses to separate timestamped log files</li>
                     </ul>
                 </section>
 
@@ -795,6 +796,10 @@ EXPECTED_RESPONSE_HEADERS "Cache-Control: no-cache"</code>
                             <div class="option-name"><code>--report [format]</code></div>
                             <div class="option-desc">Generate timestamped summary report in markdown or html format. Defaults to markdown if no format specified</div>
                         </div>
+                        <div class="option">
+                            <div class="option-name"><code>--export</code></div>
+                            <div class="option-desc">Export individual HTTP requests and responses to separate timestamped log files</div>
+                        </div>
                     </div>
 
                     <h3>Environment Options</h3>
@@ -921,6 +926,8 @@ EXPECTED_RESPONSE_STATUS 200</code>
                         <li>Test both success and error scenarios</li>
                         <li>Use the <code>--verbose</code> flag when debugging</li>
                         <li>Generate reports with <code>--report markdown</code> or <code>--report html</code> for test documentation and CI/CD integration</li>
+                        <li>Use <code>--export</code> to create file-based documentation of API requests and responses</li>
+                        <li>Combine <code>--export --pretty-json</code> for well-formatted API documentation files</li>
                         <li>Save logs for CI/CD integration with <code>--log</code></li>
                     </ul>
 
@@ -929,8 +936,8 @@ EXPECTED_RESPONSE_STATUS 200</code>
                         <code># Example GitHub Actions step
 - name: Run API Tests
   run: |
-    httprunner --discover --env staging --log test-results.log --report html
-    # Process test results and HTML report...</code>
+    httprunner --discover --env staging --log test-results.log --report html --export
+    # Process test results, HTML report, and exported request/response files...</code>
                     </div>
 
                     <h3>Performance Considerations</h3>

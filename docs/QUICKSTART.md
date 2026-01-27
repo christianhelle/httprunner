@@ -249,7 +249,28 @@ httprunner example.http --log
 httprunner example.http --log mytest
 ```
 
-### 10. Discovery Mode
+### 10. Export Requests and Responses
+
+Save individual HTTP requests and responses to separate timestamped files:
+
+```bash
+# Export requests and responses to individual files
+httprunner example.http --export
+
+# Export with pretty-printed JSON
+httprunner example.http --export --pretty-json
+
+# Combine export with verbose output and logging
+httprunner example.http --verbose --export --log test.log
+```
+
+This will create files like:
+- `GET_request_1738016400.log` (request file)
+- `GET_response_1738016400.log` (response file)
+
+Each file contains the complete HTTP message with headers and body, perfect for documentation, debugging, or replaying requests.
+
+### 11. Discovery Mode
 
 Automatically find and run all .http files:
 
@@ -356,6 +377,8 @@ EXPECTED_RESPONSE_STATUS 500
 6. **Headers**: Multiple headers can be specified, one per line after the request line
 7. **Pretty JSON**: Use `--verbose --pretty-json` to format JSON payloads for easier reading and debugging
 8. **Built-in Functions**: Use `guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, and `email()` for dynamic values
+9. **Export for Documentation**: Use `--export` to generate file-based documentation of API requests and responses
+10. **Combine Flags**: Use `--export --pretty-json` to create well-formatted API documentation files
 
 ## Troubleshooting
 

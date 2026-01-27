@@ -20,6 +20,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
 - 📊 `--report` flag to generate summary reports in markdown or html format for test results
+- 💾 `--export` flag to save individual HTTP requests and responses to timestamped log files
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
@@ -242,6 +243,15 @@ httprunner <http-file> --report html
 # Run and generate a markdown summary report (explicit)
 httprunner <http-file> --report markdown
 
+# Export requests and responses to individual timestamped files
+httprunner <http-file> --export
+
+# Export with verbose output and pretty-printed JSON
+httprunner <http-file> --verbose --pretty-json --export
+
+# Combine export with report generation
+httprunner <http-file> --export --report html
+
 # Run without the donation banner
 httprunner <http-file> --no-banner
 
@@ -295,6 +305,15 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 # Run and generate a markdown summary report (explicit)
 .\target\release\httprunner.exe <http-file> --report markdown
 
+# Export requests and responses to individual timestamped files
+.\target\release\httprunner.exe <http-file> --export
+
+# Export with verbose output and pretty-printed JSON
+.\target\release\httprunner.exe <http-file> --verbose --pretty-json --export
+
+# Combine export with report generation
+.\target\release\httprunner.exe <http-file> --export --report html
+
 # Run without the donation banner
 .\target\release\httprunner.exe <http-file> --no-banner
 
@@ -343,6 +362,15 @@ For proper emoji display in PowerShell, set UTF-8 encoding:
 
 # Run and generate a markdown summary report (explicit)
 ./target/release/httprunner <http-file> --report markdown
+
+# Export requests and responses to individual timestamped files
+./target/release/httprunner <http-file> --export
+
+# Export with verbose output and pretty-printed JSON
+./target/release/httprunner <http-file> --verbose --pretty-json --export
+
+# Combine export with report generation
+./target/release/httprunner <http-file> --export --report html
 
 # Run without the donation banner
 ./target/release/httprunner <http-file> --no-banner
@@ -465,6 +493,15 @@ docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianh
 
 # Run and generate a markdown summary report (explicit)
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --report markdown
+
+# Export requests and responses to individual timestamped files
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --export
+
+# Export with verbose output and pretty-printed JSON
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --verbose --pretty-json --export
+
+# Combine export with report generation
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file> --export --report html
 
 # Run multiple .http files
 docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner <http-file1> <http-file2>
@@ -1750,6 +1787,84 @@ HTML reports additionally feature:
 - Color-coded statistics cards and status indicators
 - Clean, modern styling with syntax highlighting
 
+### Export Mode
+
+The `--export` flag saves individual HTTP requests and responses to separate timestamped log files, making it ideal for:
+
+- **API Documentation**: Create file-based documentation of API interactions with real requests and responses
+- **Debugging & Troubleshooting**: Preserve exact HTTP request/response pairs for detailed analysis
+- **Test Artifacts**: Generate reusable request/response examples for testing and development
+- **Compliance & Auditing**: Keep detailed records of API communications with timestamps
+- **Request Replay**: Save requests in a format that can be easily replayed or modified
+
+**Key features:**
+
+- Creates separate files for each request and response with unique timestamps
+- Generates files in standard HTTP message format (headers + body)
+- Works with `--pretty-json` to format JSON content in exported files
+- Files are named using the request name (from `# @name` directive) or auto-generated names
+- Timestamped filenames prevent overwrites (e.g., `my_request_request_1738016400.log`)
+- Includes full HTTP status lines in response exports
+- Preserves all headers and body content exactly as sent/received
+
+**Usage:**
+
+```bash
+# Basic export - saves request and response files
+httprunner api-tests.http --export
+
+# Export with pretty-printed JSON
+httprunner api-tests.http --export --pretty-json
+
+# Export with verbose terminal output
+httprunner api-tests.http --export --verbose
+
+# Combine export with report generation
+httprunner api-tests.http --export --report html
+
+# Export for all discovered .http files
+httprunner --discover --export
+
+# Combine with environment-specific testing
+httprunner api-tests.http --env production --export
+```
+
+**Example export output:**
+
+When you run `httprunner example.http --export`, you'll see:
+```
+✅ Exported requests and responses to files
+   ✅ Exported GET_users_request_1738016400.log
+   ✅ Exported GET_users_response_1738016400.log
+   ✅ Exported POST_login_request_1738016400.log
+   ✅ Exported POST_login_response_1738016400.log
+```
+
+**Export file format:**
+
+Request files contain:
+```http
+GET https://api.example.com/users
+Authorization: Bearer token123
+Accept: application/json
+
+```
+
+Response files contain:
+```http
+HTTP/1.1 200
+Content-Type: application/json
+Content-Length: 156
+
+{
+  "users": [
+    {"id": 1, "name": "John Doe"}
+  ]
+}
+```
+
+**Note:** Export files are written to the current working directory with timestamped names to ensure uniqueness across multiple runs.
+
 ### Logging Mode
 
 The `--log` flag enables output logging to a file, which is essential for:
@@ -1783,8 +1898,8 @@ When running httprunner without any arguments, the following help text is displa
 ```text
 HTTP File Runner v0.1.9
 Usage:
-  httprunner <http-file> [http-file2] [...] [--verbose] [--pretty-json] [--log [filename]] [--report [FORMAT]] [--env <environment>] [--insecure]
-  httprunner [--verbose] [--pretty-json] [--log [filename]] [--report [FORMAT]] [--env <environment>] [--insecure] --discover
+  httprunner <http-file> [http-file2] [...] [--verbose] [--pretty-json] [--log [filename]] [--report [FORMAT]] [--export] [--env <environment>] [--insecure]
+  httprunner [--verbose] [--pretty-json] [--log [filename]] [--report [FORMAT]] [--export] [--env <environment>] [--insecure] --discover
   httprunner --version | -v
   httprunner --upgrade
   httprunner --help | -h
@@ -1796,6 +1911,7 @@ Arguments:
   --pretty-json    Pretty-print JSON payloads in verbose output (requires --verbose)
   --log [file]     Log output to a file (defaults to 'log' if no filename is specified)
   --report [FORMAT] Generate summary report (markdown or html). Defaults to markdown if no format specified
+  --export         Export individual HTTP requests and responses to timestamped log files
   --env <env>      Specify environment name to load variables from http-client.env.json
   --insecure       Allow insecure HTTPS connections (accept invalid certificates and hostnames)
   --no-banner      Do not show the donation banner

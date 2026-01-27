@@ -107,6 +107,11 @@ httprunner [OPTIONS] --discover</code>
                             <div class="param-desc">Generate summary report in markdown or html format. Defaults to markdown if no format specified</div>
                         </div>
                         <div class="param">
+                            <div class="param-name">--export</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Export individual HTTP requests and responses to separate timestamped log files</div>
+                        </div>
+                        <div class="param">
                             <div class="param-name">--env &lt;environment&gt;</div>
                             <div class="param-type">string</div>
                             <div class="param-desc">Specify environment from http-client.env.json</div>
@@ -146,8 +151,17 @@ httprunner api-tests.http --report html
 # Generate markdown summary report (explicit)
 httprunner api-tests.http --report markdown
 
+# Export requests and responses to individual timestamped files
+httprunner api-tests.http --export
+
+# Export with pretty-printed JSON
+httprunner api-tests.http --export --pretty-json
+
 # Environment-specific testing with formatted JSON output and HTML report
-httprunner api-tests.http --env production --verbose --pretty-json --log prod-test.log --report html</code>
+httprunner api-tests.http --env production --verbose --pretty-json --log prod-test.log --report html
+
+# Combine export with report generation
+httprunner api-tests.http --export --report html --pretty-json</code>
                     </div>
                 </section>
 
@@ -728,6 +742,65 @@ Body:
                     <ul>
                         <li>Markdown: <code>httprunner-report-YYYYMMDD-HHMMSS.md</code></li>
                         <li>HTML: <code>httprunner-report-YYYYMMDD-HHMMSS.html</code></li>
+                    </ul>
+
+                    <h3>Export Mode (--export)</h3>
+                    <p>The <code>--export</code> flag saves individual HTTP requests and responses to separate timestamped log files. Each request generates two files: one for the request and one for the response.</p>
+                    
+                    <h4>Use Cases</h4>
+                    <ul>
+                        <li><strong>API Documentation:</strong> Create file-based documentation of API interactions with real requests and responses</li>
+                        <li><strong>Debugging & Troubleshooting:</strong> Preserve exact HTTP request/response pairs for detailed analysis</li>
+                        <li><strong>Test Artifacts:</strong> Generate reusable request/response examples for testing and development</li>
+                        <li><strong>Compliance & Auditing:</strong> Keep detailed records of API communications with timestamps</li>
+                        <li><strong>Request Replay:</strong> Save requests in a format that can be easily replayed or modified</li>
+                    </ul>
+
+                    <h4>File Format</h4>
+                    <p>Export files are named using the pattern: <code>{request_name}_{type}_{timestamp}.log</code></p>
+                    <ul>
+                        <li><code>{request_name}</code>: From <code># @name</code> directive or auto-generated</li>
+                        <li><code>{type}</code>: Either "request" or "response"</li>
+                        <li><code>{timestamp}</code>: Unix timestamp to ensure uniqueness</li>
+                    </ul>
+
+                    <h4>Example Output</h4>
+                    <div class="code-block">
+                        <code>✅ Exported requests and responses to files
+   ✅ Exported GET_users_request_1738016400.log
+   ✅ Exported GET_users_response_1738016400.log
+   ✅ Exported POST_login_request_1738016400.log
+   ✅ Exported POST_login_response_1738016400.log</code>
+                    </div>
+
+                    <h4>Request File Format</h4>
+                    <div class="code-block">
+                        <code>GET https://api.example.com/users
+Authorization: Bearer token123
+Accept: application/json
+
+</code>
+                    </div>
+
+                    <h4>Response File Format</h4>
+                    <div class="code-block">
+                        <code>HTTP/1.1 200
+Content-Type: application/json
+Content-Length: 156
+
+{
+  "users": [
+    {"id": 1, "name": "John Doe"}
+  ]
+}</code>
+                    </div>
+
+                    <h4>Combining with Other Flags</h4>
+                    <ul>
+                        <li><code>--export --pretty-json</code>: Format JSON content in exported files</li>
+                        <li><code>--export --verbose</code>: Show verbose terminal output while exporting</li>
+                        <li><code>--export --report html</code>: Generate both exports and summary report</li>
+                        <li><code>--discover --export</code>: Export all discovered .http file requests</li>
                     </ul>
 
                     <h3>Discovery Mode Output</h3>
