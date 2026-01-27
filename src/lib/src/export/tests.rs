@@ -1,5 +1,7 @@
 use super::*;
-use crate::types::{Header, HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext};
+use crate::types::{
+    Header, HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
+};
 use std::collections::HashMap;
 use std::fs;
 
@@ -711,8 +713,7 @@ fn export_results_creates_unique_filenames_for_same_timestamp() {
 
     // All files should be created with unique names
     assert_eq!(export_result.file_names.len(), 4);
-    let unique_names: std::collections::HashSet<_> =
-        export_result.file_names.iter().collect();
+    let unique_names: std::collections::HashSet<_> = export_result.file_names.iter().collect();
     assert_eq!(unique_names.len(), 4);
 
     // Cleanup
