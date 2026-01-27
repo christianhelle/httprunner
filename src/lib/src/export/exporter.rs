@@ -1,0 +1,163 @@
+use std::{
+    fs::{File, OpenOptions},
+    io::Write,
+    time::{SystemTime, UNIX_EPOCH},
+};
+
+use crate::processor::format_json_if_valid;
+use crate::types::{Header, ProcessorResults};
+
+enum ExportType {
+    Request,
+    Response,
+}
+
+pub struct ExportResults {}
+
+pub fn export_results(
+    results: &ProcessorResults,
+    pretty_json: bool,
+) -> Result<ExportResults, std::io::Error> {
+    let timestamp = get_timestamp();
+    for file_results in &results.files {
+        for test_results in &file_results.result_contexts {
+            export_request(timestamp, test_results, pretty_json);
+            export_response(timestamp, test_results, pretty_json);
+        }
+    }
+
+    Ok(ExportResults {})
+}
+
+fn export_response(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) {
+    match create_file(format!("{}_response", &test_results.name), timestamp) {
+        Ok(file) => match write_http_request_response(
+            &test_results,
+            ExportType::Response,
+            file,
+            pretty_json,
+        ) {
+            Ok(_) => (),
+            Err(e) => eprintln!("Failed to write response file: {}", e),
+        },
+        Err(e) => eprintln!("Failed to create response file: {}", e),
+    };
+}
+
+fn export_request(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) {
+    match create_file(format!("{}_request", &test_results.name), timestamp) {
+        Ok(file) => {
+            match write_http_request_response(&test_results, ExportType::Request, file, pretty_json)
+            {
+                Ok(_) => (),
+                Err(e) => eprintln!("Failed to write request file: {}", e),
+            }
+        }
+        Err(e) => eprintln!("Failed to create request file: {}", e),
+    };
+}
+
+fn get_timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+}
+
+fn write_http_request_response(
+    test_results: &&crate::types::RequestContext,
+    export_type: ExportType,
+    file: File,
+    pretty_json: bool,
+) -> Result<(), std::io::Error> {
+    match export_type {
+        ExportType::Request => write_http_request(test_results, file, pretty_json),
+        ExportType::Response => write_http_response(test_results, file, pretty_json),
+    }
+}
+
+fn write_http_response(
+    test_results: &&crate::types::RequestContext,
+    mut file: File,
+    pretty_json: bool,
+) -> Result<(), std::io::Error> {
+    write_http_headers(test_results, ExportType::Response, &file)?;
+    if let Some(result) = &test_results.result
+        && let Some(response_body) = &result.response_body
+    {
+        if pretty_json {
+            let body = format!("{}\r\n", format_json_if_valid(&response_body));
+            file.write_all(body.as_bytes())?;
+        } else {
+            let body = format!("{}\r\n", response_body);
+            file.write_all(body.as_bytes())?;
+        }
+    }
+    Ok(())
+}
+
+fn write_http_request(
+    test_results: &&crate::types::RequestContext,
+    mut file: File,
+    pretty_json: bool,
+) -> Result<(), std::io::Error> {
+    write_http_headers(test_results, ExportType::Request, &file)?;
+    if let Some(request_body) = &test_results.request.body {
+        if pretty_json {
+            let body = format!("{}\r\n", format_json_if_valid(&request_body));
+            file.write_all(body.as_bytes())?;
+        } else {
+            let body = format!("{}\r\n", request_body);
+            file.write_all(body.as_bytes())?;
+        }
+    }
+    Ok(())
+}
+
+fn write_http_headers(
+    test_results: &&crate::types::RequestContext,
+    export_type: ExportType,
+    mut file: &File,
+) -> Result<(), std::io::Error> {
+    let headers = match export_type {
+        ExportType::Request => {
+            let header = format!(
+                "{} {}\r\n",
+                test_results.request.method, test_results.request.url
+            );
+            file.write_all(header.as_bytes())?;
+            test_results.request.headers.clone()
+        }
+        ExportType::Response => match &test_results.result {
+            Some(result) => {
+                let mut headers = Vec::<Header>::new();
+                if let Some(response_headers) = &result.response_headers {
+                    response_headers.iter().for_each(|(k, v)| {
+                        headers.push(Header {
+                            name: k.to_string(),
+                            value: v.to_string(),
+                        });
+                    });
+                }
+                headers
+            }
+            None => Vec::new(),
+        },
+    };
+    for header in headers.iter() {
+        let header_line = format!("{}: {}\r\n", header.name, header.value);
+        file.write_all(header_line.as_bytes())?;
+    }
+    file.write_all("\r\n".as_bytes())?;
+    Ok(())
+}
+
+fn create_file(base_filename: String, timestamp: u64) -> Result<File, std::io::Error> {
+    let log_filename = format!("{}_{}.log", base_filename, timestamp,);
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_filename)?;
+
+    Ok(file)
+}
