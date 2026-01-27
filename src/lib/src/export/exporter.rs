@@ -29,13 +29,21 @@ pub fn export_results(
     Ok(ExportResults {})
 }
 
-fn export_response(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) -> Result<(), std::io::Error> {
+fn export_response(
+    timestamp: u64,
+    test_results: &crate::types::RequestContext,
+    pretty_json: bool,
+) -> Result<(), std::io::Error> {
     let file = create_file(format!("{}_response", &test_results.name), timestamp)?;
     write_http_request_response(&test_results, ExportType::Response, file, pretty_json)?;
     Ok(())
 }
 
-fn export_request(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) -> Result<(), std::io::Error> {
+fn export_request(
+    timestamp: u64,
+    test_results: &crate::types::RequestContext,
+    pretty_json: bool,
+) -> Result<(), std::io::Error> {
     let file = create_file(format!("{}_request", &test_results.name), timestamp)?;
     write_http_request_response(&test_results, ExportType::Request, file, pretty_json)?;
     Ok(())
@@ -140,7 +148,8 @@ fn create_file(base_filename: String, timestamp: u64) -> Result<File, std::io::E
     let log_filename = format!("{}_{}.log", base_filename, timestamp,);
     let file = OpenOptions::new()
         .create(true)
-        .append(true)
+        .write(true)
+        .truncate(true)
         .open(&log_filename)?;
 
     Ok(file)
