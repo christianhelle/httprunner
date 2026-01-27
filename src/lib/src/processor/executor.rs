@@ -98,21 +98,21 @@ fn should_skip_due_to_dependency(
     log: &mut Log,
     _request_count: u32,
 ) -> bool {
-    if let Some(dep_name) = processed_request.depends_on.as_ref() {
-        if !conditions::check_dependency(&Some(dep_name.clone()), request_contexts) {
-            let name_str = format_request_name(&processed_request.name);
+    if let Some(dep_name) = processed_request.depends_on.as_ref()
+        && !conditions::check_dependency(&Some(dep_name.clone()), request_contexts)
+    {
+        let name_str = format_request_name(&processed_request.name);
 
-            log.writeln(&format!(
-                "{} {} {} {} - Skipped: dependency '{}' not met (must succeed with HTTP 2xx)",
-                colors::yellow("⏭️"),
-                name_str,
-                processed_request.method,
-                processed_request.url,
-                dep_name
-            ));
+        log.writeln(&format!(
+            "{} {} {} {} - Skipped: dependency '{}' not met (must succeed with HTTP 2xx)",
+            colors::yellow("⏭️"),
+            name_str,
+            processed_request.method,
+            processed_request.url,
+            dep_name
+        ));
 
-            return true;
-        }
+        return true;
     }
     false
 }
