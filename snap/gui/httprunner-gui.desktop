@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=HTTP Runner GUI
+Comment=Execute HTTP requests from .http files with a native GUI
+Exec=httprunner-gui
+Icon=${SNAP}/meta/gui/icon.png
+Terminal=false
+Type=Application
+Categories=Development;Network;
+Keywords=http;rest;api;testing;development;
+StartupNotify=true
