@@ -12,6 +12,7 @@ fn cli_with_log(log: Option<Option<&str>>) -> Cli {
         no_banner: false,
         pretty_json: false,
         report: None,
+        export: false,
     }
 }
 
