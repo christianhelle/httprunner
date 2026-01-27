@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Introduce --export CLI argument to export request/responses to files [\#162](https://github.com/christianhelle/httprunner/pull/162) ([christianhelle](https://github.com/christianhelle))
 - Introduce new built-in transformation functions: upper\(\) and lower\(\) [\#159](https://github.com/christianhelle/httprunner/pull/159) ([christianhelle](https://github.com/christianhelle))
 - Async file discovery and request execution for GUI/TUI [\#158](https://github.com/christianhelle/httprunner/pull/158) ([christianhelle](https://github.com/christianhelle))
 - Introduce built-in date functions: getdate\(\), gettime\(\), getdatetime\(\), getutcdatetime\(\) [\#157](https://github.com/christianhelle/httprunner/pull/157) ([christianhelle](https://github.com/christianhelle))
