@@ -207,6 +207,16 @@
                         <p>Save all output to files for CI/CD integration and reporting</p>
                     </div>
                     <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Report Generation</h3>
+                        <p>Generate summary reports in markdown or HTML format for test results</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💾</div>
+                        <h3>Export Mode</h3>
+                        <p>Export individual HTTP requests and responses to separate timestamped log files</p>
+                    </div>
+                    <div class="feature-card">
                         <div class="feature-icon">🎯</div>
                         <h3>Assertions</h3>
                         <p>Validate status codes, response body content, and headers</p>
@@ -340,7 +350,13 @@ httprunner requests.http --verbose
 httprunner --discover
 
 # Run with logging
-httprunner requests.http --log results.txt</code>
+httprunner requests.http --log results.txt
+
+# Export requests and responses to files
+httprunner requests.http --export
+
+# Generate summary report
+httprunner requests.http --report html</code>
                         </div>
                     </div>
                     
