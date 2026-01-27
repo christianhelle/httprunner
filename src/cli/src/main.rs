@@ -2,7 +2,7 @@ mod cli;
 mod upgrade;
 
 use clap::{CommandFactory, Parser};
-use httprunner_lib::{colors, discovery, processor, report};
+use httprunner_lib::{colors, discovery, export, processor, report};
 
 use crate::cli::ReportFormat;
 use crate::report::{generate_html, generate_markdown};
@@ -49,10 +49,6 @@ fn main() -> anyhow::Result<()> {
         );
     }
 
-    if !cli_args.no_banner {
-        cli::show_donation_banner();
-    }
-
     if let Some(format) = cli_args.report {
         let result = match format {
             ReportFormat::Markdown => generate_markdown(&results),
@@ -66,6 +62,25 @@ fn main() -> anyhow::Result<()> {
                 std::process::exit(2);
             }
         }
+    }
+
+    if cli_args.export {
+        match export::export_results(&results, cli_args.pretty_json) {
+            Ok(_export_results) => {
+                println!(
+                    "{} Exported requests and responses to files",
+                    colors::green("✅")
+                );
+            }
+            Err(e) => {
+                eprintln!("{} Failed to export results: {}", colors::red("❌"), e);
+                std::process::exit(3);
+            }
+        }
+    }
+
+    if !cli_args.no_banner {
+        cli::show_donation_banner();
     }
 
     if !results.success {
