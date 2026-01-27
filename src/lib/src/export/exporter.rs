@@ -12,41 +12,65 @@ enum ExportType {
     Response,
 }
 
-pub struct ExportResults {}
+pub struct ExportResults {
+    pub file_names: Vec<String>,
+    pub failed_file_names: Vec<String>,
+}
 
 pub fn export_results(
     results: &ProcessorResults,
     pretty_json: bool,
 ) -> Result<ExportResults, std::io::Error> {
+    let mut file_names = Vec::new();
+    let mut failed_file_names = Vec::new();
     let timestamp = get_timestamp();
     for file_results in &results.files {
         for test_results in &file_results.result_contexts {
-            export_request(timestamp, test_results, pretty_json)?;
-            export_response(timestamp, test_results, pretty_json)?;
+            match export_request(timestamp, test_results, pretty_json) {
+                Ok(file_name) => {
+                    file_names.push(file_name);
+                }
+                Err(err) => {
+                    failed_file_names.push(format!("{}: {}", test_results.name, err));
+                }
+            }
+            match export_response(timestamp, test_results, pretty_json) {
+                Ok(file_name) => {
+                    file_names.push(file_name);
+                }
+                Err(err) => {
+                    failed_file_names.push(format!("{}: {}", test_results.name, err));
+                }
+            }
         }
     }
 
-    Ok(ExportResults {})
+    Ok(ExportResults {
+        file_names,
+        failed_file_names,
+    })
 }
 
 fn export_response(
     timestamp: u64,
     test_results: &crate::types::RequestContext,
     pretty_json: bool,
-) -> Result<(), std::io::Error> {
-    let file = create_file(format!("{}_response", &test_results.name), timestamp)?;
-    write_http_request_response(&test_results, ExportType::Response, file, pretty_json)?;
-    Ok(())
+) -> Result<String, std::io::Error> {
+    let base_filename = format!("{}_response", &test_results.name);
+    let file = ExportFile::new(base_filename, timestamp)?;
+    write_http_request_response(&test_results, ExportType::Response, file.file, pretty_json)?;
+    Ok(file.file_name)
 }
 
 fn export_request(
     timestamp: u64,
     test_results: &crate::types::RequestContext,
     pretty_json: bool,
-) -> Result<(), std::io::Error> {
-    let file = create_file(format!("{}_request", &test_results.name), timestamp)?;
-    write_http_request_response(&test_results, ExportType::Request, file, pretty_json)?;
-    Ok(())
+) -> Result<String, std::io::Error> {
+    let base_filename = format!("{}_request", &test_results.name);
+    let file = ExportFile::new(base_filename, timestamp)?;
+    write_http_request_response(&test_results, ExportType::Request, file.file, pretty_json)?;
+    Ok(file.file_name)
 }
 
 fn get_timestamp() -> u64 {
@@ -146,13 +170,28 @@ fn write_http_headers(
     Ok(())
 }
 
-fn create_file(base_filename: String, timestamp: u64) -> Result<File, std::io::Error> {
-    let log_filename = format!("{}_{}.log", base_filename, timestamp,);
-    let file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .truncate(true)
-        .open(&log_filename)?;
+struct ExportFile {
+    file_name: String,
+    file: File,
+}
 
-    Ok(file)
+impl ExportFile {
+    fn new(base_filename: String, timestamp: u64) -> Result<Self, std::io::Error> {
+        let log_filename = get_filename(base_filename, timestamp);
+        let file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&log_filename)?;
+
+        Ok(ExportFile {
+            file_name: log_filename,
+            file,
+        })
+    }
+}
+
+fn get_filename(base_filename: String, timestamp: u64) -> String {
+    let log_filename = format!("{}_{}.log", base_filename, timestamp,);
+    log_filename
 }

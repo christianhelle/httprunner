@@ -66,11 +66,17 @@ fn main() -> anyhow::Result<()> {
 
     if cli_args.export {
         match export::export_results(&results, cli_args.pretty_json) {
-            Ok(_export_results) => {
+            Ok(export_results) => {
                 println!(
                     "{} Exported requests and responses to files",
                     colors::green("✅")
                 );
+                for filename in export_results.file_names {
+                    println!("   {} Exported {}", colors::green("✅"), filename);
+                }
+                for filename in export_results.failed_file_names {
+                    println!("   {} Failed to export {}", colors::red("❌"), filename);
+                }
             }
             Err(e) => {
                 eprintln!("{} Failed to export results: {}", colors::red("❌"), e);
