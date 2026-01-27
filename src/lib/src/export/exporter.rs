@@ -73,16 +73,18 @@ fn write_http_response(
     mut file: File,
     pretty_json: bool,
 ) -> Result<(), std::io::Error> {
-    write_http_headers(test_results, ExportType::Response, &file)?;
-    if let Some(result) = &test_results.result
-        && let Some(response_body) = &result.response_body
-    {
-        if pretty_json {
-            let body = format!("{}\r\n", format_json_if_valid(response_body));
-            file.write_all(body.as_bytes())?;
-        } else {
-            let body = format!("{}\r\n", response_body);
-            file.write_all(body.as_bytes())?;
+    if let Some(result) = &test_results.result {
+        let status_line = format!("HTTP/1.1 {}\r\n", result.status_code);
+        file.write_all(status_line.as_bytes())?;
+        write_http_headers(test_results, ExportType::Response, &file)?;
+        if let Some(response_body) = &result.response_body {
+            if pretty_json {
+                let body = format!("{}\r\n", format_json_if_valid(response_body));
+                file.write_all(body.as_bytes())?;
+            } else {
+                let body = format!("{}\r\n", response_body);
+                file.write_all(body.as_bytes())?;
+            }
         }
     }
     Ok(())
