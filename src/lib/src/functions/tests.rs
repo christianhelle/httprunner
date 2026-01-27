@@ -3017,7 +3017,10 @@ fn test_upper_consistency() {
     let result1 = sub.replace(input).unwrap();
     let result2 = sub.replace(input).unwrap();
 
-    assert_eq!(result1, result2, "Upper transformation should be consistent");
+    assert_eq!(
+        result1, result2,
+        "Upper transformation should be consistent"
+    );
     assert_eq!(result1, "CONSISTENT");
 }
 
@@ -3203,7 +3206,10 @@ fn test_lower_consistency() {
     let result1 = sub.replace(input).unwrap();
     let result2 = sub.replace(input).unwrap();
 
-    assert_eq!(result1, result2, "Lower transformation should be consistent");
+    assert_eq!(
+        result1, result2,
+        "Lower transformation should be consistent"
+    );
     assert_eq!(result1, "consistent");
 }
 
@@ -3284,10 +3290,10 @@ fn test_upper_lower_idempotency() {
     use crate::functions::substitute_functions;
 
     let input = r#"{"upper": "upper('test')", "lower": "lower('TEST')"}"#;
-    
+
     let result1 = substitute_functions(input).unwrap();
     let result2 = substitute_functions(&result1).unwrap();
-    
+
     // Second substitution should not change anything
     assert_eq!(result1, result2);
     assert!(result1.contains("TEST"));
@@ -3299,7 +3305,8 @@ fn test_upper_lower_with_variables_notation() {
     use crate::functions::substitute_functions;
 
     // Simulates using transform functions with request variable values
-    let input = r#"{"normalized": "lower('USER@EXAMPLE.COM')", "shouting": "upper('important message')"}"#;
+    let input =
+        r#"{"normalized": "lower('USER@EXAMPLE.COM')", "shouting": "upper('important message')"}"#;
     let result = substitute_functions(input).unwrap();
 
     assert!(result.contains("user@example.com"));
@@ -3310,18 +3317,17 @@ fn test_upper_lower_with_variables_notation() {
 fn test_upper_lower_very_long_strings() {
     let sub_upper = UpperSubstitutor {};
     let sub_lower = LowerSubstitutor {};
-    
+
     let long_lower = "a".repeat(1000);
     let long_upper = "A".repeat(1000);
-    
+
     let input_upper = format!("upper('{}')", long_lower);
     let result_upper = sub_upper.replace(&input_upper).unwrap();
     assert!(!result_upper.contains("upper"));
     assert_eq!(result_upper, long_upper);
-    
+
     let input_lower = format!("lower('{}')", long_upper);
     let result_lower = sub_lower.replace(&input_lower).unwrap();
     assert!(!result_lower.contains("lower"));
     assert_eq!(result_lower, long_lower);
 }
-

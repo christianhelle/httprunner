@@ -287,11 +287,7 @@ fn log_request_details(request: &HttpRequest, log: &mut Log, pretty_json: bool) 
 }
 
 /// Log execution result
-fn log_execution_result(
-    result: &HttpResult,
-    processed_request: &HttpRequest,
-    log: &mut Log,
-) {
+fn log_execution_result(result: &HttpResult, processed_request: &HttpRequest, log: &mut Log) {
     if result.success {
         let name_prefix = result
             .request_name
@@ -397,11 +393,7 @@ fn log_assertion_results(result: &HttpResult, log: &mut Log) {
                     colors::yellow(""),
                     assertion_result.assertion.expected_value
                 ));
-                log.writeln(&format!(
-                    "{}      Actual: '{}'",
-                    colors::yellow(""),
-                    actual
-                ));
+                log.writeln(&format!("{}      Actual: '{}'", colors::yellow(""), actual));
             }
         }
     }
@@ -526,7 +518,12 @@ where
 
             let mut processed_request = request.clone();
 
-            if should_skip_due_to_dependency(&processed_request, &request_contexts, &mut log, request_count) {
+            if should_skip_due_to_dependency(
+                &processed_request,
+                &request_contexts,
+                &mut log,
+                request_count,
+            ) {
                 add_skipped_request_context(
                     &mut request_contexts,
                     processed_request,
@@ -536,7 +533,12 @@ where
                 continue;
             }
 
-            if should_skip_due_to_conditions(&processed_request, &request_contexts, &mut log, config.verbose) {
+            if should_skip_due_to_conditions(
+                &processed_request,
+                &request_contexts,
+                &mut log,
+                config.verbose,
+            ) {
                 add_skipped_request_context(
                     &mut request_contexts,
                     processed_request,
