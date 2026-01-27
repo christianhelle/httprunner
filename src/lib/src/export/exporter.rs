@@ -21,40 +21,24 @@ pub fn export_results(
     let timestamp = get_timestamp();
     for file_results in &results.files {
         for test_results in &file_results.result_contexts {
-            export_request(timestamp, test_results, pretty_json);
-            export_response(timestamp, test_results, pretty_json);
+            export_request(timestamp, test_results, pretty_json)?;
+            export_response(timestamp, test_results, pretty_json)?;
         }
     }
 
     Ok(ExportResults {})
 }
 
-fn export_response(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) {
-    match create_file(format!("{}_response", &test_results.name), timestamp) {
-        Ok(file) => match write_http_request_response(
-            &test_results,
-            ExportType::Response,
-            file,
-            pretty_json,
-        ) {
-            Ok(_) => (),
-            Err(e) => eprintln!("Failed to write response file: {}", e),
-        },
-        Err(e) => eprintln!("Failed to create response file: {}", e),
-    };
+fn export_response(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) -> Result<(), std::io::Error> {
+    let file = create_file(format!("{}_response", &test_results.name), timestamp)?;
+    write_http_request_response(&test_results, ExportType::Response, file, pretty_json)?;
+    Ok(())
 }
 
-fn export_request(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) {
-    match create_file(format!("{}_request", &test_results.name), timestamp) {
-        Ok(file) => {
-            match write_http_request_response(&test_results, ExportType::Request, file, pretty_json)
-            {
-                Ok(_) => (),
-                Err(e) => eprintln!("Failed to write request file: {}", e),
-            }
-        }
-        Err(e) => eprintln!("Failed to create request file: {}", e),
-    };
+fn export_request(timestamp: u64, test_results: &crate::types::RequestContext, pretty_json: bool) -> Result<(), std::io::Error> {
+    let file = create_file(format!("{}_request", &test_results.name), timestamp)?;
+    write_http_request_response(&test_results, ExportType::Request, file, pretty_json)?;
+    Ok(())
 }
 
 fn get_timestamp() -> u64 {
