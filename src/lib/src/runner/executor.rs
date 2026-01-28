@@ -1,21 +1,22 @@
 #[cfg(not(target_arch = "wasm32"))]
+use super::response_processor::{
+    build_error_result, build_success_result, build_temp_result_for_assertions, extract_headers,
+    should_capture_response,
+};
+#[cfg(not(target_arch = "wasm32"))]
 use crate::assertions;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::types::{HttpRequest, HttpResult};
 #[cfg(not(target_arch = "wasm32"))]
 use anyhow::Result;
 #[cfg(not(target_arch = "wasm32"))]
+use reqwest::blocking::Client;
+#[cfg(not(target_arch = "wasm32"))]
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 
-#[cfg(not(target_arch = "wasm32"))]
-use reqwest::blocking::Client;
-
-// Note: There is significant code duplication between this file (executor.rs) and
-// executor_async.rs. Consider extracting common response processing logic into
-// a shared helper module to improve maintainability.
-
+/// Execute an HTTP request synchronously and return the result.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn execute_http_request(
     request: &HttpRequest,
@@ -23,8 +24,59 @@ pub fn execute_http_request(
     insecure: bool,
 ) -> Result<HttpResult> {
     let start_time = Instant::now();
-    let has_assertions = !request.assertions.is_empty();
 
+    let client = build_client(request, insecure)?;
+    let req_builder = build_request(&client, request)?;
+
+    let response = match req_builder.send() {
+        Ok(resp) => resp,
+        Err(e) => {
+            let duration_ms = start_time.elapsed().as_millis() as u64;
+            let error_message = classify_request_error(&e);
+            return Ok(build_error_result(request, error_message, duration_ms));
+        }
+    };
+
+    let status_code = response.status().as_u16();
+    let mut success = response.status().is_success();
+
+    let (response_headers, response_body) =
+        capture_response_details(request, verbose, response)?;
+
+    let duration_ms = start_time.elapsed().as_millis() as u64;
+
+    let assertion_results = if !request.assertions.is_empty() {
+        let temp_result = build_temp_result_for_assertions(
+            request,
+            status_code,
+            success,
+            duration_ms,
+            response_headers.clone(),
+            response_body.clone(),
+        );
+
+        let results = assertions::evaluate_assertions(&request.assertions, &temp_result);
+        let all_passed = results.iter().all(|r| r.passed);
+        success = success && all_passed;
+        results
+    } else {
+        Vec::new()
+    };
+
+    Ok(build_success_result(
+        request,
+        status_code,
+        success,
+        duration_ms,
+        response_headers,
+        response_body,
+        assertion_results,
+    ))
+}
+
+/// Build an HTTP client with the appropriate timeout and security settings.
+#[cfg(not(target_arch = "wasm32"))]
+fn build_client(request: &HttpRequest, insecure: bool) -> Result<Client> {
     let connection_timeout = request.connection_timeout.unwrap_or(30_000);
     let read_timeout = request.timeout.unwrap_or(60_000);
 
@@ -38,8 +90,15 @@ pub fn execute_http_request(
             .danger_accept_invalid_certs(true);
     }
 
-    let client = client_builder.build()?;
+    Ok(client_builder.build()?)
+}
 
+/// Build the HTTP request with method, URL, headers, and body.
+#[cfg(not(target_arch = "wasm32"))]
+fn build_request(
+    client: &Client,
+    request: &HttpRequest,
+) -> Result<reqwest::blocking::RequestBuilder> {
     let method = request.method.to_uppercase();
     let method = reqwest::Method::from_bytes(method.as_bytes())?;
 
@@ -53,81 +112,33 @@ pub fn execute_http_request(
         req_builder = req_builder.body(body.clone());
     }
 
-    let response = match req_builder.send() {
-        Ok(resp) => resp,
-        Err(e) => {
-            let duration_ms = start_time.elapsed().as_millis() as u64;
-            let error_message = if e.is_connect() {
-                "Connection error"
-            } else if e.is_timeout() {
-                "Request timeout"
-            } else {
-                "Request failed"
-            };
+    Ok(req_builder)
+}
 
-            return Ok(HttpResult {
-                request_name: request.name.clone(),
-                status_code: 0,
-                success: false,
-                error_message: Some(error_message.to_string()),
-                duration_ms,
-                response_headers: None,
-                response_body: None,
-                assertion_results: Vec::new(),
-            });
-        }
-    };
-
-    let status_code = response.status().as_u16();
-    let mut success = response.status().is_success();
-
-    let mut response_headers: Option<HashMap<String, String>> = None;
-    let mut response_body: Option<String> = None;
-
-    let is_named = request.name.is_some();
-    if verbose || has_assertions || is_named {
-        let mut headers = HashMap::new();
-        for (name, value) in response.headers() {
-            if let Ok(value_str) = value.to_str() {
-                headers.insert(name.to_string(), value_str.to_string());
-            }
-        }
-        response_headers = Some(headers);
-
-        if let Ok(body) = response.text() {
-            response_body = Some(body);
-        }
+/// Classify request errors into user-friendly messages.
+#[cfg(not(target_arch = "wasm32"))]
+fn classify_request_error(e: &reqwest::Error) -> &'static str {
+    if e.is_connect() {
+        "Connection error"
+    } else if e.is_timeout() {
+        "Request timeout"
+    } else {
+        "Request failed"
     }
+}
 
-    let duration_ms = start_time.elapsed().as_millis() as u64;
-
-    let mut assertion_results = Vec::new();
-    if has_assertions {
-        let temp_result = HttpResult {
-            request_name: request.name.clone(),
-            status_code,
-            success,
-            error_message: None,
-            duration_ms,
-            response_headers: response_headers.clone(),
-            response_body: response_body.clone(),
-            assertion_results: Vec::new(),
-        };
-
-        assertion_results = assertions::evaluate_assertions(&request.assertions, &temp_result);
-
-        let all_assertions_passed = assertion_results.iter().all(|r| r.passed);
-        success = success && all_assertions_passed;
+/// Capture response headers and body if needed.
+#[cfg(not(target_arch = "wasm32"))]
+fn capture_response_details(
+    request: &HttpRequest,
+    verbose: bool,
+    response: reqwest::blocking::Response,
+) -> Result<(Option<HashMap<String, String>>, Option<String>)> {
+    if should_capture_response(request, verbose) {
+        let headers = Some(extract_headers(response.headers()));
+        let body = response.text().ok();
+        Ok((headers, body))
+    } else {
+        Ok((None, None))
     }
-
-    Ok(HttpResult {
-        request_name: request.name.clone(),
-        status_code,
-        success,
-        error_message: None,
-        duration_ms,
-        response_headers,
-        response_body,
-        assertion_results,
-    })
 }
