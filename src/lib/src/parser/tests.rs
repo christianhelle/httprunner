@@ -406,3 +406,159 @@ fn test_parse_if_not_condition_with_double_slash_comment() {
     assert_eq!(requests[0].conditions.len(), 1);
     assert!(requests[0].conditions[0].negate);
 }
+
+#[test]
+fn test_parse_intellij_script_block_ignored() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = r#"GET https://api.example.com/users
+> {%
+    client.global.set("token", response.body.token);
+%}
+"#;
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].method, "GET");
+    // Script block should be ignored, not parsed as body
+    assert!(requests[0].body.is_none());
+}
+
+#[test]
+fn test_parse_intellij_script_block_single_line() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "GET https://api.example.com/users\n> {% client.test(response); %}";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    // Script block ending on same line should also be ignored
+}
+
+#[test]
+fn test_parse_empty_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 0);
+}
+
+#[test]
+fn test_parse_comments_only_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# This is a comment\n// This is also a comment\n# Another comment";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 0);
+}
+
+#[test]
+fn test_parse_variable_override() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "@baseUrl = https://api.example.com\n@baseUrl = https://api.test.com\nGET {{baseUrl}}/users";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    // The second variable assignment should override the first
+    assert_eq!(requests[0].url, "https://api.test.com/users");
+}
+
+#[test]
+fn test_parse_variable_with_variable_reference() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "@host = api.example.com\n@baseUrl = https://{{host}}\nGET {{baseUrl}}/users";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].url, "https://api.example.com/users");
+}
+
+#[test]
+fn test_parse_request_with_all_directives() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = r#"# @name fullRequest
+# @timeout 30s
+# @connection-timeout 10s
+# @dependsOn previousRequest
+# @if previousRequest.response.status == 200
+GET https://api.example.com/users"#;
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].name, Some("fullRequest".to_string()));
+    assert_eq!(requests[0].timeout, Some(30_000));
+    assert_eq!(requests[0].connection_timeout, Some(10_000));
+    assert_eq!(requests[0].depends_on, Some("previousRequest".to_string()));
+    assert_eq!(requests[0].conditions.len(), 1);
+}
+
+#[test]
+fn test_parse_multiple_conditions() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = r#"# @if auth.response.status == 200
+# @if-not auth.response.body.$.error == "blocked"
+GET https://api.example.com/protected"#;
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].conditions.len(), 2);
+    assert!(!requests[0].conditions[0].negate);
+    assert!(requests[0].conditions[1].negate);
+}
+
+#[test]
+fn test_parse_assertion_without_quotes() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "GET https://api.example.com/status\n> EXPECTED_RESPONSE_STATUS 200";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].assertions.len(), 1);
+    assert_eq!(requests[0].assertions[0].assertion_type, AssertionType::Status);
+    assert_eq!(requests[0].assertions[0].expected_value, "200");
+}
+
+#[test]
+fn test_parse_body_assertion_with_quotes() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "GET https://api.example.com/health\n> EXPECTED_RESPONSE_BODY \"healthy\"";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].assertions.len(), 1);
+    assert_eq!(requests[0].assertions[0].assertion_type, AssertionType::Body);
+    assert_eq!(requests[0].assertions[0].expected_value, "healthy");
+}
+
+#[test]
+fn test_parse_http_content_directly() {
+    let content = "GET https://api.example.com/users\nAuthorization: Bearer token";
+    let requests = parse_http_content(content, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].method, "GET");
+    assert_eq!(requests[0].headers.len(), 1);
+}
+
+#[test]
+fn test_parse_preserves_body_whitespace() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "POST https://api.example.com/data\n\nline1\nline2\nline3";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+    
+    assert_eq!(requests.len(), 1);
+    let body = requests[0].body.as_ref().unwrap();
+    assert!(body.contains("line1"));
+    assert!(body.contains("line2"));
+    assert!(body.contains("line3"));
+}
