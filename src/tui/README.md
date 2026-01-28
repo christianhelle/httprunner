@@ -1,5 +1,7 @@
 # HTTP Runner TUI
 
+> **⚠️ Experimental**: This TUI application is currently in an experimental phase. Features and interface may change as development continues.
+
 A Terminal User Interface (TUI) for HTTP Runner built with Rust and Ratatui.
 
 🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required! (GUI version available in browser)

@@ -4,6 +4,8 @@
 
 🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
 
+> **⚠️ Note**: The GUI and TUI applications are experimental and subject to change. The CLI is the primary, stable interface.
+
 ## Installation
 
 ### Option 1: From Crates.io (Recommended for Rust users)

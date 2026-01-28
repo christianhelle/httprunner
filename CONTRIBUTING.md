@@ -4,6 +4,8 @@ Thank you for your interest in improving the HTTP File Runner documentation! Thi
 
 🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
 
+> **⚠️ Note**: The GUI and TUI applications are experimental and subject to change. The CLI is the primary, stable interface.
+
 ## 📝 Documentation Structure
 
 Our documentation website is built with:

@@ -11,6 +11,8 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 
 🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
 
+> **⚠️ Note**: The GUI and TUI applications are experimental and subject to change. The CLI is the primary, stable interface.
+
 > **Note**: This project was originally written in Zig. The Zig implementation has been moved to a separate repository: [christianhelle/httprunner-zig](https://github.com/christianhelle/httprunner-zig). This repository now contains only the Rust implementation, which is actively maintained and recommended for all use cases.
 
 ## Features
