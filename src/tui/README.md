@@ -4,8 +4,6 @@
 
 A Terminal User Interface (TUI) for HTTP Runner built with Rust and Ratatui.
 
-🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required! (GUI version available in browser)
-
 ## Features
 
 - 📁 **File Tree Navigation** - Browse and select .http files from a directory
