@@ -3,7 +3,6 @@ use crate::types::{HttpRequest, RequestContext};
 use crate::variables;
 use anyhow::Result;
 
-/// Generic helper function to apply a substitution function to all parts of a request
 fn apply_substitution<F>(request: &mut HttpRequest, substitutor: F) -> Result<()>
 where
     F: Fn(&str) -> Result<String>,

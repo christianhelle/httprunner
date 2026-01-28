@@ -15,21 +15,17 @@ pub fn format_local_datetime() -> String {
         .expect("System clock is set before Unix epoch (1970-01-01)");
     let secs = duration.as_secs();
 
-    // Calculate time components
     const SECS_PER_DAY: u64 = 86400;
     const SECS_PER_HOUR: u64 = 3600;
     const SECS_PER_MIN: u64 = 60;
 
-    // Days since Unix epoch
     let days = secs / SECS_PER_DAY;
     let remaining = secs % SECS_PER_DAY;
 
-    // Time of day
     let hours = remaining / SECS_PER_HOUR;
     let minutes = (remaining % SECS_PER_HOUR) / SECS_PER_MIN;
     let seconds = remaining % SECS_PER_MIN;
 
-    // Calculate year, month, day from days since epoch (1970-01-01)
     let mut year = 1970;
     let mut day_of_year = days;
 

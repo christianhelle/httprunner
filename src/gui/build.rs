@@ -1,7 +1,6 @@
 use std::process::Command;
 
 fn main() {
-    // Embed Windows icon
     #[cfg(windows)]
     {
         let mut res = winres::WindowsResource::new();
@@ -11,16 +10,13 @@ fn main() {
         }
     }
 
-    // Get Cargo.toml version as fallback
     let cargo_version = env!("CARGO_PKG_VERSION");
 
-    // Get git information
     let git_tag = get_git_output(&["git", "describe", "--tags", "--abbrev=0"])
         .filter(|s| !s.is_empty() && s != "unknown");
     let git_commit =
         get_git_output(&["git", "rev-parse", "--short", "HEAD"]).filter(|s| !s.is_empty());
 
-    // Determine version: prefer git tag, fallback to Cargo.toml version
     let version = if let Some(tag) = &git_tag {
         tag.strip_prefix('v').unwrap_or(tag).to_string()
     } else {
@@ -30,21 +26,18 @@ fn main() {
     let git_tag_display = git_tag.unwrap_or_else(|| format!("v{}", cargo_version));
     let git_commit_display = git_commit.unwrap_or_else(|| "unknown".to_string());
 
-    // Get current timestamp in UTC
     let build_date = {
         use std::time::SystemTime;
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .expect("System time before UNIX EPOCH");
 
-        // Simple UTC formatting (YYYY-MM-DD HH:MM:SS UTC)
         let secs = now.as_secs();
         let days = secs / 86400;
         let hours = (secs % 86400) / 3600;
         let minutes = (secs % 3600) / 60;
         let seconds = secs % 60;
 
-        // Days since 1970-01-01
         let (year, month, day) = days_to_ymd(days);
 
         format!(
@@ -53,13 +46,11 @@ fn main() {
         )
     };
 
-    // Set environment variables for build
     println!("cargo:rustc-env=VERSION={}", version);
     println!("cargo:rustc-env=GIT_TAG={}", git_tag_display);
     println!("cargo:rustc-env=GIT_COMMIT={}", git_commit_display);
     println!("cargo:rustc-env=BUILD_DATE={}", build_date);
 
-    // Rerun if git changes
     println!("cargo:rerun-if-changed=.git/HEAD");
     println!("cargo:rerun-if-changed=.git/refs/tags");
     println!("cargo:rerun-if-changed=.git/packed-refs");

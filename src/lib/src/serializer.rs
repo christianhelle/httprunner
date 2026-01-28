@@ -3,7 +3,6 @@ use anyhow::Result;
 use std::fs;
 use std::path::Path;
 
-/// Serialize a single HttpRequest to .http format string
 pub fn serialize_http_request(request: &HttpRequest) -> String {
     let mut output = String::new();
 
@@ -50,7 +49,6 @@ pub fn serialize_http_request(request: &HttpRequest) -> String {
     output
 }
 
-/// Serialize multiple HttpRequests to .http format
 pub fn serialize_http_requests(requests: &[HttpRequest]) -> String {
     requests
         .iter()
@@ -59,7 +57,6 @@ pub fn serialize_http_requests(requests: &[HttpRequest]) -> String {
         .join("\n")
 }
 
-/// Write HttpRequests to a .http file
 pub fn write_http_file(path: &Path, requests: &[HttpRequest]) -> Result<()> {
     let content = serialize_http_requests(requests);
     fs::write(path, content)?;

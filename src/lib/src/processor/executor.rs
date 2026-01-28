@@ -12,7 +12,6 @@ use crate::types::{
 };
 use anyhow::Result;
 
-/// Configuration for processing HTTP files
 pub struct ProcessorConfig<'a> {
     pub files: &'a [String],
     pub verbose: bool,
@@ -24,7 +23,6 @@ pub struct ProcessorConfig<'a> {
 }
 
 impl<'a> ProcessorConfig<'a> {
-    /// Create a new ProcessorConfig with the provided files and default settings
     pub fn new(files: &'a [String]) -> Self {
         Self {
             files,
@@ -37,37 +35,31 @@ impl<'a> ProcessorConfig<'a> {
         }
     }
 
-    /// Enable verbose output
     pub fn with_verbose(mut self, verbose: bool) -> Self {
         self.verbose = verbose;
         self
     }
 
-    /// Set log filename
     pub fn with_log_filename(mut self, log_filename: Option<&'a str>) -> Self {
         self.log_filename = log_filename;
         self
     }
 
-    /// Set environment name
     pub fn with_environment(mut self, environment: Option<&'a str>) -> Self {
         self.environment = environment;
         self
     }
 
-    /// Enable insecure HTTPS
     pub fn with_insecure(mut self, insecure: bool) -> Self {
         self.insecure = insecure;
         self
     }
 
-    /// Enable pretty JSON formatting
     pub fn with_pretty_json(mut self, pretty_json: bool) -> Self {
         self.pretty_json = pretty_json;
         self
     }
 
-    /// Enable silent mode (suppress console output)
     pub fn with_silent(mut self, silent: bool) -> Self {
         self.silent = silent;
         self
@@ -91,7 +83,6 @@ fn add_skipped_request_context(
     });
 }
 
-/// Check if request dependencies are met. Returns true if request should be skipped.
 fn should_skip_due_to_dependency(
     processed_request: &HttpRequest,
     request_contexts: &[RequestContext],
@@ -117,7 +108,6 @@ fn should_skip_due_to_dependency(
     false
 }
 
-/// Evaluate conditions and log results. Returns true if request should be skipped.
 fn should_skip_due_to_conditions(
     processed_request: &HttpRequest,
     request_contexts: &[RequestContext],
@@ -259,7 +249,6 @@ fn should_skip_due_to_conditions(
     false
 }
 
-/// Log request details in verbose mode
 fn log_request_details(request: &HttpRequest, log: &mut Log, pretty_json: bool) {
     log.writeln(&format!("\n{} Request Details:", colors::blue("📤")));
     if let Some(ref name) = request.name {
@@ -286,7 +275,6 @@ fn log_request_details(request: &HttpRequest, log: &mut Log, pretty_json: bool) 
     log.writeln(&"-".repeat(30));
 }
 
-/// Log execution result
 fn log_execution_result(result: &HttpResult, processed_request: &HttpRequest, log: &mut Log) {
     if result.success {
         let name_prefix = result
@@ -336,7 +324,6 @@ fn log_execution_result(result: &HttpResult, processed_request: &HttpRequest, lo
     }
 }
 
-/// Log response details in verbose mode
 fn log_response_details(result: &HttpResult, log: &mut Log, pretty_json: bool) {
     log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
     log.writeln(&format!("Status: {}", result.status_code));
@@ -360,7 +347,6 @@ fn log_response_details(result: &HttpResult, log: &mut Log, pretty_json: bool) {
     log.writeln(&"-".repeat(30));
 }
 
-/// Log assertion results
 fn log_assertion_results(result: &HttpResult, log: &mut Log) {
     log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
     for assertion_result in &result.assertion_results {
@@ -464,7 +450,6 @@ where
     process_http_files_with_config(&config, executor)
 }
 
-/// Process HTTP files with a configuration struct and custom executor
 pub fn process_http_files_with_config<F>(
     config: &ProcessorConfig,
     executor: &F,

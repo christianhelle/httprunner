@@ -4,8 +4,6 @@ use std::io::Write;
 use std::sync::{Arc, Mutex};
 use tempfile::NamedTempFile;
 
-/// Mock HTTP executor for testing the processor
-/// Useful for tracking calls and providing predefined responses
 struct MockHttpExecutor {
     responses: Arc<Mutex<Vec<HttpResult>>>,
     call_count: Arc<Mutex<usize>>,
@@ -30,7 +28,6 @@ impl MockHttpExecutor {
         self.executed_requests.lock().unwrap().clone()
     }
 
-    /// Execute function that can be passed as a closure
     fn execute(
         &self,
         request: &HttpRequest,

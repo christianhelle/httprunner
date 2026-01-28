@@ -18,12 +18,6 @@ pub fn parse_http_file(
     parse_http_content_with_vars(&content, env_variables)
 }
 
-/// Parse HTTP requests from in-memory content.
-///
-/// Note: Environment loading is **not** supported when parsing content directly.
-/// The `environment_name` parameter is currently ignored. If you need environment
-/// support, use [`parse_http_file`] instead so that the environment loader can
-/// locate the associated environment file on disk.
 pub fn parse_http_content(
     content: &str,
     _environment_name: Option<&str>,
