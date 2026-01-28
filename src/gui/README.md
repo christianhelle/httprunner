@@ -6,7 +6,7 @@ A native cross-platform graphical user interface for HTTP Runner built with Rust
 
 ## 🌐 Try it Online
 
-**Web App**: [HTTP Runner Web App](https://christianhelle.github.io/httprunner/app/)
+**Web App**: [https://christianhelle.com/httprunner/app/](https://christianhelle.com/httprunner/app/)
 
 The GUI is also available as a web application that runs in your browser - no installation required!
 
@@ -28,7 +28,7 @@ The GUI is also available as a web application that runs in your browser - no in
 
 ### Web Version (Try Now!)
 
-1. Go to [HTTP Runner Web App](https://christianhelle.github.io/httprunner/app/)
+1. Go to [https://christianhelle.com/httprunner/app/](https://christianhelle.com/httprunner/app/)
 2. Paste your HTTP requests in the text editor
 3. Click "Run All Requests"
 4. View results!

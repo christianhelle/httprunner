@@ -7,6 +7,8 @@ This directory contains the complete documentation website for HTTP File Runner,
 The documentation is automatically deployed to GitHub Pages: 
 **[https://christianhelle.github.io/httprunner/](https://christianhelle.github.io/httprunner/)**
 
+🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
+
 ## 📁 Structure
 
 ```

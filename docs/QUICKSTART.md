@@ -2,6 +2,8 @@
 
 > **Note**: This is the Rust implementation. The original Zig implementation has been deprecated due to limitations in Zig's HTTP/HTTPS client that prevented configuring insecure HTTPS calls necessary for development environments with self-signed certificates.
 
+🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
+
 ## Installation
 
 ### Option 1: From Crates.io (Recommended for Rust users)

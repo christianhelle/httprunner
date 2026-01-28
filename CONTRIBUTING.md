@@ -2,6 +2,8 @@
 
 Thank you for your interest in improving the HTTP File Runner documentation! This guide will help you contribute effectively.
 
+🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
+
 ## 📝 Documentation Structure
 
 Our documentation website is built with:

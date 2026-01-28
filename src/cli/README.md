@@ -1,5 +1,7 @@
 A simple command-line tool written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
+🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
+
 ## Features
 
 - 🚀 Parse and execute HTTP requests from `.http` files
