@@ -35,11 +35,10 @@ parts:
   httprunner:
     plugin: rust
     source: .
-    rust-channel: stable
+    override-build: |
+      cargo build --release --package httprunner
+      install -D -m755 target/release/httprunner $SNAPCRAFT_PART_INSTALL/bin/httprunner
     build-packages:
       - libssl-dev
       - pkg-config
       - git
-    stage-packages:
-      - libssl3
-      - ca-certificates
