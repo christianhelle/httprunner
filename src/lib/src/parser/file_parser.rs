@@ -232,12 +232,24 @@ fn try_parse_condition_directive(trimmed: &str, state: &mut ParserState) -> Line
 
 fn try_parse_variable_line(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     if trimmed.starts_with('@') {
+        // If we're in the body, don't treat '@' as a variable declaration
+        if state.in_body {
+            return LineParseResult::NotHandled;
+        }
+        
+        // Outside the body, '@' lines should be variable declarations with '='
         if let Some(eq_pos) = trimmed.find('=') {
             let var_name = trimmed[1..eq_pos].trim();
             let var_value = trimmed[eq_pos + 1..].trim();
             state.set_variable(var_name, var_value);
+            LineParseResult::Continue
+        } else {
+            // '@' line without '=' is likely a typo
+            LineParseResult::Error(format!(
+                "Invalid variable declaration: '{}' (missing '=')",
+                trimmed
+            ))
         }
-        LineParseResult::Continue
     } else {
         LineParseResult::NotHandled
     }
