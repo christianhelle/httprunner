@@ -75,6 +75,10 @@ impl App {
                 self.cycle_environment();
                 return Ok(());
             }
+            (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
+                self.results_view.toggle_compact_mode();
+                return Ok(());
+            }
             (KeyCode::F(5), _)
             | (KeyCode::Char('r'), KeyModifiers::CONTROL)
             | (KeyCode::Char('r'), KeyModifiers::NONE)
@@ -211,6 +215,7 @@ impl App {
                                             url: request.url,
                                             status: http_result.status_code,
                                             duration_ms: http_result.duration_ms,
+                                            response_body: http_result.response_body.unwrap_or_default(),
                                             assertion_results: http_result.assertion_results,
                                         }
                                     } else {
