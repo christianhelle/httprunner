@@ -75,11 +75,7 @@ fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
     let is_discovering = app.file_tree.is_discovering();
     let discovered_count = app.file_tree.discovered_count();
 
-    let title = if is_discovering {
-        format!("Files [Discovering... {}]", discovered_count)
-    } else {
-        "Files [Tab to switch]".to_string()
-    };
+    let title = "Files [↑/↓/j/k to navigate]".to_string();
 
     let files = app.file_tree.files();
     let mut items: Vec<ListItem> = files
@@ -111,7 +107,7 @@ fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
             ListItem::new(Line::from(vec![
                 Span::styled("⏳ ", Style::default().fg(Color::Yellow)),
                 Span::styled(
-                    "Scanning for .http files...",
+                    format!("Scanning... ({})", discovered_count),
                     Style::default().fg(Color::Gray),
                 ),
             ])),
@@ -189,10 +185,7 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
     let list = List::new(items).block(
         Block::default()
             .borders(Borders::ALL)
-            .title(format!(
-                "Requests ({}) [F5/Ctrl+R to run all]",
-                requests.len()
-            ))
+            .title(format!("Requests ({}) [R/F5 to run all]", requests.len()))
             .border_style(border_style),
     );
 
@@ -401,7 +394,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 
         f.render_widget(paragraph, area);
     } else {
-        let empty_msg = Paragraph::new("No results yet\n\nPress F5 or Ctrl+R to run all requests")
+        let empty_msg = Paragraph::new("No results yet\n\nPress R or F5 to run all requests")
             .block(
                 Block::default()
                     .borders(Borders::ALL)
@@ -420,15 +413,16 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             Span::styled(&app.status_message, Style::default().fg(Color::Cyan)),
         ]),
         Line::from(vec![
-            Span::raw("Shortcuts: "),
+            Span::styled("R/F5", Style::default().fg(Color::Yellow)),
+            Span::raw(" Run | "),
+            Span::styled("Q", Style::default().fg(Color::Yellow)),
+            Span::raw(" Quit | "),
             Span::styled("Tab", Style::default().fg(Color::Yellow)),
-            Span::raw(" = Switch Pane | "),
-            Span::styled("F5/Ctrl+R", Style::default().fg(Color::Yellow)),
-            Span::raw(" = Run All | "),
+            Span::raw(" Switch Pane | "),
+            Span::styled("↑/↓/j/k", Style::default().fg(Color::Yellow)),
+            Span::raw(" Navigate | "),
             Span::styled("Ctrl+E", Style::default().fg(Color::Yellow)),
-            Span::raw(" = Cycle Env | "),
-            Span::styled("Ctrl+Q", Style::default().fg(Color::Yellow)),
-            Span::raw(" = Quit"),
+            Span::raw(" Cycle Env"),
         ]),
     ];
 
