@@ -339,12 +339,13 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                             Style::default().add_modifier(Modifier::BOLD),
                         )]));
                         // Show first few lines of response (truncate for TUI)
+                        let line_count = response_body.lines().count();
                         for (i, line) in response_body.lines().take(10).enumerate() {
                             lines.push(Line::from(vec![
                                 Span::raw("    "),
                                 Span::styled(line.to_string(), Style::default().fg(Color::Gray)),
                             ]));
-                            if i == 9 && response_body.lines().count() > 10 {
+                            if i == 9 && line_count > 10 {
                                 lines.push(Line::from(vec![
                                     Span::raw("    "),
                                     Span::styled(

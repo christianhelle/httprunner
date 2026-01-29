@@ -146,21 +146,15 @@ impl App {
     }
 
     fn cycle_focus_reverse(&mut self) {
+        if !self.file_tree_visible {
+            // When the file tree is hidden, always normalize focus to RequestView.
+            self.focused_pane = FocusedPane::RequestView;
+            return;
+        }
+
         self.focused_pane = match self.focused_pane {
-            FocusedPane::FileTree => {
-                if self.file_tree_visible {
-                    FocusedPane::ResultsView
-                } else {
-                    FocusedPane::RequestView
-                }
-            }
-            FocusedPane::RequestView => {
-                if self.file_tree_visible {
-                    FocusedPane::FileTree
-                } else {
-                    FocusedPane::ResultsView
-                }
-            }
+            FocusedPane::FileTree => FocusedPane::ResultsView,
+            FocusedPane::RequestView => FocusedPane::FileTree,
             FocusedPane::ResultsView => FocusedPane::RequestView,
         };
     }
