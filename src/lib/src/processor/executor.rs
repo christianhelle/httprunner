@@ -439,8 +439,8 @@ fn log_single_assertion_result(assertion_result: &crate::types::AssertionResult,
             assertion_type_str,
             assertion_result
                 .error_message
-                .as_ref()
-                .unwrap_or(&"Failed".to_string())
+                .as_deref()
+                .unwrap_or("Failed")
         ));
         if let Some(ref actual) = assertion_result.actual_value {
             log.writeln(&format!(
