@@ -75,6 +75,10 @@ impl App {
                 self.save_state();
                 return Ok(());
             }
+            (KeyCode::Tab, KeyModifiers::SHIFT) => {
+                self.cycle_focus_reverse();
+                return Ok(());
+            }
             (KeyCode::Tab, _) => {
                 self.cycle_focus();
                 return Ok(());
@@ -138,6 +142,26 @@ impl App {
                     FocusedPane::RequestView
                 }
             }
+        };
+    }
+
+    fn cycle_focus_reverse(&mut self) {
+        self.focused_pane = match self.focused_pane {
+            FocusedPane::FileTree => {
+                if self.file_tree_visible {
+                    FocusedPane::ResultsView
+                } else {
+                    FocusedPane::RequestView
+                }
+            }
+            FocusedPane::RequestView => {
+                if self.file_tree_visible {
+                    FocusedPane::FileTree
+                } else {
+                    FocusedPane::ResultsView
+                }
+            }
+            FocusedPane::ResultsView => FocusedPane::RequestView,
         };
     }
 

@@ -538,7 +538,7 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(" Run | "),
             Span::styled("Q", Style::default().fg(Color::Yellow)),
             Span::raw(" Quit | "),
-            Span::styled("Tab", Style::default().fg(Color::Yellow)),
+            Span::styled("Tab/Shift+Tab", Style::default().fg(Color::Yellow)),
             Span::raw(" Pane | "),
             Span::styled("Ctrl+B", Style::default().fg(Color::Yellow)),
             Span::raw(" Files | "),
