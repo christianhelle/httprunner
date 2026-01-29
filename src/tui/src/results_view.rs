@@ -50,6 +50,10 @@ impl ResultsView {
         self.compact_mode = !self.compact_mode;
     }
 
+    pub fn set_compact_mode(&mut self, compact: bool) {
+        self.compact_mode = compact;
+    }
+
     pub fn is_compact_mode(&self) -> bool {
         self.compact_mode
     }

@@ -24,6 +24,7 @@ pub struct App {
     pub environments: Vec<String>,
     pub selected_environment: Option<String>,
     pub status_message: String,
+    pub file_tree_visible: bool,
 }
 
 impl App {
@@ -35,17 +36,24 @@ impl App {
             .and_then(|p| if p.exists() { Some(p) } else { None })
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
+        let file_tree_visible = state.file_tree_visible.unwrap_or(true);
+        let results_compact_mode = state.results_compact_mode.unwrap_or(true);
+
+        let mut results_view = ResultsView::new();
+        results_view.set_compact_mode(results_compact_mode);
+
         let mut app = Self {
             should_quit: false,
             file_tree: FileTree::new(root_directory.clone()),
             request_view: RequestView::new(),
-            results_view: ResultsView::new(),
+            results_view,
             focused_pane: FocusedPane::FileTree,
             root_directory,
             selected_file: None,
             environments: Vec::new(),
             selected_environment: None,
             status_message: String::from("Ready"),
+            file_tree_visible,
         };
 
         if let Some(saved_file) = state.selected_file
@@ -73,6 +81,14 @@ impl App {
             }
             (KeyCode::Char('e'), KeyModifiers::CONTROL) => {
                 self.cycle_environment();
+                return Ok(());
+            }
+            (KeyCode::Char('b'), KeyModifiers::CONTROL) => {
+                self.file_tree_visible = !self.file_tree_visible;
+                // If hiding file tree and it was focused, switch to request view
+                if !self.file_tree_visible && self.focused_pane == FocusedPane::FileTree {
+                    self.focused_pane = FocusedPane::RequestView;
+                }
                 return Ok(());
             }
             (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
@@ -115,7 +131,13 @@ impl App {
         self.focused_pane = match self.focused_pane {
             FocusedPane::FileTree => FocusedPane::RequestView,
             FocusedPane::RequestView => FocusedPane::ResultsView,
-            FocusedPane::ResultsView => FocusedPane::FileTree,
+            FocusedPane::ResultsView => {
+                if self.file_tree_visible {
+                    FocusedPane::FileTree
+                } else {
+                    FocusedPane::RequestView
+                }
+            }
         };
     }
 
@@ -215,7 +237,9 @@ impl App {
                                             url: request.url,
                                             status: http_result.status_code,
                                             duration_ms: http_result.duration_ms,
-                                            response_body: http_result.response_body.unwrap_or_default(),
+                                            response_body: http_result
+                                                .response_body
+                                                .unwrap_or_default(),
                                             assertion_results: http_result.assertion_results,
                                         }
                                     } else {
@@ -290,8 +314,8 @@ impl App {
             selected_environment: self.selected_environment.clone(),
             window_size: None,
             font_size: None,
-            file_tree_visible: None,
-            results_compact_mode: None,
+            file_tree_visible: Some(self.file_tree_visible),
+            results_compact_mode: Some(self.results_view.is_compact_mode()),
             last_results: None,
         };
         state.save();

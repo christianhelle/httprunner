@@ -50,18 +50,31 @@ fn render_title(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_main_content(f: &mut Frame, area: Rect, app: &App) {
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(25), // File tree
-            Constraint::Percentage(40), // Request view
-            Constraint::Percentage(35), // Results view
-        ])
-        .split(area);
+    if app.file_tree_visible {
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(25), // File tree
+                Constraint::Percentage(40), // Request view
+                Constraint::Percentage(35), // Results view
+            ])
+            .split(area);
 
-    render_file_tree(f, chunks[0], app);
-    render_request_view(f, chunks[1], app);
-    render_results_view(f, chunks[2], app);
+        render_file_tree(f, chunks[0], app);
+        render_request_view(f, chunks[1], app);
+        render_results_view(f, chunks[2], app);
+    } else {
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(55), // Request view (larger when file tree hidden)
+                Constraint::Percentage(45), // Results view
+            ])
+            .split(area);
+
+        render_request_view(f, chunks[0], app);
+        render_results_view(f, chunks[1], app);
+    }
 }
 
 fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
@@ -214,9 +227,19 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
         // Show mode indicator
         lines.push(Line::from(vec![
             if compact_mode {
-                Span::styled("📋 Compact", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+                Span::styled(
+                    "📋 Compact",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                )
             } else {
-                Span::styled("📄 Verbose", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD))
+                Span::styled(
+                    "📄 Verbose",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                )
             },
             Span::styled(" (Ctrl+D to toggle)", Style::default().fg(Color::Gray)),
         ]));
@@ -278,7 +301,10 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                                         format!(
                                             "{}: {}",
                                             assertion_type_str,
-                                            assertion.error_message.as_ref().unwrap_or(&"Failed".to_string())
+                                            assertion
+                                                .error_message
+                                                .as_ref()
+                                                .unwrap_or(&"Failed".to_string())
                                         ),
                                         Style::default().fg(Color::Red),
                                     ),
@@ -303,9 +329,10 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     // Show response body in verbose mode
                     if !compact_mode && !response_body.is_empty() {
                         lines.push(Line::from(""));
-                        lines.push(Line::from(vec![
-                            Span::styled("  Response:", Style::default().add_modifier(Modifier::BOLD)),
-                        ]));
+                        lines.push(Line::from(vec![Span::styled(
+                            "  Response:",
+                            Style::default().add_modifier(Modifier::BOLD),
+                        )]));
                         // Show first few lines of response (truncate for TUI)
                         for (i, line) in response_body.lines().take(10).enumerate() {
                             lines.push(Line::from(vec![
@@ -315,7 +342,10 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                             if i == 9 && response_body.lines().count() > 10 {
                                 lines.push(Line::from(vec![
                                     Span::raw("    "),
-                                    Span::styled("... (truncated)", Style::default().fg(Color::DarkGray)),
+                                    Span::styled(
+                                        "... (truncated)",
+                                        Style::default().fg(Color::DarkGray),
+                                    ),
                                 ]));
                             }
                         }
@@ -504,13 +534,13 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             Span::styled("Q", Style::default().fg(Color::Yellow)),
             Span::raw(" Quit | "),
             Span::styled("Tab", Style::default().fg(Color::Yellow)),
-            Span::raw(" Switch Pane | "),
-            Span::styled("↑/↓/j/k", Style::default().fg(Color::Yellow)),
-            Span::raw(" Navigate | "),
-            Span::styled("Ctrl+E", Style::default().fg(Color::Yellow)),
-            Span::raw(" Env | "),
+            Span::raw(" Pane | "),
+            Span::styled("Ctrl+B", Style::default().fg(Color::Yellow)),
+            Span::raw(" Files | "),
             Span::styled("Ctrl+D", Style::default().fg(Color::Yellow)),
-            Span::raw(" Toggle View"),
+            Span::raw(" View | "),
+            Span::styled("Ctrl+E", Style::default().fg(Color::Yellow)),
+            Span::raw(" Env"),
         ]),
     ];
 
