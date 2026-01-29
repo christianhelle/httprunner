@@ -75,11 +75,7 @@ fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
     let is_discovering = app.file_tree.is_discovering();
     let discovered_count = app.file_tree.discovered_count();
 
-    let title = if is_discovering {
-        format!("Files [↑/↓/j/k to navigate]")
-    } else {
-        "Files [↑/↓/j/k to navigate]".to_string()
-    };
+    let title = "Files [↑/↓/j/k to navigate]".to_string();
 
     let files = app.file_tree.files();
     let mut items: Vec<ListItem> = files

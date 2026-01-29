@@ -236,7 +236,7 @@ fn try_parse_variable_line(trimmed: &str, state: &mut ParserState) -> LineParseR
         if state.in_body {
             return LineParseResult::NotHandled;
         }
-        
+
         // Outside the body, '@' lines should be variable declarations with '='
         if let Some(eq_pos) = trimmed.find('=') {
             let var_name = trimmed[1..eq_pos].trim();
