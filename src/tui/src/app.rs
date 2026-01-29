@@ -75,7 +75,7 @@ impl App {
                 self.save_state();
                 return Ok(());
             }
-            (KeyCode::Tab, KeyModifiers::SHIFT) => {
+            (KeyCode::BackTab, _) => {
                 self.cycle_focus_reverse();
                 return Ok(());
             }
