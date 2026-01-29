@@ -33,14 +33,20 @@ The TUI is divided into three main panes:
 
 ### Keyboard Shortcuts
 
-- **Tab** - Switch between panes
+#### Navigation
+- **Tab** - Switch to next pane (left to right)
+- **Shift+Tab** - Switch to previous pane (right to left)
 - **↑/↓** or **k/j** - Navigate within current pane
-- **Enter** - Run selected request (in Request View)
-- **F5** or **Ctrl+R** - Run all requests in the selected file
-- **Ctrl+E** - Cycle through available environments
-- **Ctrl+Q** or **Ctrl+C** - Quit application
 - **Page Up/Down** - Scroll results (in Results View)
 - **Home/End** - Jump to first/last item
+
+#### Actions
+- **Enter** - Run selected request (in Request View)
+- **F5** or **Ctrl+R** or **R** - Run all requests in the selected file
+- **Ctrl+E** - Cycle through available environments
+- **Ctrl+B** - Toggle file tree visibility
+- **Ctrl+D** - Toggle results view mode (compact/verbose)
+- **Ctrl+Q** or **Q** - Quit application
 
 ## Building
 
