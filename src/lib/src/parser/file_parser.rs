@@ -357,11 +357,12 @@ fn parse_line(line: &str, state: &mut ParserState) {
     // Parse header line
     if trimmed.contains(':') && !state.in_body {
         if state.current_request.is_some()
-            && let Some(colon_pos) = trimmed.find(':') {
-                let name = trimmed[..colon_pos].trim();
-                let value = trimmed[colon_pos + 1..].trim();
-                state.add_header(name, value);
-            }
+            && let Some(colon_pos) = trimmed.find(':')
+        {
+            let name = trimmed[..colon_pos].trim();
+            let value = trimmed[colon_pos + 1..].trim();
+            state.add_header(name, value);
+        }
         return;
     }
 
