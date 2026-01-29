@@ -60,7 +60,9 @@ impl App {
     pub fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<()> {
         // Global shortcuts
         match (key.code, key.modifiers) {
-            (KeyCode::Char('q'), KeyModifiers::CONTROL) => {
+            (KeyCode::Char('q'), KeyModifiers::CONTROL)
+            | (KeyCode::Char('q'), KeyModifiers::NONE)
+            | (KeyCode::Char('Q'), KeyModifiers::SHIFT) => {
                 self.should_quit = true;
                 self.save_state();
                 return Ok(());
@@ -73,7 +75,10 @@ impl App {
                 self.cycle_environment();
                 return Ok(());
             }
-            (KeyCode::F(5), _) | (KeyCode::Char('r'), KeyModifiers::CONTROL) => {
+            (KeyCode::F(5), _)
+            | (KeyCode::Char('r'), KeyModifiers::CONTROL)
+            | (KeyCode::Char('r'), KeyModifiers::NONE)
+            | (KeyCode::Char('R'), KeyModifiers::SHIFT) => {
                 self.run_all_requests();
                 return Ok(());
             }
