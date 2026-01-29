@@ -123,6 +123,11 @@ impl TotalCounters {
         self.skipped += counters.skipped;
         self.files_processed += 1;
     }
+
+    fn increment_files_failed(&mut self) {
+        self.failed += 1;
+        self.files_processed += 1;
+    }
 }
 
 fn get_context_name(request: &HttpRequest, request_count: u32) -> String {
@@ -547,7 +552,7 @@ fn process_single_file<F>(
     config: &ProcessorConfig,
     executor: &F,
     log: &mut Log,
-) -> Option<HttpFileResults>
+) -> Result<HttpFileResults>
 where
     F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
 {
@@ -557,7 +562,7 @@ where
         Ok(reqs) => reqs,
         Err(e) => {
             log.writeln(&format!("{} Error parsing file: {}", colors::red("❌"), e));
-            return None;
+            return Err(e);
         }
     };
 
@@ -566,7 +571,7 @@ where
             "{} No HTTP requests found in file",
             colors::yellow("⚠️")
         ));
-        return None;
+        return Err(anyhow::anyhow!("No HTTP requests found in file"));
     }
 
     log.writeln(&format!("Found {} HTTP request(s)\n", requests.len()));
@@ -636,7 +641,7 @@ where
 
     log_file_summary(&counters, log);
 
-    Some(HttpFileResults {
+    Ok(HttpFileResults {
         filename: http_file.to_string(),
         success_count: counters.success,
         failed_count: counters.failed,
@@ -721,14 +726,20 @@ where
     let mut totals = TotalCounters::new();
 
     for http_file in config.files {
-        if let Some(file_results) = process_single_file(http_file, config, executor, &mut log) {
-            totals.add_file_results(&RequestCounters {
-                success: file_results.success_count,
-                failed: file_results.failed_count,
-                skipped: file_results.skipped_count,
-                total: 0, // Not used in add_file_results
-            });
-            http_file_results.push(file_results);
+        match process_single_file(http_file, config, executor, &mut log) {
+            Ok(file_results) => {
+                totals.add_file_results(&RequestCounters {
+                    success: file_results.success_count,
+                    failed: file_results.failed_count,
+                    skipped: file_results.skipped_count,
+                    total: 0, // Not used in add_file_results
+                });
+                http_file_results.push(file_results);
+            }
+            Err(_) => {
+                // Parse error - count the entire file as failed
+                totals.increment_files_failed();
+            }
         }
     }
 
