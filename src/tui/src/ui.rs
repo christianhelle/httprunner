@@ -67,8 +67,8 @@ fn render_main_content(f: &mut Frame, area: Rect, app: &App) {
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Percentage(55), // Request view (larger when file tree hidden)
-                Constraint::Percentage(45), // Results view
+                Constraint::Percentage(50), // Request view
+                Constraint::Percentage(50), // Results view
             ])
             .split(area);
 
@@ -148,7 +148,12 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
     let requests = app.request_view.requests();
 
     if requests.is_empty() {
-        let empty_msg = Paragraph::new("No requests loaded\n\nSelect a file from the left panel")
+        let hint = if app.file_tree_visible {
+            "No requests loaded\n\nSelect a file from the left panel"
+        } else {
+            "No requests loaded\n\nPress Ctrl+B to show file list"
+        };
+        let empty_msg = Paragraph::new(hint)
             .block(
                 Block::default()
                     .borders(Borders::ALL)
