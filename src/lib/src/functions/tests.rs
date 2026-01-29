@@ -1503,7 +1503,7 @@ fn test_number_boundary_comprehensive() {
         if num <= 10 {
             has_low = true;
         }
-        if 40 <= num && num <= 60 {
+        if (40..=60).contains(&num) {
             has_mid = true;
         }
         if num >= 90 {
@@ -1577,7 +1577,7 @@ fn test_first_name_generates_valid_names() {
         let name = sub.generate();
         assert!(!name.is_empty(), "First name should not be empty");
         assert!(
-            name.len() > 0,
+            !name.is_empty(),
             "First name should have at least one character"
         );
     }
@@ -1590,7 +1590,7 @@ fn test_last_name_generates_valid_names() {
         let name = sub.generate();
         assert!(!name.is_empty(), "Last name should not be empty");
         assert!(
-            name.len() > 0,
+            !name.is_empty(),
             "Last name should have at least one character"
         );
     }

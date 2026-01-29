@@ -435,10 +435,7 @@ fn log_assertion_results(result: &HttpResult, log: &mut Log) {
 }
 
 /// Log a single assertion result.
-fn log_single_assertion_result(
-    assertion_result: &crate::types::AssertionResult,
-    log: &mut Log,
-) {
+fn log_single_assertion_result(assertion_result: &crate::types::AssertionResult, log: &mut Log) {
     let assertion_type_str = match assertion_result.assertion.assertion_type {
         AssertionType::Status => "Status Code",
         AssertionType::Body => "Response Body",
@@ -607,20 +604,15 @@ where
     for request in requests {
         counters.increment_total();
 
-        let (result, processed_request) = match process_single_request(
-            request,
-            &request_contexts,
-            config,
-            executor,
-            log,
-        ) {
-            Ok((result, req)) => (result, req),
-            Err(e) => {
-                log.writeln(&format!("{} Internal error: {}", colors::red("❌"), e));
-                counters.record_failure();
-                continue;
-            }
-        };
+        let (result, processed_request) =
+            match process_single_request(request, &request_contexts, config, executor, log) {
+                Ok((result, req)) => (result, req),
+                Err(e) => {
+                    log.writeln(&format!("{} Internal error: {}", colors::red("❌"), e));
+                    counters.record_failure();
+                    continue;
+                }
+            };
 
         match result {
             RequestProcessResult::Skipped => {

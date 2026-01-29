@@ -417,7 +417,7 @@ fn test_parse_intellij_script_block_ignored() {
 "#;
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].method, "GET");
     // Script block should be ignored, not parsed as body
@@ -430,7 +430,7 @@ fn test_parse_intellij_script_block_single_line() {
     let content = "GET https://api.example.com/users\n> {% client.test(response); %}";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     // Script block ending on same line should also be ignored
 }
@@ -441,7 +441,7 @@ fn test_parse_empty_file() {
     let content = "";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 0);
 }
 
@@ -451,7 +451,7 @@ fn test_parse_comments_only_file() {
     let content = "# This is a comment\n// This is also a comment\n# Another comment";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 0);
 }
 
@@ -461,7 +461,7 @@ fn test_parse_variable_override() {
     let content = "@baseUrl = https://api.example.com\n@baseUrl = https://api.test.com\nGET {{baseUrl}}/users";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     // The second variable assignment should override the first
     assert_eq!(requests[0].url, "https://api.test.com/users");
@@ -473,7 +473,7 @@ fn test_parse_variable_with_variable_reference() {
     let content = "@host = api.example.com\n@baseUrl = https://{{host}}\nGET {{baseUrl}}/users";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].url, "https://api.example.com/users");
 }
@@ -489,7 +489,7 @@ fn test_parse_request_with_all_directives() {
 GET https://api.example.com/users"#;
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].name, Some("fullRequest".to_string()));
     assert_eq!(requests[0].timeout, Some(30_000));
@@ -506,7 +506,7 @@ fn test_parse_multiple_conditions() {
 GET https://api.example.com/protected"#;
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].conditions.len(), 2);
     assert!(!requests[0].conditions[0].negate);
@@ -519,10 +519,13 @@ fn test_parse_assertion_without_quotes() {
     let content = "GET https://api.example.com/status\n> EXPECTED_RESPONSE_STATUS 200";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].assertions.len(), 1);
-    assert_eq!(requests[0].assertions[0].assertion_type, AssertionType::Status);
+    assert_eq!(
+        requests[0].assertions[0].assertion_type,
+        AssertionType::Status
+    );
     assert_eq!(requests[0].assertions[0].expected_value, "200");
 }
 
@@ -532,10 +535,13 @@ fn test_parse_body_assertion_with_quotes() {
     let content = "GET https://api.example.com/health\n> EXPECTED_RESPONSE_BODY \"healthy\"";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].assertions.len(), 1);
-    assert_eq!(requests[0].assertions[0].assertion_type, AssertionType::Body);
+    assert_eq!(
+        requests[0].assertions[0].assertion_type,
+        AssertionType::Body
+    );
     assert_eq!(requests[0].assertions[0].expected_value, "healthy");
 }
 
@@ -543,7 +549,7 @@ fn test_parse_body_assertion_with_quotes() {
 fn test_parse_http_content_directly() {
     let content = "GET https://api.example.com/users\nAuthorization: Bearer token";
     let requests = parse_http_content(content, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].method, "GET");
     assert_eq!(requests[0].headers.len(), 1);
@@ -555,7 +561,7 @@ fn test_parse_preserves_body_whitespace() {
     let content = "POST https://api.example.com/data\n\nline1\nline2\nline3";
     let file_path = create_test_file(&temp_dir, "test.http", content);
     let requests = parse_http_file(&file_path, None).unwrap();
-    
+
     assert_eq!(requests.len(), 1);
     let body = requests[0].body.as_ref().unwrap();
     assert!(body.contains("line1"));

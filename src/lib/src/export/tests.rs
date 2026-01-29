@@ -800,7 +800,7 @@ fn export_formats_http_headers_with_crlf() {
 
 #[test]
 fn export_handles_different_http_methods() {
-    let methods = vec!["GET", "POST", "PUT", "DELETE", "PATCH"];
+    let methods = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
     for (i, method) in methods.iter().enumerate() {
         let name = format!("{}_method_test_{}", method.to_lowercase(), i);
@@ -836,7 +836,7 @@ fn export_handles_different_http_methods() {
 
 #[test]
 fn export_handles_various_status_codes() {
-    let status_codes = vec![200, 201, 204, 400, 404, 500];
+    let status_codes = [200, 201, 204, 400, 404, 500];
 
     for (i, status) in status_codes.iter().enumerate() {
         let name = format!("status_test_{}_{}", status, i);
