@@ -313,73 +313,77 @@ fn parse_line(line: &str, state: &mut ParserState) {
         return;
     }
 
-    // Try parsing directives in order
-    match try_parse_name_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
+    // When in body mode, skip directive/comment/assertion parsing to preserve body content
+    // Only HTTP request lines can exit body mode (by starting a new request)
+    if !state.in_body {
+        // Try parsing directives in order
+        match try_parse_name_directive(trimmed, state) {
+            LineParseResult::Continue => return,
+            LineParseResult::Error(msg) => {
+                eprintln!("Warning: {}", msg);
+                return;
+            }
+            LineParseResult::NotHandled => {}
+        }
+
+        match try_parse_timeout_directive(trimmed, state) {
+            LineParseResult::Continue => return,
+            LineParseResult::Error(msg) => {
+                eprintln!("Warning: {}", msg);
+                return;
+            }
+            LineParseResult::NotHandled => {}
+        }
+
+        match try_parse_connection_timeout_directive(trimmed, state) {
+            LineParseResult::Continue => return,
+            LineParseResult::Error(msg) => {
+                eprintln!("Warning: {}", msg);
+                return;
+            }
+            LineParseResult::NotHandled => {}
+        }
+
+        match try_parse_depends_on_directive(trimmed, state) {
+            LineParseResult::Continue => return,
+            LineParseResult::Error(msg) => {
+                eprintln!("Warning: {}", msg);
+                return;
+            }
+            LineParseResult::NotHandled => {}
+        }
+
+        match try_parse_condition_directive(trimmed, state) {
+            LineParseResult::Continue => return,
+            LineParseResult::Error(msg) => {
+                eprintln!("Warning: {}", msg);
+                return;
+            }
+            LineParseResult::NotHandled => {}
+        }
+
+        // Skip comment lines (after directive processing)
+        if trimmed.starts_with('#') || trimmed.starts_with("//") {
             return;
         }
-        LineParseResult::NotHandled => {}
-    }
 
-    match try_parse_timeout_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
+        match try_parse_variable_line(trimmed, state) {
+            LineParseResult::Continue => return,
+            LineParseResult::Error(msg) => {
+                eprintln!("Warning: {}", msg);
+                return;
+            }
+            LineParseResult::NotHandled => {}
         }
-        LineParseResult::NotHandled => {}
-    }
 
-    match try_parse_connection_timeout_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
+        match try_parse_assertion_line(trimmed, state) {
+            LineParseResult::Continue => return,
+            LineParseResult::Error(msg) => {
+                eprintln!("Warning: {}", msg);
+                return;
+            }
+            LineParseResult::NotHandled => {}
         }
-        LineParseResult::NotHandled => {}
-    }
-
-    match try_parse_depends_on_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
-    }
-
-    match try_parse_condition_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
-    }
-
-    // Skip comment lines (after directive processing)
-    if trimmed.starts_with('#') || trimmed.starts_with("//") {
-        return;
-    }
-
-    match try_parse_variable_line(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
-    }
-
-    match try_parse_assertion_line(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
     }
 
     // Parse HTTP request line
