@@ -189,7 +189,7 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
     let list = List::new(items).block(
         Block::default()
             .borders(Borders::ALL)
-            .title(format!("Requests ({}) [R to run all]", requests.len()))
+            .title(format!("Requests ({}) [R/F5 to run all]", requests.len()))
             .border_style(border_style),
     );
 
@@ -398,7 +398,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 
         f.render_widget(paragraph, area);
     } else {
-        let empty_msg = Paragraph::new("No results yet\n\nPress R to run all requests")
+        let empty_msg = Paragraph::new("No results yet\n\nPress R or F5 to run all requests")
             .block(
                 Block::default()
                     .borders(Borders::ALL)
