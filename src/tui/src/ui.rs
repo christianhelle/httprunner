@@ -50,18 +50,31 @@ fn render_title(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_main_content(f: &mut Frame, area: Rect, app: &App) {
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(25), // File tree
-            Constraint::Percentage(40), // Request view
-            Constraint::Percentage(35), // Results view
-        ])
-        .split(area);
+    if app.file_tree_visible {
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(25), // File tree
+                Constraint::Percentage(40), // Request view
+                Constraint::Percentage(35), // Results view
+            ])
+            .split(area);
 
-    render_file_tree(f, chunks[0], app);
-    render_request_view(f, chunks[1], app);
-    render_results_view(f, chunks[2], app);
+        render_file_tree(f, chunks[0], app);
+        render_request_view(f, chunks[1], app);
+        render_results_view(f, chunks[2], app);
+    } else {
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(50), // Request view
+                Constraint::Percentage(50), // Results view
+            ])
+            .split(area);
+
+        render_request_view(f, chunks[0], app);
+        render_results_view(f, chunks[1], app);
+    }
 }
 
 fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
@@ -135,7 +148,12 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
     let requests = app.request_view.requests();
 
     if requests.is_empty() {
-        let empty_msg = Paragraph::new("No requests loaded\n\nSelect a file from the left panel")
+        let hint = if app.file_tree_visible {
+            "No requests loaded\n\nSelect a file from the left panel"
+        } else {
+            "No requests loaded\n\nPress Ctrl+B to show file list"
+        };
+        let empty_msg = Paragraph::new(hint)
             .block(
                 Block::default()
                     .borders(Borders::ALL)
@@ -194,6 +212,7 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
 
 fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
     use crate::results_view::ExecutionResult;
+    use httprunner_lib::types::AssertionType;
 
     let is_focused = app.focused_pane == FocusedPane::ResultsView;
     let border_style = if is_focused {
@@ -204,10 +223,32 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 
     let is_running = app.results_view.is_running();
     let incremental_results = app.results_view.get_incremental_results();
+    let compact_mode = app.results_view.is_compact_mode();
 
     // Check if we have incremental results (from async execution)
     if !incremental_results.is_empty() || is_running {
         let mut lines = Vec::new();
+
+        // Show mode indicator
+        lines.push(Line::from(vec![
+            if compact_mode {
+                Span::styled(
+                    "📋 Compact",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                )
+            } else {
+                Span::styled(
+                    "📄 Verbose",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                )
+            },
+            Span::styled(" (Ctrl+D to toggle)", Style::default().fg(Color::Gray)),
+        ]));
+        lines.push(Line::from(""));
 
         // Show running indicator
         if is_running {
@@ -226,16 +267,96 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     url,
                     status,
                     duration_ms,
-                    ..
+                    response_body,
+                    assertion_results,
                 } => {
+                    // Main result line (same for compact and verbose)
                     lines.push(Line::from(vec![
                         Span::styled("✓ ", Style::default().fg(Color::Green)),
                         Span::raw(format!("{} {} ", method, url)),
                         Span::styled(
-                            format!("[{} - {}ms]", status, duration_ms),
+                            format!("| {} | {}ms", status, duration_ms),
                             Style::default().fg(Color::Gray),
                         ),
                     ]));
+
+                    // Show assertion results
+                    if !assertion_results.is_empty() {
+                        for assertion in assertion_results {
+                            let assertion_type_str = match assertion.assertion.assertion_type {
+                                AssertionType::Status => "Status",
+                                AssertionType::Body => "Body",
+                                AssertionType::Headers => "Headers",
+                            };
+
+                            if assertion.passed {
+                                lines.push(Line::from(vec![
+                                    Span::raw("  "),
+                                    Span::styled("✓ ", Style::default().fg(Color::Green)),
+                                    Span::raw(format!(
+                                        "{}: Expected '{}'",
+                                        assertion_type_str, assertion.assertion.expected_value
+                                    )),
+                                ]));
+                            } else {
+                                lines.push(Line::from(vec![
+                                    Span::raw("  "),
+                                    Span::styled("✗ ", Style::default().fg(Color::Red)),
+                                    Span::styled(
+                                        format!(
+                                            "{}: {}",
+                                            assertion_type_str,
+                                            assertion
+                                                .error_message
+                                                .as_ref()
+                                                .unwrap_or(&"Failed".to_string())
+                                        ),
+                                        Style::default().fg(Color::Red),
+                                    ),
+                                ]));
+
+                                if let Some(ref actual) = assertion.actual_value {
+                                    lines.push(Line::from(vec![
+                                        Span::raw("    "),
+                                        Span::styled(
+                                            format!(
+                                                "Expected: '{}', Actual: '{}'",
+                                                assertion.assertion.expected_value, actual
+                                            ),
+                                            Style::default().fg(Color::Yellow),
+                                        ),
+                                    ]));
+                                }
+                            }
+                        }
+                    }
+
+                    // Show response body in verbose mode
+                    if !compact_mode && !response_body.is_empty() {
+                        lines.push(Line::from(""));
+                        lines.push(Line::from(vec![Span::styled(
+                            "  Response:",
+                            Style::default().add_modifier(Modifier::BOLD),
+                        )]));
+                        // Show first few lines of response (truncate for TUI)
+                        let line_count = response_body.lines().count();
+                        for (i, line) in response_body.lines().take(10).enumerate() {
+                            lines.push(Line::from(vec![
+                                Span::raw("    "),
+                                Span::styled(line.to_string(), Style::default().fg(Color::Gray)),
+                            ]));
+                            if i == 9 && line_count > 10 {
+                                lines.push(Line::from(vec![
+                                    Span::raw("    "),
+                                    Span::styled(
+                                        "... (truncated)",
+                                        Style::default().fg(Color::DarkGray),
+                                    ),
+                                ]));
+                            }
+                        }
+                    }
+                    lines.push(Line::from(""));
                 }
                 ExecutionResult::Failure { method, url, error } => {
                     lines.push(Line::from(vec![
@@ -246,6 +367,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         Span::raw("  "),
                         Span::styled(error, Style::default().fg(Color::Red)),
                     ]));
+                    lines.push(Line::from(""));
                 }
                 ExecutionResult::Running { message } => {
                     lines.push(Line::from(vec![
@@ -417,12 +539,14 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(" Run | "),
             Span::styled("Q", Style::default().fg(Color::Yellow)),
             Span::raw(" Quit | "),
-            Span::styled("Tab", Style::default().fg(Color::Yellow)),
-            Span::raw(" Switch Pane | "),
-            Span::styled("↑/↓/j/k", Style::default().fg(Color::Yellow)),
-            Span::raw(" Navigate | "),
+            Span::styled("Tab/Shift+Tab", Style::default().fg(Color::Yellow)),
+            Span::raw(" Pane | "),
+            Span::styled("Ctrl+B", Style::default().fg(Color::Yellow)),
+            Span::raw(" Files | "),
+            Span::styled("Ctrl+D", Style::default().fg(Color::Yellow)),
+            Span::raw(" View | "),
             Span::styled("Ctrl+E", Style::default().fg(Color::Yellow)),
-            Span::raw(" Cycle Env"),
+            Span::raw(" Env"),
         ]),
     ];
 

@@ -10,7 +10,7 @@ pub enum ExecutionResult {
         url: String,
         status: u16,
         duration_ms: u64,
-        #[allow(dead_code)]
+        response_body: String,
         assertion_results: Vec<AssertionResult>,
     },
     Failure {
@@ -31,6 +31,8 @@ pub struct ResultsView {
     /// Whether execution is in progress
     is_running: Arc<Mutex<bool>>,
     scroll_offset: usize,
+    /// Compact mode (true) or Verbose mode (false)
+    compact_mode: bool,
 }
 
 impl ResultsView {
@@ -40,7 +42,20 @@ impl ResultsView {
             incremental_results: Arc::new(Mutex::new(Vec::new())),
             is_running: Arc::new(Mutex::new(false)),
             scroll_offset: 0,
+            compact_mode: true,
         }
+    }
+
+    pub fn toggle_compact_mode(&mut self) {
+        self.compact_mode = !self.compact_mode;
+    }
+
+    pub fn set_compact_mode(&mut self, compact: bool) {
+        self.compact_mode = compact;
+    }
+
+    pub fn is_compact_mode(&self) -> bool {
+        self.compact_mode
     }
 
     #[allow(dead_code)]

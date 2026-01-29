@@ -92,9 +92,24 @@ All standard directives are preserved:
 
 ## Keyboard Shortcuts
 
+### Focus Navigation
+- **Tab**: Move focus to the next widget (left to right)
+- **Shift + Tab**: Move focus to the previous widget (right to left)
+
+### Font Size
 - **Ctrl + Plus**: Zoom in (increase font size)
 - **Ctrl + Minus**: Zoom out (decrease font size)
 - **Ctrl + 0**: Reset font size to default
+
+### Actions
+- **Ctrl + R** or **F5**: Run all requests
+- **Ctrl + S**: Save current file
+- **Ctrl + T**: Toggle between Text Editor and Request Details view
+- **Ctrl + O**: Open folder (desktop only)
+- **Ctrl + B**: Toggle file tree visibility (desktop only)
+- **Ctrl + D**: Toggle results view mode (compact/verbose)
+- **Ctrl + E**: Switch environment
+- **Ctrl + Q**: Quit application
 
 ## Technical Details
 
