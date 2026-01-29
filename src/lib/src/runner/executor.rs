@@ -16,11 +16,9 @@ use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 
-/// Type alias for captured response details (headers and body).
 #[cfg(not(target_arch = "wasm32"))]
 type ResponseDetails = (Option<HashMap<String, String>>, Option<String>);
 
-/// Execute an HTTP request synchronously and return the result.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn execute_http_request(
     request: &HttpRequest,
@@ -77,7 +75,6 @@ pub fn execute_http_request(
     ))
 }
 
-/// Build an HTTP client with the appropriate timeout and security settings.
 #[cfg(not(target_arch = "wasm32"))]
 fn build_client(request: &HttpRequest, insecure: bool) -> Result<Client> {
     let connection_timeout = request.connection_timeout.unwrap_or(30_000);
@@ -96,7 +93,6 @@ fn build_client(request: &HttpRequest, insecure: bool) -> Result<Client> {
     Ok(client_builder.build()?)
 }
 
-/// Build the HTTP request with method, URL, headers, and body.
 #[cfg(not(target_arch = "wasm32"))]
 fn build_request(
     client: &Client,
@@ -118,7 +114,6 @@ fn build_request(
     Ok(req_builder)
 }
 
-/// Classify request errors into user-friendly messages.
 #[cfg(not(target_arch = "wasm32"))]
 fn classify_request_error(e: &reqwest::Error) -> &'static str {
     if e.is_connect() {
@@ -130,7 +125,6 @@ fn classify_request_error(e: &reqwest::Error) -> &'static str {
     }
 }
 
-/// Capture response headers and body if needed.
 #[cfg(not(target_arch = "wasm32"))]
 fn capture_response_details(
     request: &HttpRequest,

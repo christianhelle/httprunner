@@ -1,7 +1,6 @@
 use crate::types::{HttpRequest, HttpResult};
 use std::collections::HashMap;
 
-/// Build an error result when a request fails before getting a response
 pub fn build_error_result(
     request: &HttpRequest,
     error_message: &str,
@@ -19,7 +18,6 @@ pub fn build_error_result(
     }
 }
 
-/// Extract headers from a reqwest HeaderMap into a HashMap
 pub fn extract_headers(headers: &reqwest::header::HeaderMap) -> HashMap<String, String> {
     let mut result = HashMap::new();
     for (name, value) in headers {
@@ -30,12 +28,10 @@ pub fn extract_headers(headers: &reqwest::header::HeaderMap) -> HashMap<String, 
     result
 }
 
-/// Determine if response details should be captured based on request properties
 pub fn should_capture_response(request: &HttpRequest, verbose: bool) -> bool {
     verbose || !request.assertions.is_empty() || request.name.is_some()
 }
 
-/// Build a successful HTTP result with all response details
 pub fn build_success_result(
     request: &HttpRequest,
     status_code: u16,
@@ -57,7 +53,6 @@ pub fn build_success_result(
     }
 }
 
-/// Create a temporary result for assertion evaluation
 pub fn build_temp_result_for_assertions(
     request: &HttpRequest,
     status_code: u16,

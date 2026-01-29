@@ -12,7 +12,6 @@ use crate::types::{
 };
 use anyhow::Result;
 
-/// Configuration for processing HTTP files.
 pub struct ProcessorConfig<'a> {
     pub files: &'a [String],
     pub verbose: bool,
@@ -67,7 +66,6 @@ impl<'a> ProcessorConfig<'a> {
     }
 }
 
-/// Counters for tracking request processing results.
 struct RequestCounters {
     success: u32,
     failed: u32,
@@ -102,7 +100,6 @@ impl RequestCounters {
     }
 }
 
-/// Aggregate counters across multiple files.
 struct TotalCounters {
     success: u32,
     failed: u32,
@@ -128,7 +125,6 @@ impl TotalCounters {
     }
 }
 
-/// Generate a context name for a request.
 fn get_context_name(request: &HttpRequest, request_count: u32) -> String {
     request
         .name
@@ -136,7 +132,6 @@ fn get_context_name(request: &HttpRequest, request_count: u32) -> String {
         .unwrap_or_else(|| format!("request_{}", request_count))
 }
 
-/// Add a request context for a skipped request.
 fn add_skipped_request_context(
     request_contexts: &mut Vec<RequestContext>,
     processed_request: HttpRequest,
@@ -150,7 +145,6 @@ fn add_skipped_request_context(
     });
 }
 
-/// Add a request context with a result.
 fn add_request_context_with_result(
     request_contexts: &mut Vec<RequestContext>,
     processed_request: HttpRequest,
@@ -165,7 +159,6 @@ fn add_request_context_with_result(
     });
 }
 
-/// Check if a request should be skipped due to a failed dependency.
 fn should_skip_due_to_dependency(
     processed_request: &HttpRequest,
     request_contexts: &[RequestContext],
@@ -190,7 +183,6 @@ fn should_skip_due_to_dependency(
     false
 }
 
-/// Log verbose condition evaluation details.
 fn log_condition_evaluation_verbose(
     processed_request: &HttpRequest,
     request_contexts: &[RequestContext],
@@ -225,7 +217,6 @@ fn log_condition_evaluation_verbose(
     Ok(conditions_met)
 }
 
-/// Log a single condition evaluation result.
 fn log_single_condition_result(
     condition: &crate::types::Condition,
     eval_result: &conditions::ConditionEvaluationResult,
@@ -276,7 +267,6 @@ fn log_single_condition_result(
     ));
 }
 
-/// Check if a request should be skipped due to unmet conditions.
 fn should_skip_due_to_conditions(
     processed_request: &HttpRequest,
     request_contexts: &[RequestContext],
@@ -311,7 +301,6 @@ fn should_skip_due_to_conditions(
     }
 }
 
-/// Log that conditions were not met.
 fn log_conditions_not_met(processed_request: &HttpRequest, log: &mut Log) {
     let name_str = format_request_name(&processed_request.name);
     log.writeln(&format!(
@@ -323,7 +312,6 @@ fn log_conditions_not_met(processed_request: &HttpRequest, log: &mut Log) {
     ));
 }
 
-/// Log a condition evaluation error.
 fn log_condition_error(processed_request: &HttpRequest, error: &anyhow::Error, log: &mut Log) {
     let name_str = format_request_name(&processed_request.name);
     log.writeln(&format!(
@@ -336,7 +324,6 @@ fn log_condition_error(processed_request: &HttpRequest, error: &anyhow::Error, l
     ));
 }
 
-/// Log request details in verbose mode.
 fn log_request_details(request: &HttpRequest, log: &mut Log, pretty_json: bool) {
     log.writeln(&format!("\n{} Request Details:", colors::blue("📤")));
     if let Some(ref name) = request.name {
@@ -363,7 +350,6 @@ fn log_request_details(request: &HttpRequest, log: &mut Log, pretty_json: bool) 
     log.writeln(&"-".repeat(30));
 }
 
-/// Log the result of executing a request.
 fn log_execution_result(result: &HttpResult, processed_request: &HttpRequest, log: &mut Log) {
     let name_prefix = result
         .request_name
@@ -401,7 +387,6 @@ fn log_execution_result(result: &HttpResult, processed_request: &HttpRequest, lo
     }
 }
 
-/// Log response details in verbose mode.
 fn log_response_details(result: &HttpResult, log: &mut Log, pretty_json: bool) {
     log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
     log.writeln(&format!("Status: {}", result.status_code));
@@ -425,7 +410,6 @@ fn log_response_details(result: &HttpResult, log: &mut Log, pretty_json: bool) {
     log.writeln(&"-".repeat(30));
 }
 
-/// Log assertion results.
 fn log_assertion_results(result: &HttpResult, log: &mut Log) {
     log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
     for assertion_result in &result.assertion_results {
@@ -434,7 +418,6 @@ fn log_assertion_results(result: &HttpResult, log: &mut Log) {
     log.writeln(&"-".repeat(30));
 }
 
-/// Log a single assertion result.
 fn log_single_assertion_result(assertion_result: &crate::types::AssertionResult, log: &mut Log) {
     let assertion_type_str = match assertion_result.assertion.assertion_type {
         AssertionType::Status => "Status Code",
@@ -470,7 +453,6 @@ fn log_single_assertion_result(assertion_result: &crate::types::AssertionResult,
     }
 }
 
-/// Log the file header when starting to process a file.
 fn log_file_header(http_file: &str, log: &mut Log) {
     log.writeln(&format!(
         "{} HTTP File Runner - Processing file: {}",
@@ -480,7 +462,6 @@ fn log_file_header(http_file: &str, log: &mut Log) {
     log.writeln(&"=".repeat(50));
 }
 
-/// Log the file summary after processing all requests in a file.
 fn log_file_summary(counters: &RequestCounters, log: &mut Log) {
     log.writeln(&format!("\n{}", "=".repeat(50)));
     log.writeln(&format!(
@@ -491,7 +472,6 @@ fn log_file_summary(counters: &RequestCounters, log: &mut Log) {
     ));
 }
 
-/// Log the overall summary when processing multiple files.
 fn log_overall_summary(totals: &TotalCounters, log: &mut Log) {
     if totals.files_processed > 1 {
         log.writeln(&format!("{} Overall Summary:", colors::blue("🎯")));
@@ -505,7 +485,6 @@ fn log_overall_summary(totals: &TotalCounters, log: &mut Log) {
     }
 }
 
-/// Log an execution error.
 fn log_execution_error(processed_request: &HttpRequest, error: &anyhow::Error, log: &mut Log) {
     log.writeln(&format!(
         "{} {} {} - Error: {}",
@@ -516,17 +495,12 @@ fn log_execution_error(processed_request: &HttpRequest, error: &anyhow::Error, l
     ));
 }
 
-/// Result of processing a single request.
 enum RequestProcessResult {
-    /// Request was skipped
     Skipped,
-    /// Request execution failed with an error
     ExecutionError,
-    /// Request completed (success or failure determined by result.success)
     Completed(HttpResult),
 }
 
-/// Process a single HTTP request.
 fn process_single_request<F>(
     request: HttpRequest,
     request_contexts: &[RequestContext],
@@ -568,7 +542,6 @@ where
     }
 }
 
-/// Process all requests in a single HTTP file.
 fn process_single_file<F>(
     http_file: &str,
     config: &ProcessorConfig,
@@ -672,7 +645,6 @@ where
     })
 }
 
-/// Process HTTP files with the default executor.
 pub fn process_http_files(
     files: &[String],
     verbose: bool,
@@ -693,7 +665,6 @@ pub fn process_http_files(
     })
 }
 
-/// Process HTTP files with the default executor in silent mode.
 pub fn process_http_files_with_silent(
     files: &[String],
     verbose: bool,
@@ -716,7 +687,6 @@ pub fn process_http_files_with_silent(
     })
 }
 
-/// Process HTTP files with a custom executor.
 pub fn process_http_files_with_executor<F>(
     files: &[String],
     verbose: bool,
@@ -739,7 +709,6 @@ where
     process_http_files_with_config(&config, executor)
 }
 
-/// Process HTTP files with a custom executor and full configuration.
 pub fn process_http_files_with_config<F>(
     config: &ProcessorConfig,
     executor: &F,

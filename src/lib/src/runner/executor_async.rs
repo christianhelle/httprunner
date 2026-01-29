@@ -13,7 +13,6 @@ use std::time::Instant;
 #[cfg(target_arch = "wasm32")]
 use web_time::Instant;
 
-/// Execute an HTTP request asynchronously and return the result.
 pub async fn execute_http_request_async(
     request: &HttpRequest,
     verbose: bool,
@@ -70,7 +69,6 @@ pub async fn execute_http_request_async(
     ))
 }
 
-/// Build an async HTTP client with appropriate timeout and security settings.
 fn build_client_async(request: &HttpRequest, insecure: bool) -> Result<Client> {
     #[allow(unused_mut)]
     let mut client_builder = Client::builder();
@@ -91,14 +89,12 @@ fn build_client_async(request: &HttpRequest, insecure: bool) -> Result<Client> {
         }
     }
 
-    // Suppress unused variable warning on WASM where insecure is not used
     #[cfg(target_arch = "wasm32")]
     let _ = insecure;
 
     Ok(client_builder.build()?)
 }
 
-/// Build the async HTTP request with method, URL, headers, and body.
 fn build_request_async(client: &Client, request: &HttpRequest) -> Result<reqwest::RequestBuilder> {
     let method = request.method.to_uppercase();
     let method = reqwest::Method::from_bytes(method.as_bytes())?;
@@ -116,7 +112,6 @@ fn build_request_async(client: &Client, request: &HttpRequest) -> Result<reqwest
     Ok(req_builder)
 }
 
-/// Capture response headers and body asynchronously if needed.
 async fn capture_response_details_async(
     request: &HttpRequest,
     verbose: bool,

@@ -7,7 +7,6 @@ use crate::types::{Assertion, AssertionType, Condition, Header, HttpRequest, Var
 use anyhow::{Context, Result};
 use std::fs;
 
-/// Parses an HTTP file from disk and returns a list of HTTP requests.
 pub fn parse_http_file(
     file_path: &str,
     environment_name: Option<&str>,
@@ -19,7 +18,6 @@ pub fn parse_http_file(
     parse_http_content_with_vars(&content, env_variables)
 }
 
-/// Parses HTTP content from a string (without file-based environment loading).
 pub fn parse_http_content(
     content: &str,
     _environment_name: Option<&str>,
@@ -28,7 +26,6 @@ pub fn parse_http_content(
     parse_http_content_with_vars(content, env_variables)
 }
 
-/// State tracked during parsing of an HTTP file.
 struct ParserState {
     requests: Vec<HttpRequest>,
     variables: Vec<Variable>,
@@ -60,7 +57,6 @@ impl ParserState {
         }
     }
 
-    /// Finalize the current request and add it to the requests list.
     fn finalize_current_request(&mut self) {
         if let Some(mut req) = self.current_request.take() {
             if !self.body_content.is_empty() {
@@ -71,7 +67,6 @@ impl ParserState {
         }
     }
 
-    /// Start a new HTTP request with the given method and URL.
     fn start_new_request(&mut self, method: String, url: String) {
         self.current_request = Some(HttpRequest {
             name: self.pending_request_name.take(),
@@ -89,7 +84,6 @@ impl ParserState {
         self.in_body = false;
     }
 
-    /// Add a header to the current request.
     fn add_header(&mut self, name: &str, value: &str) {
         if let Some(ref mut req) = self.current_request {
             req.headers.push(Header {
@@ -99,7 +93,6 @@ impl ParserState {
         }
     }
 
-    /// Add an assertion to the current request.
     fn add_assertion(&mut self, assertion_type: AssertionType, expected_value: &str) {
         if let Some(ref mut req) = self.current_request {
             req.assertions.push(Assertion {
@@ -109,7 +102,6 @@ impl ParserState {
         }
     }
 
-    /// Append content to the request body.
     fn append_body_content(&mut self, content: &str) {
         self.in_body = true;
         if !self.body_content.is_empty() {
@@ -118,7 +110,6 @@ impl ParserState {
         self.body_content.push_str(content);
     }
 
-    /// Update or add a variable.
     fn set_variable(&mut self, name: &str, value: &str) {
         let substituted_value = substitute_variables(value, &self.variables);
         if let Some(var) = self.variables.iter_mut().find(|v| v.name == name) {
@@ -132,15 +123,11 @@ impl ParserState {
     }
 }
 
-/// Result of parsing a single line.
 enum LineParseResult {
-    /// Line was handled, continue to next line
     Continue,
-    /// Line was not a directive, needs further processing
     NotHandled,
 }
 
-/// Try to parse a @name directive.
 fn try_parse_name_directive(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     if let Some(name) = trimmed.strip_prefix("# @name ") {
         state.pending_request_name = Some(name.trim().to_string());
@@ -153,7 +140,6 @@ fn try_parse_name_directive(trimmed: &str, state: &mut ParserState) -> LineParse
     }
 }
 
-/// Try to parse a @timeout directive.
 fn try_parse_timeout_directive(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     let timeout_value = trimmed
         .strip_prefix("# @timeout ")
@@ -168,7 +154,6 @@ fn try_parse_timeout_directive(trimmed: &str, state: &mut ParserState) -> LinePa
     }
 }
 
-/// Try to parse a @connection-timeout directive.
 fn try_parse_connection_timeout_directive(
     trimmed: &str,
     state: &mut ParserState,
@@ -186,7 +171,6 @@ fn try_parse_connection_timeout_directive(
     }
 }
 
-/// Try to parse a @dependsOn directive.
 fn try_parse_depends_on_directive(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     let depends_on_value = trimmed
         .strip_prefix("# @dependsOn ")
@@ -201,7 +185,6 @@ fn try_parse_depends_on_directive(trimmed: &str, state: &mut ParserState) -> Lin
     }
 }
 
-/// Try to parse @if or @if-not condition directives.
 fn try_parse_condition_directive(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     // Try @if directive
     let if_value = trimmed
@@ -234,7 +217,6 @@ fn try_parse_condition_directive(trimmed: &str, state: &mut ParserState) -> Line
     LineParseResult::NotHandled
 }
 
-/// Try to parse a variable definition line (@varname = value).
 fn try_parse_variable_line(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     if trimmed.starts_with('@') {
         if let Some(eq_pos) = trimmed.find('=') {
@@ -248,7 +230,6 @@ fn try_parse_variable_line(trimmed: &str, state: &mut ParserState) -> LineParseR
     }
 }
 
-/// Strip quotes from a string value if present.
 fn strip_quotes(value: &str) -> &str {
     if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
         &value[1..value.len() - 1]
@@ -257,7 +238,6 @@ fn strip_quotes(value: &str) -> &str {
     }
 }
 
-/// Try to parse an assertion line.
 fn try_parse_assertion_line(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     let assertion_line = trimmed.strip_prefix("> ").unwrap_or(trimmed);
 
@@ -282,7 +262,6 @@ fn try_parse_assertion_line(trimmed: &str, state: &mut ParserState) -> LineParse
     LineParseResult::NotHandled
 }
 
-/// Parse a single line in the HTTP file.
 fn parse_line(line: &str, state: &mut ParserState) {
     let trimmed = line.trim();
 
