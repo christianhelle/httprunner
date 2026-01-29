@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Implement toggling file list view \(CTRL+B\) in TUI app [\#166](https://github.com/christianhelle/httprunner/pull/166) ([christianhelle](https://github.com/christianhelle))
 - Fix double press issue in TUI app when running in Windows [\#165](https://github.com/christianhelle/httprunner/pull/165) ([christianhelle](https://github.com/christianhelle))
 - Added Q and R shortcuts \(in addition to existing Ctrl+Q and Ctrl+R/F5\) in TUI app [\#164](https://github.com/christianhelle/httprunner/pull/164) ([christianhelle](https://github.com/christianhelle))
 
