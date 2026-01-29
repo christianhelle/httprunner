@@ -81,7 +81,7 @@ pub fn build_temp_result_for_assertions(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Assertion, AssertionType, Header};
+    use crate::types::{Assertion, AssertionType};
 
     fn create_test_request() -> HttpRequest {
         HttpRequest {

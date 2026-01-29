@@ -142,11 +142,11 @@ enum LineParseResult {
 
 /// Try to parse a @name directive.
 fn try_parse_name_directive(trimmed: &str, state: &mut ParserState) -> LineParseResult {
-    if trimmed.starts_with("# @name ") {
-        state.pending_request_name = Some(trimmed[8..].trim().to_string());
+    if let Some(name) = trimmed.strip_prefix("# @name ") {
+        state.pending_request_name = Some(name.trim().to_string());
         LineParseResult::Continue
-    } else if trimmed.starts_with("// @name ") {
-        state.pending_request_name = Some(trimmed[9..].trim().to_string());
+    } else if let Some(name) = trimmed.strip_prefix("// @name ") {
+        state.pending_request_name = Some(name.trim().to_string());
         LineParseResult::Continue
     } else {
         LineParseResult::NotHandled
@@ -308,11 +308,17 @@ fn parse_line(line: &str, state: &mut ParserState) {
     }
 
     // Try parsing directives in order
-    if matches!(try_parse_name_directive(trimmed, state), LineParseResult::Continue) {
+    if matches!(
+        try_parse_name_directive(trimmed, state),
+        LineParseResult::Continue
+    ) {
         return;
     }
 
-    if matches!(try_parse_timeout_directive(trimmed, state), LineParseResult::Continue) {
+    if matches!(
+        try_parse_timeout_directive(trimmed, state),
+        LineParseResult::Continue
+    ) {
         return;
     }
 
@@ -323,11 +329,17 @@ fn parse_line(line: &str, state: &mut ParserState) {
         return;
     }
 
-    if matches!(try_parse_depends_on_directive(trimmed, state), LineParseResult::Continue) {
+    if matches!(
+        try_parse_depends_on_directive(trimmed, state),
+        LineParseResult::Continue
+    ) {
         return;
     }
 
-    if matches!(try_parse_condition_directive(trimmed, state), LineParseResult::Continue) {
+    if matches!(
+        try_parse_condition_directive(trimmed, state),
+        LineParseResult::Continue
+    ) {
         return;
     }
 
@@ -336,11 +348,17 @@ fn parse_line(line: &str, state: &mut ParserState) {
         return;
     }
 
-    if matches!(try_parse_variable_line(trimmed, state), LineParseResult::Continue) {
+    if matches!(
+        try_parse_variable_line(trimmed, state),
+        LineParseResult::Continue
+    ) {
         return;
     }
 
-    if matches!(try_parse_assertion_line(trimmed, state), LineParseResult::Continue) {
+    if matches!(
+        try_parse_assertion_line(trimmed, state),
+        LineParseResult::Continue
+    ) {
         return;
     }
 
@@ -359,13 +377,12 @@ fn parse_line(line: &str, state: &mut ParserState) {
 
     // Parse header line
     if trimmed.contains(':') && !state.in_body {
-        if state.current_request.is_some() {
-            if let Some(colon_pos) = trimmed.find(':') {
+        if state.current_request.is_some()
+            && let Some(colon_pos) = trimmed.find(':') {
                 let name = trimmed[..colon_pos].trim();
                 let value = trimmed[colon_pos + 1..].trim();
                 state.add_header(name, value);
             }
-        }
         return;
     }
 

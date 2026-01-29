@@ -16,6 +16,10 @@ use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 
+/// Type alias for captured response details (headers and body).
+#[cfg(not(target_arch = "wasm32"))]
+type ResponseDetails = (Option<HashMap<String, String>>, Option<String>);
+
 /// Execute an HTTP request synchronously and return the result.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn execute_http_request(
@@ -40,8 +44,7 @@ pub fn execute_http_request(
     let status_code = response.status().as_u16();
     let mut success = response.status().is_success();
 
-    let (response_headers, response_body) =
-        capture_response_details(request, verbose, response)?;
+    let (response_headers, response_body) = capture_response_details(request, verbose, response)?;
 
     let duration_ms = start_time.elapsed().as_millis() as u64;
 
@@ -133,7 +136,7 @@ fn capture_response_details(
     request: &HttpRequest,
     verbose: bool,
     response: reqwest::blocking::Response,
-) -> Result<(Option<HashMap<String, String>>, Option<String>)> {
+) -> Result<ResponseDetails> {
     if should_capture_response(request, verbose) {
         let headers = Some(extract_headers(response.headers()));
         let body = response.text().ok();
