@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.7.46...HEAD)
+
+**Implemented enhancements:**
+
+- Fix double press issue in TUI app when running in Windows [\#165](https://github.com/christianhelle/httprunner/pull/165) ([christianhelle](https://github.com/christianhelle))
+- Added Q and R shortcuts \(in addition to existing Ctrl+Q and Ctrl+R/F5\) in TUI app [\#164](https://github.com/christianhelle/httprunner/pull/164) ([christianhelle](https://github.com/christianhelle))
+
 ## [0.7.46](https://github.com/christianhelle/httprunner/tree/0.7.46) (2026-01-27)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.6.45...0.7.46)
