@@ -24,6 +24,10 @@ base64 = { version = "0.22.1", default-features = false, features = ["std"] }
 chrono = "0.4.43"
 uuid = { version = "1.11", features = ["v4"] }
 
+# Telemetry dependencies
+appinsights = { version = "0.2.3", features = ["blocking"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+
 # CLI dependencies
 clap = { version = "4.5", features = ["derive", "std", "help", "usage", "error-context"], default-features = false }
 

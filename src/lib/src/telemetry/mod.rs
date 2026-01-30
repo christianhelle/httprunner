@@ -22,8 +22,10 @@ use std::sync::{Mutex, OnceLock};
 
 use serde::{Deserialize, Serialize};
 
-// Azure Application Insights ingestion endpoint
-const INGESTION_ENDPOINT: &str = "https://westeurope-5.in.applicationinsights.azure.com/";
+#[cfg(not(target_arch = "wasm32"))]
+use appinsights::blocking::TelemetryClient;
+#[cfg(not(target_arch = "wasm32"))]
+use appinsights::telemetry::{SeverityLevel, Telemetry};
 
 // Azure Application Insights instrumentation key
 // This is a write-only ingestion key - it cannot be used to read data
@@ -84,8 +86,8 @@ impl TelemetryConfig {
 
     /// Save telemetry config to disk
     pub fn save(&self) -> anyhow::Result<()> {
-        let path = Self::config_path()
-            .ok_or_else(|| anyhow::anyhow!("Could not determine config path"))?;
+        let path =
+            Self::config_path().ok_or_else(|| anyhow::anyhow!("Could not determine config path"))?;
 
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
@@ -103,6 +105,8 @@ impl TelemetryConfig {
 
 /// Internal telemetry state
 struct TelemetryState {
+    #[cfg(not(target_arch = "wasm32"))]
+    client: Option<TelemetryClient>,
     app_type: AppType,
     version: String,
     session_id: String,
@@ -110,7 +114,6 @@ struct TelemetryState {
     support_key: String,
     support_key_short: String,
     enabled: bool,
-    pending_events: Vec<serde_json::Value>,
 }
 
 /// Check if telemetry is disabled via environment variables
@@ -148,6 +151,7 @@ fn get_support_key_info() -> (String, String) {
 /// * `app_type` - The type of application (CLI, TUI, or GUI)
 /// * `version` - The application version string
 /// * `force_disabled` - If true, telemetry will be disabled regardless of other settings
+#[cfg(not(target_arch = "wasm32"))]
 pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     let config = TelemetryConfig::load();
     let enabled = !force_disabled
@@ -159,7 +163,11 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     let (support_key, support_key_short) = get_support_key_info();
     let device_id = support_key.clone();
 
+    // Create the App Insights client
+    let client = TelemetryClient::new(INSTRUMENTATION_KEY.to_string());
+
     let state = TelemetryState {
+        client: Some(client),
         app_type,
         version: version.to_string(),
         session_id,
@@ -167,7 +175,6 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
         support_key,
         support_key_short,
         enabled,
-        pending_events: Vec::new(),
     };
 
     let _ = TELEMETRY_STATE.set(Mutex::new(state));
@@ -176,6 +183,12 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     if enabled {
         track_event("AppStart", HashMap::new());
     }
+}
+
+/// Initialize telemetry (WASM stub - no-op)
+#[cfg(target_arch = "wasm32")]
+pub fn init(_app_type: AppType, _version: &str, _force_disabled: bool) {
+    // Telemetry not supported on WASM
 }
 
 /// Check if telemetry is currently enabled
@@ -193,63 +206,50 @@ pub fn set_enabled(enabled: bool) -> anyhow::Result<()> {
     config.save()
 }
 
-/// Build an Application Insights envelope for an event
-#[cfg(not(target_arch = "wasm32"))]
-fn build_event_envelope(
-    name: &str,
-    properties: &HashMap<String, String>,
-    state: &TelemetryState,
-) -> serde_json::Value {
-    let now = chrono::Utc::now();
-
-    // Build properties with standard fields including support key
-    let mut all_properties = properties.clone();
-    all_properties.insert("app_type".to_string(), state.app_type.as_str().to_string());
-    all_properties.insert("version".to_string(), state.version.clone());
-    all_properties.insert("session_id".to_string(), state.session_id.clone());
-    all_properties.insert("device_id".to_string(), state.device_id.clone());
-    all_properties.insert("support_key".to_string(), state.support_key.clone());
-    all_properties.insert("support_key_short".to_string(), state.support_key_short.clone());
-    all_properties.insert("os".to_string(), std::env::consts::OS.to_string());
-    all_properties.insert("arch".to_string(), std::env::consts::ARCH.to_string());
-
-    serde_json::json!({
-        "name": "Microsoft.ApplicationInsights.Event",
-        "time": now.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string(),
-        "iKey": INSTRUMENTATION_KEY,
-        "tags": {
-            "ai.session.id": state.session_id,
-            "ai.device.id": state.device_id,
-            "ai.user.id": state.support_key,
-            "ai.device.os": std::env::consts::OS,
-            "ai.application.ver": state.version,
-        },
-        "data": {
-            "baseType": "EventData",
-            "baseData": {
-                "ver": 2,
-                "name": name,
-                "properties": all_properties,
-            }
-        }
-    })
-}
-
 /// Track a custom event with properties
 #[cfg(not(target_arch = "wasm32"))]
 pub fn track_event(name: &str, properties: HashMap<String, String>) {
     let Some(state_mutex) = TELEMETRY_STATE.get() else {
         return;
     };
-    let Ok(mut state) = state_mutex.lock() else {
+    let Ok(state) = state_mutex.lock() else {
         return;
     };
     if !state.enabled {
         return;
     }
+    let Some(ref client) = state.client else {
+        return;
+    };
 
-    let envelope = build_event_envelope(name, &properties, &state);
-    state.pending_events.push(envelope);
+    // Create event telemetry
+    let mut event = appinsights::telemetry::EventTelemetry::new(name);
+    
+    // Add standard properties
+    let props = event.properties_mut();
+    props.insert("app_type".to_string(), state.app_type.as_str().to_string());
+    props.insert("version".to_string(), state.version.clone());
+    props.insert("session_id".to_string(), state.session_id.clone());
+    props.insert("device_id".to_string(), state.device_id.clone());
+    props.insert("support_key".to_string(), state.support_key.clone());
+    props.insert("support_key_short".to_string(), state.support_key_short.clone());
+    props.insert("os".to_string(), std::env::consts::OS.to_string());
+    props.insert("arch".to_string(), std::env::consts::ARCH.to_string());
+    
+    // Add custom properties
+    for (key, value) in properties {
+        props.insert(key, value);
+    }
+    
+    // Set context tags
+    let tags = event.tags_mut();
+    tags.insert("ai.session.id".to_string(), state.session_id.clone());
+    tags.insert("ai.device.id".to_string(), state.device_id.clone());
+    tags.insert("ai.user.id".to_string(), state.support_key.clone());
+    tags.insert("ai.device.os".to_string(), std::env::consts::OS.to_string());
+    tags.insert("ai.application.ver".to_string(), state.version.clone());
+
+    client.track(event);
 }
 
 /// Track a custom event (WASM stub - no-op)
@@ -261,14 +261,51 @@ pub fn track_event(_name: &str, _properties: HashMap<String, String>) {
 /// Track an error/exception
 #[cfg(not(target_arch = "wasm32"))]
 pub fn track_error(error: &dyn std::error::Error) {
+    let Some(state_mutex) = TELEMETRY_STATE.get() else {
+        return;
+    };
+    let Ok(state) = state_mutex.lock() else {
+        return;
+    };
+    if !state.enabled {
+        return;
+    }
+    let Some(ref client) = state.client else {
+        return;
+    };
+
     // Sanitize error message - remove potential file paths and sensitive data
     let message = sanitize_error_message(&error.to_string());
+    let error_type = get_error_type_name(error);
 
-    let mut properties = HashMap::new();
-    properties.insert("error_type".to_string(), get_error_type_name(error));
-    properties.insert("error_message".to_string(), message);
+    // Create trace telemetry for the error
+    let mut trace = appinsights::telemetry::TraceTelemetry::new(
+        format!("[{}] {}", error_type, message),
+        SeverityLevel::Error,
+    );
+    
+    // Add properties
+    let props = trace.properties_mut();
+    props.insert("app_type".to_string(), state.app_type.as_str().to_string());
+    props.insert("version".to_string(), state.version.clone());
+    props.insert("session_id".to_string(), state.session_id.clone());
+    props.insert("device_id".to_string(), state.device_id.clone());
+    props.insert("support_key".to_string(), state.support_key.clone());
+    props.insert("support_key_short".to_string(), state.support_key_short.clone());
+    props.insert("os".to_string(), std::env::consts::OS.to_string());
+    props.insert("arch".to_string(), std::env::consts::ARCH.to_string());
+    props.insert("error_type".to_string(), error_type);
+    props.insert("error_message".to_string(), message);
+    
+    // Set context tags
+    let tags = trace.tags_mut();
+    tags.insert("ai.session.id".to_string(), state.session_id.clone());
+    tags.insert("ai.device.id".to_string(), state.device_id.clone());
+    tags.insert("ai.user.id".to_string(), state.support_key.clone());
+    tags.insert("ai.device.os".to_string(), std::env::consts::OS.to_string());
+    tags.insert("ai.application.ver".to_string(), state.version.clone());
 
-    track_event("Error", properties);
+    client.track(trace);
 }
 
 /// Track an error (WASM stub - no-op)
@@ -280,12 +317,48 @@ pub fn track_error(_error: &dyn std::error::Error) {
 /// Track an error message string
 #[cfg(not(target_arch = "wasm32"))]
 pub fn track_error_message(message: &str) {
+    let Some(state_mutex) = TELEMETRY_STATE.get() else {
+        return;
+    };
+    let Ok(state) = state_mutex.lock() else {
+        return;
+    };
+    if !state.enabled {
+        return;
+    }
+    let Some(ref client) = state.client else {
+        return;
+    };
+
     let sanitized = sanitize_error_message(message);
 
-    let mut properties = HashMap::new();
-    properties.insert("error_message".to_string(), sanitized);
+    // Create trace telemetry for the error
+    let mut trace = appinsights::telemetry::TraceTelemetry::new(
+        sanitized.clone(),
+        SeverityLevel::Error,
+    );
+    
+    // Add properties
+    let props = trace.properties_mut();
+    props.insert("app_type".to_string(), state.app_type.as_str().to_string());
+    props.insert("version".to_string(), state.version.clone());
+    props.insert("session_id".to_string(), state.session_id.clone());
+    props.insert("device_id".to_string(), state.device_id.clone());
+    props.insert("support_key".to_string(), state.support_key.clone());
+    props.insert("support_key_short".to_string(), state.support_key_short.clone());
+    props.insert("os".to_string(), std::env::consts::OS.to_string());
+    props.insert("arch".to_string(), std::env::consts::ARCH.to_string());
+    props.insert("error_message".to_string(), sanitized);
+    
+    // Set context tags
+    let tags = trace.tags_mut();
+    tags.insert("ai.session.id".to_string(), state.session_id.clone());
+    tags.insert("ai.device.id".to_string(), state.device_id.clone());
+    tags.insert("ai.user.id".to_string(), state.support_key.clone());
+    tags.insert("ai.device.os".to_string(), std::env::consts::OS.to_string());
+    tags.insert("ai.application.ver".to_string(), state.version.clone());
 
-    track_event("Error", properties);
+    client.track(trace);
 }
 
 /// Track an error message (WASM stub - no-op)
@@ -350,6 +423,9 @@ pub fn track_request_result(success: bool, request_count: usize, duration_ms: u6
 /// This should be called before application exit to ensure all telemetry is sent.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn flush() {
+    // Track app exit event first
+    track_event("AppExit", HashMap::new());
+    
     let Some(state_mutex) = TELEMETRY_STATE.get() else {
         return;
     };
@@ -360,51 +436,10 @@ pub fn flush() {
         return;
     }
 
-    // Track app exit before flushing
-    let exit_envelope = build_event_envelope("AppExit", &HashMap::new(), &state);
-    state.pending_events.push(exit_envelope);
-
-    if state.pending_events.is_empty() {
-        return;
+    // Take ownership of client and close the channel - this will flush and block until done
+    if let Some(client) = state.client.take() {
+        client.close_channel();
     }
-
-    // Take ownership of pending events
-    let events = std::mem::take(&mut state.pending_events);
-    drop(state); // Release the lock before making HTTP request
-
-    // Send all events to App Insights
-    send_telemetry_batch(events);
-}
-
-/// Send a batch of telemetry events to Application Insights
-#[cfg(not(target_arch = "wasm32"))]
-fn send_telemetry_batch(events: Vec<serde_json::Value>) {
-    if events.is_empty() {
-        return;
-    }
-
-    // Build the batch payload (newline-delimited JSON)
-    let payload: String = events
-        .iter()
-        .filter_map(|e| serde_json::to_string(e).ok())
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    // Send synchronously with a short timeout (don't block app exit too long)
-    let client = match reqwest::blocking::Client::builder()
-        .timeout(std::time::Duration::from_secs(5))
-        .build()
-    {
-        Ok(c) => c,
-        Err(_) => return, // Silently fail if we can't build client
-    };
-
-    // Fire and forget - we don't care about the response
-    let _ = client
-        .post(INGESTION_ENDPOINT)
-        .header("Content-Type", "application/x-json-stream")
-        .body(payload)
-        .send();
 }
 
 /// Flush telemetry (WASM stub - no-op)
