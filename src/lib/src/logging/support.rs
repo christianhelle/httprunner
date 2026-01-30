@@ -43,12 +43,16 @@ pub fn get_support_key() -> Result<SupportKey, Box<dyn std::error::Error>> {
 pub fn get_support_key() -> Result<SupportKey, Box<dyn std::error::Error>> {
     if let Some(storage) = get_local_storage() {
         if let Ok(Some(key)) = storage.get_item(LOCAL_STORAGE_KEY) {
-            let n = std::cmp::min(8, key.chars().count());
-            let short_key: String = key.chars().take(n).collect();
-            return Ok(SupportKey {
-                key: key.clone(),
-                short_key,
-            });
+            // Validate key length before creating short_key
+            if key.len() >= 8 {
+                let n = std::cmp::min(8, key.chars().count());
+                let short_key: String = key.chars().take(n).collect();
+                return Ok(SupportKey {
+                    key: key.clone(),
+                    short_key,
+                });
+            }
+            // Persisted key is invalid or too short; regenerate and overwrite.
         }
         // Generate and persist new key
         let support_key = generate_support_key();

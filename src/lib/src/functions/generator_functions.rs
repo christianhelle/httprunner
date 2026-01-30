@@ -1,6 +1,8 @@
 use crate::functions::{substitution::FunctionSubstitutor, values};
 
-/// Generates a UUIDv4-formatted string (32 hexadecimal characters)
+/// Generates a compact UUIDv4-formatted string (32 hexadecimal characters without hyphens).
+/// This is equivalent to a standard UUIDv4 but with hyphens removed.
+/// Example: "550e8400e29b41d4a716446655440000" instead of "550e8400-e29b-41d4-a716-446655440000"
 pub(crate) fn generate_uuid_v4() -> String {
     use rand::Rng;
     let mut rng = rand::thread_rng();

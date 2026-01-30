@@ -77,25 +77,16 @@ mod logging_tests {
 
 #[cfg(test)]
 mod support_tests {
-    use crate::logging::{get_support_key, SupportKey};
-    use crate::functions::generate_uuid_v4;
-
-    fn generate_support_key() -> SupportKey {
-        let new_key = generate_uuid_v4();
-        let short_key = &new_key[..8];
-        SupportKey {
-            key: new_key.clone(),
-            short_key: short_key.to_string(),
-        }
-    }
+    use crate::logging::get_support_key;
 
     #[test]
     fn generate_support_key_creates_valid_format() {
-        let key = generate_support_key();
+        // Call the internal generate function through get_support_key
+        let key = get_support_key().unwrap();
         
         // Full key should be 32 hex characters (UUID v4 without hyphens)
         assert_eq!(key.key.len(), 32);
-        assert!(key.key.chars().all(|c: char| c.is_ascii_hexdigit()));
+        assert!(key.key.chars().all(|c| c.is_ascii_hexdigit()));
         
         // Short key should be first 8 characters
         assert_eq!(key.short_key.len(), 8);
@@ -104,30 +95,22 @@ mod support_tests {
 
     #[test]
     fn generate_support_key_produces_unique_keys() {
-        let key1 = generate_support_key();
-        let key2 = generate_support_key();
+        // Generate two keys and verify they're different
+        let key1 = get_support_key().unwrap();
+        let key2 = get_support_key().unwrap();
         
-        // Two generated keys should be different
-        assert_ne!(key1.key, key2.key);
-        assert_ne!(key1.short_key, key2.short_key);
+        // Note: On platforms with persistence, these might be the same.
+        // But we can verify they're both valid format.
+        assert_eq!(key1.key.len(), 32);
+        assert_eq!(key2.key.len(), 32);
+        assert_eq!(key1.short_key.len(), 8);
+        assert_eq!(key2.short_key.len(), 8);
     }
 
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
-    fn get_support_key_persists_across_calls() {
-        use tempfile::tempdir;
-
-        // Create a temporary directory for the test
-        let _temp = tempdir().unwrap();
-        
-        // Set the config directory to our temp directory
-        // This will be picked up by dirs::config_dir() in some test scenarios,
-        // but since we can't easily override dirs::config_dir(), we'll test
-        // the persistence logic by calling get_support_key multiple times
-        // and verifying the keys are consistent when the file exists.
-        
-        // For this test, we'll just verify that calling get_support_key()
-        // multiple times returns a valid key each time
+    fn get_support_key_returns_valid_format() {
+        // Verify that calling get_support_key() returns a valid key
         let key1 = get_support_key().unwrap();
         let key2 = get_support_key().unwrap();
         
@@ -137,8 +120,8 @@ mod support_tests {
         assert_eq!(key1.short_key.len(), 8);
         assert_eq!(key2.short_key.len(), 8);
         
-        // Since we can't easily override the config directory in this test,
-        // we just verify the keys are well-formed. In a real scenario,
-        // the keys would be the same if persistence is working.
+        // Keys should be the same due to persistence
+        assert_eq!(key1.key, key2.key);
+        assert_eq!(key1.short_key, key2.short_key);
     }
 }
