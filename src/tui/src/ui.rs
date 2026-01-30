@@ -529,11 +529,11 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
-    // Get support key
-    let support_key_text = match httprunner_lib::logging::get_support_key() {
-        Ok(key) => format!("Support: {}", key.short_key),
-        Err(_) => String::new(),
-    };
+    // Use cached support key
+    let support_key_text = app.support_key
+        .as_ref()
+        .map(|key| format!("Support: {}", key))
+        .unwrap_or_default();
 
     let status_text = vec![
         Line::from(vec![

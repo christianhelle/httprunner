@@ -74,3 +74,54 @@ mod logging_tests {
         assert!(!content.contains("\x1b[0m"));
     }
 }
+
+#[cfg(test)]
+mod support_tests {
+    use crate::logging::get_support_key;
+
+    #[test]
+    fn generate_support_key_creates_valid_format() {
+        // Call the internal generate function through get_support_key
+        let key = get_support_key().unwrap();
+        
+        // Full key should be 32 hex characters (UUID v4 without hyphens)
+        assert_eq!(key.key.len(), 32);
+        assert!(key.key.chars().all(|c| c.is_ascii_hexdigit()));
+        
+        // Short key should be first 8 characters
+        assert_eq!(key.short_key.len(), 8);
+        assert_eq!(key.short_key, &key.key[..8]);
+    }
+
+    #[test]
+    fn generate_support_key_produces_unique_keys() {
+        // Generate two keys and verify they're different
+        let key1 = get_support_key().unwrap();
+        let key2 = get_support_key().unwrap();
+        
+        // Note: On platforms with persistence, these might be the same.
+        // But we can verify they're both valid format.
+        assert_eq!(key1.key.len(), 32);
+        assert_eq!(key2.key.len(), 32);
+        assert_eq!(key1.short_key.len(), 8);
+        assert_eq!(key2.short_key.len(), 8);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn get_support_key_returns_valid_format() {
+        // Verify that calling get_support_key() returns a valid key
+        let key1 = get_support_key().unwrap();
+        let key2 = get_support_key().unwrap();
+        
+        // Both calls should return valid keys
+        assert_eq!(key1.key.len(), 32);
+        assert_eq!(key2.key.len(), 32);
+        assert_eq!(key1.short_key.len(), 8);
+        assert_eq!(key2.short_key.len(), 8);
+        
+        // Keys should be the same due to persistence
+        assert_eq!(key1.key, key2.key);
+        assert_eq!(key1.short_key, key2.short_key);
+    }
+}

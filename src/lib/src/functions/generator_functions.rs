@@ -1,5 +1,25 @@
 use crate::functions::{substitution::FunctionSubstitutor, values};
 
+/// Generates a compact UUIDv4-formatted string (32 hexadecimal characters without hyphens).
+/// This is equivalent to a standard UUIDv4 but with hyphens removed.
+/// Example: "550e8400e29b41d4a716446655440000" instead of "550e8400-e29b-41d4-a716-446655440000"
+pub(crate) fn generate_uuid_v4() -> String {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let mut bytes = [0u8; 16];
+    rng.fill(&mut bytes);
+    format!(
+        "{:08x}{:04x}{:04x}{:04x}{:012x}",
+        u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
+        u16::from_be_bytes([bytes[4], bytes[5]]),
+        (u16::from_be_bytes([bytes[6], bytes[7]]) & 0x0fff) | 0x4000,
+        (u16::from_be_bytes([bytes[8], bytes[9]]) & 0x3fff) | 0x8000,
+        u64::from_be_bytes([
+            0, 0, bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+        ]) & 0xffffffffffff
+    )
+}
+
 pub struct GuidSubstitutor {}
 impl FunctionSubstitutor for GuidSubstitutor {
     fn get_regex(&self) -> &str {
@@ -7,20 +27,7 @@ impl FunctionSubstitutor for GuidSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let mut bytes = [0u8; 16];
-        rng.fill(&mut bytes);
-        format!(
-            "{:08x}{:04x}{:04x}{:04x}{:012x}",
-            u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
-            u16::from_be_bytes([bytes[4], bytes[5]]),
-            (u16::from_be_bytes([bytes[6], bytes[7]]) & 0x0fff) | 0x4000,
-            (u16::from_be_bytes([bytes[8], bytes[9]]) & 0x3fff) | 0x8000,
-            u64::from_be_bytes([
-                0, 0, bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
-            ]) & 0xffffffffffff
-        )
+        generate_uuid_v4()
     }
 }
 

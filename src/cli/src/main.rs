@@ -7,7 +7,6 @@ use httprunner_lib::types::ProcessorResults;
 use httprunner_lib::{colors, discovery, export, logging, processor, report};
 
 use crate::cli::ReportFormat;
-use crate::report::{generate_html, generate_markdown};
 
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
@@ -22,22 +21,37 @@ fn main() -> anyhow::Result<()> {
         cli::show_donation_banner();
     }
 
-    if result.is_err() {
-        std::process::exit(1);
+    // Print error and exit with non-zero code on failure
+    match result {
+        Ok(success) => {
+            if !success {
+                std::process::exit(1);
+            }
+        }
+        Err(e) => {
+            eprintln!("{} Error: {}", colors::red("❌"), e);
+            std::process::exit(1);
+        }
     }
 
     Ok(())
 }
 
-fn run(cli_args: &cli::Cli) -> Result<()> {
+fn run(cli_args: &cli::Cli) -> Result<bool> {
     let files = load_files(cli_args)?;
     if files.is_empty() {
-        return Ok(());
+        println!(
+            "{} No HTTP files were discovered. Nothing to do.",
+            colors::blue("ℹ️"),
+        );
+        return Ok(true); // Not an error, just nothing to do
     }
     let results = process_http_files(cli_args, files)?;
     generate_report(cli_args, &results)?;
     export_results(cli_args, &results)?;
-    Ok(())
+    
+    // Return the success status from processing
+    Ok(results.success)
 }
 
 fn load_files(cli_args: &cli::Cli) -> Result<Vec<String>> {
@@ -84,8 +98,8 @@ fn process_http_files(cli_args: &cli::Cli, files: Vec<String>) -> Result<Process
 fn generate_report(cli_args: &cli::Cli, results: &ProcessorResults) -> Result<()> {
     if let Some(format) = cli_args.report {
         let result = match format {
-            ReportFormat::Markdown => generate_markdown(results),
-            ReportFormat::Html => generate_html(results),
+            ReportFormat::Markdown => report::generate_markdown(results),
+            ReportFormat::Html => report::generate_html(results),
         };
 
         match result {
