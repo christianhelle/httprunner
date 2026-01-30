@@ -5,7 +5,7 @@ static FILE_NAME: &str = "support_key.txt";
 #[cfg(target_arch = "wasm32")]
 const LOCAL_STORAGE_KEY: &str = "httprunner-support-key";
 
-#[warn(dead_code)]
+#[allow(dead_code)]
 pub struct SupportKey {
     pub key: String,
     pub short_key: String,
@@ -17,10 +17,11 @@ pub fn get_support_key() -> Result<SupportKey, Box<dyn std::error::Error>> {
         if path.exists() {
             let contents = std::fs::read_to_string(&path)?;
             let key = contents.trim().to_string();
-            let short_key = &key[..8];
+            let n = std::cmp::min(8, key.len());
+            let short_key: String = key.chars().take(n).collect();
             return Ok(SupportKey {
                 key: key.clone(),
-                short_key: short_key.to_string(),
+                short_key,
             });
         }
         let support_key = generate_support_key();
