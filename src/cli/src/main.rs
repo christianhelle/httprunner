@@ -4,7 +4,7 @@ mod upgrade;
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use httprunner_lib::types::ProcessorResults;
-use httprunner_lib::{colors, discovery, export, logging, processor, report};
+use httprunner_lib::{colors, discovery, export, logging, processor};
 
 use crate::cli::ReportFormat;
 use crate::report::{generate_html, generate_markdown};
