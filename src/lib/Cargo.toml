@@ -35,6 +35,7 @@ reqwest = { version = "0.12", features = ["json"], default-features = false }
 getrandom = { version = "0.2", features = ["js"] }
 wasm-bindgen-futures = "0.4"
 web-time = "1.1"
+web-sys = { version = "0.3", features = ["Storage", "Window"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }

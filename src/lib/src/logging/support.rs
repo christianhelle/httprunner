@@ -2,12 +2,16 @@ use std::path::PathBuf;
 
 static FILE_NAME: &str = "support_key.txt";
 
+#[cfg(target_arch = "wasm32")]
+const LOCAL_STORAGE_KEY: &str = "httprunner-support-key";
+
 #[warn(dead_code)]
 pub struct SupportKey {
     pub key: String,
     pub short_key: String,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_support_key() -> Result<SupportKey, Box<dyn std::error::Error>> {
     if let Some(path) = get_state_file_path() {
         if path.exists() {
@@ -25,6 +29,31 @@ pub fn get_support_key() -> Result<SupportKey, Box<dyn std::error::Error>> {
         return Ok(support_key);
     }
     Ok(generate_support_key())
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn get_support_key() -> Result<SupportKey, Box<dyn std::error::Error>> {
+    if let Some(storage) = get_local_storage() {
+        if let Ok(Some(key)) = storage.get_item(LOCAL_STORAGE_KEY) {
+            if key.len() >= 8 {
+                let short_key = &key[..8];
+                return Ok(SupportKey {
+                    key: key.clone(),
+                    short_key: short_key.to_string(),
+                });
+            }
+        }
+        // Generate and persist new key
+        let support_key = generate_support_key();
+        let _ = storage.set_item(LOCAL_STORAGE_KEY, &support_key.key);
+        return Ok(support_key);
+    }
+    Ok(generate_support_key())
+}
+
+#[cfg(target_arch = "wasm32")]
+fn get_local_storage() -> Option<web_sys::Storage> {
+    web_sys::window()?.local_storage().ok()?
 }
 
 pub fn generate_support_key() -> SupportKey {
@@ -53,6 +82,7 @@ fn generate_uuid() -> String {
     )
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn get_state_file_path() -> Option<PathBuf> {
     use dirs;
     if let Some(config_dir) = dirs::config_dir() {
