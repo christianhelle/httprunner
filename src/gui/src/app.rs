@@ -40,6 +40,7 @@ pub struct HttpRunnerApp {
     last_saved_window_size: Option<(f32, f32)>,
     view_mode: ViewMode,
     file_tree_visible: bool,
+    support_key: Option<String>,
 }
 
 impl HttpRunnerApp {
@@ -60,6 +61,11 @@ impl HttpRunnerApp {
 
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
 
+        // Get support key once at startup
+        let support_key = httprunner_lib::logging::get_support_key()
+            .ok()
+            .map(|key| key.short_key);
+
         let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
             request_view: RequestView::new(),
@@ -75,6 +81,7 @@ impl HttpRunnerApp {
             last_saved_window_size: state.window_size,
             view_mode: ViewMode::TextEditor, // Default to text editor for new files
             file_tree_visible,
+            support_key,
         };
 
         app.update_font_size(&cc.egui_ctx);
@@ -284,8 +291,8 @@ impl HttpRunnerApp {
                     ui.label(format!("Selected: {}", file.display()));
                 }
                 ui.separator();
-                if let Ok(support_key) = httprunner_lib::logging::get_support_key() {
-                    ui.label(format!("Support: {}", support_key.short_key));
+                if let Some(ref key) = self.support_key {
+                    ui.label(format!("Support: {}", key));
                 }
             });
         });

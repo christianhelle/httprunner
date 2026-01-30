@@ -25,6 +25,7 @@ pub struct App {
     pub selected_environment: Option<String>,
     pub status_message: String,
     pub file_tree_visible: bool,
+    pub support_key: Option<String>,
 }
 
 impl App {
@@ -42,6 +43,11 @@ impl App {
         let mut results_view = ResultsView::new();
         results_view.set_compact_mode(results_compact_mode);
 
+        // Get support key once at startup
+        let support_key = httprunner_lib::logging::get_support_key()
+            .ok()
+            .map(|key| key.short_key);
+
         let mut app = Self {
             should_quit: false,
             file_tree: FileTree::new(root_directory.clone()),
@@ -54,6 +60,7 @@ impl App {
             selected_environment: None,
             status_message: String::from("Ready"),
             file_tree_visible,
+            support_key,
         };
 
         if let Some(saved_file) = state.selected_file
