@@ -31,6 +31,9 @@ fn main() -> anyhow::Result<()> {
 
 fn run(cli_args: &cli::Cli) -> Result<()> {
     let files = load_files(cli_args)?;
+    if files.is_empty() {
+        return Ok(());
+    }
     let results = process_http_files(cli_args, files)?;
     generate_report(cli_args, &results)?;
     export_results(cli_args, &results)?;
@@ -47,7 +50,7 @@ fn load_files(cli_args: &cli::Cli) -> Result<Vec<String>> {
     } else if cli_args.files.is_empty() {
         let mut cmd = cli::Cli::command();
         cmd.print_help()?;
-        std::process::exit(0);
+        return Ok(Vec::<String>::new());
     } else {
         cli_args.files.clone()
     };
