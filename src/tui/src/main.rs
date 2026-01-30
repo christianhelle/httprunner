@@ -13,10 +13,16 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
+use httprunner_lib::telemetry::{self, AppType};
 use ratatui::{Terminal, backend::CrosstermBackend};
 use std::io;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() -> anyhow::Result<()> {
+    // Initialize telemetry
+    telemetry::init(AppType::Tui, VERSION, false);
+    
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -39,9 +45,14 @@ fn main() -> anyhow::Result<()> {
     )?;
     terminal.show_cursor()?;
 
-    if let Err(err) = res {
+    // Track error if app failed
+    if let Err(ref err) = res {
+        telemetry::track_error(err.as_ref());
         eprintln!("Error: {}", err);
     }
+    
+    // Flush telemetry before exit
+    telemetry::flush();
 
     Ok(())
 }

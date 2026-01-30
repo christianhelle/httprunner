@@ -3,16 +3,28 @@ mod upgrade;
 
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
+use httprunner_lib::telemetry::{self, AppType, CliArgPatterns};
 use httprunner_lib::types::ProcessorResults;
 use httprunner_lib::{colors, discovery, export, logging, processor, report};
 
 use crate::cli::ReportFormat;
 use crate::report::{generate_html, generate_markdown};
 
+const VERSION: &str = env!("VERSION");
+
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
+    
+    // Initialize telemetry (before any operations that might fail)
+    telemetry::init(AppType::Cli, VERSION, cli_args.no_telemetry);
+    
+    // Track CLI argument patterns (only flags, not values)
+    track_cli_usage(&cli_args);
+    
     if cli_args.upgrade {
-        return upgrade::run_upgrade();
+        let result = upgrade::run_upgrade();
+        telemetry::flush();
+        return result;
     }
 
     let result = run(&cli_args);
@@ -22,11 +34,36 @@ fn main() -> anyhow::Result<()> {
         cli::show_donation_banner();
     }
 
+    // Track error if run failed
+    if let Err(ref e) = result {
+        telemetry::track_error(e.as_ref());
+    }
+    
+    // Flush telemetry before exit
+    telemetry::flush();
+
     if result.is_err() {
         std::process::exit(1);
     }
 
     Ok(())
+}
+
+fn track_cli_usage(cli_args: &cli::Cli) {
+    let patterns = CliArgPatterns {
+        verbose: cli_args.verbose,
+        log: cli_args.log.is_some(),
+        env: cli_args.env.is_some(),
+        insecure: cli_args.insecure,
+        discover: cli_args.discover,
+        no_banner: cli_args.no_banner,
+        pretty_json: cli_args.pretty_json,
+        report: cli_args.report.is_some(),
+        report_format: cli_args.report.map(|f| format!("{:?}", f)),
+        export: cli_args.export,
+        file_count: cli_args.files.len(),
+    };
+    telemetry::track_cli_args(&patterns);
 }
 
 fn run(cli_args: &cli::Cli) -> Result<()> {

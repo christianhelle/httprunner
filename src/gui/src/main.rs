@@ -16,10 +16,19 @@ mod results_view_async;
 #[cfg(not(target_arch = "wasm32"))]
 use app::HttpRunnerApp;
 
+#[cfg(not(target_arch = "wasm32"))]
+use httprunner_lib::telemetry::{self, AppType};
+
+#[cfg(not(target_arch = "wasm32"))]
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 // Native binary entry point
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+    
+    // Initialize telemetry
+    telemetry::init(AppType::Gui, VERSION, false);
 
     // Load saved state to restore window size
     let saved_state = state::AppState::load();
@@ -36,11 +45,16 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
 
-    eframe::run_native(
+    let result = eframe::run_native(
         "HTTP File Runner",
         native_options,
         Box::new(|cc| Ok(Box::new(HttpRunnerApp::new(cc)))),
-    )
+    );
+    
+    // Flush telemetry before exit
+    telemetry::flush();
+    
+    result
 }
 
 #[cfg(not(target_arch = "wasm32"))]

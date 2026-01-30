@@ -68,6 +68,10 @@ pub struct Cli {
     /// Export requests and responses to files
     #[arg(long)]
     pub export: bool,
+
+    /// Disable anonymous telemetry data collection
+    #[arg(long)]
+    pub no_telemetry: bool,
 }
 
 impl Cli {
