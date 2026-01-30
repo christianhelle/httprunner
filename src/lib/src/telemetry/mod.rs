@@ -107,6 +107,8 @@ struct TelemetryState {
     version: String,
     session_id: String,
     device_id: String,
+    support_key: String,
+    support_key_short: String,
     enabled: bool,
     pending_events: Vec<serde_json::Value>,
 }
@@ -127,15 +129,15 @@ fn is_telemetry_disabled_by_env() -> bool {
     false
 }
 
-/// Get or generate a device ID for anonymous tracking
-fn get_device_id() -> String {
-    // Try to use the existing support key as device ID
+/// Get support key information
+fn get_support_key_info() -> (String, String) {
     if let Ok(support_key) = crate::logging::get_support_key() {
-        return support_key.key;
+        (support_key.key, support_key.short_key)
+    } else {
+        let key = uuid::Uuid::new_v4().to_string();
+        let short_key = key.chars().take(8).collect();
+        (key, short_key)
     }
-
-    // Fallback to generating a new UUID
-    uuid::Uuid::new_v4().to_string()
 }
 
 /// Initialize telemetry for the application.
@@ -154,13 +156,16 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
         && INSTRUMENTATION_KEY != "YOUR_INSTRUMENTATION_KEY_HERE";
 
     let session_id = uuid::Uuid::new_v4().to_string();
-    let device_id = get_device_id();
+    let (support_key, support_key_short) = get_support_key_info();
+    let device_id = support_key.clone();
 
     let state = TelemetryState {
         app_type,
         version: version.to_string(),
         session_id,
         device_id,
+        support_key,
+        support_key_short,
         enabled,
         pending_events: Vec::new(),
     };
@@ -197,12 +202,14 @@ fn build_event_envelope(
 ) -> serde_json::Value {
     let now = chrono::Utc::now();
 
-    // Build properties with standard fields
+    // Build properties with standard fields including support key
     let mut all_properties = properties.clone();
     all_properties.insert("app_type".to_string(), state.app_type.as_str().to_string());
     all_properties.insert("version".to_string(), state.version.clone());
     all_properties.insert("session_id".to_string(), state.session_id.clone());
     all_properties.insert("device_id".to_string(), state.device_id.clone());
+    all_properties.insert("support_key".to_string(), state.support_key.clone());
+    all_properties.insert("support_key_short".to_string(), state.support_key_short.clone());
     all_properties.insert("os".to_string(), std::env::consts::OS.to_string());
     all_properties.insert("arch".to_string(), std::env::consts::ARCH.to_string());
 
@@ -213,6 +220,7 @@ fn build_event_envelope(
         "tags": {
             "ai.session.id": state.session_id,
             "ai.device.id": state.device_id,
+            "ai.user.id": state.support_key,
             "ai.device.os": std::env::consts::OS,
             "ai.application.ver": state.version,
         },
