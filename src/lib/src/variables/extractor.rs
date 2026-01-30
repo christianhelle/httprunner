@@ -6,15 +6,12 @@ pub fn extract_request_variable_value(
     request_var: &RequestVariable,
     context: &[RequestContext],
 ) -> Result<Option<String>> {
-    let target_context = context
+    let Some(ctx) = context
         .iter()
-        .find(|ctx| ctx.name == request_var.request_name);
-
-    if target_context.is_none() {
+        .find(|ctx| ctx.name == request_var.request_name)
+    else {
         return Ok(None);
-    }
-
-    let ctx = target_context.unwrap();
+    };
 
     match request_var.source {
         RequestVariableSource::Request => extract_from_request(request_var, &ctx.request),
