@@ -92,3 +92,126 @@ fn get_state_file_path() -> Option<PathBuf> {
         Some(PathBuf::from(FILE_NAME))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generate_support_key_creates_valid_key() {
+        let support_key = generate_support_key();
+        assert!(!support_key.key.is_empty());
+        assert!(!support_key.short_key.is_empty());
+    }
+
+    #[test]
+    fn generate_support_key_short_key_is_8_chars() {
+        let support_key = generate_support_key();
+        assert_eq!(support_key.short_key.len(), 8);
+    }
+
+    #[test]
+    fn generate_support_key_short_key_is_prefix_of_key() {
+        let support_key = generate_support_key();
+        assert!(support_key.key.starts_with(&support_key.short_key));
+    }
+
+    #[test]
+    fn generate_uuid_returns_32_char_hex_string() {
+        let uuid = generate_uuid();
+        assert_eq!(uuid.len(), 32);
+        assert!(uuid.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn generate_uuid_is_unique() {
+        let uuid1 = generate_uuid();
+        let uuid2 = generate_uuid();
+        assert_ne!(uuid1, uuid2);
+    }
+
+    #[test]
+    fn generate_uuid_has_version_4_marker() {
+        let uuid = generate_uuid();
+        // UUID v4 has '4' at position 12 (13th char, 0-indexed at 12)
+        assert_eq!(uuid.chars().nth(12), Some('4'));
+    }
+
+    #[test]
+    fn generate_uuid_has_valid_variant_marker() {
+        let uuid = generate_uuid();
+        // UUID variant bits at position 16 should be 8, 9, a, or b
+        let variant_char = uuid.chars().nth(16).unwrap();
+        assert!(
+            variant_char == '8'
+                || variant_char == '9'
+                || variant_char == 'a'
+                || variant_char == 'b',
+            "Expected variant char to be 8, 9, a, or b, got: {}",
+            variant_char
+        );
+    }
+
+    #[test]
+    fn support_key_struct_fields_are_accessible() {
+        let key = SupportKey {
+            key: "test-key-12345678".to_string(),
+            short_key: "test-key".to_string(),
+        };
+        assert_eq!(key.key, "test-key-12345678");
+        assert_eq!(key.short_key, "test-key");
+    }
+
+    #[test]
+    fn short_key_handles_short_input_safely() {
+        // Simulate what happens with a key shorter than 8 chars
+        let key = "abc";
+        let n = std::cmp::min(8, key.len());
+        let short_key: String = key.chars().take(n).collect();
+        assert_eq!(short_key, "abc");
+    }
+
+    #[test]
+    fn short_key_handles_utf8_safely() {
+        // Test with multi-byte UTF-8 characters (9 chars, should take first 8)
+        let key = "日本語テスト文字列";
+        let n = std::cmp::min(8, key.chars().count());
+        let short_key: String = key.chars().take(n).collect();
+        assert_eq!(short_key.chars().count(), 8);
+        assert_eq!(short_key, "日本語テスト文字");
+    }
+
+    #[test]
+    fn short_key_handles_mixed_utf8_ascii() {
+        let key = "abc日本xyz";
+        let n = std::cmp::min(8, key.chars().count());
+        let short_key: String = key.chars().take(n).collect();
+        assert_eq!(short_key.chars().count(), 8);
+        assert_eq!(short_key, "abc日本xyz");
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn get_state_file_path_returns_some() {
+        let path = get_state_file_path();
+        assert!(path.is_some());
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn get_state_file_path_ends_with_filename() {
+        let path = get_state_file_path().unwrap();
+        assert!(path.ends_with(FILE_NAME));
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn get_support_key_returns_valid_key() {
+        let result = get_support_key();
+        assert!(result.is_ok());
+        let support_key = result.unwrap();
+        assert!(!support_key.key.is_empty());
+        assert!(!support_key.short_key.is_empty());
+        assert_eq!(support_key.short_key.len(), 8);
+    }
+}
