@@ -2,7 +2,7 @@ mod cli;
 mod upgrade;
 
 use clap::{CommandFactory, Parser};
-use httprunner_lib::{colors, discovery, export, processor, report};
+use httprunner_lib::{colors, discovery, export, logging, processor, report};
 
 use crate::cli::ReportFormat;
 use crate::report::{generate_html, generate_markdown};
@@ -82,6 +82,23 @@ fn main() -> anyhow::Result<()> {
                 eprintln!("{} Failed to export results: {}", colors::red("❌"), e);
                 std::process::exit(3);
             }
+        }
+    }
+
+    match logging::get_support_key() {
+        Ok(support_key) => {
+            println!(
+                "{} Support Key: {} (use this key when seeking support)",
+                colors::blue("ℹ️"),
+                support_key.short_key
+            );
+        }
+        Err(e) => {
+            eprintln!(
+                "{} Failed to get or generate support key: {}",
+                colors::red("❌"),
+                e
+            );
         }
     }
 
