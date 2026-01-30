@@ -283,6 +283,10 @@ impl HttpRunnerApp {
                 if let Some(file) = &self.selected_file {
                     ui.label(format!("Selected: {}", file.display()));
                 }
+                ui.separator();
+                if let Ok(support_key) = httprunner_lib::logging::get_support_key() {
+                    ui.label(format!("Support: {}", support_key.short_key));
+                }
             });
         });
     }
