@@ -26,7 +26,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
-    
+
     // Initialize telemetry
     telemetry::init(AppType::Gui, VERSION, false);
 
@@ -50,10 +50,10 @@ fn main() -> eframe::Result<()> {
         native_options,
         Box::new(|cc| Ok(Box::new(HttpRunnerApp::new(cc)))),
     );
-    
+
     // Flush telemetry before exit
     telemetry::flush();
-    
+
     result
 }
 

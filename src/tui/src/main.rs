@@ -22,7 +22,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn main() -> anyhow::Result<()> {
     // Initialize telemetry
     telemetry::init(AppType::Tui, VERSION, false);
-    
+
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -50,7 +50,7 @@ fn main() -> anyhow::Result<()> {
         telemetry::track_error(err.as_ref());
         eprintln!("Error: {}", err);
     }
-    
+
     // Flush telemetry before exit
     telemetry::flush();
 

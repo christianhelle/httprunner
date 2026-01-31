@@ -14,13 +14,10 @@ const VERSION: &str = env!("VERSION");
 
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
-    
-    // Initialize telemetry (before any operations that might fail)
+
     telemetry::init(AppType::Cli, VERSION, cli_args.no_telemetry);
-    
-    // Track CLI argument patterns (only flags, not values)
     track_cli_usage(&cli_args);
-    
+
     if cli_args.upgrade {
         let result = upgrade::run_upgrade();
         telemetry::flush();
@@ -34,12 +31,10 @@ fn main() -> anyhow::Result<()> {
         cli::show_donation_banner();
     }
 
-    // Track error if run failed
     if let Err(ref e) = result {
         telemetry::track_error(e.as_ref());
     }
-    
-    // Flush telemetry before exit
+
     telemetry::flush();
 
     if result.is_err() {
