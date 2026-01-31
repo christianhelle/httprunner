@@ -351,7 +351,7 @@ impl App {
     fn run_selected_request(&mut self) {
         // Note: Running individual requests requires library support for single-request execution
         // Currently, the library's process_http_files function processes all requests in a file
-         // This would need to be enhanced in httprunner-lib to support executing a single request by index
+        // This would need to be enhanced in httprunner-lib to support executing a single request by index
         if let Some(file) = &self.selected_file
             && self.request_view.get_selected_index().is_some()
         {

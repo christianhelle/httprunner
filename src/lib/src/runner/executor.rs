@@ -6,7 +6,7 @@ use super::response_processor::{
 #[cfg(not(target_arch = "wasm32"))]
 use crate::assertions;
 #[cfg(not(target_arch = "wasm32"))]
-use crate::telemetry::{track_connection_error, ConnectionErrorCategory};
+use crate::telemetry::{ConnectionErrorCategory, track_connection_error};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::types::{HttpRequest, HttpResult};
 #[cfg(not(target_arch = "wasm32"))]
@@ -140,7 +140,10 @@ fn classify_request_error(e: &reqwest::Error) -> (&'static str, ConnectionErrorC
         {
             ("DNS resolution failed", ConnectionErrorCategory::Dns)
         } else {
-            ("Connection error", ConnectionErrorCategory::ConnectionRefused)
+            (
+                "Connection error",
+                ConnectionErrorCategory::ConnectionRefused,
+            )
         }
     } else if has_ssl_error {
         ("SSL/TLS error", ConnectionErrorCategory::Ssl)

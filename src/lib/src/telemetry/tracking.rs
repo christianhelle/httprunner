@@ -306,7 +306,11 @@ pub fn track_request_result(success: bool, request_count: usize, duration_ms: u6
 }
 
 /// Track performance metrics (parsing, execution timing)
-pub fn track_metric(metric_name: &str, duration_ms: u64, additional_props: HashMap<String, String>) {
+pub fn track_metric(
+    metric_name: &str,
+    duration_ms: u64,
+    additional_props: HashMap<String, String>,
+) {
     let mut properties = HashMap::new();
     properties.insert("metric_name".to_string(), metric_name.to_string());
     properties.insert("duration_ms".to_string(), duration_ms.to_string());
@@ -382,7 +386,10 @@ pub fn track_execution_complete(
     properties.insert("success_count".to_string(), success_count.to_string());
     properties.insert("failed_count".to_string(), failed_count.to_string());
     properties.insert("skipped_count".to_string(), skipped_count.to_string());
-    properties.insert("total_duration_ms".to_string(), total_duration_ms.to_string());
+    properties.insert(
+        "total_duration_ms".to_string(),
+        total_duration_ms.to_string(),
+    );
 
     track_event("execution-complete", properties);
 }

@@ -271,9 +271,11 @@ impl HttpRunnerApp {
                     ui.separator();
 
                     ui.label(
-                        egui::RichText::new("Telemetry helps improve the app.\nNo personal data is collected.")
-                            .small()
-                            .color(egui::Color32::GRAY),
+                        egui::RichText::new(
+                            "Telemetry helps improve the app.\nNo personal data is collected.",
+                        )
+                        .small()
+                        .color(egui::Color32::GRAY),
                     );
                 });
 
