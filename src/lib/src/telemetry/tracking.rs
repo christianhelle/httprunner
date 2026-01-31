@@ -61,7 +61,7 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     let _ = TELEMETRY_STATE.set(Mutex::new(state));
 
     if enabled {
-        track_event("AppStart", HashMap::new());
+        track_event("app-started", HashMap::new());
     }
 }
 
@@ -259,7 +259,7 @@ pub fn track_cli_args(args: &CliArgPatterns) {
         properties.insert("report_format".to_string(), format.clone());
     }
 
-    track_event("CliInvocation", properties);
+    track_event("cli-args", properties);
 }
 
 pub fn track_request_result(success: bool, request_count: usize, duration_ms: u64) {
@@ -268,12 +268,12 @@ pub fn track_request_result(success: bool, request_count: usize, duration_ms: u6
     properties.insert("request_count".to_string(), request_count.to_string());
     properties.insert("duration_ms".to_string(), duration_ms.to_string());
 
-    track_event("RequestExecution", properties);
+    track_event("request-executed", properties);
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn flush() {
-    track_event("AppExit", HashMap::new());
+    track_event("app-exited", HashMap::new());
 
     let Some(state_mutex) = TELEMETRY_STATE.get() else {
         return;
