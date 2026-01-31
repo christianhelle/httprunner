@@ -15,13 +15,18 @@ use crossterm::{
 };
 use httprunner_lib::telemetry::{self, AppType};
 use ratatui::{Terminal, backend::CrosstermBackend};
+use state::AppState;
 use std::io;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() -> anyhow::Result<()> {
-    // Initialize telemetry
-    telemetry::init(AppType::Tui, VERSION, false);
+    // Load saved state to check telemetry preference
+    let saved_state = AppState::load();
+    let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
+
+    // Initialize telemetry (respects stored preference)
+    telemetry::init(AppType::Tui, VERSION, telemetry_disabled);
 
     // Setup terminal
     enable_raw_mode()?;

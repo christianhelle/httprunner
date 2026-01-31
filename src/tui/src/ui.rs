@@ -535,6 +535,13 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
         Err(_) => String::new(),
     };
 
+    // Telemetry status indicator
+    let telemetry_indicator = if app.telemetry_enabled {
+        Span::styled("📊", Style::default().fg(Color::Green))
+    } else {
+        Span::styled("📊", Style::default().fg(Color::DarkGray))
+    };
+
     let status_text = vec![
         Line::from(vec![
             Span::raw("Status: "),
@@ -545,20 +552,24 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
                 Span::raw("")
             },
             Span::styled(support_key_text, Style::default().fg(Color::Blue)),
+            Span::raw(" | "),
+            telemetry_indicator,
         ]),
         Line::from(vec![
             Span::styled("R/F5", Style::default().fg(Color::Yellow)),
             Span::raw(" Run | "),
             Span::styled("Q", Style::default().fg(Color::Yellow)),
             Span::raw(" Quit | "),
-            Span::styled("Tab/Shift+Tab", Style::default().fg(Color::Yellow)),
+            Span::styled("Tab", Style::default().fg(Color::Yellow)),
             Span::raw(" Pane | "),
             Span::styled("Ctrl+B", Style::default().fg(Color::Yellow)),
             Span::raw(" Files | "),
             Span::styled("Ctrl+D", Style::default().fg(Color::Yellow)),
             Span::raw(" View | "),
             Span::styled("Ctrl+E", Style::default().fg(Color::Yellow)),
-            Span::raw(" Env"),
+            Span::raw(" Env | "),
+            Span::styled("Ctrl+T", Style::default().fg(Color::Yellow)),
+            Span::raw(" Telemetry"),
         ]),
     ];
 

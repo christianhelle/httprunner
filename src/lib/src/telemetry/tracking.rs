@@ -305,6 +305,88 @@ pub fn track_request_result(success: bool, request_count: usize, duration_ms: u6
     track_event("request-executed", properties);
 }
 
+/// Track performance metrics (parsing, execution timing)
+pub fn track_metric(metric_name: &str, duration_ms: u64, additional_props: HashMap<String, String>) {
+    let mut properties = HashMap::new();
+    properties.insert("metric_name".to_string(), metric_name.to_string());
+    properties.insert("duration_ms".to_string(), duration_ms.to_string());
+
+    for (key, value) in additional_props {
+        properties.insert(key, value);
+    }
+
+    track_event("metric", properties);
+}
+
+/// Categories of connection errors for telemetry
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectionErrorCategory {
+    /// SSL/TLS certificate or handshake errors
+    Ssl,
+    /// DNS resolution failures
+    Dns,
+    /// Connection refused or unreachable
+    ConnectionRefused,
+    /// Request or connection timeout
+    Timeout,
+    /// Other connection errors
+    Other,
+}
+
+impl ConnectionErrorCategory {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ConnectionErrorCategory::Ssl => "ssl",
+            ConnectionErrorCategory::Dns => "dns",
+            ConnectionErrorCategory::ConnectionRefused => "connection_refused",
+            ConnectionErrorCategory::Timeout => "timeout",
+            ConnectionErrorCategory::Other => "other",
+        }
+    }
+}
+
+/// Track connection errors with categorization (no sensitive data)
+pub fn track_connection_error(category: ConnectionErrorCategory, is_insecure_mode: bool) {
+    let mut properties = HashMap::new();
+    properties.insert("error_category".to_string(), category.as_str().to_string());
+    properties.insert("insecure_mode".to_string(), is_insecure_mode.to_string());
+
+    track_event("connection-error", properties);
+}
+
+/// Track feature usage in TUI/GUI apps
+pub fn track_feature_usage(feature_name: &str) {
+    let mut properties = HashMap::new();
+    properties.insert("feature_name".to_string(), feature_name.to_string());
+
+    track_event("feature-used", properties);
+}
+
+/// Track file parsing metrics
+pub fn track_parse_complete(request_count: usize, duration_ms: u64) {
+    let mut properties = HashMap::new();
+    properties.insert("request_count".to_string(), request_count.to_string());
+    properties.insert("duration_ms".to_string(), duration_ms.to_string());
+
+    track_event("parse-complete", properties);
+}
+
+/// Track execution completion metrics
+pub fn track_execution_complete(
+    success_count: usize,
+    failed_count: usize,
+    skipped_count: usize,
+    total_duration_ms: u64,
+) {
+    let mut properties = HashMap::new();
+    properties.insert("success_count".to_string(), success_count.to_string());
+    properties.insert("failed_count".to_string(), failed_count.to_string());
+    properties.insert("skipped_count".to_string(), skipped_count.to_string());
+    properties.insert("total_duration_ms".to_string(), total_duration_ms.to_string());
+
+    track_event("execution-complete", properties);
+}
+
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn flush() {
     track_event("app-exited", HashMap::new());

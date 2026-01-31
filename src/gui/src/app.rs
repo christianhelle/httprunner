@@ -5,6 +5,7 @@ use super::{
     state::AppState,
     text_editor::TextEditor,
 };
+use httprunner_lib::telemetry;
 use std::path::{Path, PathBuf};
 
 enum KeyboardAction {
@@ -40,6 +41,7 @@ pub struct HttpRunnerApp {
     last_saved_window_size: Option<(f32, f32)>,
     view_mode: ViewMode,
     file_tree_visible: bool,
+    telemetry_enabled: bool,
 }
 
 impl HttpRunnerApp {
@@ -59,6 +61,7 @@ impl HttpRunnerApp {
         let font_size = state.font_size.unwrap_or(Self::DEFAULT_FONT_SIZE);
 
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
+        let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
 
         let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
@@ -75,6 +78,7 @@ impl HttpRunnerApp {
             last_saved_window_size: state.window_size,
             view_mode: ViewMode::TextEditor, // Default to text editor for new files
             file_tree_visible,
+            telemetry_enabled,
         };
 
         app.update_font_size(&cc.egui_ctx);
@@ -245,6 +249,34 @@ impl HttpRunnerApp {
                     }
                 });
 
+                ui.menu_button("Settings", |ui| {
+                    let telemetry_text = if self.telemetry_enabled {
+                        "✓ Telemetry Enabled"
+                    } else {
+                        "  Telemetry Disabled"
+                    };
+
+                    if ui.button(telemetry_text).clicked() {
+                        self.telemetry_enabled = !self.telemetry_enabled;
+
+                        // Update the global telemetry state and persist
+                        if let Err(e) = telemetry::set_enabled(self.telemetry_enabled) {
+                            eprintln!("Failed to save telemetry setting: {}", e);
+                        }
+
+                        self.save_state();
+                        ui.close();
+                    }
+
+                    ui.separator();
+
+                    ui.label(
+                        egui::RichText::new("Telemetry helps improve the app.\nNo personal data is collected.")
+                            .small()
+                            .color(egui::Color32::GRAY),
+                    );
+                });
+
                 ui.separator();
 
                 ui.label("Environment:");
@@ -331,6 +363,7 @@ impl HttpRunnerApp {
             last_results: Some(self.results_view.get_results()),
             file_tree_visible: Some(self.file_tree_visible),
             results_compact_mode: Some(self.results_view.is_compact_mode()),
+            telemetry_enabled: Some(self.telemetry_enabled),
         };
 
         if let Err(e) = state.save() {

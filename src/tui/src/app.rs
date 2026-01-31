@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use httprunner_lib::telemetry;
 use std::path::PathBuf;
 
 use crate::file_tree::FileTree;
@@ -25,6 +26,7 @@ pub struct App {
     pub selected_environment: Option<String>,
     pub status_message: String,
     pub file_tree_visible: bool,
+    pub telemetry_enabled: bool,
 }
 
 impl App {
@@ -38,6 +40,7 @@ impl App {
 
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
         let results_compact_mode = state.results_compact_mode.unwrap_or(true);
+        let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
 
         let mut results_view = ResultsView::new();
         results_view.set_compact_mode(results_compact_mode);
@@ -54,6 +57,7 @@ impl App {
             selected_environment: None,
             status_message: String::from("Ready"),
             file_tree_visible,
+            telemetry_enabled,
         };
 
         if let Some(saved_file) = state.selected_file
@@ -97,6 +101,10 @@ impl App {
             }
             (KeyCode::Char('d'), KeyModifiers::CONTROL) => {
                 self.results_view.toggle_compact_mode();
+                return Ok(());
+            }
+            (KeyCode::Char('t'), KeyModifiers::CONTROL) => {
+                self.toggle_telemetry();
                 return Ok(());
             }
             (KeyCode::F(5), _)
@@ -213,6 +221,9 @@ impl App {
         if let Some(file) = &self.selected_file {
             self.status_message = format!("Running requests from {}", file.display());
 
+            // Track feature usage
+            telemetry::track_feature_usage("run_all_requests");
+
             let file_path = file.clone();
             let env = self.selected_environment.clone();
             let incremental_results = self.results_view.incremental_results();
@@ -224,11 +235,20 @@ impl App {
             // Spawn background thread for async execution
             std::thread::spawn(move || {
                 let path_str = file_path.to_string_lossy().to_string();
+                let execution_start = std::time::Instant::now();
 
                 // Parse the file first
+                let parse_start = std::time::Instant::now();
                 match httprunner_lib::parser::parse_http_file(&path_str, env.as_deref()) {
                     Ok(requests) => {
+                        let parse_duration = parse_start.elapsed().as_millis() as u64;
                         let total = requests.len();
+
+                        // Track parse metrics
+                        telemetry::track_parse_complete(total, parse_duration);
+
+                        let mut success_count = 0usize;
+                        let mut failed_count = 0usize;
 
                         for (idx, request) in requests.into_iter().enumerate() {
                             // Show running status
@@ -250,6 +270,7 @@ impl App {
                             ) {
                                 Ok(http_result) => {
                                     if http_result.success {
+                                        success_count += 1;
                                         crate::results_view::ExecutionResult::Success {
                                             method: request.method,
                                             url: request.url,
@@ -261,6 +282,7 @@ impl App {
                                             assertion_results: http_result.assertion_results,
                                         }
                                     } else {
+                                        failed_count += 1;
                                         crate::results_view::ExecutionResult::Failure {
                                             method: request.method,
                                             url: request.url,
@@ -270,11 +292,14 @@ impl App {
                                         }
                                     }
                                 }
-                                Err(e) => crate::results_view::ExecutionResult::Failure {
-                                    method: request.method,
-                                    url: request.url,
-                                    error: e.to_string(),
-                                },
+                                Err(e) => {
+                                    failed_count += 1;
+                                    crate::results_view::ExecutionResult::Failure {
+                                        method: request.method,
+                                        url: request.url,
+                                        error: e.to_string(),
+                                    }
+                                }
                             };
 
                             // Remove running message and add result
@@ -291,8 +316,20 @@ impl App {
                                 results.push(result);
                             }
                         }
+
+                        // Track execution completion
+                        let total_duration = execution_start.elapsed().as_millis() as u64;
+                        telemetry::track_execution_complete(
+                            success_count,
+                            failed_count,
+                            0, // skipped not tracked in TUI yet
+                            total_duration,
+                        );
                     }
                     Err(e) => {
+                        // Track parse error
+                        telemetry::track_error_message(&format!("Parse error: {}", e));
+
                         if let Ok(mut results) = incremental_results.lock() {
                             results.push(crate::results_view::ExecutionResult::Failure {
                                 method: "PARSE".to_string(),
@@ -314,7 +351,7 @@ impl App {
     fn run_selected_request(&mut self) {
         // Note: Running individual requests requires library support for single-request execution
         // Currently, the library's process_http_files function processes all requests in a file
-        // This would need to be enhanced in httprunner-lib to support executing a single request by index
+         // This would need to be enhanced in httprunner-lib to support executing a single request by index
         if let Some(file) = &self.selected_file
             && self.request_view.get_selected_index().is_some()
         {
@@ -323,6 +360,23 @@ impl App {
                 file.file_name().unwrap_or_default().to_string_lossy()
             );
         }
+    }
+
+    fn toggle_telemetry(&mut self) {
+        self.telemetry_enabled = !self.telemetry_enabled;
+
+        // Update the global telemetry state and persist
+        if let Err(e) = telemetry::set_enabled(self.telemetry_enabled) {
+            self.status_message = format!("Failed to save telemetry setting: {}", e);
+        } else {
+            self.status_message = if self.telemetry_enabled {
+                "Telemetry enabled".to_string()
+            } else {
+                "Telemetry disabled".to_string()
+            };
+        }
+
+        self.save_state();
     }
 
     fn save_state(&self) {
@@ -335,6 +389,7 @@ impl App {
             file_tree_visible: Some(self.file_tree_visible),
             results_compact_mode: Some(self.results_view.is_compact_mode()),
             last_results: None,
+            telemetry_enabled: Some(self.telemetry_enabled),
         };
         state.save();
     }

@@ -27,11 +27,13 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    // Initialize telemetry
-    telemetry::init(AppType::Gui, VERSION, false);
-
-    // Load saved state to restore window size
+    // Load saved state to restore window size and check telemetry preference
     let saved_state = state::AppState::load();
+    let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
+
+    // Initialize telemetry (respects stored preference)
+    telemetry::init(AppType::Gui, VERSION, telemetry_disabled);
+
     let window_size = saved_state
         .window_size
         .map(|(w, h)| [w, h])
