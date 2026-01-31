@@ -15,6 +15,10 @@ categories = [
   "web-programming::http-client",
 ]
 
+[features]
+default = []
+telemetry = ["appinsights", "tokio"]
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }
@@ -30,8 +34,10 @@ uuid = { workspace = true }
 # Platform-specific dependencies (native)
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 reqwest = { workspace = true }
-appinsights = { workspace = true }
-tokio = { workspace = true }
+
+# Telemetry dependencies (optional)
+appinsights = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 reqwest = { version = "0.12", features = ["json"], default-features = false }

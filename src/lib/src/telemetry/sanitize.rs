@@ -1,3 +1,4 @@
+#[cfg(any(feature = "telemetry", test))]
 pub fn sanitize_error_message(message: &str) -> String {
     let mut sanitized = message.to_string();
 
@@ -34,7 +35,7 @@ pub fn sanitize_error_message(message: &str) -> String {
     sanitized
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn get_error_type_name(error: &dyn std::error::Error) -> String {
     let full_type = std::any::type_name_of_val(error);
     full_type

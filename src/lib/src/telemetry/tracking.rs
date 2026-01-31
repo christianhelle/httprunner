@@ -1,21 +1,24 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use appinsights::blocking::TelemetryClient;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use appinsights::telemetry::{SeverityLevel, Telemetry};
 
 use super::app_type::AppType;
 use super::config::{TelemetryConfig, is_disabled_by_env};
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use super::sanitize::{get_error_type_name, sanitize_error_message};
 
+#[cfg(feature = "telemetry")]
 const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
 static TELEMETRY_STATE: OnceLock<Mutex<TelemetryState>> = OnceLock::new();
 
+#[allow(dead_code)]
 struct TelemetryState {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
     client: Option<TelemetryClient>,
     app_type: AppType,
     version: String,
@@ -36,7 +39,7 @@ fn get_support_key_info() -> (String, String) {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     let config = TelemetryConfig::load();
     let enabled = !force_disabled && config.enabled && !is_disabled_by_env();
@@ -65,6 +68,28 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     }
 }
 
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
+pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
+    let config = TelemetryConfig::load();
+    let enabled = !force_disabled && config.enabled && !is_disabled_by_env();
+
+    let session_id = uuid::Uuid::new_v4().to_string();
+    let (support_key, support_key_short) = get_support_key_info();
+    let device_id = support_key.clone();
+
+    let state = TelemetryState {
+        app_type,
+        version: version.to_string(),
+        session_id,
+        device_id,
+        support_key,
+        support_key_short,
+        enabled,
+    };
+
+    let _ = TELEMETRY_STATE.set(Mutex::new(state));
+}
+
 #[cfg(target_arch = "wasm32")]
 pub fn init(_app_type: AppType, _version: &str, _force_disabled: bool) {}
 
@@ -81,7 +106,7 @@ pub fn set_enabled(enabled: bool) -> anyhow::Result<()> {
     config.save()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn track_event(name: &str, properties: HashMap<String, String>) {
     let Some(state_mutex) = TELEMETRY_STATE.get() else {
         return;
@@ -125,10 +150,13 @@ pub fn track_event(name: &str, properties: HashMap<String, String>) {
     client.track(event);
 }
 
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
+pub fn track_event(_name: &str, _properties: HashMap<String, String>) {}
+
 #[cfg(target_arch = "wasm32")]
 pub fn track_event(_name: &str, _properties: HashMap<String, String>) {}
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn track_error(error: &dyn std::error::Error) {
     let Some(state_mutex) = TELEMETRY_STATE.get() else {
         return;
@@ -176,10 +204,13 @@ pub fn track_error(error: &dyn std::error::Error) {
     client.track(trace);
 }
 
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
+pub fn track_error(_error: &dyn std::error::Error) {}
+
 #[cfg(target_arch = "wasm32")]
 pub fn track_error(_error: &dyn std::error::Error) {}
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn track_error_message(message: &str) {
     let Some(state_mutex) = TELEMETRY_STATE.get() else {
         return;
@@ -222,6 +253,9 @@ pub fn track_error_message(message: &str) {
 
     client.track(trace);
 }
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
+pub fn track_error_message(_message: &str) {}
 
 #[cfg(target_arch = "wasm32")]
 pub fn track_error_message(_message: &str) {}
@@ -271,7 +305,7 @@ pub fn track_request_result(success: bool, request_count: usize, duration_ms: u6
     track_event("request-executed", properties);
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn flush() {
     track_event("app-exited", HashMap::new());
 
@@ -289,6 +323,9 @@ pub fn flush() {
         client.close_channel();
     }
 }
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
+pub fn flush() {}
 
 #[cfg(target_arch = "wasm32")]
 pub fn flush() {}
