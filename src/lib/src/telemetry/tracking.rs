@@ -7,7 +7,7 @@ use appinsights::blocking::TelemetryClient;
 use appinsights::telemetry::{SeverityLevel, Telemetry};
 
 use super::app_type::AppType;
-use super::config::{is_disabled_by_env, TelemetryConfig};
+use super::config::{TelemetryConfig, is_disabled_by_env};
 use super::sanitize::{get_error_type_name, sanitize_error_message};
 
 const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
@@ -39,10 +39,7 @@ fn get_support_key_info() -> (String, String) {
 #[cfg(not(target_arch = "wasm32"))]
 pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     let config = TelemetryConfig::load();
-    let enabled = !force_disabled
-        && config.enabled
-        && !is_disabled_by_env()
-        && INSTRUMENTATION_KEY != "YOUR_INSTRUMENTATION_KEY_HERE";
+    let enabled = !force_disabled && config.enabled && !is_disabled_by_env();
 
     let session_id = uuid::Uuid::new_v4().to_string();
     let (support_key, support_key_short) = get_support_key_info();
