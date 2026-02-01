@@ -26,7 +26,7 @@ fn main() -> anyhow::Result<()> {
     let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
 
     // Initialize telemetry (respects stored preference)
-    telemetry::init(AppType::Tui, VERSION, telemetry_disabled);
+    telemetry::init(AppType::TUI, VERSION, telemetry_disabled);
 
     // Setup terminal
     enable_raw_mode()?;

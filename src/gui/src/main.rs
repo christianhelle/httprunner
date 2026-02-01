@@ -32,7 +32,7 @@ fn main() -> eframe::Result<()> {
     let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
 
     // Initialize telemetry (respects stored preference)
-    telemetry::init(AppType::Gui, VERSION, telemetry_disabled);
+    telemetry::init(AppType::GUI, VERSION, telemetry_disabled);
 
     let window_size = saved_state
         .window_size

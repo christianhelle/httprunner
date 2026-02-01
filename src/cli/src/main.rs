@@ -15,7 +15,7 @@ const VERSION: &str = env!("VERSION");
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
 
-    telemetry::init(AppType::Cli, VERSION, cli_args.no_telemetry);
+    telemetry::init(AppType::CLI, VERSION, cli_args.no_telemetry);
     track_cli_usage(&cli_args);
 
     if cli_args.upgrade {

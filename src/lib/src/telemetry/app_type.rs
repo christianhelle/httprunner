@@ -2,17 +2,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AppType {
-    Cli,
-    Tui,
-    Gui,
+    CLI,
+    TUI,
+    GUI,
 }
 
 impl AppType {
     pub fn as_str(&self) -> &'static str {
         match self {
-            AppType::Cli => "CLI",
-            AppType::Tui => "TUI",
-            AppType::Gui => "GUI",
+            AppType::CLI => "CLI",
+            AppType::TUI => "TUI",
+            AppType::GUI => "GUI",
         }
     }
 }
@@ -29,8 +29,8 @@ mod tests {
 
     #[test]
     fn test_app_type_display() {
-        assert_eq!(AppType::Cli.as_str(), "CLI");
-        assert_eq!(AppType::Tui.as_str(), "TUI");
-        assert_eq!(AppType::Gui.as_str(), "GUI");
+        assert_eq!(AppType::CLI.as_str(), "CLI");
+        assert_eq!(AppType::TUI.as_str(), "TUI");
+        assert_eq!(AppType::GUI.as_str(), "GUI");
     }
 }
