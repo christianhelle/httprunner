@@ -22,6 +22,9 @@ use httprunner_lib::telemetry::{self, AppType};
 #[cfg(not(target_arch = "wasm32"))]
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[cfg(not(target_arch = "wasm32"))]
+const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
+
 // Native binary entry point
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
@@ -32,7 +35,7 @@ fn main() -> eframe::Result<()> {
     let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
 
     // Initialize telemetry (respects stored preference)
-    telemetry::init(AppType::GUI, VERSION, telemetry_disabled);
+    telemetry::init(AppType::GUI, VERSION, telemetry_disabled, INSTRUMENTATION_KEY);
 
     let window_size = saved_state
         .window_size

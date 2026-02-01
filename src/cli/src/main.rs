@@ -11,11 +11,12 @@ use crate::cli::ReportFormat;
 use crate::report::{generate_html, generate_markdown};
 
 const VERSION: &str = env!("VERSION");
+const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
 
-    telemetry::init(AppType::CLI, VERSION, cli_args.no_telemetry);
+    telemetry::init(AppType::CLI, VERSION, cli_args.no_telemetry, INSTRUMENTATION_KEY);
     track_cli_usage(&cli_args);
 
     if cli_args.upgrade {

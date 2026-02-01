@@ -19,6 +19,7 @@ use state::AppState;
 use std::io;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
 fn main() -> anyhow::Result<()> {
     // Load saved state to check telemetry preference
@@ -26,7 +27,7 @@ fn main() -> anyhow::Result<()> {
     let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
 
     // Initialize telemetry (respects stored preference)
-    telemetry::init(AppType::TUI, VERSION, telemetry_disabled);
+    telemetry::init(AppType::TUI, VERSION, telemetry_disabled, INSTRUMENTATION_KEY);
 
     // Setup terminal
     enable_raw_mode()?;

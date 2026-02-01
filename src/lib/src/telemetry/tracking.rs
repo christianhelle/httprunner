@@ -11,9 +11,6 @@ use super::config::{TelemetryConfig, is_disabled_by_env};
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use super::sanitize::{get_error_type_name, sanitize_error_message};
 
-#[cfg(feature = "telemetry")]
-const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
-
 static TELEMETRY_STATE: OnceLock<Mutex<TelemetryState>> = OnceLock::new();
 
 #[allow(dead_code)]
@@ -40,7 +37,7 @@ fn get_support_key_info() -> (String, String) {
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
-pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
+pub fn init(app_type: AppType, version: &str, force_disabled: bool, instrumentation_key: &str) {
     let config = TelemetryConfig::load();
     let enabled = !force_disabled && config.enabled && !is_disabled_by_env();
 
@@ -48,7 +45,7 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
     let (support_key, support_key_short) = get_support_key_info();
     let device_id = support_key.clone();
 
-    let client = TelemetryClient::new(INSTRUMENTATION_KEY.to_string());
+    let client = TelemetryClient::new(instrumentation_key.to_string());
 
     let state = TelemetryState {
         client: Some(client),
@@ -69,7 +66,7 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
-pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
+pub fn init(app_type: AppType, version: &str, force_disabled: bool, _instrumentation_key: &str) {
     let config = TelemetryConfig::load();
     let enabled = !force_disabled && config.enabled && !is_disabled_by_env();
 
@@ -91,7 +88,7 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool) {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn init(_app_type: AppType, _version: &str, _force_disabled: bool) {}
+pub fn init(_app_type: AppType, _version: &str, _force_disabled: bool, _instrumentation_key: &str) {}
 
 pub fn is_enabled() -> bool {
     TELEMETRY_STATE
