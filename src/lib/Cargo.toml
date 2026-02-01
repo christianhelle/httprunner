@@ -16,7 +16,7 @@ categories = [
 ]
 
 [features]
-default = []
+default = ["telemetry"]
 telemetry = ["appinsights", "tokio"]
 
 [dependencies]
