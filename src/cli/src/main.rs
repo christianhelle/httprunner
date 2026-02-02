@@ -5,10 +5,9 @@ use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use httprunner_lib::telemetry::{self, AppType, CliArgPatterns};
 use httprunner_lib::types::ProcessorResults;
-use httprunner_lib::{colors, discovery, export, logging, processor, report};
-
+use httprunner_lib::{colors, discovery, export, logging, processor};
+use httprunner_lib::report::{generate_html, generate_markdown};
 use crate::cli::ReportFormat;
-use crate::report::{generate_html, generate_markdown};
 
 const VERSION: &str = env!("VERSION");
 const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
