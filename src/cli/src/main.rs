@@ -16,7 +16,12 @@ const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
 
-    telemetry::init(AppType::CLI, VERSION, cli_args.no_telemetry, INSTRUMENTATION_KEY);
+    telemetry::init(
+        AppType::CLI,
+        VERSION,
+        cli_args.no_telemetry,
+        INSTRUMENTATION_KEY,
+    );
     track_cli_usage(&cli_args);
 
     if cli_args.upgrade {
@@ -26,11 +31,6 @@ fn main() -> anyhow::Result<()> {
     }
 
     let result = run(&cli_args);
-
-    show_support_key();
-    if !cli_args.no_banner {
-        cli::show_donation_banner();
-    }
 
     if let Err(ref e) = result {
         telemetry::track_error(e.as_ref());
@@ -70,6 +70,10 @@ fn run(cli_args: &cli::Cli) -> Result<()> {
     let results = process_http_files(cli_args, files)?;
     generate_report(cli_args, &results)?;
     export_results(cli_args, &results)?;
+    show_support_key();
+    if !cli_args.no_banner {
+        cli::show_donation_banner();
+    }
     Ok(())
 }
 
