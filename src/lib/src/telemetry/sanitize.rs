@@ -27,8 +27,8 @@ pub fn sanitize_error_message(message: &str) -> String {
         sanitized = email_re.replace_all(&sanitized, "[EMAIL]").to_string();
     }
 
-    if sanitized.len() > 500 {
-        sanitized.truncate(500);
+    if sanitized.chars().count() > 500 {
+        sanitized = sanitized.chars().take(500).collect::<String>();
         sanitized.push_str("...[TRUNCATED]");
     }
 
