@@ -22,11 +22,11 @@ rand = { version = "0.8", default-features = false, features = ["std", "std_rng"
 regex = { version = "1.12.2", default-features = false, features = ["std", "perf", "unicode-perl", "unicode-case"] }
 base64 = { version = "0.22.1", default-features = false, features = ["std"] }
 chrono = { version = "0.4.43", default-features = false, features = ["clock", "std"] }
-uuid = { version = "1.11", default-features = false, features = ["v4", "std"] }
+uuid = { version = "1.20.0", default-features = false, features = ["v4", "std"] }
 
 # Telemetry dependencies (optional)
 appinsights = { version = "0.2.3", features = ["blocking"] }
-tokio = { version = "1", default-features = false, features = ["rt", "sync", "time", "macros"] }
+tokio = { version = "1.49.0", default-features = false, features = ["rt", "sync", "time", "macros"] }
 
 # CLI dependencies
 clap = { version = "4.5", features = ["derive", "std", "help", "usage", "error-context"], default-features = false }
