@@ -32,9 +32,7 @@ fn discover_http_files_returns_empty_when_none_found() {
 
 #[test]
 fn run_discovery_mode_returns_empty_list_when_no_files() {
-    // Instead of changing directories, use discover_http_files directly
-    let temp = tempdir().unwrap();
-    let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
+    let files = run_discovery_mode().unwrap();
     assert!(files.is_empty());
 }
 
@@ -226,16 +224,16 @@ fn discover_http_files_handles_nonexistent_directory() {
 fn discover_http_files_with_deeply_nested_structure() {
     let temp = tempdir().unwrap();
     let mut path = temp.path().to_path_buf();
-    
+
     // Create 10 levels deep
     for i in 0..10 {
         path = path.join(format!("level{}", i));
     }
     fs::create_dir_all(&path).unwrap();
-    
+
     let file = path.join("deep.http");
     fs::write(&file, "GET http://example.com/deep").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
     assert!(files[0].ends_with("deep.http"));
@@ -246,11 +244,11 @@ fn discover_http_files_ignores_directories_named_with_http_extension() {
     let temp = tempdir().unwrap();
     let dir_named_http = temp.path().join("folder.http");
     fs::create_dir(&dir_named_http).unwrap();
-    
+
     // Also create a real .http file
     let real_file = temp.path().join("real.http");
     fs::write(&real_file, "GET http://example.com").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     // Should only find the real file, not the directory
     assert_eq!(files.len(), 1);
@@ -262,10 +260,10 @@ fn discover_http_files_with_unicode_in_directory_names() {
     let temp = tempdir().unwrap();
     let unicode_dir = temp.path().join("日本語");
     fs::create_dir(&unicode_dir).unwrap();
-    
+
     let file = unicode_dir.join("test.http");
     fs::write(&file, "GET http://example.com").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
     assert!(files[0].contains("日本語"));
@@ -274,10 +272,10 @@ fn discover_http_files_with_unicode_in_directory_names() {
 #[test]
 fn discover_http_files_with_unicode_in_filenames() {
     let temp = tempdir().unwrap();
-    
+
     let file = temp.path().join("テスト.http");
     fs::write(&file, "GET http://example.com").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
     assert!(files[0].ends_with(".http"));
@@ -286,10 +284,10 @@ fn discover_http_files_with_unicode_in_filenames() {
 #[test]
 fn discover_http_files_with_spaces_in_names() {
     let temp = tempdir().unwrap();
-    
+
     let file = temp.path().join("my test file.http");
     fs::write(&file, "GET http://example.com").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
     assert!(files[0].ends_with("my test file.http"));
@@ -298,11 +296,11 @@ fn discover_http_files_with_spaces_in_names() {
 #[test]
 fn discover_http_files_sorted_output() {
     let temp = tempdir().unwrap();
-    
+
     for name in ["zebra.http", "alpha.http", "beta.http"] {
         fs::write(temp.path().join(name), "GET http://example.com").unwrap();
     }
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 3);
     // Files are discovered, ordering depends on filesystem
@@ -314,12 +312,12 @@ fn discover_http_files_sorted_output() {
 #[test]
 fn discover_http_files_no_duplicate_files() {
     let temp = tempdir().unwrap();
-    
+
     fs::write(temp.path().join("test.http"), "GET http://example.com").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
-    
+
     // Verify no duplicates in the result
     let unique: std::collections::HashSet<_> = files.iter().collect();
     assert_eq!(unique.len(), files.len());
@@ -328,12 +326,12 @@ fn discover_http_files_no_duplicate_files() {
 #[test]
 fn discover_http_files_respects_file_extension_boundary() {
     let temp = tempdir().unwrap();
-    
+
     // Files that contain .http but don't end with it
     fs::write(temp.path().join("test.http.bak"), "GET http://example.com").unwrap();
     fs::write(temp.path().join("test.httpx"), "GET http://example.com").unwrap();
     fs::write(temp.path().join("valid.http"), "GET http://example.com").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
     assert!(files[0].ends_with("valid.http"));
@@ -345,7 +343,7 @@ fn run_discovery_mode_output_format() {
     // This will output to stdout but we're mainly checking it doesn't crash
     let temp = tempdir().unwrap();
     fs::write(temp.path().join("test.http"), "GET http://example.com").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert!(!files.is_empty());
 }
@@ -353,11 +351,11 @@ fn run_discovery_mode_output_format() {
 #[test]
 fn discover_http_files_with_very_long_filename() {
     let temp = tempdir().unwrap();
-    
+
     // Create a very long but valid filename
     let long_name = format!("{}.http", "a".repeat(200));
     let file = temp.path().join(&long_name);
-    
+
     // This might fail on some filesystems, so we handle both cases
     if fs::write(&file, "GET http://example.com").is_ok() {
         let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
@@ -368,10 +366,10 @@ fn discover_http_files_with_very_long_filename() {
 #[test]
 fn discover_http_files_empty_http_file() {
     let temp = tempdir().unwrap();
-    
+
     // Empty .http files should still be discovered
     fs::write(temp.path().join("empty.http"), "").unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
 }
@@ -379,11 +377,11 @@ fn discover_http_files_empty_http_file() {
 #[test]
 fn discover_http_files_binary_content_in_http_file() {
     let temp = tempdir().unwrap();
-    
+
     // .http file with binary content should still be found (we don't read content)
     let binary_data = vec![0u8, 1, 2, 3, 255, 254, 253];
     std::fs::write(temp.path().join("binary.http"), binary_data).unwrap();
-    
+
     let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert_eq!(files.len(), 1);
 }
