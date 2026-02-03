@@ -48,7 +48,7 @@ mod tests {
     #[test]
     fn test_app_type_clone() {
         let cli1 = AppType::CLI;
-        let cli2 = cli1.clone();
+        let cli2 = cli1;
         assert_eq!(cli1, cli2);
     }
 

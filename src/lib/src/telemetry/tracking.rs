@@ -532,9 +532,8 @@ mod tests {
         // When TELEMETRY_STATE is not initialized, should return false
         // Note: This test might fail if other tests have initialized the state
         // In a real scenario, we'd use a different approach or reset state
-        let enabled = is_enabled();
-        // Should return false or the current state - we just verify it doesn't panic
-        assert!(enabled == true || enabled == false);
+        // We just verify it doesn't panic
+        let _enabled = is_enabled();
     }
 
     #[test]
@@ -902,8 +901,10 @@ mod tests {
     #[test]
     fn test_track_cli_args_with_various_file_counts() {
         for count in [0, 1, 5, 10, 100, 1000] {
-            let mut args = CliArgPatterns::default();
-            args.file_count = count;
+            let args = CliArgPatterns {
+                file_count: count,
+                ..Default::default()
+            };
             track_cli_args(&args);
         }
     }
@@ -911,9 +912,11 @@ mod tests {
     #[test]
     fn test_track_cli_args_with_different_report_formats() {
         for format in ["json", "html", "xml", "markdown"] {
-            let mut args = CliArgPatterns::default();
-            args.report = true;
-            args.report_format = Some(format.to_string());
+            let args = CliArgPatterns {
+                report: true,
+                report_format: Some(format.to_string()),
+                ..Default::default()
+            };
             track_cli_args(&args);
         }
     }
