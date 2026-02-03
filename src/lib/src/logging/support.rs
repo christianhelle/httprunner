@@ -1,5 +1,7 @@
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
+#[cfg(not(target_arch = "wasm32"))]
 static FILE_NAME: &str = "support_key.txt";
 
 #[cfg(target_arch = "wasm32")]

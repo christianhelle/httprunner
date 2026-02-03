@@ -69,7 +69,7 @@ pub async fn execute_http_request_async(
     ))
 }
 
-fn build_client_async(request: &HttpRequest, insecure: bool) -> Result<Client> {
+fn build_client_async(_request: &HttpRequest, insecure: bool) -> Result<Client> {
     #[allow(unused_mut)]
     let mut client_builder = Client::builder();
 

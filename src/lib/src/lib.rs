@@ -3,7 +3,6 @@ pub mod colors;
 pub mod conditions;
 pub mod discovery;
 pub mod environment;
-pub mod export;
 pub mod functions;
 pub mod logging;
 pub mod parser;
@@ -13,6 +12,9 @@ pub mod serializer;
 pub mod telemetry;
 pub mod types;
 pub mod variables;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub mod export;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod processor;
