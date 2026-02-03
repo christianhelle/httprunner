@@ -88,7 +88,8 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool, _instrumenta
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn init(_app_type: AppType, _version: &str, _force_disabled: bool, _instrumentation_key: &str) {}
+pub fn init(_app_type: AppType, _version: &str, _force_disabled: bool, _instrumentation_key: &str) {
+}
 
 pub fn is_enabled() -> bool {
     TELEMETRY_STATE
@@ -100,17 +101,19 @@ pub fn is_enabled() -> bool {
 
 pub fn set_enabled(enabled: bool) -> anyhow::Result<()> {
     use super::config::is_disabled_by_env;
-    
+
     let final_enabled = enabled && !is_disabled_by_env();
-    let config = TelemetryConfig { enabled: final_enabled };
+    let config = TelemetryConfig {
+        enabled: final_enabled,
+    };
     config.save()?;
-    
-    if let Some(state_mutex) = TELEMETRY_STATE.get() {
-        if let Ok(mut state) = state_mutex.lock() {
-            state.enabled = final_enabled;
-        }
+
+    if let Some(state_mutex) = TELEMETRY_STATE.get()
+        && let Ok(mut state) = state_mutex.lock()
+    {
+        state.enabled = final_enabled;
     }
-    
+
     Ok(())
 }
 
