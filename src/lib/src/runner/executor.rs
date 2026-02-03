@@ -166,3 +166,216 @@ fn capture_response_details(
         Ok((None, None))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Header;
+
+    fn create_test_request() -> HttpRequest {
+        HttpRequest {
+            name: Some("test_request".to_string()),
+            method: "GET".to_string(),
+            url: "https://httpbin.org/get".to_string(),
+            headers: Vec::new(),
+            body: None,
+            assertions: Vec::new(),
+            variables: Vec::new(),
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn test_build_client_with_default_timeouts() {
+        let request = create_test_request();
+        let client = build_client(&request, false);
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn test_build_client_with_custom_timeouts() {
+        let mut request = create_test_request();
+        request.timeout = Some(5000);
+        request.connection_timeout = Some(2000);
+        let client = build_client(&request, false);
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn test_build_client_with_insecure_flag() {
+        let request = create_test_request();
+        let client = build_client(&request, true);
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn test_build_client_with_zero_timeouts() {
+        let mut request = create_test_request();
+        request.timeout = Some(0);
+        request.connection_timeout = Some(0);
+        let client = build_client(&request, false);
+        assert!(client.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_get() {
+        let request = create_test_request();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_post_with_body() {
+        let mut request = create_test_request();
+        request.method = "POST".to_string();
+        request.body = Some("{\"key\":\"value\"}".to_string());
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_with_headers() {
+        let mut request = create_test_request();
+        request.headers.push(Header {
+            name: "Content-Type".to_string(),
+            value: "application/json".to_string(),
+        });
+        request.headers.push(Header {
+            name: "Authorization".to_string(),
+            value: "Bearer token123".to_string(),
+        });
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_put_method() {
+        let mut request = create_test_request();
+        request.method = "PUT".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_delete_method() {
+        let mut request = create_test_request();
+        request.method = "DELETE".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_patch_method() {
+        let mut request = create_test_request();
+        request.method = "PATCH".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_head_method() {
+        let mut request = create_test_request();
+        request.method = "HEAD".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_options_method() {
+        let mut request = create_test_request();
+        request.method = "OPTIONS".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_lowercase_method() {
+        let mut request = create_test_request();
+        request.method = "get".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_mixed_case_method() {
+        let mut request = create_test_request();
+        request.method = "PoSt".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_invalid_method() {
+        let mut request = create_test_request();
+        request.method = "INVALID_METHOD_@#$".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_build_request_empty_method() {
+        let mut request = create_test_request();
+        request.method = "".to_string();
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_build_request_with_multiple_headers() {
+        let mut request = create_test_request();
+        for i in 0..10 {
+            request.headers.push(Header {
+                name: format!("X-Custom-Header-{}", i),
+                value: format!("value_{}", i),
+            });
+        }
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_post_without_body() {
+        let mut request = create_test_request();
+        request.method = "POST".to_string();
+        request.body = None;
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_with_empty_body() {
+        let mut request = create_test_request();
+        request.method = "POST".to_string();
+        request.body = Some(String::new());
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_build_request_with_large_body() {
+        let mut request = create_test_request();
+        request.method = "POST".to_string();
+        request.body = Some("x".repeat(10000));
+        let client = Client::new();
+        let result = build_request(&client, &request);
+        assert!(result.is_ok());
+    }
+}
