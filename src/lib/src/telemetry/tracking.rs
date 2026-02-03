@@ -48,7 +48,13 @@ pub fn init_without_persisted_state(
     force_disabled: bool,
     instrumentation_key: &str,
 ) {
-    init_with_config(app_type, version, force_disabled, instrumentation_key, false);
+    init_with_config(
+        app_type,
+        version,
+        force_disabled,
+        instrumentation_key,
+        false,
+    );
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
@@ -92,7 +98,13 @@ fn init_with_config(
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
 pub fn init(app_type: AppType, version: &str, force_disabled: bool, _instrumentation_key: &str) {
-    init_with_config(app_type, version, force_disabled, _instrumentation_key, true);
+    init_with_config(
+        app_type,
+        version,
+        force_disabled,
+        _instrumentation_key,
+        true,
+    );
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
@@ -102,7 +114,13 @@ pub fn init_without_persisted_state(
     force_disabled: bool,
     _instrumentation_key: &str,
 ) {
-    init_with_config(app_type, version, force_disabled, _instrumentation_key, false);
+    init_with_config(
+        app_type,
+        version,
+        force_disabled,
+        _instrumentation_key,
+        false,
+    );
 }
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]

@@ -21,10 +21,22 @@ impl Default for TelemetryConfig {
 
 impl TelemetryConfig {
     pub fn load() -> Self {
-        Self::config_path()
-            .and_then(|path| fs::read_to_string(path).ok())
-            .and_then(|content| serde_json::from_str(&content).ok())
-            .unwrap_or_default()
+        match Self::config_path() {
+            None => Self::default(),
+            Some(path) => {
+                if !path.exists() {
+                    return Self::default();
+                }
+
+                match fs::read_to_string(&path) {
+                    Ok(content) => match serde_json::from_str(&content) {
+                        Ok(config) => config,
+                        Err(_) => Self { enabled: false },
+                    },
+                    Err(_) => Self { enabled: false },
+                }
+            }
+        }
     }
 
     pub fn save(&self) -> anyhow::Result<()> {

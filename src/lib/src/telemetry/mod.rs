@@ -19,6 +19,6 @@ pub use config::TelemetryConfig;
 pub use tracking::{
     CliArgPatterns, ConnectionErrorCategory, flush, init, init_without_persisted_state, is_enabled,
     set_enabled, track_cli_args, track_connection_error, track_error, track_error_message,
-    track_event, track_execution_complete, track_feature_usage, track_metric,
-    track_parse_complete, track_request_result,
+    track_event, track_execution_complete, track_feature_usage, track_metric, track_parse_complete,
+    track_request_result,
 };
