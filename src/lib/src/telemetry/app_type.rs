@@ -39,7 +39,7 @@ mod tests {
         assert_eq!(AppType::CLI, AppType::CLI);
         assert_eq!(AppType::TUI, AppType::TUI);
         assert_eq!(AppType::GUI, AppType::GUI);
-        
+
         assert_ne!(AppType::CLI, AppType::TUI);
         assert_ne!(AppType::CLI, AppType::GUI);
         assert_ne!(AppType::TUI, AppType::GUI);
@@ -78,7 +78,7 @@ mod tests {
         let cli = AppType::CLI;
         let json = serde_json::to_string(&cli).unwrap();
         assert!(json.contains("CLI"));
-        
+
         let deserialized: AppType = serde_json::from_str(&json).unwrap();
         assert_eq!(cli, deserialized);
     }
@@ -108,7 +108,7 @@ mod tests {
     fn test_app_type_all_variants() {
         let variants = vec![AppType::CLI, AppType::TUI, AppType::GUI];
         assert_eq!(variants.len(), 3);
-        
+
         for variant in variants {
             let s = variant.as_str();
             assert!(!s.is_empty());
