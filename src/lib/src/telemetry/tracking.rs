@@ -76,10 +76,14 @@ fn init_with_config(
     let (support_key, support_key_short) = get_support_key_info();
     let device_id = support_key.clone();
 
-    let client = TelemetryClient::new(instrumentation_key.to_string());
+    let client = if enabled {
+        Some(TelemetryClient::new(instrumentation_key.to_string()))
+    } else {
+        None
+    };
 
     let state = TelemetryState {
-        client: Some(client),
+        client,
         app_type,
         version: version.to_string(),
         session_id,
