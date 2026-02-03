@@ -38,8 +38,33 @@ fn get_support_key_info() -> (String, String) {
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 pub fn init(app_type: AppType, version: &str, force_disabled: bool, instrumentation_key: &str) {
-    let config = TelemetryConfig::load();
-    let enabled = !force_disabled && config.enabled && !is_disabled_by_env();
+    init_with_config(app_type, version, force_disabled, instrumentation_key, true);
+}
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
+pub fn init_without_persisted_state(
+    app_type: AppType,
+    version: &str,
+    force_disabled: bool,
+    instrumentation_key: &str,
+) {
+    init_with_config(app_type, version, force_disabled, instrumentation_key, false);
+}
+
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
+fn init_with_config(
+    app_type: AppType,
+    version: &str,
+    force_disabled: bool,
+    instrumentation_key: &str,
+    use_persisted_config: bool,
+) {
+    let config_enabled = if use_persisted_config {
+        TelemetryConfig::load().enabled
+    } else {
+        true // Default to enabled when not using persisted config
+    };
+    let enabled = !force_disabled && config_enabled && !is_disabled_by_env();
 
     let session_id = uuid::Uuid::new_v4().to_string();
     let (support_key, support_key_short) = get_support_key_info();
@@ -67,8 +92,33 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool, instrumentat
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
 pub fn init(app_type: AppType, version: &str, force_disabled: bool, _instrumentation_key: &str) {
-    let config = TelemetryConfig::load();
-    let enabled = !force_disabled && config.enabled && !is_disabled_by_env();
+    init_with_config(app_type, version, force_disabled, _instrumentation_key, true);
+}
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
+pub fn init_without_persisted_state(
+    app_type: AppType,
+    version: &str,
+    force_disabled: bool,
+    _instrumentation_key: &str,
+) {
+    init_with_config(app_type, version, force_disabled, _instrumentation_key, false);
+}
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "telemetry")))]
+fn init_with_config(
+    app_type: AppType,
+    version: &str,
+    force_disabled: bool,
+    _instrumentation_key: &str,
+    use_persisted_config: bool,
+) {
+    let config_enabled = if use_persisted_config {
+        TelemetryConfig::load().enabled
+    } else {
+        true // Default to enabled when not using persisted config
+    };
+    let enabled = !force_disabled && config_enabled && !is_disabled_by_env();
 
     let session_id = uuid::Uuid::new_v4().to_string();
     let (support_key, support_key_short) = get_support_key_info();
@@ -89,6 +139,15 @@ pub fn init(app_type: AppType, version: &str, force_disabled: bool, _instrumenta
 
 #[cfg(target_arch = "wasm32")]
 pub fn init(_app_type: AppType, _version: &str, _force_disabled: bool, _instrumentation_key: &str) {
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn init_without_persisted_state(
+    _app_type: AppType,
+    _version: &str,
+    _force_disabled: bool,
+    _instrumentation_key: &str,
+) {
 }
 
 pub fn is_enabled() -> bool {

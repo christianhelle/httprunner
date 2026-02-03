@@ -20,7 +20,7 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    telemetry::init(
+    telemetry::init_without_persisted_state(
         AppType::CLI,
         VERSION,
         cli_args.no_telemetry,
