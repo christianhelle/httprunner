@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Introduce anonymous telemetry data collection to Azure App Insights [\#171](https://github.com/christianhelle/httprunner/pull/171) ([christianhelle](https://github.com/christianhelle))
 - Introduce support key [\#167](https://github.com/christianhelle/httprunner/pull/167) ([christianhelle](https://github.com/christianhelle))
 - Implement toggling file list view \(CTRL+B\) in TUI app [\#166](https://github.com/christianhelle/httprunner/pull/166) ([christianhelle](https://github.com/christianhelle))
 - Fix double press issue in TUI app when running in Windows [\#165](https://github.com/christianhelle/httprunner/pull/165) ([christianhelle](https://github.com/christianhelle))
