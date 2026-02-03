@@ -702,4 +702,273 @@ mod tests {
         // Should not panic with empty properties
         track_event("test_event", HashMap::new());
     }
+
+    #[test]
+    fn test_cli_arg_patterns_with_all_flags_enabled() {
+        let args = CliArgPatterns {
+            verbose: true,
+            log: true,
+            env: true,
+            insecure: true,
+            discover: true,
+            no_banner: true,
+            pretty_json: true,
+            report: true,
+            report_format: Some("html".to_string()),
+            export: true,
+            file_count: 100,
+        };
+
+        track_cli_args(&args);
+        assert_eq!(args.file_count, 100);
+    }
+
+    #[test]
+    fn test_cli_arg_patterns_with_all_flags_disabled() {
+        let args = CliArgPatterns {
+            verbose: false,
+            log: false,
+            env: false,
+            insecure: false,
+            discover: false,
+            no_banner: false,
+            pretty_json: false,
+            report: false,
+            report_format: None,
+            export: false,
+            file_count: 0,
+        };
+
+        track_cli_args(&args);
+    }
+
+    #[test]
+    fn test_track_request_result_success() {
+        track_request_result(true, 1, 100);
+    }
+
+    #[test]
+    fn test_track_request_result_failure() {
+        track_request_result(false, 1, 200);
+    }
+
+    #[test]
+    fn test_track_request_result_multiple_requests() {
+        track_request_result(true, 50, 5000);
+    }
+
+    #[test]
+    fn test_track_request_result_zero_duration() {
+        track_request_result(true, 1, 0);
+    }
+
+    #[test]
+    fn test_track_metric_with_empty_properties() {
+        track_metric("performance", 150, HashMap::new());
+    }
+
+    #[test]
+    fn test_track_metric_with_multiple_properties() {
+        let mut props = HashMap::new();
+        props.insert("category".to_string(), "network".to_string());
+        props.insert("endpoint".to_string(), "api".to_string());
+        props.insert("version".to_string(), "v2".to_string());
+
+        track_metric("api_call", 300, props);
+    }
+
+    #[test]
+    fn test_track_connection_error_all_categories() {
+        track_connection_error(ConnectionErrorCategory::Ssl, true);
+        track_connection_error(ConnectionErrorCategory::Dns, false);
+        track_connection_error(ConnectionErrorCategory::ConnectionRefused, true);
+        track_connection_error(ConnectionErrorCategory::Timeout, false);
+        track_connection_error(ConnectionErrorCategory::Other, true);
+    }
+
+    #[test]
+    fn test_track_feature_usage_various_features() {
+        track_feature_usage("export");
+        track_feature_usage("import");
+        track_feature_usage("validation");
+        track_feature_usage("formatting");
+    }
+
+    #[test]
+    fn test_track_parse_complete_zero_requests() {
+        track_parse_complete(0, 0);
+    }
+
+    #[test]
+    fn test_track_parse_complete_many_requests() {
+        track_parse_complete(1000, 5000);
+    }
+
+    #[test]
+    fn test_track_execution_complete_all_success() {
+        track_execution_complete(10, 0, 0, 2000);
+    }
+
+    #[test]
+    fn test_track_execution_complete_all_failed() {
+        track_execution_complete(0, 10, 0, 3000);
+    }
+
+    #[test]
+    fn test_track_execution_complete_all_skipped() {
+        track_execution_complete(0, 0, 10, 1000);
+    }
+
+    #[test]
+    fn test_track_execution_complete_mixed_results() {
+        track_execution_complete(5, 3, 2, 4000);
+    }
+
+    #[test]
+    fn test_track_execution_complete_zero_duration() {
+        track_execution_complete(1, 0, 0, 0);
+    }
+
+    #[test]
+    fn test_connection_error_category_equality() {
+        assert_eq!(ConnectionErrorCategory::Ssl, ConnectionErrorCategory::Ssl);
+        assert_ne!(ConnectionErrorCategory::Ssl, ConnectionErrorCategory::Dns);
+        assert_ne!(ConnectionErrorCategory::Timeout, ConnectionErrorCategory::Other);
+    }
+
+    #[test]
+    fn test_connection_error_category_debug() {
+        let ssl = ConnectionErrorCategory::Ssl;
+        let debug_str = format!("{:?}", ssl);
+        assert!(debug_str.contains("Ssl"));
+    }
+
+    #[test]
+    fn test_cli_arg_patterns_clone() {
+        let args1 = CliArgPatterns {
+            verbose: true,
+            log: false,
+            env: true,
+            insecure: false,
+            discover: true,
+            no_banner: false,
+            pretty_json: true,
+            report: false,
+            report_format: Some("json".to_string()),
+            export: true,
+            file_count: 42,
+        };
+
+        let args2 = args1.clone();
+        assert_eq!(args1.verbose, args2.verbose);
+        assert_eq!(args1.file_count, args2.file_count);
+        assert_eq!(args1.report_format, args2.report_format);
+    }
+
+    #[test]
+    fn test_cli_arg_patterns_debug() {
+        let args = CliArgPatterns::default();
+        let debug_str = format!("{:?}", args);
+        assert!(debug_str.contains("CliArgPatterns"));
+    }
+
+    #[test]
+    #[serial]
+    fn test_set_enabled_state_persistence() {
+        unsafe {
+            std::env::remove_var("DO_NOT_TRACK");
+            std::env::remove_var("HTTPRUNNER_TELEMETRY_OPTOUT");
+        }
+
+        // Enable then disable
+        let _ = set_enabled(true);
+        let _ = set_enabled(false);
+    }
+
+    #[test]
+    fn test_track_cli_args_with_various_file_counts() {
+        for count in [0, 1, 5, 10, 100, 1000] {
+            let mut args = CliArgPatterns::default();
+            args.file_count = count;
+            track_cli_args(&args);
+        }
+    }
+
+    #[test]
+    fn test_track_cli_args_with_different_report_formats() {
+        for format in ["json", "html", "xml", "markdown"] {
+            let mut args = CliArgPatterns::default();
+            args.report = true;
+            args.report_format = Some(format.to_string());
+            track_cli_args(&args);
+        }
+    }
+
+    #[test]
+    fn test_track_metric_zero_duration() {
+        track_metric("instant_operation", 0, HashMap::new());
+    }
+
+    #[test]
+    fn test_track_metric_large_duration() {
+        track_metric("long_operation", u64::MAX, HashMap::new());
+    }
+
+    #[test]
+    fn test_track_parse_complete_large_numbers() {
+        track_parse_complete(usize::MAX, u64::MAX);
+    }
+
+    #[test]
+    fn test_track_execution_complete_large_numbers() {
+        track_execution_complete(1000000, 500000, 250000, u64::MAX);
+    }
+
+    #[test]
+    fn test_is_enabled_multiple_calls() {
+        // Multiple calls should be safe and consistent
+        let first = is_enabled();
+        let second = is_enabled();
+        let third = is_enabled();
+        
+        // All calls should return the same value
+        assert_eq!(first, second);
+        assert_eq!(second, third);
+    }
+
+    #[test]
+    fn test_flush_multiple_calls() {
+        // Multiple flush calls should be safe
+        flush();
+        flush();
+        flush();
+    }
+
+    #[test]
+    fn test_connection_error_category_copy() {
+        let cat1 = ConnectionErrorCategory::Ssl;
+        let cat2 = cat1;
+        assert_eq!(cat1, cat2);
+    }
+
+    #[test]
+    fn test_track_feature_usage_empty_string() {
+        track_feature_usage("");
+    }
+
+    #[test]
+    fn test_track_feature_usage_long_name() {
+        let long_name = "a".repeat(1000);
+        track_feature_usage(&long_name);
+    }
+
+    #[test]
+    fn test_track_metric_with_special_characters() {
+        let mut props = HashMap::new();
+        props.insert("key-with-dashes".to_string(), "value".to_string());
+        props.insert("key_with_underscores".to_string(), "value".to_string());
+        props.insert("key.with.dots".to_string(), "value".to_string());
+
+        track_metric("special-metric", 100, props);
+    }
 }
