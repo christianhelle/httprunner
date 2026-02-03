@@ -99,8 +99,19 @@ pub fn is_enabled() -> bool {
 }
 
 pub fn set_enabled(enabled: bool) -> anyhow::Result<()> {
-    let config = TelemetryConfig { enabled };
-    config.save()
+    use super::config::is_disabled_by_env;
+    
+    let final_enabled = enabled && !is_disabled_by_env();
+    let config = TelemetryConfig { enabled: final_enabled };
+    config.save()?;
+    
+    if let Some(state_mutex) = TELEMETRY_STATE.get() {
+        if let Ok(mut state) = state_mutex.lock() {
+            state.enabled = final_enabled;
+        }
+    }
+    
+    Ok(())
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
