@@ -201,7 +201,10 @@ mod tests {
         );
         let result = extract_headers(&headers);
         assert_eq!(result.len(), 1);
-        assert_eq!(result.get("content-type"), Some(&"application/json".to_string()));
+        assert_eq!(
+            result.get("content-type"),
+            Some(&"application/json".to_string())
+        );
     }
 
     #[test]
@@ -211,10 +214,7 @@ mod tests {
             reqwest::header::CONTENT_TYPE,
             "application/json".parse().unwrap(),
         );
-        headers.insert(
-            reqwest::header::CONTENT_LENGTH,
-            "1234".parse().unwrap(),
-        );
+        headers.insert(reqwest::header::CONTENT_LENGTH, "1234".parse().unwrap());
         headers.insert(
             reqwest::header::HeaderName::from_static("x-custom"),
             "custom-value".parse().unwrap(),
@@ -254,15 +254,7 @@ mod tests {
     fn test_build_success_result_without_headers_and_body() {
         let request = create_test_request();
 
-        let result = build_success_result(
-            &request,
-            204,
-            true,
-            100,
-            None,
-            None,
-            Vec::new(),
-        );
+        let result = build_success_result(&request, 204, true, 100, None, None, Vec::new());
 
         assert_eq!(result.status_code, 204);
         assert!(result.success);
@@ -273,17 +265,15 @@ mod tests {
     #[test]
     fn test_build_success_result_with_assertions() {
         let request = create_test_request();
-        let assertion_results = vec![
-            crate::types::AssertionResult {
-                assertion: crate::types::Assertion {
-                    assertion_type: AssertionType::Status,
-                    expected_value: "200".to_string(),
-                },
-                passed: true,
-                actual_value: Some("200".to_string()),
-                error_message: None,
+        let assertion_results = vec![crate::types::AssertionResult {
+            assertion: crate::types::Assertion {
+                assertion_type: AssertionType::Status,
+                expected_value: "200".to_string(),
             },
-        ];
+            passed: true,
+            actual_value: Some("200".to_string()),
+            error_message: None,
+        }];
 
         let result = build_success_result(
             &request,
@@ -339,7 +329,7 @@ mod tests {
         let mut request = create_test_request();
         request.name = None;
         request.assertions.clear();
-        
+
         assert!(!should_capture_response(&request, false));
     }
 
@@ -348,14 +338,14 @@ mod tests {
         let mut request = create_test_request();
         request.name = None;
         request.assertions.clear();
-        
+
         assert!(should_capture_response(&request, true));
     }
 
     #[test]
     fn test_build_success_result_failure_status() {
         let request = create_test_request();
-        
+
         let result = build_success_result(
             &request,
             404,
@@ -374,7 +364,7 @@ mod tests {
     #[test]
     fn test_build_success_result_server_error() {
         let request = create_test_request();
-        
+
         let result = build_success_result(
             &request,
             500,
@@ -401,16 +391,8 @@ mod tests {
     #[test]
     fn test_build_success_result_redirect_status() {
         let request = create_test_request();
-        
-        let result = build_success_result(
-            &request,
-            302,
-            true,
-            150,
-            None,
-            None,
-            Vec::new(),
-        );
+
+        let result = build_success_result(&request, 302, true, 150, None, None, Vec::new());
 
         assert_eq!(result.status_code, 302);
     }
@@ -427,7 +409,7 @@ mod tests {
             reqwest::header::SET_COOKIE,
             "cookie2=value2".parse().unwrap(),
         );
-        
+
         let result = extract_headers(&headers);
         // Should have the set-cookie header
         assert!(result.contains_key("set-cookie"));
@@ -437,9 +419,9 @@ mod tests {
     fn test_build_temp_result_preserves_request_name() {
         let mut request = create_test_request();
         request.name = Some("my_custom_request".to_string());
-        
+
         let result = build_temp_result_for_assertions(&request, 200, true, 100, None, None);
-        
+
         assert_eq!(result.request_name, Some("my_custom_request".to_string()));
     }
 
@@ -447,9 +429,9 @@ mod tests {
     fn test_build_temp_result_without_request_name() {
         let mut request = create_test_request();
         request.name = None;
-        
+
         let result = build_temp_result_for_assertions(&request, 200, true, 100, None, None);
-        
+
         assert!(result.request_name.is_none());
     }
 }

@@ -833,7 +833,10 @@ mod tests {
     fn test_connection_error_category_equality() {
         assert_eq!(ConnectionErrorCategory::Ssl, ConnectionErrorCategory::Ssl);
         assert_ne!(ConnectionErrorCategory::Ssl, ConnectionErrorCategory::Dns);
-        assert_ne!(ConnectionErrorCategory::Timeout, ConnectionErrorCategory::Other);
+        assert_ne!(
+            ConnectionErrorCategory::Timeout,
+            ConnectionErrorCategory::Other
+        );
     }
 
     #[test]
@@ -930,7 +933,7 @@ mod tests {
         let first = is_enabled();
         let second = is_enabled();
         let third = is_enabled();
-        
+
         // All calls should return the same value
         assert_eq!(first, second);
         assert_eq!(second, third);
