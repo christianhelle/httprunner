@@ -44,13 +44,12 @@ impl TextEditor {
         // Try to load from LocalStorage first
         use web_sys::window;
 
-        if let Some(window) = window() {
-            if let Ok(Some(storage)) = window.local_storage() {
-                if let Ok(Some(saved_content)) = storage.get_item("httprunner_editor_content") {
-                    self.content = saved_content;
-                    self.has_changes = false;
-                }
-            }
+        if let Some(window) = window()
+            && let Ok(Some(storage)) = window.local_storage()
+            && let Ok(Some(saved_content)) = storage.get_item("httprunner_editor_content")
+        {
+            self.content = saved_content;
+            self.has_changes = false;
         }
     }
 

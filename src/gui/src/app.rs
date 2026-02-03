@@ -5,7 +5,6 @@ use super::{
     state::AppState,
     text_editor::TextEditor,
 };
-use httprunner_lib::telemetry;
 use std::path::{Path, PathBuf};
 
 enum KeyboardAction {
@@ -638,7 +637,7 @@ impl eframe::App for HttpRunnerApp {
                                             // current text editor content instead of a file path.
                                             let editor_content = self.text_editor.get_content();
                                             self.results_view.run_single_request_async(
-                                                &editor_content,
+                                                editor_content,
                                                 idx,
                                                 self.selected_environment.as_deref(),
                                                 ctx,

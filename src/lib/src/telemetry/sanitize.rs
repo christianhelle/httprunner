@@ -1,4 +1,4 @@
-#[cfg(any(feature = "telemetry", test))]
+#[cfg(any(all(not(target_arch = "wasm32"), feature = "telemetry"), test))]
 pub fn sanitize_error_message(message: &str) -> String {
     let mut sanitized = message.to_string();
 

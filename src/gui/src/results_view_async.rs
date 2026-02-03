@@ -71,10 +71,10 @@ impl ResultsView {
 
                         if let Ok(mut r) = results.lock() {
                             // Remove running message
-                            if let Some(last) = r.last() {
-                                if matches!(last, ExecutionResult::Running { .. }) {
-                                    r.pop();
-                                }
+                            if let Some(last) = r.last()
+                                && matches!(last, ExecutionResult::Running { .. })
+                            {
+                                r.pop();
                             }
                             r.push(result);
                         }

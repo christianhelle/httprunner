@@ -7,7 +7,9 @@ use appinsights::blocking::TelemetryClient;
 use appinsights::telemetry::{SeverityLevel, Telemetry};
 
 use super::app_type::AppType;
-use super::config::{TelemetryConfig, is_disabled_by_env};
+use super::config::TelemetryConfig;
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
+use super::config::is_disabled_by_env;
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use super::sanitize::{get_error_type_name, sanitize_error_message};
 
@@ -26,6 +28,7 @@ struct TelemetryState {
     enabled: bool,
 }
 
+#[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 fn get_support_key_info() -> (String, String) {
     if let Ok(support_key) = crate::logging::get_support_key() {
         (support_key.key, support_key.short_key)
