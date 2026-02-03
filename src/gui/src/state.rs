@@ -14,6 +14,8 @@ pub struct AppState {
     pub last_results: Option<Vec<ExecutionResult>>,
     pub file_tree_visible: Option<bool>,
     pub results_compact_mode: Option<bool>,
+    /// Telemetry opt-in/opt-out setting (defaults to true if not set)
+    pub telemetry_enabled: Option<bool>,
 }
 
 impl AppState {

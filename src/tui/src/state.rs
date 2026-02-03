@@ -17,6 +17,9 @@ pub struct AppState {
     pub results_compact_mode: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub last_results: Option<String>,
+    /// Telemetry opt-in/opt-out setting (defaults to true if not set)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub telemetry_enabled: Option<bool>,
 }
 
 impl AppState {
@@ -43,6 +46,7 @@ impl AppState {
             file_tree_visible: None,
             results_compact_mode: None,
             last_results: None,
+            telemetry_enabled: None,
         }
     }
 

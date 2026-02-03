@@ -16,13 +16,32 @@ mod results_view_async;
 #[cfg(not(target_arch = "wasm32"))]
 use app::HttpRunnerApp;
 
+#[cfg(not(target_arch = "wasm32"))]
+use httprunner_lib::telemetry::{self, AppType};
+
+#[cfg(not(target_arch = "wasm32"))]
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[cfg(not(target_arch = "wasm32"))]
+const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
+
 // Native binary entry point
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    // Load saved state to restore window size
+    // Load saved state to restore window size and check telemetry preference
     let saved_state = state::AppState::load();
+    let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
+
+    // Initialize telemetry (respects stored preference)
+    telemetry::init(
+        AppType::GUI,
+        VERSION,
+        telemetry_disabled,
+        INSTRUMENTATION_KEY,
+    );
+
     let window_size = saved_state
         .window_size
         .map(|(w, h)| [w, h])
@@ -36,11 +55,16 @@ fn main() -> eframe::Result<()> {
         ..Default::default()
     };
 
-    eframe::run_native(
+    let result = eframe::run_native(
         "HTTP File Runner",
         native_options,
         Box::new(|cc| Ok(Box::new(HttpRunnerApp::new(cc)))),
-    )
+    );
+
+    // Flush telemetry before exit
+    telemetry::flush();
+
+    result
 }
 
 #[cfg(not(target_arch = "wasm32"))]

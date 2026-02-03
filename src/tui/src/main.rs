@@ -13,10 +13,27 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
+use httprunner_lib::telemetry::{self, AppType};
 use ratatui::{Terminal, backend::CrosstermBackend};
+use state::AppState;
 use std::io;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
+
 fn main() -> anyhow::Result<()> {
+    // Load saved state to check telemetry preference
+    let saved_state = AppState::load();
+    let telemetry_disabled = saved_state.telemetry_enabled == Some(false);
+
+    // Initialize telemetry (respects stored preference)
+    telemetry::init(
+        AppType::TUI,
+        VERSION,
+        telemetry_disabled,
+        INSTRUMENTATION_KEY,
+    );
+
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -39,9 +56,14 @@ fn main() -> anyhow::Result<()> {
     )?;
     terminal.show_cursor()?;
 
-    if let Err(err) = res {
+    // Track error if app failed
+    if let Err(ref err) = res {
+        telemetry::track_error(err.as_ref());
         eprintln!("Error: {}", err);
     }
+
+    // Flush telemetry before exit
+    telemetry::flush();
 
     Ok(())
 }

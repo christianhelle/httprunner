@@ -10,6 +10,7 @@ pub mod parser;
 pub mod report;
 pub mod runner;
 pub mod serializer;
+pub mod telemetry;
 pub mod types;
 pub mod variables;
 

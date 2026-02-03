@@ -1,3 +1,4 @@
+use httprunner_lib::telemetry;
 use httprunner_lib::types::AssertionResult;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
@@ -88,6 +89,9 @@ impl ResultsView {
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
 
+        // Track feature usage
+        telemetry::track_feature_usage("run_file");
+
         // Clear previous results
         if let Ok(mut r) = results.lock() {
             r.clear();
@@ -101,16 +105,26 @@ impl ResultsView {
         }
 
         thread::spawn(move || {
+            let execution_start = std::time::Instant::now();
+
             if let Some(path_str) = path.to_str() {
                 // Parse the file first to get all requests
+                let parse_start = std::time::Instant::now();
                 match httprunner_lib::parser::parse_http_file(path_str, env.as_deref()) {
                     Ok(requests) => {
+                        let parse_duration = parse_start.elapsed().as_millis() as u64;
                         let total = requests.len();
+
+                        // Track parse metrics
+                        telemetry::track_parse_complete(total, parse_duration);
 
                         // Clear running message
                         if let Ok(mut r) = results.lock() {
                             r.clear();
                         }
+
+                        let mut success_count = 0usize;
+                        let mut failed_count = 0usize;
 
                         // Execute each request individually for immediate feedback
                         for (idx, request) in requests.into_iter().enumerate() {
@@ -130,6 +144,13 @@ impl ResultsView {
                             // Execute the request
                             let result = execute_request(request);
 
+                            // Count results for telemetry
+                            match &result {
+                                ExecutionResult::Success { .. } => success_count += 1,
+                                ExecutionResult::Failure { .. } => failed_count += 1,
+                                ExecutionResult::Running { .. } => {}
+                            }
+
                             // Remove running message and add result
                             if let Ok(mut r) = results.lock() {
                                 // Remove the running message we just added
@@ -141,8 +162,20 @@ impl ResultsView {
                                 r.push(result);
                             }
                         }
+
+                        // Track execution completion
+                        let total_duration = execution_start.elapsed().as_millis() as u64;
+                        telemetry::track_execution_complete(
+                            success_count,
+                            failed_count,
+                            0, // skipped not tracked in GUI yet
+                            total_duration,
+                        );
                     }
                     Err(e) => {
+                        // Track parse error
+                        telemetry::track_error_message(&format!("Parse error: {}", e));
+
                         if let Ok(mut r) = results.lock() {
                             r.clear();
                             r.push(ExecutionResult::Failure {

@@ -1,32 +1,69 @@
 mod cli;
 mod upgrade;
 
+use crate::cli::ReportFormat;
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
+use httprunner_lib::report::{generate_html, generate_markdown};
+use httprunner_lib::telemetry::{self, AppType, CliArgPatterns};
 use httprunner_lib::types::ProcessorResults;
-use httprunner_lib::{colors, discovery, export, logging, processor, report};
+use httprunner_lib::{colors, discovery, export, logging, processor};
 
-use crate::cli::ReportFormat;
-use crate::report::{generate_html, generate_markdown};
+const VERSION: &str = env!("VERSION");
+const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
+    if cli_args.files.is_empty() && !cli_args.discover {
+        let mut cmd = cli::Cli::command();
+        cmd.print_help()?;
+        return Ok(());
+    }
+
+    telemetry::init_without_persisted_state(
+        AppType::CLI,
+        VERSION,
+        cli_args.no_telemetry,
+        INSTRUMENTATION_KEY,
+    );
+    track_cli_usage(&cli_args);
+
     if cli_args.upgrade {
-        return upgrade::run_upgrade();
+        let result = upgrade::run_upgrade();
+        telemetry::flush();
+        return result;
     }
 
     let result = run(&cli_args);
 
-    show_support_key();
-    if !cli_args.no_banner {
-        cli::show_donation_banner();
+    if let Err(ref e) = result {
+        telemetry::track_error(e.as_ref());
     }
+
+    telemetry::flush();
 
     if result.is_err() {
         std::process::exit(1);
     }
 
     Ok(())
+}
+
+fn track_cli_usage(cli_args: &cli::Cli) {
+    let patterns = CliArgPatterns {
+        verbose: cli_args.verbose,
+        log: cli_args.log.is_some(),
+        env: cli_args.env.is_some(),
+        insecure: cli_args.insecure,
+        discover: cli_args.discover,
+        no_banner: cli_args.no_banner,
+        pretty_json: cli_args.pretty_json,
+        report: cli_args.report.is_some(),
+        report_format: cli_args.report.map(|f| format!("{:?}", f)),
+        export: cli_args.export,
+        file_count: cli_args.files.len(),
+    };
+    telemetry::track_cli_args(&patterns);
 }
 
 fn run(cli_args: &cli::Cli) -> Result<()> {
@@ -37,6 +74,10 @@ fn run(cli_args: &cli::Cli) -> Result<()> {
     let results = process_http_files(cli_args, files)?;
     generate_report(cli_args, &results)?;
     export_results(cli_args, &results)?;
+    show_support_key();
+    if !cli_args.no_banner {
+        cli::show_donation_banner();
+    }
     Ok(())
 }
 

@@ -713,6 +713,47 @@ This is particularly useful in:
 - **Log files**: Reduce banner noise in logged output
 - **User preference**: Suppress the banner if you're not interested in support options
 
+## Telemetry
+
+httprunner collects anonymous telemetry data to help improve the application. This data helps us understand how the tool is used and identify issues.
+
+### What We Collect
+
+- **Application events**: Startup, shutdown, and errors (sanitized to remove sensitive information)
+- **CLI flags used**: Which command-line options are popular (e.g., `--verbose`, `--discover`)
+- **Execution statistics**: Success/failure counts and duration (no request/response content)
+- **System information**: OS type, architecture, app version
+
+### What We DON'T Collect
+
+- ❌ **HTTP request/response content** (URLs, headers, bodies)
+- ❌ **File paths** or file names
+- ❌ **Environment variable values**
+- ❌ **Personal identifiable information (PII)**
+- ❌ **IP addresses, email addresses, or hostnames from your requests**
+
+All error messages are sanitized to remove file paths, URLs, IP addresses, and email addresses before being sent.
+
+### Opting Out
+
+You can disable telemetry using any of these methods:
+
+**CLI flag:**
+```bash
+httprunner --no-telemetry examples/simple.http
+```
+
+**Environment variables:**
+```bash
+# httprunner-specific opt-out
+export HTTPRUNNER_TELEMETRY_OPTOUT=1
+
+# Standard Do Not Track (works with many tools)
+export DO_NOT_TRACK=1
+```
+
+The telemetry preference is respected across CLI, TUI, and GUI applications.
+
 ## .http File Format
 
 The HTTP File Runner supports a simple format for defining HTTP requests:

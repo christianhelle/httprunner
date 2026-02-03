@@ -6,6 +6,8 @@ use super::response_processor::{
 #[cfg(not(target_arch = "wasm32"))]
 use crate::assertions;
 #[cfg(not(target_arch = "wasm32"))]
+use crate::telemetry::{ConnectionErrorCategory, track_connection_error};
+#[cfg(not(target_arch = "wasm32"))]
 use crate::types::{HttpRequest, HttpResult};
 #[cfg(not(target_arch = "wasm32"))]
 use anyhow::Result;
@@ -34,7 +36,11 @@ pub fn execute_http_request(
         Ok(resp) => resp,
         Err(e) => {
             let duration_ms = start_time.elapsed().as_millis() as u64;
-            let error_message = classify_request_error(&e);
+            let (error_message, error_category) = classify_request_error(&e);
+
+            // Track connection error telemetry
+            track_connection_error(error_category, insecure);
+
             return Ok(build_error_result(request, error_message, duration_ms));
         }
     };
@@ -115,13 +121,34 @@ fn build_request(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn classify_request_error(e: &reqwest::Error) -> &'static str {
-    if e.is_connect() {
-        "Connection error"
-    } else if e.is_timeout() {
-        "Request timeout"
+fn classify_request_error(e: &reqwest::Error) -> (&'static str, ConnectionErrorCategory) {
+    // Check for SSL/TLS errors by inspecting the error source chain
+    let error_string = e.to_string().to_lowercase();
+    let has_ssl_error = error_string.contains("ssl")
+        || error_string.contains("tls")
+        || error_string.contains("certificate")
+        || error_string.contains("handshake");
+
+    if e.is_timeout() {
+        ("Request timeout", ConnectionErrorCategory::Timeout)
+    } else if e.is_connect() {
+        if has_ssl_error {
+            ("SSL/TLS error", ConnectionErrorCategory::Ssl)
+        } else if error_string.contains("dns")
+            || error_string.contains("resolve")
+            || error_string.contains("name or service not known")
+        {
+            ("DNS resolution failed", ConnectionErrorCategory::Dns)
+        } else {
+            (
+                "Connection error",
+                ConnectionErrorCategory::ConnectionRefused,
+            )
+        }
+    } else if has_ssl_error {
+        ("SSL/TLS error", ConnectionErrorCategory::Ssl)
     } else {
-        "Request failed"
+        ("Request failed", ConnectionErrorCategory::Other)
     }
 }
 
