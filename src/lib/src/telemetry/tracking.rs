@@ -20,6 +20,7 @@ struct TelemetryState {
     app_type: AppType,
     version: String,
     session_id: String,
+    operation_id: String,
     device_id: String,
     support_key: String,
     support_key_short: String,
@@ -73,6 +74,7 @@ fn init_with_config(
     let enabled = !force_disabled && config_enabled && !is_disabled_by_env();
 
     let session_id = uuid::Uuid::new_v4().to_string();
+    let operation_id = uuid::Uuid::new_v4().to_string();
     let (support_key, support_key_short) = get_support_key_info();
     let device_id = support_key.clone();
 
@@ -87,6 +89,7 @@ fn init_with_config(
         app_type,
         version: version.to_string(),
         session_id,
+        operation_id,
         device_id,
         support_key,
         support_key_short,
@@ -143,6 +146,7 @@ fn init_with_config(
     let enabled = !force_disabled && config_enabled && !is_disabled_by_env();
 
     let session_id = uuid::Uuid::new_v4().to_string();
+    let operation_id = uuid::Uuid::new_v4().to_string();
     let (support_key, support_key_short) = get_support_key_info();
     let device_id = support_key.clone();
 
@@ -150,6 +154,7 @@ fn init_with_config(
         app_type,
         version: version.to_string(),
         session_id,
+        operation_id,
         device_id,
         support_key,
         support_key_short,
@@ -233,6 +238,7 @@ pub fn track_event(name: &str, properties: HashMap<String, String>) {
     }
 
     let tags = event.tags_mut();
+    tags.insert("ai.operation.id".to_string(), state.operation_id.clone());
     tags.insert("ai.session.id".to_string(), state.session_id.clone());
     tags.insert("ai.device.id".to_string(), state.device_id.clone());
     tags.insert("ai.user.id".to_string(), state.support_key.clone());
@@ -287,6 +293,7 @@ pub fn track_error(error: &dyn std::error::Error) {
     props.insert("error_message".to_string(), message);
 
     let tags = trace.tags_mut();
+    tags.insert("ai.operation.id".to_string(), state.operation_id.clone());
     tags.insert("ai.session.id".to_string(), state.session_id.clone());
     tags.insert("ai.device.id".to_string(), state.device_id.clone());
     tags.insert("ai.user.id".to_string(), state.support_key.clone());
@@ -337,6 +344,7 @@ pub fn track_error_message(message: &str) {
     props.insert("error_message".to_string(), sanitized);
 
     let tags = trace.tags_mut();
+    tags.insert("ai.operation.id".to_string(), state.operation_id.clone());
     tags.insert("ai.session.id".to_string(), state.session_id.clone());
     tags.insert("ai.device.id".to_string(), state.device_id.clone());
     tags.insert("ai.user.id".to_string(), state.support_key.clone());
