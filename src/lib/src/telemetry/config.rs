@@ -59,10 +59,139 @@ pub fn is_disabled_by_env() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_telemetry_config_default() {
         let config = TelemetryConfig::default();
+        assert!(config.enabled);
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_do_not_track_1() {
+        unsafe {
+            std::env::set_var("DO_NOT_TRACK", "1");
+        }
+        assert!(is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("DO_NOT_TRACK");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_do_not_track_true() {
+        unsafe {
+            std::env::set_var("DO_NOT_TRACK", "true");
+        }
+        assert!(is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("DO_NOT_TRACK");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_do_not_track_true_uppercase() {
+        unsafe {
+            std::env::set_var("DO_NOT_TRACK", "TRUE");
+        }
+        assert!(is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("DO_NOT_TRACK");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_httprunner_optout_1() {
+        unsafe {
+            std::env::set_var("HTTPRUNNER_TELEMETRY_OPTOUT", "1");
+        }
+        assert!(is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("HTTPRUNNER_TELEMETRY_OPTOUT");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_httprunner_optout_true() {
+        unsafe {
+            std::env::set_var("HTTPRUNNER_TELEMETRY_OPTOUT", "true");
+        }
+        assert!(is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("HTTPRUNNER_TELEMETRY_OPTOUT");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_httprunner_optout_true_mixed_case() {
+        unsafe {
+            std::env::set_var("HTTPRUNNER_TELEMETRY_OPTOUT", "TrUe");
+        }
+        assert!(is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("HTTPRUNNER_TELEMETRY_OPTOUT");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_not_set() {
+        unsafe {
+            std::env::remove_var("DO_NOT_TRACK");
+            std::env::remove_var("HTTPRUNNER_TELEMETRY_OPTOUT");
+        }
+        assert!(!is_disabled_by_env());
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_invalid_values() {
+        unsafe {
+            std::env::set_var("DO_NOT_TRACK", "0");
+            std::env::set_var("HTTPRUNNER_TELEMETRY_OPTOUT", "false");
+        }
+        assert!(!is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("DO_NOT_TRACK");
+            std::env::remove_var("HTTPRUNNER_TELEMETRY_OPTOUT");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_disabled_by_env_empty_string() {
+        unsafe {
+            std::env::set_var("DO_NOT_TRACK", "");
+            std::env::set_var("HTTPRUNNER_TELEMETRY_OPTOUT", "");
+        }
+        assert!(!is_disabled_by_env());
+        unsafe {
+            std::env::remove_var("DO_NOT_TRACK");
+            std::env::remove_var("HTTPRUNNER_TELEMETRY_OPTOUT");
+        }
+    }
+
+    #[test]
+    fn test_telemetry_config_serialization() {
+        let config = TelemetryConfig { enabled: true };
+        let json = serde_json::to_string(&config).unwrap();
+        assert!(json.contains("\"enabled\":true"));
+
+        let deserialized: TelemetryConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(config.enabled, deserialized.enabled);
+    }
+
+    #[test]
+    fn test_telemetry_config_deserialization_missing_field() {
+        // Test that missing 'enabled' field defaults to true
+        let json = "{}";
+        let config: TelemetryConfig = serde_json::from_str(json).unwrap();
         assert!(config.enabled);
     }
 }

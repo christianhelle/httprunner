@@ -48,3 +48,4 @@ web-sys = { version = "0.3", features = ["Storage", "Window"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+serial_test = "3.2.0"

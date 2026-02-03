@@ -96,4 +96,85 @@ mod tests {
         assert!(sanitized.len() < 600);
         assert!(sanitized.ends_with("[TRUNCATED]"));
     }
+
+    #[test]
+    fn test_sanitize_error_message_utf8_safe_truncation_multibyte() {
+        // Create a message with multi-byte UTF-8 characters (Japanese)
+        let base = "エラー"; // 3 characters, but 9 bytes (3 bytes each)
+        let msg = base.repeat(200); // 600 characters
+        let sanitized = sanitize_error_message(&msg);
+
+        // Should be truncated to 500 characters + "[TRUNCATED]"
+        assert!(sanitized.chars().count() <= 500 + "...[TRUNCATED]".chars().count());
+        assert!(sanitized.ends_with("[TRUNCATED]"));
+        // Should be valid UTF-8 (no panic, no broken chars)
+        assert!(std::str::from_utf8(sanitized.as_bytes()).is_ok());
+    }
+
+    #[test]
+    fn test_sanitize_error_message_utf8_safe_truncation_emoji() {
+        // Create a message with emoji (4-byte UTF-8 sequences)
+        let emoji = "😀😃😄😁"; // 4 emoji
+        let msg = emoji.repeat(150); // 600 emoji
+        let sanitized = sanitize_error_message(&msg);
+
+        // Should be truncated to 500 characters + "[TRUNCATED]"
+        assert!(sanitized.chars().count() <= 500 + "...[TRUNCATED]".chars().count());
+        assert!(sanitized.ends_with("[TRUNCATED]"));
+        // Should be valid UTF-8
+        assert!(std::str::from_utf8(sanitized.as_bytes()).is_ok());
+    }
+
+    #[test]
+    fn test_sanitize_error_message_utf8_safe_truncation_mixed() {
+        // Mix of ASCII, multi-byte, and emoji
+        let msg = format!(
+            "Error: {}{}{}",
+            "x".repeat(200),
+            "エラー".repeat(100), // 300 chars
+            "😀".repeat(100)      // 100 chars
+        ); // Total > 500 chars
+        let sanitized = sanitize_error_message(&msg);
+
+        assert!(sanitized.chars().count() <= 500 + "...[TRUNCATED]".chars().count());
+        assert!(sanitized.ends_with("[TRUNCATED]"));
+        assert!(std::str::from_utf8(sanitized.as_bytes()).is_ok());
+    }
+
+    #[test]
+    fn test_sanitize_error_message_exactly_500_chars() {
+        // Message with exactly 500 characters should not be truncated
+        let msg = "x".repeat(500);
+        let sanitized = sanitize_error_message(&msg);
+        assert_eq!(sanitized.chars().count(), 500);
+        assert!(!sanitized.ends_with("[TRUNCATED]"));
+    }
+
+    #[test]
+    fn test_sanitize_error_message_501_chars() {
+        // Message with 501 characters should be truncated
+        let msg = "x".repeat(501);
+        let sanitized = sanitize_error_message(&msg);
+        assert!(sanitized.chars().count() <= 500 + "...[TRUNCATED]".chars().count());
+        assert!(sanitized.ends_with("[TRUNCATED]"));
+    }
+
+    #[test]
+    fn test_sanitize_error_message_combined_operations() {
+        // Test that sanitization + truncation works together
+        let msg = format!(
+            "Error connecting to https://secret.com with user@example.com from 192.168.1.1 at {}",
+            "x".repeat(600)
+        );
+        let sanitized = sanitize_error_message(&msg);
+
+        // URLs, emails, IPs should be sanitized
+        assert!(sanitized.contains("[URL]"));
+        assert!(sanitized.contains("[EMAIL]"));
+        assert!(sanitized.contains("[IP]"));
+
+        // Message should be truncated
+        assert!(sanitized.chars().count() <= 500 + "...[TRUNCATED]".chars().count());
+        assert!(sanitized.ends_with("[TRUNCATED]"));
+    }
 }
