@@ -35,7 +35,7 @@ uuid = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 reqwest = { workspace = true }
 
-# Telemetry dependencies (optional)
+# Telemetry dependencies (optional, platform-specific)
 appinsights = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
