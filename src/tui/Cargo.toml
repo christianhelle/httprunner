@@ -21,13 +21,11 @@ name = "httprunner-tui"
 path = "src/main.rs"
 
 [dependencies]
-httprunner-lib = { path = "../lib" }
+httprunner-lib = { path = "../lib" , version = "*", default-features = false }
 anyhow = { workspace = true }
 walkdir = { workspace = true }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", default-features = false }
 serde_json = { workspace = true }
 dirs = "6.0"
-
-# TUI dependencies
-ratatui = "0.29"
-crossterm = "0.28"
+ratatui = { version = "0.29", features = ["crossterm"], default-features = false }
+crossterm = { version = "0.28", default-features = false }

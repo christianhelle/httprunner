@@ -21,7 +21,7 @@ name = "httprunner"
 path = "src/main.rs"
 
 [dependencies]
-httprunner-lib = { path = "../lib", version = "0.1.0", features = ["telemetry"] }
+httprunner-lib = { path = "../lib", version = "0.1.0", default-features = false }
 clap = { workspace = true }
 anyhow = { workspace = true }
 reqwest = { workspace = true }

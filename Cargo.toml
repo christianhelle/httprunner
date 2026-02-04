@@ -14,31 +14,29 @@ documentation = "https://github.com/christianhelle/httprunner"
 
 [workspace.dependencies]
 # Shared dependencies
-reqwest = { version = "0.12", features = ["blocking", "json", "native-tls"], default-features = false }
-serde_json = { version = "1.0", default-features = false, features = ["std"] }
-anyhow = { version = "1.0", default-features = false, features = ["std"] }
+reqwest = { version = "0.12", features = ["blocking", "default-tls"], default-features = false }
+serde_json = "1.0"
+anyhow = { version = "1.0", default-features = false }
 walkdir = "2.5"
-rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
-regex = { version = "1.12.2", default-features = false, features = ["std", "perf", "unicode-perl", "unicode-case"] }
-base64 = { version = "0.22.1", default-features = false, features = ["std"] }
-chrono = { version = "0.4.43", default-features = false, features = ["clock", "std"] }
-uuid = { version = "1.20.0", default-features = false, features = ["v4", "std"] }
+rand = "0.8"
+regex = { version = "1.12.2", default-features = false, features = ["perf", "std", "unicode-case", "unicode-perl"] }
+base64 = { version = "0.22.1", default-features = false }
+chrono = { version = "0.4.43", default-features = false, features = ["windows-link"] }
+uuid = { version = "1.20.0", default-features = false }
 
 # Telemetry dependencies (optional)
 appinsights = { version = "0.2.3", features = ["blocking"] }
-tokio = { version = "1.49.0", default-features = false, features = ["rt", "sync", "time", "macros"] }
+tokio = { version = "1.49.0", features = ["macros"] }
 
 # CLI dependencies
-clap = { version = "4.5", features = ["derive", "std", "help", "usage", "error-context"], default-features = false }
+clap = { version = "4.5", features = ["derive", "error-context", "help", "std", "usage"], default-features = false }
 
 # GUI dependencies
 eframe = { version = "0.33", default-features = false }
-egui = "0.33"
-rfd = "0.17"
-env_logger = "0.11"
-
-# Dev dependencies
-tempfile = "3"
+egui = { version = "0.33", default-features = false }
+rfd = { version = "0.17", default-features = false }
+env_logger = { version = "0.11", default-features = false }
+tempfile = { version = "3", default-features = false }
 
 [profile.dev]
 opt-level = 0         # No optimization for fastest compile times
