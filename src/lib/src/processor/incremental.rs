@@ -8,6 +8,7 @@ use crate::types::{HttpRequest, HttpResult, RequestContext};
 use anyhow::Result;
 
 /// Result of processing a single request
+#[derive(Debug)]
 pub enum RequestProcessingResult {
     /// Request was skipped due to conditions or dependencies
     Skipped {

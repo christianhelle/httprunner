@@ -17,3 +17,6 @@ mod tests;
 
 #[cfg(test)]
 mod executor_tests;
+
+#[cfg(test)]
+mod incremental_tests;
