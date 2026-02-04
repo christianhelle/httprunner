@@ -5,7 +5,6 @@ use super::{
     state::AppState,
     text_editor::TextEditor,
 };
-use httprunner_lib::telemetry;
 use std::path::{Path, PathBuf};
 
 enum KeyboardAction {
