@@ -571,9 +571,9 @@ impl ResultsView {
             }
         }
 
-        // 2. Display request body if present
+        // 2. Display request body if present (skip if empty or whitespace only)
         if let Some(request_body) = params.request_body
-            && !request_body.is_empty()
+            && !request_body.trim().is_empty()
         {
             ui.separator();
             ui.label("Request Body:");
@@ -585,15 +585,17 @@ impl ResultsView {
                 });
         }
 
-        // 3. Display response body
-        ui.separator();
-        ui.label("Response:");
-        egui::ScrollArea::vertical()
-            .id_salt(format!("response_body_{}", params.result_idx))
-            .max_height(300.0)
-            .show(ui, |ui| {
-                ui.monospace(params.response_body);
-            });
+        // 3. Display response body (only if not empty or whitespace only)
+        if !params.response_body.trim().is_empty() {
+            ui.separator();
+            ui.label("Response:");
+            egui::ScrollArea::vertical()
+                .id_salt(format!("response_body_{}", params.result_idx))
+                .max_height(300.0)
+                .show(ui, |ui| {
+                    ui.monospace(params.response_body);
+                });
+        }
         ui.separator();
     }
 

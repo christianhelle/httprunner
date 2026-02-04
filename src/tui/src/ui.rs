@@ -334,10 +334,10 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         }
                     }
 
-                    // 2. Show request body in verbose mode
+                    // 2. Show request body in verbose mode (skip if empty or whitespace only)
                     if !compact_mode
                         && let Some(req_body) = request_body
-                        && !req_body.is_empty()
+                        && !req_body.trim().is_empty()
                     {
                         lines.push(Line::from(""));
                         lines.push(Line::from(vec![Span::styled(
@@ -363,8 +363,8 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         }
                     }
 
-                    // 3. Show response body in verbose mode
-                    if !compact_mode && !response_body.is_empty() {
+                    // 3. Show response body in verbose mode (skip if empty or whitespace only)
+                    if !compact_mode && !response_body.trim().is_empty() {
                         lines.push(Line::from(""));
                         lines.push(Line::from(vec![Span::styled(
                             "  Response:",
