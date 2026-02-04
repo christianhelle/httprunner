@@ -247,9 +247,9 @@ impl App {
                     &path_str,
                     env.as_deref(),
                     false, // insecure
-                    |idx, total, process_result| {
+                    |_idx, total, process_result| {
                         total_count = total;
-                        
+
                         use httprunner_lib::processor::RequestProcessingResult;
                         match process_result {
                             RequestProcessingResult::Skipped { request, reason } => {
@@ -267,26 +267,32 @@ impl App {
                                 if result.success {
                                     success_count += 1;
                                     if let Ok(mut results) = incremental_results.lock() {
-                                        results.push(crate::results_view::ExecutionResult::Success {
-                                            method: request.method,
-                                            url: request.url,
-                                            status: result.status_code,
-                                            duration_ms: result.duration_ms,
-                                            request_body,
-                                            response_body: result.response_body.unwrap_or_default(),
-                                            assertion_results: result.assertion_results,
-                                        });
+                                        results.push(
+                                            crate::results_view::ExecutionResult::Success {
+                                                method: request.method,
+                                                url: request.url,
+                                                status: result.status_code,
+                                                duration_ms: result.duration_ms,
+                                                request_body,
+                                                response_body: result
+                                                    .response_body
+                                                    .unwrap_or_default(),
+                                                assertion_results: result.assertion_results,
+                                            },
+                                        );
                                     }
                                 } else {
                                     failed_count += 1;
                                     if let Ok(mut results) = incremental_results.lock() {
-                                        results.push(crate::results_view::ExecutionResult::Failure {
-                                            method: request.method,
-                                            url: request.url,
-                                            error: result
-                                                .error_message
-                                                .unwrap_or_else(|| "Unknown error".to_string()),
-                                        });
+                                        results.push(
+                                            crate::results_view::ExecutionResult::Failure {
+                                                method: request.method,
+                                                url: request.url,
+                                                error: result
+                                                    .error_message
+                                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                                            },
+                                        );
                                     }
                                 }
                             }
@@ -318,10 +324,10 @@ impl App {
                 } else {
                     // Track execution completion
                     let total_duration = execution_start.elapsed().as_millis() as u64;
-                    
+
                     // Track parse metrics (approximate, since parsing is now integrated)
                     telemetry::track_parse_complete(total_count, 0);
-                    
+
                     telemetry::track_execution_complete(
                         success_count,
                         failed_count,

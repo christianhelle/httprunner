@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 
 /// Individual execution result for incremental display
 #[derive(Clone)]
+#[allow(dead_code)]
 pub enum ExecutionResult {
     Success {
         method: String,

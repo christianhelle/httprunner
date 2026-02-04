@@ -514,17 +514,17 @@ impl ResultsView {
         ui.label(format!("Duration: {} ms", params.duration_ms));
 
         // Display request body if present
-        if let Some(request_body) = params.request_body {
-            if !request_body.is_empty() {
-                ui.separator();
-                ui.label("Request Body:");
-                egui::ScrollArea::vertical()
-                    .id_salt(format!("request_body_{}", params.result_idx))
-                    .max_height(150.0)
-                    .show(ui, |ui| {
-                        ui.monospace(request_body);
-                    });
-            }
+        if let Some(request_body) = params.request_body
+            && !request_body.is_empty()
+        {
+            ui.separator();
+            ui.label("Request Body:");
+            egui::ScrollArea::vertical()
+                .id_salt(format!("request_body_{}", params.result_idx))
+                .max_height(150.0)
+                .show(ui, |ui| {
+                    ui.monospace(request_body);
+                });
         }
 
         // Display assertion results if any
@@ -601,4 +601,3 @@ impl ResultsView {
         ui.separator();
     }
 }
-

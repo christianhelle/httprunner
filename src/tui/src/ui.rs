@@ -333,31 +333,30 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     }
 
                     // Show request body in verbose mode
-                    if !compact_mode {
-                        if let Some(req_body) = request_body {
-                            if !req_body.is_empty() {
-                                lines.push(Line::from(""));
-                                lines.push(Line::from(vec![Span::styled(
-                                    "  Request Body:",
-                                    Style::default().add_modifier(Modifier::BOLD),
-                                )]));
-                                // Show first few lines of request body (truncate for TUI)
-                                let line_count = req_body.lines().count();
-                                for (i, line) in req_body.lines().take(5).enumerate() {
-                                    lines.push(Line::from(vec![
-                                        Span::raw("    "),
-                                        Span::styled(line.to_string(), Style::default().fg(Color::Cyan)),
-                                    ]));
-                                    if i == 4 && line_count > 5 {
-                                        lines.push(Line::from(vec![
-                                            Span::raw("    "),
-                                            Span::styled(
-                                                "... (truncated)",
-                                                Style::default().fg(Color::DarkGray),
-                                            ),
-                                        ]));
-                                    }
-                                }
+                    if !compact_mode
+                        && let Some(req_body) = request_body
+                        && !req_body.is_empty()
+                    {
+                        lines.push(Line::from(""));
+                        lines.push(Line::from(vec![Span::styled(
+                            "  Request Body:",
+                            Style::default().add_modifier(Modifier::BOLD),
+                        )]));
+                        // Show first few lines of request body (truncate for TUI)
+                        let line_count = req_body.lines().count();
+                        for (i, line) in req_body.lines().take(5).enumerate() {
+                            lines.push(Line::from(vec![
+                                Span::raw("    "),
+                                Span::styled(line.to_string(), Style::default().fg(Color::Cyan)),
+                            ]));
+                            if i == 4 && line_count > 5 {
+                                lines.push(Line::from(vec![
+                                    Span::raw("    "),
+                                    Span::styled(
+                                        "... (truncated)",
+                                        Style::default().fg(Color::DarkGray),
+                                    ),
+                                ]));
                             }
                         }
                     }

@@ -20,10 +20,7 @@ pub enum RequestProcessingResult {
         result: HttpResult,
     },
     /// Request processing failed with an error
-    Failed {
-        request: HttpRequest,
-        error: String,
-    },
+    Failed { request: HttpRequest, error: String },
 }
 
 /// Process HTTP requests from a file with incremental callbacks for UI updates
@@ -52,22 +49,22 @@ where
 
     for (idx, mut request) in requests.into_iter().enumerate() {
         let request_count = (idx + 1) as u32;
-        
+
         // Check dependencies
-        if let Some(dep_name) = request.depends_on.as_ref() {
-            if !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts) {
-                let reason = format!("Dependency on '{}' not met", dep_name);
-                callback(
-                    idx,
-                    total,
-                    RequestProcessingResult::Skipped {
-                        request: request.clone(),
-                        reason,
-                    },
-                );
-                add_request_context(&mut request_contexts, request, None, request_count);
-                continue;
-            }
+        if let Some(dep_name) = request.depends_on.as_ref()
+            && !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts)
+        {
+            let reason = format!("Dependency on '{}' not met", dep_name);
+            callback(
+                idx,
+                total,
+                RequestProcessingResult::Skipped {
+                    request: request.clone(),
+                    reason,
+                },
+            );
+            add_request_context(&mut request_contexts, request, None, request_count);
+            continue;
         }
 
         // Check conditions
@@ -144,10 +141,7 @@ where
                 callback(
                     idx,
                     total,
-                    RequestProcessingResult::Executed {
-                        request,
-                        result,
-                    },
+                    RequestProcessingResult::Executed { request, result },
                 );
             }
             Err(e) => {
