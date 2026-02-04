@@ -1,3 +1,5 @@
+#[cfg(not(target_arch = "wasm32"))]
+use httprunner_lib::telemetry;
 use httprunner_lib::types::AssertionResult;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};

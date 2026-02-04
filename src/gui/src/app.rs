@@ -5,6 +5,8 @@ use super::{
     state::AppState,
     text_editor::TextEditor,
 };
+#[cfg(not(target_arch = "wasm32"))]
+use httprunner_lib::telemetry;
 use std::path::{Path, PathBuf};
 
 enum KeyboardAction {
@@ -259,6 +261,7 @@ impl HttpRunnerApp {
                         self.telemetry_enabled = !self.telemetry_enabled;
 
                         // Update the global telemetry state and persist
+                        #[cfg(not(target_arch = "wasm32"))]
                         if let Err(e) = telemetry::set_enabled(self.telemetry_enabled) {
                             eprintln!("Failed to save telemetry setting: {}", e);
                         }
