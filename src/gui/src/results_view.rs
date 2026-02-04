@@ -111,83 +111,103 @@ impl ResultsView {
             let execution_start = std::time::Instant::now();
 
             if let Some(path_str) = path.to_str() {
-                // Parse the file first to get all requests
-                let parse_start = std::time::Instant::now();
-                match httprunner_lib::parser::parse_http_file(path_str, env.as_deref()) {
-                    Ok(requests) => {
-                        let parse_duration = parse_start.elapsed().as_millis() as u64;
-                        let total = requests.len();
+                // Clear the parsing message
+                if let Ok(mut r) = results.lock() {
+                    r.clear();
+                }
 
-                        // Track parse metrics
-                        telemetry::track_parse_complete(total, parse_duration);
+                let mut success_count = 0usize;
+                let mut failed_count = 0usize;
+                let mut skipped_count = 0usize;
+                let mut total_count = 0usize;
 
-                        // Clear running message
-                        if let Ok(mut r) = results.lock() {
-                            r.clear();
-                        }
+                // Use the incremental processor which handles all features
+                let result = httprunner_lib::processor::process_http_file_incremental(
+                    path_str,
+                    env.as_deref(),
+                    false, // insecure
+                    |_idx, total, process_result| {
+                        total_count = total;
 
-                        let mut success_count = 0usize;
-                        let mut failed_count = 0usize;
-
-                        // Execute each request individually for immediate feedback
-                        for (idx, request) in requests.into_iter().enumerate() {
-                            // Show progress for current request
-                            if let Ok(mut r) = results.lock() {
-                                r.push(ExecutionResult::Running {
-                                    message: format!(
-                                        "Running {}/{}: {} {}",
-                                        idx + 1,
-                                        total,
-                                        request.method,
-                                        request.url
-                                    ),
-                                });
-                            }
-
-                            // Execute the request
-                            let result = execute_request(request);
-
-                            // Count results for telemetry
-                            match &result {
-                                ExecutionResult::Success { .. } => success_count += 1,
-                                ExecutionResult::Failure { .. } => failed_count += 1,
-                                ExecutionResult::Running { .. } => {}
-                            }
-
-                            // Remove running message and add result
-                            if let Ok(mut r) = results.lock() {
-                                // Remove the running message we just added
-                                if let Some(last) = r.last()
-                                    && matches!(last, ExecutionResult::Running { .. })
-                                {
-                                    r.pop();
+                        use httprunner_lib::processor::RequestProcessingResult;
+                        match process_result {
+                            RequestProcessingResult::Skipped { request, reason } => {
+                                skipped_count += 1;
+                                if let Ok(mut r) = results.lock() {
+                                    r.push(ExecutionResult::Failure {
+                                        method: format!("⏭️ {}", request.method),
+                                        url: request.url,
+                                        error: format!("Skipped: {}", reason),
+                                    });
                                 }
-                                r.push(result);
+                            }
+                            RequestProcessingResult::Executed { request, result } => {
+                                let request_body = request.body.clone();
+                                if result.success {
+                                    success_count += 1;
+                                    if let Ok(mut r) = results.lock() {
+                                        r.push(ExecutionResult::Success {
+                                            method: request.method,
+                                            url: request.url,
+                                            status: result.status_code,
+                                            duration_ms: result.duration_ms,
+                                            request_body,
+                                            response_body: result.response_body.unwrap_or_default(),
+                                            assertion_results: result.assertion_results,
+                                        });
+                                    }
+                                } else {
+                                    failed_count += 1;
+                                    if let Ok(mut r) = results.lock() {
+                                        r.push(ExecutionResult::Failure {
+                                            method: request.method,
+                                            url: request.url,
+                                            error: result
+                                                .error_message
+                                                .unwrap_or_else(|| "Unknown error".to_string()),
+                                        });
+                                    }
+                                }
+                            }
+                            RequestProcessingResult::Failed { request, error } => {
+                                failed_count += 1;
+                                if let Ok(mut r) = results.lock() {
+                                    r.push(ExecutionResult::Failure {
+                                        method: request.method,
+                                        url: request.url,
+                                        error,
+                                    });
+                                }
                             }
                         }
+                    },
+                );
 
-                        // Track execution completion
-                        let total_duration = execution_start.elapsed().as_millis() as u64;
-                        telemetry::track_execution_complete(
-                            success_count,
-                            failed_count,
-                            0, // skipped not tracked in GUI yet
-                            total_duration,
-                        );
-                    }
-                    Err(e) => {
-                        // Track parse error
-                        telemetry::track_error_message(&format!("Parse error: {}", e));
+                if let Err(e) = result {
+                    // Track parse error
+                    telemetry::track_error_message(&format!("Parse error: {}", e));
 
-                        if let Ok(mut r) = results.lock() {
-                            r.clear();
-                            r.push(ExecutionResult::Failure {
-                                method: "PARSE".to_string(),
-                                url: path.display().to_string(),
-                                error: format!("Failed to parse file: {}", e),
-                            });
-                        }
+                    if let Ok(mut r) = results.lock() {
+                        r.clear();
+                        r.push(ExecutionResult::Failure {
+                            method: "PARSE".to_string(),
+                            url: path.display().to_string(),
+                            error: format!("Failed to parse file: {}", e),
+                        });
                     }
+                } else {
+                    // Track execution completion
+                    let total_duration = execution_start.elapsed().as_millis() as u64;
+
+                    // Track parse metrics (approximate, since parsing is now integrated)
+                    telemetry::track_parse_complete(total_count, 0);
+
+                    telemetry::track_execution_complete(
+                        success_count,
+                        failed_count,
+                        skipped_count,
+                        total_duration,
+                    );
                 }
             } else if let Ok(mut r) = results.lock() {
                 r.clear();
@@ -224,31 +244,82 @@ impl ResultsView {
         }
 
         thread::spawn(move || {
-            // Parse the file
             if let Some(path_str) = path.to_str() {
-                if let Ok(requests) =
-                    httprunner_lib::parser::parse_http_file(path_str, env.as_deref())
-                {
-                    if let Some(request) = requests.get(index) {
-                        let result = execute_request(request.clone());
-                        if let Ok(mut r) = results.lock() {
-                            r.clear();
-                            r.push(result);
+                // Use the incremental processor to properly handle all features
+                // We process all requests up to the selected index to maintain context
+                // but only show the result of the selected request
+                let mut target_result: Option<ExecutionResult> = None;
+
+                let result = httprunner_lib::processor::process_http_file_incremental(
+                    path_str,
+                    env.as_deref(),
+                    false, // insecure
+                    |idx, _total, process_result| {
+                        // Only capture the result for the target index
+                        if idx == index {
+                            use httprunner_lib::processor::RequestProcessingResult;
+                            target_result = Some(match process_result {
+                                RequestProcessingResult::Skipped { request, reason } => {
+                                    ExecutionResult::Failure {
+                                        method: format!("⏭️ {}", request.method),
+                                        url: request.url,
+                                        error: format!("Skipped: {}", reason),
+                                    }
+                                }
+                                RequestProcessingResult::Executed { request, result } => {
+                                    let request_body = request.body.clone();
+                                    if result.success {
+                                        ExecutionResult::Success {
+                                            method: request.method,
+                                            url: request.url,
+                                            status: result.status_code,
+                                            duration_ms: result.duration_ms,
+                                            request_body,
+                                            response_body: result.response_body.unwrap_or_default(),
+                                            assertion_results: result.assertion_results,
+                                        }
+                                    } else {
+                                        ExecutionResult::Failure {
+                                            method: request.method,
+                                            url: request.url,
+                                            error: result
+                                                .error_message
+                                                .unwrap_or_else(|| "Unknown error".to_string()),
+                                        }
+                                    }
+                                }
+                                RequestProcessingResult::Failed { request, error } => {
+                                    ExecutionResult::Failure {
+                                        method: request.method,
+                                        url: request.url,
+                                        error,
+                                    }
+                                }
+                            });
                         }
-                    } else if let Ok(mut r) = results.lock() {
+                    },
+                );
+
+                if let Err(e) = result {
+                    if let Ok(mut r) = results.lock() {
                         r.clear();
                         r.push(ExecutionResult::Failure {
-                            method: "INDEX".to_string(),
+                            method: "PARSE".to_string(),
                             url: path.display().to_string(),
-                            error: format!("Request index {} not found", index),
+                            error: format!("Failed to parse file: {}", e),
                         });
+                    }
+                } else if let Some(result) = target_result {
+                    if let Ok(mut r) = results.lock() {
+                        r.clear();
+                        r.push(result);
                     }
                 } else if let Ok(mut r) = results.lock() {
                     r.clear();
                     r.push(ExecutionResult::Failure {
-                        method: "PARSE".to_string(),
+                        method: "INDEX".to_string(),
                         url: path.display().to_string(),
-                        error: "Failed to parse .http file".to_string(),
+                        error: format!("Request index {} not found", index),
                     });
                 }
             } else if let Ok(mut r) = results.lock() {
@@ -256,7 +327,7 @@ impl ResultsView {
                 r.push(ExecutionResult::Failure {
                     method: "PATH".to_string(),
                     url: path.display().to_string(),
-                    error: "Invalid file path".to_string(),
+                    error: "Failed to convert path to string".to_string(),
                 });
             }
 
@@ -531,41 +602,3 @@ impl ResultsView {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
-    use std::time::Instant;
-
-    let start = Instant::now();
-    let request_body = request.body.clone();
-
-    match httprunner_lib::runner::execute_http_request(&request, false, false) {
-        Ok(result) => {
-            let duration_ms = start.elapsed().as_millis() as u64;
-
-            if result.success {
-                ExecutionResult::Success {
-                    method: request.method,
-                    url: request.url,
-                    status: result.status_code,
-                    duration_ms,
-                    request_body,
-                    response_body: result.response_body.unwrap_or_default(),
-                    assertion_results: result.assertion_results.clone(),
-                }
-            } else {
-                ExecutionResult::Failure {
-                    method: request.method,
-                    url: request.url,
-                    error: result
-                        .error_message
-                        .unwrap_or_else(|| "Unknown error".to_string()),
-                }
-            }
-        }
-        Err(e) => ExecutionResult::Failure {
-            method: request.method,
-            url: request.url,
-            error: e.to_string(),
-        },
-    }
-}

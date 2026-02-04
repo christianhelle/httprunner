@@ -1,5 +1,6 @@
 mod executor;
 mod formatter;
+mod incremental;
 mod substitution;
 
 pub use executor::{
@@ -8,6 +9,8 @@ pub use executor::{
 };
 
 pub use formatter::format_json_if_valid;
+
+pub use incremental::{RequestProcessingResult, process_http_file_incremental};
 
 #[cfg(test)]
 mod tests;
