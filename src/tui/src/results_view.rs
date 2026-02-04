@@ -4,12 +4,14 @@ use std::sync::{Arc, Mutex};
 
 /// Individual execution result for incremental display
 #[derive(Clone)]
+#[allow(dead_code)]
 pub enum ExecutionResult {
     Success {
         method: String,
         url: String,
         status: u16,
         duration_ms: u64,
+        request_body: Option<String>,
         response_body: String,
         assertion_results: Vec<AssertionResult>,
     },

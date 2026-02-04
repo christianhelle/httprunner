@@ -237,107 +237,103 @@ impl App {
                 let path_str = file_path.to_string_lossy().to_string();
                 let execution_start = std::time::Instant::now();
 
-                // Parse the file first
-                let parse_start = std::time::Instant::now();
-                match httprunner_lib::parser::parse_http_file(&path_str, env.as_deref()) {
-                    Ok(requests) => {
-                        let parse_duration = parse_start.elapsed().as_millis() as u64;
-                        let total = requests.len();
+                let mut success_count = 0usize;
+                let mut failed_count = 0usize;
+                let mut skipped_count = 0usize;
+                let mut total_count = 0usize;
 
-                        // Track parse metrics
-                        telemetry::track_parse_complete(total, parse_duration);
+                // Use the incremental processor which handles all features
+                let result = httprunner_lib::processor::process_http_file_incremental(
+                    &path_str,
+                    env.as_deref(),
+                    false, // insecure
+                    |_idx, total, process_result| {
+                        total_count = total;
 
-                        let mut success_count = 0usize;
-                        let mut failed_count = 0usize;
-
-                        for (idx, request) in requests.into_iter().enumerate() {
-                            // Show running status
-                            if let Ok(mut results) = incremental_results.lock() {
-                                results.push(crate::results_view::ExecutionResult::Running {
-                                    message: format!(
-                                        "Running {}/{}: {} {}",
-                                        idx + 1,
-                                        total,
-                                        request.method,
-                                        request.url
-                                    ),
-                                });
+                        use httprunner_lib::processor::RequestProcessingResult;
+                        match process_result {
+                            RequestProcessingResult::Skipped { request, reason } => {
+                                skipped_count += 1;
+                                if let Ok(mut results) = incremental_results.lock() {
+                                    results.push(crate::results_view::ExecutionResult::Failure {
+                                        method: format!("⏭️ {}", request.method),
+                                        url: request.url,
+                                        error: format!("Skipped: {}", reason),
+                                    });
+                                }
                             }
-
-                            // Execute the request
-                            let result = match httprunner_lib::runner::execute_http_request(
-                                &request, false, false,
-                            ) {
-                                Ok(http_result) => {
-                                    if http_result.success {
-                                        success_count += 1;
-                                        crate::results_view::ExecutionResult::Success {
-                                            method: request.method,
-                                            url: request.url,
-                                            status: http_result.status_code,
-                                            duration_ms: http_result.duration_ms,
-                                            response_body: http_result
-                                                .response_body
-                                                .unwrap_or_default(),
-                                            assertion_results: http_result.assertion_results,
-                                        }
-                                    } else {
-                                        failed_count += 1;
-                                        crate::results_view::ExecutionResult::Failure {
-                                            method: request.method,
-                                            url: request.url,
-                                            error: http_result
-                                                .error_message
-                                                .unwrap_or_else(|| "Unknown error".to_string()),
-                                        }
+                            RequestProcessingResult::Executed { request, result } => {
+                                let request_body = request.body.clone();
+                                if result.success {
+                                    success_count += 1;
+                                    if let Ok(mut results) = incremental_results.lock() {
+                                        results.push(
+                                            crate::results_view::ExecutionResult::Success {
+                                                method: request.method,
+                                                url: request.url,
+                                                status: result.status_code,
+                                                duration_ms: result.duration_ms,
+                                                request_body,
+                                                response_body: result
+                                                    .response_body
+                                                    .unwrap_or_default(),
+                                                assertion_results: result.assertion_results,
+                                            },
+                                        );
+                                    }
+                                } else {
+                                    failed_count += 1;
+                                    if let Ok(mut results) = incremental_results.lock() {
+                                        results.push(
+                                            crate::results_view::ExecutionResult::Failure {
+                                                method: request.method,
+                                                url: request.url,
+                                                error: result
+                                                    .error_message
+                                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                                            },
+                                        );
                                     }
                                 }
-                                Err(e) => {
-                                    failed_count += 1;
-                                    crate::results_view::ExecutionResult::Failure {
+                            }
+                            RequestProcessingResult::Failed { request, error } => {
+                                failed_count += 1;
+                                if let Ok(mut results) = incremental_results.lock() {
+                                    results.push(crate::results_view::ExecutionResult::Failure {
                                         method: request.method,
                                         url: request.url,
-                                        error: e.to_string(),
-                                    }
+                                        error,
+                                    });
                                 }
-                            };
-
-                            // Remove running message and add result
-                            if let Ok(mut results) = incremental_results.lock() {
-                                // Remove the last running message
-                                if let Some(last) = results.last()
-                                    && matches!(
-                                        last,
-                                        crate::results_view::ExecutionResult::Running { .. }
-                                    )
-                                {
-                                    results.pop();
-                                }
-                                results.push(result);
                             }
                         }
+                    },
+                );
 
-                        // Track execution completion
-                        let total_duration = execution_start.elapsed().as_millis() as u64;
-                        telemetry::track_execution_complete(
-                            success_count,
-                            failed_count,
-                            0, // skipped not tracked in TUI yet
-                            total_duration,
-                        );
-                    }
-                    Err(e) => {
-                        // Track parse error
-                        telemetry::track_error_message(&format!("Parse error: {}", e));
+                if let Err(e) = result {
+                    // Track parse error
+                    telemetry::track_error_message(&format!("Parse error: {}", e));
 
-                        if let Ok(mut results) = incremental_results.lock() {
-                            results.push(crate::results_view::ExecutionResult::Failure {
-                                method: "PARSE".to_string(),
-                                url: path_str,
-                                error: format!("Failed to parse file: {}", e),
-                            });
-                        }
+                    if let Ok(mut results) = incremental_results.lock() {
+                        results.push(crate::results_view::ExecutionResult::Failure {
+                            method: "PARSE".to_string(),
+                            url: path_str,
+                            error: format!("Failed to parse file: {}", e),
+                        });
                     }
+                } else {
+                    // Track execution completion
+                    let total_duration = execution_start.elapsed().as_millis() as u64;
+
+                    // Track parse metrics (approximate, since parsing is now integrated)
+                    telemetry::track_parse_complete(total_count, 0);
+
+                    telemetry::track_execution_complete(
+                        success_count,
+                        failed_count,
+                        skipped_count,
+                        total_duration,
+                    );
                 }
 
                 // Mark as complete

@@ -267,6 +267,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     url,
                     status,
                     duration_ms,
+                    request_body,
                     response_body,
                     assertion_results,
                 } => {
@@ -280,7 +281,9 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         ),
                     ]));
 
-                    // Show assertion results
+                    // In Verbose mode, show in order: Assertion Results -> Request Body -> Response Body
+                    
+                    // 1. Show assertion results
                     if !assertion_results.is_empty() {
                         for assertion in assertion_results {
                             let assertion_type_str = match assertion.assertion.assertion_type {
@@ -331,8 +334,37 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         }
                     }
 
-                    // Show response body in verbose mode
-                    if !compact_mode && !response_body.is_empty() {
+                    // 2. Show request body in verbose mode (skip if empty or whitespace only)
+                    if !compact_mode
+                        && let Some(req_body) = request_body
+                        && !req_body.trim().is_empty()
+                    {
+                        lines.push(Line::from(""));
+                        lines.push(Line::from(vec![Span::styled(
+                            "  Request Body:",
+                            Style::default().add_modifier(Modifier::BOLD),
+                        )]));
+                        // Show first few lines of request body (truncate for TUI)
+                        let line_count = req_body.lines().count();
+                        for (i, line) in req_body.lines().take(5).enumerate() {
+                            lines.push(Line::from(vec![
+                                Span::raw("    "),
+                                Span::styled(line.to_string(), Style::default().fg(Color::Cyan)),
+                            ]));
+                            if i == 4 && line_count > 5 {
+                                lines.push(Line::from(vec![
+                                    Span::raw("    "),
+                                    Span::styled(
+                                        "... (truncated)",
+                                        Style::default().fg(Color::DarkGray),
+                                    ),
+                                ]));
+                            }
+                        }
+                    }
+
+                    // 3. Show response body in verbose mode (skip if empty or whitespace only)
+                    if !compact_mode && !response_body.trim().is_empty() {
                         lines.push(Line::from(""));
                         lines.push(Line::from(vec![Span::styled(
                             "  Response:",
