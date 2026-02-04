@@ -281,7 +281,9 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         ),
                     ]));
 
-                    // Show assertion results
+                    // In Verbose mode, show in order: Assertion Results -> Request Body -> Response Body
+                    
+                    // 1. Show assertion results
                     if !assertion_results.is_empty() {
                         for assertion in assertion_results {
                             let assertion_type_str = match assertion.assertion.assertion_type {
@@ -332,7 +334,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         }
                     }
 
-                    // Show request body in verbose mode
+                    // 2. Show request body in verbose mode
                     if !compact_mode
                         && let Some(req_body) = request_body
                         && !req_body.is_empty()
@@ -361,7 +363,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                         }
                     }
 
-                    // Show response body in verbose mode
+                    // 3. Show response body in verbose mode
                     if !compact_mode && !response_body.is_empty() {
                         lines.push(Line::from(""));
                         lines.push(Line::from(vec![Span::styled(
