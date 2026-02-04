@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+#[cfg(not(target_arch = "wasm32"))]
 use std::thread;
+#[cfg(not(target_arch = "wasm32"))]
 use walkdir::WalkDir;
 
 pub struct FileTree {
@@ -17,44 +19,55 @@ impl FileTree {
         let is_discovering = Arc::new(Mutex::new(true));
         let discovered_count = Arc::new(Mutex::new(0usize));
 
-        // Clone for the background thread
-        let files_clone = Arc::clone(&http_files);
-        let discovering_clone = Arc::clone(&is_discovering);
-        let count_clone = Arc::clone(&discovered_count);
-        let path_clone = root_path.clone();
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // Clone for the background thread
+            let files_clone = Arc::clone(&http_files);
+            let discovering_clone = Arc::clone(&is_discovering);
+            let count_clone = Arc::clone(&discovered_count);
+            let path_clone = root_path.clone();
 
-        // Start async discovery in background thread
-        thread::spawn(move || {
-            let mut temp_files = Vec::new();
+            // Start async discovery in background thread
+            thread::spawn(move || {
+                let mut temp_files = Vec::new();
 
-            for entry in WalkDir::new(&path_clone)
-                .follow_links(true)
-                .into_iter()
-                .filter_map(|e| e.ok())
-            {
-                if entry.file_type().is_file()
-                    && let Some(ext) = entry.path().extension()
-                    && ext == "http"
+                for entry in WalkDir::new(&path_clone)
+                    .follow_links(true)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
                 {
-                    let file_path = entry.path().to_path_buf();
-                    temp_files.push(file_path.clone());
+                    if entry.file_type().is_file()
+                        && let Some(ext) = entry.path().extension()
+                        && ext == "http"
+                    {
+                        let file_path = entry.path().to_path_buf();
+                        temp_files.push(file_path.clone());
 
-                    // Update shared state incrementally
-                    if let Ok(mut files) = files_clone.lock() {
-                        files.push(file_path);
-                        files.sort();
-                    }
-                    if let Ok(mut count) = count_clone.lock() {
-                        *count = temp_files.len();
+                        // Update shared state incrementally
+                        if let Ok(mut files) = files_clone.lock() {
+                            files.push(file_path);
+                            files.sort();
+                        }
+                        if let Ok(mut count) = count_clone.lock() {
+                            *count = temp_files.len();
+                        }
                     }
                 }
-            }
 
-            // Mark discovery as complete
-            if let Ok(mut discovering) = discovering_clone.lock() {
+                // Mark discovery as complete
+                if let Ok(mut discovering) = discovering_clone.lock() {
+                    *discovering = false;
+                }
+            });
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            // In WASM, there's no real filesystem, so immediately mark as not discovering
+            if let Ok(mut discovering) = is_discovering.lock() {
                 *discovering = false;
             }
-        });
+        }
 
         Self {
             root_path,
