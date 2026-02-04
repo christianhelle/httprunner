@@ -401,12 +401,6 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     ]));
                     lines.push(Line::from(""));
                 }
-                ExecutionResult::Running { message } => {
-                    lines.push(Line::from(vec![
-                        Span::styled("⏳ ", Style::default().fg(Color::Yellow)),
-                        Span::styled(message, Style::default().fg(Color::Cyan)),
-                    ]));
-                }
             }
         }
 

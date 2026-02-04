@@ -180,6 +180,8 @@ impl ResultsView {
                                 }
                             }
                         }
+                        // Continue processing all requests for "Run All"
+                        true
                     },
                 );
 
@@ -296,6 +298,11 @@ impl ResultsView {
                                     }
                                 }
                             });
+                            // Stop processing after capturing the target result
+                            false
+                        } else {
+                            // Continue processing to maintain context
+                            true
                         }
                     },
                 );

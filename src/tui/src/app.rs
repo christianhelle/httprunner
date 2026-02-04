@@ -307,6 +307,8 @@ impl App {
                                 }
                             }
                         }
+                        // Continue processing all requests
+                        true
                     },
                 );
 

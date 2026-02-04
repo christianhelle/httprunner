@@ -28,6 +28,9 @@ pub enum RequestProcessingResult {
 /// This function processes requests one at a time, maintaining proper context
 /// for variable substitution, function evaluation, and condition checking.
 /// It calls the provided callback after each request is processed.
+///
+/// The callback can return `true` to continue processing or `false` to stop.
+/// This allows processing to stop early after reaching a target request.
 pub fn process_http_file_incremental<F>(
     file_path: &str,
     environment: Option<&str>,
@@ -35,7 +38,7 @@ pub fn process_http_file_incremental<F>(
     mut callback: F,
 ) -> Result<()>
 where
-    F: FnMut(usize, usize, RequestProcessingResult),
+    F: FnMut(usize, usize, RequestProcessingResult) -> bool,
 {
     // Parse the file
     let requests = parser::parse_http_file(file_path, environment)?;
@@ -55,7 +58,7 @@ where
             && !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts)
         {
             let reason = format!("Dependency on '{}' not met", dep_name);
-            callback(
+            let should_continue = callback(
                 idx,
                 total,
                 RequestProcessingResult::Skipped {
@@ -64,6 +67,9 @@ where
                 },
             );
             add_request_context(&mut request_contexts, request, None, request_count);
+            if !should_continue {
+                break;
+            }
             continue;
         }
 
@@ -75,7 +81,7 @@ where
                 }
                 Ok(false) => {
                     // Conditions not met, skip
-                    callback(
+                    let should_continue = callback(
                         idx,
                         total,
                         RequestProcessingResult::Skipped {
@@ -84,10 +90,13 @@ where
                         },
                     );
                     add_request_context(&mut request_contexts, request, None, request_count);
+                    if !should_continue {
+                        break;
+                    }
                     continue;
                 }
                 Err(e) => {
-                    callback(
+                    let should_continue = callback(
                         idx,
                         total,
                         RequestProcessingResult::Failed {
@@ -96,6 +105,9 @@ where
                         },
                     );
                     add_request_context(&mut request_contexts, request, None, request_count);
+                    if !should_continue {
+                        break;
+                    }
                     continue;
                 }
             }
@@ -103,7 +115,7 @@ where
 
         // Apply variable substitutions
         if let Err(e) = substitute_request_variables_in_request(&mut request, &request_contexts) {
-            callback(
+            let should_continue = callback(
                 idx,
                 total,
                 RequestProcessingResult::Failed {
@@ -112,12 +124,15 @@ where
                 },
             );
             add_request_context(&mut request_contexts, request, None, request_count);
+            if !should_continue {
+                break;
+            }
             continue;
         }
 
         // Apply function substitutions
         if let Err(e) = substitute_functions_in_request(&mut request) {
-            callback(
+            let should_continue = callback(
                 idx,
                 total,
                 RequestProcessingResult::Failed {
@@ -126,6 +141,9 @@ where
                 },
             );
             add_request_context(&mut request_contexts, request, None, request_count);
+            if !should_continue {
+                break;
+            }
             continue;
         }
 
@@ -138,14 +156,17 @@ where
                     Some(result.clone()),
                     request_count,
                 );
-                callback(
+                let should_continue = callback(
                     idx,
                     total,
                     RequestProcessingResult::Executed { request, result },
                 );
+                if !should_continue {
+                    break;
+                }
             }
             Err(e) => {
-                callback(
+                let should_continue = callback(
                     idx,
                     total,
                     RequestProcessingResult::Failed {
@@ -154,6 +175,9 @@ where
                     },
                 );
                 add_request_context(&mut request_contexts, request, None, request_count);
+                if !should_continue {
+                    break;
+                }
             }
         }
     }
@@ -170,7 +194,8 @@ fn add_request_context(
     let context_name = if let Some(ref name) = request.name {
         name.clone()
     } else {
-        format!("Request {}", request_count)
+        // Use same format as executor.rs for consistency
+        format!("request_{}", request_count)
     };
 
     contexts.push(RequestContext {
