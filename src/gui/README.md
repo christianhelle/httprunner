@@ -119,6 +119,8 @@ trunk build --release
    - Press **F5** to run all requests in the selected file
    - Click "▶ Run this request" on any individual request to execute it
 6. **View Results**: See execution results in the right panel
+   - Toggle between Compact and Verbose modes using **Ctrl+D**
+   - Verbose mode displays request bodies, response bodies, and assertion results
 
 ### Web Application
 
@@ -145,6 +147,8 @@ Accept: application/json
 - **Ctrl+T** / **Cmd+T**: Toggle between Text Editor and Request Details view
 - **Ctrl+B** / **Cmd+B**: Toggle file tree visibility
 - **Ctrl+D** / **Cmd+D**: Toggle results view (Compact/Verbose)
+  - **Compact mode**: Shows only request method, URL, status, and duration
+  - **Verbose mode**: Includes request body, response body, and assertion results
 - **Ctrl+S** / **Cmd+S**: Save file
 - **Ctrl+Plus** / **Cmd+Plus**: Zoom in
 - **Ctrl+Minus** / **Cmd+Minus**: Zoom out

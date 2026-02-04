@@ -30,6 +30,8 @@ The TUI is divided into three main panes:
 1. **File Tree (Left)** - Browse and select .http files
 2. **Request View (Center)** - View parsed requests from the selected file
 3. **Results View (Right)** - See execution results
+   - Toggle between Compact and Verbose modes using **Ctrl+D**
+   - Verbose mode displays request bodies, response bodies, and assertion results
 
 ### Keyboard Shortcuts
 
@@ -46,6 +48,8 @@ The TUI is divided into three main panes:
 - **Ctrl+E** - Cycle through available environments
 - **Ctrl+B** - Toggle file tree visibility
 - **Ctrl+D** - Toggle results view mode (compact/verbose)
+  - **Compact mode**: Shows only request method, URL, status, and duration
+  - **Verbose mode**: Includes request body, response body, and assertion results
 - **Ctrl+Q** or **Q** - Quit application
 
 ## Building
