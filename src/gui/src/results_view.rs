@@ -17,6 +17,7 @@ struct VerboseSuccessParams<'a> {
     url: &'a str,
     status: u16,
     duration_ms: u64,
+    request_body: &'a Option<String>,
     response_body: &'a str,
     assertion_results: &'a [AssertionResult],
 }
@@ -28,6 +29,7 @@ pub enum ExecutionResult {
         url: String,
         status: u16,
         duration_ms: u64,
+        request_body: Option<String>,
         response_body: String,
         assertion_results: Vec<AssertionResult>,
     },
@@ -311,6 +313,7 @@ impl ResultsView {
                         url,
                         status,
                         duration_ms,
+                        request_body,
                         response_body,
                         assertion_results,
                     } => {
@@ -332,6 +335,7 @@ impl ResultsView {
                                     url,
                                     status: *status,
                                     duration_ms: *duration_ms,
+                                    request_body,
                                     response_body,
                                     assertion_results,
                                 },
@@ -438,6 +442,20 @@ impl ResultsView {
         ui.label(format!("Status: {}", params.status));
         ui.label(format!("Duration: {} ms", params.duration_ms));
 
+        // Display request body if present
+        if let Some(request_body) = params.request_body {
+            if !request_body.is_empty() {
+                ui.separator();
+                ui.label("Request Body:");
+                egui::ScrollArea::vertical()
+                    .id_salt(format!("request_body_{}", params.result_idx))
+                    .max_height(150.0)
+                    .show(ui, |ui| {
+                        ui.monospace(request_body);
+                    });
+            }
+        }
+
         // Display assertion results if any
         if !params.assertion_results.is_empty() {
             ui.separator();
@@ -518,6 +536,7 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
     use std::time::Instant;
 
     let start = Instant::now();
+    let request_body = request.body.clone();
 
     match httprunner_lib::runner::execute_http_request(&request, false, false) {
         Ok(result) => {
@@ -529,6 +548,7 @@ fn execute_request(request: httprunner_lib::HttpRequest) -> ExecutionResult {
                     url: request.url,
                     status: result.status_code,
                     duration_ms,
+                    request_body,
                     response_body: result.response_body.unwrap_or_default(),
                     assertion_results: result.assertion_results.clone(),
                 }

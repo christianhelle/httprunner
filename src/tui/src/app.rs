@@ -265,6 +265,7 @@ impl App {
                             }
 
                             // Execute the request
+                            let request_body = request.body.clone();
                             let result = match httprunner_lib::runner::execute_http_request(
                                 &request, false, false,
                             ) {
@@ -276,6 +277,7 @@ impl App {
                                             url: request.url,
                                             status: http_result.status_code,
                                             duration_ms: http_result.duration_ms,
+                                            request_body,
                                             response_body: http_result
                                                 .response_body
                                                 .unwrap_or_default(),

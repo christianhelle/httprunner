@@ -10,6 +10,7 @@ pub enum ExecutionResult {
         url: String,
         status: u16,
         duration_ms: u64,
+        request_body: Option<String>,
         response_body: String,
         assertion_results: Vec<AssertionResult>,
     },
