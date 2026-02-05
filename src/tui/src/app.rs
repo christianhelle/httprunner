@@ -110,13 +110,11 @@ impl App {
                 self.toggle_telemetry();
                 return Ok(());
             }
-            (KeyCode::Char('+'), KeyModifiers::CONTROL)
-            | (KeyCode::Char('='), KeyModifiers::CONTROL) => {
+            (KeyCode::Char(']'), KeyModifiers::NONE) => {
                 self.increase_delay();
                 return Ok(());
             }
-            (KeyCode::Char('-'), KeyModifiers::CONTROL)
-            | (KeyCode::Char('_'), KeyModifiers::CONTROL) => {
+            (KeyCode::Char('['), KeyModifiers::NONE) => {
                 self.decrease_delay();
                 return Ok(());
             }

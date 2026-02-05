@@ -728,8 +728,8 @@ httprunner --discover --delay 500 --log results.txt
 ### TUI Usage
 
 In the Terminal UI application:
-- Press `Ctrl++` to increase delay by 100ms (max 10 seconds)
-- Press `Ctrl+-` to decrease delay by 100ms (min 0ms)
+- Press `]` to increase delay by 100ms (max 10 seconds)
+- Press `[` to decrease delay by 100ms (min 0ms)
 - Current delay is displayed in the status bar
 
 ### GUI Usage
