@@ -20,6 +20,7 @@ pub struct ProcessorConfig<'a> {
     pub insecure: bool,
     pub pretty_json: bool,
     pub silent: bool,
+    pub delay_ms: u64,
 }
 
 impl<'a> ProcessorConfig<'a> {
@@ -32,6 +33,7 @@ impl<'a> ProcessorConfig<'a> {
             insecure: false,
             pretty_json: false,
             silent: false,
+            delay_ms: 0,
         }
     }
 
@@ -62,6 +64,11 @@ impl<'a> ProcessorConfig<'a> {
 
     pub fn with_silent(mut self, silent: bool) -> Self {
         self.silent = silent;
+        self
+    }
+
+    pub fn with_delay(mut self, delay_ms: u64) -> Self {
+        self.delay_ms = delay_ms;
         self
     }
 }
@@ -582,6 +589,11 @@ where
     for request in requests {
         counters.increment_total();
 
+        // Apply delay between requests (not before first request)
+        if counters.total > 1 && config.delay_ms > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(config.delay_ms));
+        }
+
         let (result, processed_request) =
             match process_single_request(request, &request_contexts, config, executor, log) {
                 Ok((result, req)) => (result, req),
@@ -657,13 +669,15 @@ pub fn process_http_files(
     environment: Option<&str>,
     insecure: bool,
     pretty_json: bool,
+    delay_ms: u64,
 ) -> Result<ProcessorResults> {
     let config = ProcessorConfig::new(files)
         .with_verbose(verbose)
         .with_log_filename(log_filename)
         .with_environment(environment)
         .with_insecure(insecure)
-        .with_pretty_json(pretty_json);
+        .with_pretty_json(pretty_json)
+        .with_delay(delay_ms);
 
     process_http_files_with_config(&config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
@@ -678,6 +692,7 @@ pub fn process_http_files_with_silent(
     insecure: bool,
     pretty_json: bool,
     silent: bool,
+    delay_ms: u64,
 ) -> Result<ProcessorResults> {
     let config = ProcessorConfig::new(files)
         .with_verbose(verbose)
@@ -685,7 +700,8 @@ pub fn process_http_files_with_silent(
         .with_environment(environment)
         .with_insecure(insecure)
         .with_pretty_json(pretty_json)
-        .with_silent(silent);
+        .with_silent(silent)
+        .with_delay(delay_ms);
 
     process_http_files_with_config(&config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
