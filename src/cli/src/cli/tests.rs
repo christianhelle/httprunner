@@ -14,6 +14,7 @@ fn cli_with_log(log: Option<Option<&str>>) -> Cli {
         report: None,
         export: false,
         no_telemetry: false,
+        delay: 0,
     }
 }
 

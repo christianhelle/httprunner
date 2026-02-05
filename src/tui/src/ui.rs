@@ -282,7 +282,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     ]));
 
                     // In Verbose mode, show in order: Assertion Results -> Request Body -> Response Body
-                    
+
                     // 1. Show assertion results
                     if !assertion_results.is_empty() {
                         for assertion in assertion_results {
@@ -581,7 +581,10 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(" | "),
             telemetry_indicator,
             Span::raw(" | "),
-            Span::styled(format!("Delay: {}ms", app.delay_ms), Style::default().fg(Color::Magenta)),
+            Span::styled(
+                format!("Delay: {}ms", app.delay_ms),
+                Style::default().fg(Color::Magenta),
+            ),
         ]),
         Line::from(vec![
             Span::styled("R/F5", Style::default().fg(Color::Yellow)),

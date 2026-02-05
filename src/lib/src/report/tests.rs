@@ -843,5 +843,3 @@ fn generate_markdown_handles_large_numbers() {
 
     fs::remove_file(filename).ok();
 }
-
-

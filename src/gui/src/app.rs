@@ -274,10 +274,13 @@ impl HttpRunnerApp {
                     }
 
                     ui.separator();
-                    
+
                     ui.label("Request Delay (ms):");
                     let mut delay_value = self.delay_ms as i32;
-                    if ui.add(egui::Slider::new(&mut delay_value, 0..=10000).suffix(" ms")).changed() {
+                    if ui
+                        .add(egui::Slider::new(&mut delay_value, 0..=10000).suffix(" ms"))
+                        .changed()
+                    {
                         self.delay_ms = delay_value.max(0) as u64;
                         self.save_state();
                     }
@@ -400,8 +403,11 @@ impl eframe::App for HttpRunnerApp {
                 if !self.request_view.has_changes()
                     && let Some(file) = &self.selected_file
                 {
-                    self.results_view
-                        .run_file(file, self.selected_environment.as_deref(), self.delay_ms);
+                    self.results_view.run_file(
+                        file,
+                        self.selected_environment.as_deref(),
+                        self.delay_ms,
+                    );
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -601,8 +607,11 @@ impl eframe::App for HttpRunnerApp {
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 if let Some(file) = &self.selected_file {
-                                    self.results_view
-                                        .run_file(file, self.selected_environment.as_deref(), self.delay_ms);
+                                    self.results_view.run_file(
+                                        file,
+                                        self.selected_environment.as_deref(),
+                                        self.delay_ms,
+                                    );
                                 }
 
                                 #[cfg(target_arch = "wasm32")]
@@ -695,8 +704,11 @@ impl eframe::App for HttpRunnerApp {
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 if let Some(file) = &self.selected_file {
-                                    self.results_view
-                                        .run_file(file, self.selected_environment.as_deref(), self.delay_ms);
+                                    self.results_view.run_file(
+                                        file,
+                                        self.selected_environment.as_deref(),
+                                        self.delay_ms,
+                                    );
                                 }
 
                                 #[cfg(target_arch = "wasm32")]

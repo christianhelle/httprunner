@@ -273,4 +273,3 @@ GET https://httpbin.org/get
         let _ = fs::remove_file(&output_file);
     }
 }
-

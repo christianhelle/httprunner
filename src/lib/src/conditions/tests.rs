@@ -760,5 +760,3 @@ fn test_evaluate_conditions_verbose_json_path_not_found() {
     assert!(!results[0].condition_met);
     assert_eq!(results[0].actual_value, Some("<not found>".to_string()));
 }
-
-

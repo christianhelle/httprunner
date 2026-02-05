@@ -1066,5 +1066,3 @@ fn generate_html_handles_quotes_in_values() {
 
     fs::remove_file(filename).ok();
 }
-
-
