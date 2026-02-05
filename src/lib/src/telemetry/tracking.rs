@@ -580,6 +580,7 @@ mod tests {
             report_format: Some("json".to_string()),
             export: true,
             file_count: 5,
+            delay: 0,
         };
 
         // Should not panic even if telemetry is not initialized
@@ -729,6 +730,7 @@ mod tests {
             report_format: Some("html".to_string()),
             export: true,
             file_count: 100,
+            delay: 0,
         };
 
         track_cli_args(&args);
@@ -749,6 +751,7 @@ mod tests {
             report_format: None,
             export: false,
             file_count: 0,
+            delay: 0,
         };
 
         track_cli_args(&args);
@@ -872,6 +875,7 @@ mod tests {
             report_format: Some("json".to_string()),
             export: true,
             file_count: 42,
+            delay: 0,
         };
 
         let args2 = args1.clone();
