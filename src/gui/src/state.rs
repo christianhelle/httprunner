@@ -16,6 +16,8 @@ pub struct AppState {
     pub results_compact_mode: Option<bool>,
     /// Telemetry opt-in/opt-out setting (defaults to true if not set)
     pub telemetry_enabled: Option<bool>,
+    /// Delay between requests in milliseconds
+    pub delay_ms: Option<u64>,
 }
 
 impl AppState {
