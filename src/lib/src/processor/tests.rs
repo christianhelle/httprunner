@@ -59,6 +59,8 @@ fn test_substitute_request_variables_in_url() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -75,6 +77,8 @@ fn test_substitute_request_variables_in_url() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("login".to_string()),
@@ -111,6 +115,8 @@ fn test_substitute_request_variables_in_headers() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -127,6 +133,8 @@ fn test_substitute_request_variables_in_headers() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("login".to_string()),
@@ -160,6 +168,8 @@ fn test_substitute_request_variables_in_body() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -176,6 +186,8 @@ fn test_substitute_request_variables_in_body() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("getUser".to_string()),
@@ -209,6 +221,8 @@ fn test_substitute_request_variables_with_no_context() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![];
@@ -235,6 +249,8 @@ fn test_substitute_multiple_variables() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![
@@ -252,6 +268,8 @@ fn test_substitute_multiple_variables() {
                 connection_timeout: None,
                 depends_on: None,
                 conditions: vec![],
+                pre_delay_ms: None,
+                post_delay_ms: None,
             },
             result: Some(HttpResult {
                 request_name: Some("host".to_string()),
@@ -278,6 +296,8 @@ fn test_substitute_multiple_variables() {
                 connection_timeout: None,
                 depends_on: None,
                 conditions: vec![],
+                pre_delay_ms: None,
+                post_delay_ms: None,
             },
             result: Some(HttpResult {
                 request_name: Some("user".to_string()),
@@ -312,6 +332,8 @@ fn test_substitute_functions_in_request_with_body() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = substitute_functions_in_request(&mut request);
@@ -357,6 +379,8 @@ fn test_substitute_functions_in_request_with_headers() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = substitute_functions_in_request(&mut request);
@@ -398,6 +422,8 @@ fn test_substitute_functions_and_variables_together() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("Setup Request".to_string()),
@@ -427,6 +453,8 @@ fn test_substitute_functions_and_variables_together() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = substitute_request_variables_in_request(&mut request, &context);
@@ -467,6 +495,8 @@ fn test_substitute_request_variables_with_missing_result() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -483,6 +513,8 @@ fn test_substitute_request_variables_with_missing_result() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: None,
     }];
@@ -513,6 +545,8 @@ fn test_substitute_request_variables_in_assertions() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -529,6 +563,8 @@ fn test_substitute_request_variables_in_assertions() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("setup".to_string()),
@@ -562,6 +598,8 @@ fn test_substitute_functions_with_url() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = substitute_functions_in_request(&mut request);
@@ -593,6 +631,8 @@ fn test_substitute_functions_with_multiple_functions() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = substitute_functions_in_request(&mut request);
@@ -623,6 +663,8 @@ fn test_substitute_request_variables_with_header_reference() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -639,6 +681,8 @@ fn test_substitute_request_variables_with_header_reference() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("login".to_string()),
@@ -671,6 +715,8 @@ fn test_substitute_request_variables_with_complex_jsonpath() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -687,6 +733,8 @@ fn test_substitute_request_variables_with_complex_jsonpath() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("data".to_string()),
@@ -744,6 +792,8 @@ fn test_substitute_request_variables_empty_body() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -760,6 +810,8 @@ fn test_substitute_request_variables_empty_body() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("login".to_string()),
@@ -791,6 +843,8 @@ fn test_substitute_request_variables_with_special_chars_in_json() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -807,6 +861,8 @@ fn test_substitute_request_variables_with_special_chars_in_json() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         },
         result: Some(HttpResult {
             request_name: Some("prev".to_string()),
@@ -844,6 +900,8 @@ fn test_substitute_functions_in_assertions() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = substitute_functions_in_request(&mut request);
@@ -873,6 +931,8 @@ fn test_substitute_request_variables_preserve_unmatched_patterns() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![];

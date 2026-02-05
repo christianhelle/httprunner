@@ -568,3 +568,75 @@ fn test_parse_preserves_body_whitespace() {
     assert!(body.contains("line2"));
     assert!(body.contains("line3"));
 }
+
+#[test]
+fn test_parse_pre_delay() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @pre-delay 500\nGET https://api.example.com/users";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+
+    let requests = parse_http_file(&file_path, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].pre_delay_ms, Some(500));
+    assert_eq!(requests[0].post_delay_ms, None);
+}
+
+#[test]
+fn test_parse_post_delay() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @post-delay 1000\nGET https://api.example.com/users";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+
+    let requests = parse_http_file(&file_path, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].pre_delay_ms, None);
+    assert_eq!(requests[0].post_delay_ms, Some(1000));
+}
+
+#[test]
+fn test_parse_both_delays() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @pre-delay 250\n# @post-delay 750\nGET https://api.example.com/users";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+
+    let requests = parse_http_file(&file_path, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].pre_delay_ms, Some(250));
+    assert_eq!(requests[0].post_delay_ms, Some(750));
+}
+
+#[test]
+fn test_parse_delay_with_double_slash_comment() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "// @pre-delay 500\n// @post-delay 1000\nGET https://api.example.com/users";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+
+    let requests = parse_http_file(&file_path, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].pre_delay_ms, Some(500));
+    assert_eq!(requests[0].post_delay_ms, Some(1000));
+}
+
+#[test]
+fn test_parse_delay_with_all_directives() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = r#"# @name delayedRequest
+# @timeout 30s
+# @pre-delay 100
+# @post-delay 200
+# @dependsOn previousRequest
+GET https://api.example.com/users"#;
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let requests = parse_http_file(&file_path, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].name, Some("delayedRequest".to_string()));
+    assert_eq!(requests[0].timeout, Some(30_000));
+    assert_eq!(requests[0].pre_delay_ms, Some(100));
+    assert_eq!(requests[0].post_delay_ms, Some(200));
+    assert_eq!(requests[0].depends_on, Some("previousRequest".to_string()));
+}

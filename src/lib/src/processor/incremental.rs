@@ -36,6 +36,7 @@ pub fn process_http_file_incremental<F>(
     file_path: &str,
     environment: Option<&str>,
     insecure: bool,
+    delay_ms: u64,
     mut callback: F,
 ) -> Result<()>
 where
@@ -53,6 +54,11 @@ where
 
     for (idx, mut request) in requests.into_iter().enumerate() {
         let request_count = (idx + 1) as u32;
+
+        // Apply delay between requests (not before first request)
+        if idx > 0 && delay_ms > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(delay_ms));
+        }
 
         // Check dependencies
         if let Some(dep_name) = request.depends_on.as_ref()
@@ -148,6 +154,15 @@ where
             continue;
         }
 
+        // Apply pre-request delay
+        if let Some(pre_delay) = request.pre_delay_ms
+            && pre_delay > 0 {
+                std::thread::sleep(std::time::Duration::from_millis(pre_delay));
+            }
+
+        // Capture post-delay before request is moved
+        let post_delay = request.post_delay_ms;
+
         // Execute the request
         match runner::execute_http_request(&request, false, insecure) {
             Ok(result) => {
@@ -181,6 +196,12 @@ where
                 }
             }
         }
+
+        // Apply post-request delay
+        if let Some(post_delay) = post_delay
+            && post_delay > 0 {
+                std::thread::sleep(std::time::Duration::from_millis(post_delay));
+            }
     }
 
     Ok(())

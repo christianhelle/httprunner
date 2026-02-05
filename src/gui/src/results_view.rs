@@ -86,7 +86,7 @@ impl ResultsView {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn run_file(&mut self, path: &Path, environment: Option<&str>) {
+    pub fn run_file(&mut self, path: &Path, environment: Option<&str>, delay_ms: u64) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
         let results = Arc::clone(&self.results);
@@ -126,6 +126,7 @@ impl ResultsView {
                     path_str,
                     env.as_deref(),
                     false, // insecure
+                    delay_ms,
                     |_idx, total, process_result| {
                         total_count = total;
 
@@ -227,7 +228,13 @@ impl ResultsView {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn run_single_request(&mut self, path: &Path, index: usize, environment: Option<&str>) {
+    pub fn run_single_request(
+        &mut self,
+        path: &Path,
+        index: usize,
+        environment: Option<&str>,
+        delay_ms: u64,
+    ) {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
         let results = Arc::clone(&self.results);
@@ -256,6 +263,7 @@ impl ResultsView {
                     path_str,
                     env.as_deref(),
                     false, // insecure
+                    delay_ms,
                     |idx, _total, process_result| {
                         // Only capture the result for the target index
                         if idx == index {
@@ -521,7 +529,7 @@ impl ResultsView {
         ui.label(format!("Duration: {} ms", params.duration_ms));
 
         // Verbose mode display order: 1. Assertion Results -> 2. Request Body -> 3. Response Body
-        
+
         // 1. Display assertion results if any
         if !params.assertion_results.is_empty() {
             ui.separator();

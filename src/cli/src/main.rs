@@ -62,6 +62,7 @@ fn track_cli_usage(cli_args: &cli::Cli) {
         report_format: cli_args.report.map(|f| format!("{:?}", f)),
         export: cli_args.export,
         file_count: cli_args.files.len(),
+        delay: cli_args.delay,
     };
     telemetry::track_cli_args(&patterns);
 }
@@ -106,6 +107,7 @@ fn process_http_files(cli_args: &cli::Cli, files: Vec<String>) -> Result<Process
         cli_args.env.as_deref(),
         cli_args.insecure,
         cli_args.pretty_json,
+        cli_args.delay,
     )?;
 
     if results.success {

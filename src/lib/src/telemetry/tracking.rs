@@ -376,6 +376,7 @@ pub struct CliArgPatterns {
     pub report_format: Option<String>,
     pub export: bool,
     pub file_count: usize,
+    pub delay: u64,
 }
 
 pub fn track_cli_args(args: &CliArgPatterns) {
@@ -391,6 +392,7 @@ pub fn track_cli_args(args: &CliArgPatterns) {
     properties.insert("report".to_string(), args.report.to_string());
     properties.insert("export".to_string(), args.export.to_string());
     properties.insert("file_count".to_string(), args.file_count.to_string());
+    properties.insert("delay".to_string(), args.delay.to_string());
 
     if let Some(ref format) = args.report_format {
         properties.insert("report_format".to_string(), format.clone());
@@ -578,6 +580,7 @@ mod tests {
             report_format: Some("json".to_string()),
             export: true,
             file_count: 5,
+            delay: 0,
         };
 
         // Should not panic even if telemetry is not initialized
@@ -727,6 +730,7 @@ mod tests {
             report_format: Some("html".to_string()),
             export: true,
             file_count: 100,
+            delay: 0,
         };
 
         track_cli_args(&args);
@@ -747,6 +751,7 @@ mod tests {
             report_format: None,
             export: false,
             file_count: 0,
+            delay: 0,
         };
 
         track_cli_args(&args);
@@ -870,6 +875,7 @@ mod tests {
             report_format: Some("json".to_string()),
             export: true,
             file_count: 42,
+            delay: 0,
         };
 
         let args2 = args1.clone();

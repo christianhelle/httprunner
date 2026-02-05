@@ -20,6 +20,9 @@ pub struct AppState {
     /// Telemetry opt-in/opt-out setting (defaults to true if not set)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub telemetry_enabled: Option<bool>,
+    /// Delay between requests in milliseconds
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delay_ms: Option<u64>,
 }
 
 impl AppState {
@@ -47,6 +50,7 @@ impl AppState {
             results_compact_mode: None,
             last_results: None,
             telemetry_enabled: None,
+            delay_ms: None,
         }
     }
 

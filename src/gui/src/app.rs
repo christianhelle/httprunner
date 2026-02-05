@@ -43,6 +43,7 @@ pub struct HttpRunnerApp {
     view_mode: ViewMode,
     file_tree_visible: bool,
     telemetry_enabled: bool,
+    delay_ms: u64,
 }
 
 impl HttpRunnerApp {
@@ -63,6 +64,7 @@ impl HttpRunnerApp {
 
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
         let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
+        let delay_ms = state.delay_ms.unwrap_or(0);
 
         let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
@@ -80,6 +82,7 @@ impl HttpRunnerApp {
             view_mode: ViewMode::TextEditor, // Default to text editor for new files
             file_tree_visible,
             telemetry_enabled,
+            delay_ms,
         };
 
         app.update_font_size(&cc.egui_ctx);
@@ -272,6 +275,18 @@ impl HttpRunnerApp {
 
                     ui.separator();
 
+                    ui.label("Request Delay (ms):");
+                    let mut delay_value = self.delay_ms as i32;
+                    if ui
+                        .add(egui::Slider::new(&mut delay_value, 0..=10000).suffix(" ms"))
+                        .changed()
+                    {
+                        self.delay_ms = delay_value.max(0) as u64;
+                        self.save_state();
+                    }
+
+                    ui.separator();
+
                     ui.label(
                         egui::RichText::new(
                             "Telemetry helps improve the app.\nNo personal data is collected.",
@@ -368,6 +383,7 @@ impl HttpRunnerApp {
             file_tree_visible: Some(self.file_tree_visible),
             results_compact_mode: Some(self.results_view.is_compact_mode()),
             telemetry_enabled: Some(self.telemetry_enabled),
+            delay_ms: Some(self.delay_ms),
         };
 
         if let Err(e) = state.save() {
@@ -387,8 +403,11 @@ impl eframe::App for HttpRunnerApp {
                 if !self.request_view.has_changes()
                     && let Some(file) = &self.selected_file
                 {
-                    self.results_view
-                        .run_file(file, self.selected_environment.as_deref());
+                    self.results_view.run_file(
+                        file,
+                        self.selected_environment.as_deref(),
+                        self.delay_ms,
+                    );
                 }
 
                 #[cfg(target_arch = "wasm32")]
@@ -588,8 +607,11 @@ impl eframe::App for HttpRunnerApp {
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 if let Some(file) = &self.selected_file {
-                                    self.results_view
-                                        .run_file(file, self.selected_environment.as_deref());
+                                    self.results_view.run_file(
+                                        file,
+                                        self.selected_environment.as_deref(),
+                                        self.delay_ms,
+                                    );
                                 }
 
                                 #[cfg(target_arch = "wasm32")]
@@ -630,6 +652,7 @@ impl eframe::App for HttpRunnerApp {
                                                 file,
                                                 idx,
                                                 self.selected_environment.as_deref(),
+                                                self.delay_ms,
                                             );
                                         }
 
@@ -681,8 +704,11 @@ impl eframe::App for HttpRunnerApp {
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 if let Some(file) = &self.selected_file {
-                                    self.results_view
-                                        .run_file(file, self.selected_environment.as_deref());
+                                    self.results_view.run_file(
+                                        file,
+                                        self.selected_environment.as_deref(),
+                                        self.delay_ms,
+                                    );
                                 }
 
                                 #[cfg(target_arch = "wasm32")]

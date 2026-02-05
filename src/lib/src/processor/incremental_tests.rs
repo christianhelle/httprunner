@@ -1,4 +1,4 @@
-use super::incremental::{process_http_file_incremental, RequestProcessingResult};
+use super::incremental::{RequestProcessingResult, process_http_file_incremental};
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 use tempfile::NamedTempFile;
@@ -19,7 +19,7 @@ fn test_basic_request_execution() {
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, |idx, total, result| {
+    let _ = process_http_file_incremental(file_path, None, false, 0, |idx, total, result| {
         results_clone.lock().unwrap().push((idx, total, result));
         true // Continue processing
     });
@@ -45,14 +45,18 @@ GET https://httpbin.org/status/202
     let execution_count = Arc::new(Mutex::new(0));
     let execution_count_clone = Arc::clone(&execution_count);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |idx, _total, _result| {
-        *execution_count_clone.lock().unwrap() += 1;
-        // Stop after processing index 1 (second request)
-        idx < 1
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |idx, _total, _result| {
+            *execution_count_clone.lock().unwrap() += 1;
+            // Stop after processing index 1 (second request)
+            idx < 1
+        });
 
     let count = *execution_count.lock().unwrap();
-    assert_eq!(count, 2, "Should process exactly 2 requests before stopping");
+    assert_eq!(
+        count, 2,
+        "Should process exactly 2 requests before stopping"
+    );
 }
 
 #[test]
@@ -75,10 +79,11 @@ GET https://httpbin.org/status/200
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |_idx, _total, result| {
-        results_clone.lock().unwrap().push(result);
-        true
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        });
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 2, "Should process both requests");
@@ -109,10 +114,11 @@ GET https://httpbin.org/status/200
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |_idx, _total, result| {
-        results_clone.lock().unwrap().push(result);
-        true
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        });
 
     let results = results.lock().unwrap();
     assert!(results.len() >= 2, "Should process at least 2 requests");
@@ -170,10 +176,11 @@ Content-Type: application/json
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |_idx, _total, result| {
-        results_clone.lock().unwrap().push(result);
-        true
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        });
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 2, "Should process both requests");
@@ -207,10 +214,11 @@ Content-Type: application/json
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |_idx, _total, result| {
-        results_clone.lock().unwrap().push(result);
-        true
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        });
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 1, "Should process one request");
@@ -243,10 +251,11 @@ GET https://httpbin.org/status/200
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |_idx, _total, result| {
-        results_clone.lock().unwrap().push(result);
-        true
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        });
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 3);
@@ -269,7 +278,7 @@ fn test_empty_file() {
     let callback_called = Arc::new(Mutex::new(false));
     let callback_called_clone = Arc::clone(&callback_called);
 
-    let result = process_http_file_incremental(file_path, None, false, move |_, _, _| {
+    let result = process_http_file_incremental(file_path, None, false, 0, move |_, _, _| {
         *callback_called_clone.lock().unwrap() = true;
         true
     });
@@ -290,7 +299,7 @@ fn test_parse_error_handling() {
     let callback_called = Arc::new(Mutex::new(false));
     let callback_called_clone = Arc::clone(&callback_called);
 
-    let result = process_http_file_incremental(file_path, None, false, move |_, _, _| {
+    let result = process_http_file_incremental(file_path, None, false, 0, move |_, _, _| {
         *callback_called_clone.lock().unwrap() = true;
         true
     });
@@ -315,10 +324,11 @@ GET https://httpbin.org/json
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |_idx, _total, result| {
-        results_clone.lock().unwrap().push(result);
-        true
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        });
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 1, "Should process one request");
@@ -349,10 +359,11 @@ GET https://httpbin.org/status/404
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, move |_idx, _total, result| {
-        results_clone.lock().unwrap().push(result);
-        true
-    });
+    let _ =
+        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        });
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 3);
@@ -360,14 +371,12 @@ GET https://httpbin.org/status/404
     // All should be executed (even the 404 is technically a successful execution)
     for (idx, result) in results.iter().enumerate() {
         match result {
-            RequestProcessingResult::Executed { result, .. } => {
-                match idx {
-                    0 => assert_eq!(result.status_code, 200),
-                    1 => assert_eq!(result.status_code, 201),
-                    2 => assert_eq!(result.status_code, 404),
-                    _ => {}
-                }
-            }
+            RequestProcessingResult::Executed { result, .. } => match idx {
+                0 => assert_eq!(result.status_code, 200),
+                1 => assert_eq!(result.status_code, 201),
+                2 => assert_eq!(result.status_code, 404),
+                _ => {}
+            },
             _ => panic!("All requests should be executed"),
         }
     }

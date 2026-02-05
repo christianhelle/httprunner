@@ -37,6 +37,8 @@ struct ParserState {
     pending_connection_timeout: Option<u64>,
     pending_depends_on: Option<String>,
     pending_conditions: Vec<Condition>,
+    pending_pre_delay: Option<u64>,
+    pending_post_delay: Option<u64>,
     in_intellij_script: bool,
 }
 
@@ -53,6 +55,8 @@ impl ParserState {
             pending_connection_timeout: None,
             pending_depends_on: None,
             pending_conditions: Vec::new(),
+            pending_pre_delay: None,
+            pending_post_delay: None,
             in_intellij_script: false,
         }
     }
@@ -80,6 +84,8 @@ impl ParserState {
             connection_timeout: self.pending_connection_timeout.take(),
             depends_on: self.pending_depends_on.take(),
             conditions: std::mem::take(&mut self.pending_conditions),
+            pre_delay_ms: self.pending_pre_delay.take(),
+            post_delay_ms: self.pending_post_delay.take(),
         });
         self.in_body = false;
     }
@@ -230,6 +236,50 @@ fn try_parse_condition_directive(trimmed: &str, state: &mut ParserState) -> Line
     LineParseResult::NotHandled
 }
 
+fn try_parse_pre_delay_directive(trimmed: &str, state: &mut ParserState) -> LineParseResult {
+    let delay_value = trimmed
+        .strip_prefix("# @pre-delay ")
+        .or_else(|| trimmed.strip_prefix("// @pre-delay "))
+        .map(|s| s.trim());
+
+    if let Some(value) = delay_value {
+        match value.parse::<u64>() {
+            Ok(delay_ms) => {
+                state.pending_pre_delay = Some(delay_ms);
+                LineParseResult::Continue
+            }
+            Err(_) => LineParseResult::Error(format!(
+                "Invalid @pre-delay value '{}', expected number in milliseconds",
+                value
+            )),
+        }
+    } else {
+        LineParseResult::NotHandled
+    }
+}
+
+fn try_parse_post_delay_directive(trimmed: &str, state: &mut ParserState) -> LineParseResult {
+    let delay_value = trimmed
+        .strip_prefix("# @post-delay ")
+        .or_else(|| trimmed.strip_prefix("// @post-delay "))
+        .map(|s| s.trim());
+
+    if let Some(value) = delay_value {
+        match value.parse::<u64>() {
+            Ok(delay_ms) => {
+                state.pending_post_delay = Some(delay_ms);
+                LineParseResult::Continue
+            }
+            Err(_) => LineParseResult::Error(format!(
+                "Invalid @post-delay value '{}', expected number in milliseconds",
+                value
+            )),
+        }
+    } else {
+        LineParseResult::NotHandled
+    }
+}
+
 fn try_parse_variable_line(trimmed: &str, state: &mut ParserState) -> LineParseResult {
     if trimmed.starts_with('@') {
         // If we're in the body, don't treat '@' as a variable declaration
@@ -351,6 +401,24 @@ fn parse_line(line: &str, state: &mut ParserState) {
     }
 
     match try_parse_condition_directive(trimmed, state) {
+        LineParseResult::Continue => return,
+        LineParseResult::Error(msg) => {
+            eprintln!("Warning: {}", msg);
+            return;
+        }
+        LineParseResult::NotHandled => {}
+    }
+
+    match try_parse_pre_delay_directive(trimmed, state) {
+        LineParseResult::Continue => return,
+        LineParseResult::Error(msg) => {
+            eprintln!("Warning: {}", msg);
+            return;
+        }
+        LineParseResult::NotHandled => {}
+    }
+
+    match try_parse_post_delay_directive(trimmed, state) {
         LineParseResult::Continue => return,
         LineParseResult::Error(msg) => {
             eprintln!("Warning: {}", msg);

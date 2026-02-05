@@ -85,6 +85,8 @@ impl EditableRequest {
                 Some(self.depends_on.clone())
             },
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         }
     }
 

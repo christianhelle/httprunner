@@ -16,6 +16,8 @@ pub struct HttpRequest {
     pub connection_timeout: Option<u64>, // Connection timeout in milliseconds
     pub depends_on: Option<String>,      // Request name this depends on (for @dependsOn)
     pub conditions: Vec<Condition>,      // Conditions for execution (for @if)
+    pub pre_delay_ms: Option<u64>,       // Delay before executing request (for @pre-delay)
+    pub post_delay_ms: Option<u64>,      // Delay after executing request (for @post-delay)
 }
 
 #[derive(Debug, Clone)]

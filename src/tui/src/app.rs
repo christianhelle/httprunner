@@ -27,6 +27,7 @@ pub struct App {
     pub status_message: String,
     pub file_tree_visible: bool,
     pub telemetry_enabled: bool,
+    pub delay_ms: u64,
 }
 
 impl App {
@@ -41,6 +42,7 @@ impl App {
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
         let results_compact_mode = state.results_compact_mode.unwrap_or(true);
         let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
+        let delay_ms = state.delay_ms.unwrap_or(0);
 
         let mut results_view = ResultsView::new();
         results_view.set_compact_mode(results_compact_mode);
@@ -58,6 +60,7 @@ impl App {
             status_message: String::from("Ready"),
             file_tree_visible,
             telemetry_enabled,
+            delay_ms,
         };
 
         if let Some(saved_file) = state.selected_file
@@ -105,6 +108,16 @@ impl App {
             }
             (KeyCode::Char('t'), KeyModifiers::CONTROL) => {
                 self.toggle_telemetry();
+                return Ok(());
+            }
+            (KeyCode::Char('+'), KeyModifiers::CONTROL)
+            | (KeyCode::Char('='), KeyModifiers::CONTROL) => {
+                self.increase_delay();
+                return Ok(());
+            }
+            (KeyCode::Char('-'), KeyModifiers::CONTROL)
+            | (KeyCode::Char('_'), KeyModifiers::CONTROL) => {
+                self.decrease_delay();
                 return Ok(());
             }
             (KeyCode::F(5), _)
@@ -228,6 +241,7 @@ impl App {
             let env = self.selected_environment.clone();
             let incremental_results = self.results_view.incremental_results();
             let is_running = self.results_view.is_running_arc();
+            let delay_ms = self.delay_ms; // Copy the delay value
 
             // Clear for async run
             self.results_view.clear_for_async_run();
@@ -247,6 +261,7 @@ impl App {
                     &path_str,
                     env.as_deref(),
                     false, // insecure
+                    delay_ms,
                     |_idx, total, process_result| {
                         total_count = total;
 
@@ -377,6 +392,18 @@ impl App {
         self.save_state();
     }
 
+    fn increase_delay(&mut self) {
+        self.delay_ms = (self.delay_ms + 100).min(10000); // Max 10 seconds
+        self.status_message = format!("Delay: {}ms", self.delay_ms);
+        self.save_state();
+    }
+
+    fn decrease_delay(&mut self) {
+        self.delay_ms = self.delay_ms.saturating_sub(100);
+        self.status_message = format!("Delay: {}ms", self.delay_ms);
+        self.save_state();
+    }
+
     fn save_state(&self) {
         let state = AppState {
             root_directory: Some(self.root_directory.clone()),
@@ -388,6 +415,7 @@ impl App {
             results_compact_mode: Some(self.results_view.is_compact_mode()),
             last_results: None,
             telemetry_enabled: Some(self.telemetry_enabled),
+            delay_ms: Some(self.delay_ms),
         };
         state.save();
     }

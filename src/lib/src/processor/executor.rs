@@ -20,6 +20,7 @@ pub struct ProcessorConfig<'a> {
     pub insecure: bool,
     pub pretty_json: bool,
     pub silent: bool,
+    pub delay_ms: u64,
 }
 
 impl<'a> ProcessorConfig<'a> {
@@ -32,6 +33,7 @@ impl<'a> ProcessorConfig<'a> {
             insecure: false,
             pretty_json: false,
             silent: false,
+            delay_ms: 0,
         }
     }
 
@@ -62,6 +64,11 @@ impl<'a> ProcessorConfig<'a> {
 
     pub fn with_silent(mut self, silent: bool) -> Self {
         self.silent = silent;
+        self
+    }
+
+    pub fn with_delay(mut self, delay_ms: u64) -> Self {
+        self.delay_ms = delay_ms;
         self
     }
 }
@@ -532,19 +539,31 @@ where
     substitute_request_variables_in_request(&mut processed_request, request_contexts)?;
     substitute_functions_in_request(&mut processed_request)?;
 
+    // Apply pre-delay if specified
+    if let Some(pre_delay) = processed_request.pre_delay_ms {
+        std::thread::sleep(std::time::Duration::from_millis(pre_delay));
+    }
+
     // Log request details if verbose
     if config.verbose {
         log_request_details(&processed_request, log, config.pretty_json);
     }
 
     // Execute the request
-    match executor(&processed_request, config.verbose, config.insecure) {
+    let result = match executor(&processed_request, config.verbose, config.insecure) {
         Ok(result) => Ok((RequestProcessResult::Completed(result), processed_request)),
         Err(e) => {
             log_execution_error(&processed_request, &e, log);
             Ok((RequestProcessResult::ExecutionError, processed_request))
         }
+    };
+
+    // Apply post-delay if specified (even if request failed)
+    if let Some(post_delay) = result.as_ref().ok().and_then(|(_, req)| req.post_delay_ms) {
+        std::thread::sleep(std::time::Duration::from_millis(post_delay));
     }
+
+    result
 }
 
 fn process_single_file<F>(
@@ -581,6 +600,11 @@ where
 
     for request in requests {
         counters.increment_total();
+
+        // Apply delay between requests (not before first request)
+        if counters.total > 1 && config.delay_ms > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(config.delay_ms));
+        }
 
         let (result, processed_request) =
             match process_single_request(request, &request_contexts, config, executor, log) {
@@ -657,27 +681,7 @@ pub fn process_http_files(
     environment: Option<&str>,
     insecure: bool,
     pretty_json: bool,
-) -> Result<ProcessorResults> {
-    let config = ProcessorConfig::new(files)
-        .with_verbose(verbose)
-        .with_log_filename(log_filename)
-        .with_environment(environment)
-        .with_insecure(insecure)
-        .with_pretty_json(pretty_json);
-
-    process_http_files_with_config(&config, &|request, verbose, insecure| {
-        runner::execute_http_request(request, verbose, insecure)
-    })
-}
-
-pub fn process_http_files_with_silent(
-    files: &[String],
-    verbose: bool,
-    log_filename: Option<&str>,
-    environment: Option<&str>,
-    insecure: bool,
-    pretty_json: bool,
-    silent: bool,
+    delay_ms: u64,
 ) -> Result<ProcessorResults> {
     let config = ProcessorConfig::new(files)
         .with_verbose(verbose)
@@ -685,9 +689,15 @@ pub fn process_http_files_with_silent(
         .with_environment(environment)
         .with_insecure(insecure)
         .with_pretty_json(pretty_json)
-        .with_silent(silent);
+        .with_delay(delay_ms);
 
     process_http_files_with_config(&config, &|request, verbose, insecure| {
+        runner::execute_http_request(request, verbose, insecure)
+    })
+}
+
+pub fn process_http_files_with_silent(config: &ProcessorConfig) -> Result<ProcessorResults> {
+    process_http_files_with_config(config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
     })
 }
