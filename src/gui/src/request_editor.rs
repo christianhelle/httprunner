@@ -28,8 +28,8 @@ impl Default for EditableRequest {
     }
 }
 
-impl From<&httprunner_lib::HttpRequest> for EditableRequest {
-    fn from(request: &httprunner_lib::HttpRequest) -> Self {
+impl From<&httprunner_core::HttpRequest> for EditableRequest {
+    fn from(request: &httprunner_core::HttpRequest) -> Self {
         Self {
             name: request.name.clone().unwrap_or_default(),
             method: request.method.clone(),
@@ -51,10 +51,10 @@ impl From<&httprunner_lib::HttpRequest> for EditableRequest {
 }
 
 impl EditableRequest {
-    pub fn to_http_request(&self) -> httprunner_lib::HttpRequest {
-        use httprunner_lib::types::Header;
+    pub fn to_http_request(&self) -> httprunner_core::HttpRequest {
+        use httprunner_core::types::Header;
 
-        httprunner_lib::HttpRequest {
+        httprunner_core::HttpRequest {
             name: if self.name.is_empty() {
                 None
             } else {
@@ -102,7 +102,7 @@ impl EditableRequest {
 }
 
 pub struct RequestEditor {
-    requests: Vec<httprunner_lib::HttpRequest>,
+    requests: Vec<httprunner_core::HttpRequest>,
     editing_index: Option<usize>,
     editing_request: Option<EditableRequest>,
     current_file: Option<PathBuf>,
@@ -123,7 +123,7 @@ impl RequestEditor {
     pub fn load_file(&mut self, path: &Path) {
         if let Some(path_str) = path.to_str() {
             let parsed_requests =
-                httprunner_lib::parser::parse_http_file(path_str, None).unwrap_or_default();
+                httprunner_core::parser::parse_http_file(path_str, None).unwrap_or_default();
             self.requests = parsed_requests;
             self.current_file = Some(path.to_path_buf());
             self.editing_index = None;
@@ -185,7 +185,7 @@ impl RequestEditor {
 
     pub fn save_to_file(&mut self) -> anyhow::Result<()> {
         if let Some(path) = &self.current_file {
-            httprunner_lib::serializer::write_http_file(path, &self.requests)?;
+            httprunner_core::serializer::write_http_file(path, &self.requests)?;
             self.has_changes = false;
             Ok(())
         } else {
@@ -193,7 +193,7 @@ impl RequestEditor {
         }
     }
 
-    pub fn get_requests(&self) -> &[httprunner_lib::HttpRequest] {
+    pub fn get_requests(&self) -> &[httprunner_core::HttpRequest] {
         &self.requests
     }
 

@@ -21,7 +21,7 @@ name = "httprunner-tui"
 path = "src/main.rs"
 
 [dependencies]
-httprunner-lib = { path = "../lib" }
+httprunner-core = { path = "../core" }
 anyhow = { workspace = true }
 walkdir = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }

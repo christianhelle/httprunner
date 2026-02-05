@@ -2536,7 +2536,7 @@ The project is organized as a Cargo workspace with the following structure:
 ```
 httprunner/
 ├── src/
-│   ├── lib/         # Core library (httprunner-lib) - HTTP processing logic
+│   ├── core/        # Core library (httprunner-core) - HTTP processing logic
 │   ├── cli/         # CLI application (httprunner) - builds httprunner binary
 │   ├── tui/         # TUI application (httprunner-tui) - builds httprunner-tui binary
 │   └── gui/         # GUI application (httprunner-gui) - builds httprunner-gui binary

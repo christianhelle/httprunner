@@ -1,4 +1,4 @@
-# httprunner-lib
+# httprunner-core
 
 A powerful Rust library for parsing and executing HTTP requests from `.http` files. This is the core library that powers the `httprunner` CLI tool.
 
@@ -7,7 +7,7 @@ A powerful Rust library for parsing and executing HTTP requests from `.http` fil
 
 ## Overview
 
-`httprunner-lib` provides a complete solution for working with `.http` files - a simple text-based format for defining HTTP requests. It handles parsing, variable substitution, request execution, and response validation.
+`httprunner-core` provides a complete solution for working with `.http` files - a simple text-based format for defining HTTP requests. It handles parsing, variable substitution, request execution, and response validation.
 
 ## Features
 
@@ -31,7 +31,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-httprunner-lib = "0.1.0"
+httprunner-core = "0.1.0"
 ```
 
 ## Quick Start
@@ -39,7 +39,7 @@ httprunner-lib = "0.1.0"
 ### Low-level API (Parse and Execute)
 
 ```rust
-use httprunner_lib::{parser::parse_http_file, runner::execute_http_request};
+use httprunner_core::{parser::parse_http_file, runner::execute_http_request};
 
 fn main() -> anyhow::Result<()> {
     // Parse an .http file
@@ -59,7 +59,7 @@ fn main() -> anyhow::Result<()> {
 ### High-level API (Process Multiple Files)
 
 ```rust
-use httprunner_lib::processor::process_http_files;
+use httprunner_core::processor::process_http_files;
 
 fn main() -> anyhow::Result<()> {
     // Process one or more .http files

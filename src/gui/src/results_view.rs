@@ -1,6 +1,6 @@
 #[cfg(not(target_arch = "wasm32"))]
-use httprunner_lib::telemetry;
-use httprunner_lib::types::AssertionResult;
+use httprunner_core::telemetry;
+use httprunner_core::types::AssertionResult;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
@@ -122,7 +122,7 @@ impl ResultsView {
                 let mut total_count = 0usize;
 
                 // Use the incremental processor which handles all features
-                let result = httprunner_lib::processor::process_http_file_incremental(
+                let result = httprunner_core::processor::process_http_file_incremental(
                     path_str,
                     env.as_deref(),
                     false, // insecure
@@ -130,7 +130,7 @@ impl ResultsView {
                     |_idx, total, process_result| {
                         total_count = total;
 
-                        use httprunner_lib::processor::RequestProcessingResult;
+                        use httprunner_core::processor::RequestProcessingResult;
                         match process_result {
                             RequestProcessingResult::Skipped { request, reason } => {
                                 skipped_count += 1;
@@ -259,7 +259,7 @@ impl ResultsView {
                 // but only show the result of the selected request
                 let mut target_result: Option<ExecutionResult> = None;
 
-                let result = httprunner_lib::processor::process_http_file_incremental(
+                let result = httprunner_core::processor::process_http_file_incremental(
                     path_str,
                     env.as_deref(),
                     false, // insecure
@@ -267,7 +267,7 @@ impl ResultsView {
                     |idx, _total, process_result| {
                         // Only capture the result for the target index
                         if idx == index {
-                            use httprunner_lib::processor::RequestProcessingResult;
+                            use httprunner_core::processor::RequestProcessingResult;
                             target_result = Some(match process_result {
                                 RequestProcessingResult::Skipped { request, reason } => {
                                     ExecutionResult::Failure {
@@ -464,9 +464,9 @@ impl ResultsView {
         if !assertion_results.is_empty() {
             for assertion_result in assertion_results {
                 let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_lib::types::AssertionType::Status => "Status Code",
-                    httprunner_lib::types::AssertionType::Body => "Response Body",
-                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                    httprunner_core::types::AssertionType::Status => "Status Code",
+                    httprunner_core::types::AssertionType::Body => "Response Body",
+                    httprunner_core::types::AssertionType::Headers => "Response Headers",
                 };
 
                 if assertion_result.passed {
@@ -537,9 +537,9 @@ impl ResultsView {
 
             for assertion_result in params.assertion_results {
                 let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_lib::types::AssertionType::Status => "Status Code",
-                    httprunner_lib::types::AssertionType::Body => "Response Body",
-                    httprunner_lib::types::AssertionType::Headers => "Response Headers",
+                    httprunner_core::types::AssertionType::Status => "Status Code",
+                    httprunner_core::types::AssertionType::Body => "Response Body",
+                    httprunner_core::types::AssertionType::Headers => "Response Headers",
                 };
 
                 if assertion_result.passed {

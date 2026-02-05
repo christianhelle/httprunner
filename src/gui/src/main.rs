@@ -17,7 +17,7 @@ mod results_view_async;
 use app::HttpRunnerApp;
 
 #[cfg(not(target_arch = "wasm32"))]
-use httprunner_lib::telemetry::{self, AppType};
+use httprunner_core::telemetry::{self, AppType};
 
 #[cfg(not(target_arch = "wasm32"))]
 const VERSION: &str = env!("CARGO_PKG_VERSION");

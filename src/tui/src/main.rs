@@ -13,7 +13,7 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use httprunner_lib::telemetry::{self, AppType};
+use httprunner_core::telemetry::{self, AppType};
 use ratatui::{Terminal, backend::CrosstermBackend};
 use state::AppState;
 use std::io;

@@ -253,8 +253,8 @@ jobs:
           $toml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path Cargo.toml
 
-          $toml = (Get-Content -Path src/lib/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
-          $toml | Set-Content -Path src/lib/Cargo.toml
+          $toml = (Get-Content -Path src/core/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml | Set-Content -Path src/core/Cargo.toml
 
           $toml = (Get-Content -Path src/cli/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path src/cli/Cargo.toml
@@ -262,16 +262,16 @@ jobs:
           $toml = (Get-Content -Path src/gui/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path src/gui/Cargo.toml
 
-          $readme = (Get-Content -Path src/lib/README.md -Raw) -replace 'httprunner-lib = version = "0.1.0"', 'httprunner-lib = version = "${{ env.VERSION }}"'
-          $readme | Set-Content -Path src/lib/README.md
+          $readme = (Get-Content -Path src/core/README.md -Raw) -replace 'httprunner-core = version = "0.1.0"', 'httprunner-core = version = "${{ env.VERSION }}"'
+          $readme | Set-Content -Path src/core/README.md
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
 
-      - name: Publish Lib to crates.io
-        run: cargo publish --allow-dirty --token ${{ secrets.CRATES_TOKEN }} -p httprunner-lib
+      - name: Publish Core to crates.io
+        run: cargo publish --allow-dirty --token ${{ secrets.CRATES_TOKEN }} -p httprunner-core
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_TOKEN }}
 

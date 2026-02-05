@@ -212,7 +212,7 @@ fn render_request_view(f: &mut Frame, area: Rect, app: &App) {
 
 fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
     use crate::results_view::ExecutionResult;
-    use httprunner_lib::types::AssertionType;
+    use httprunner_core::types::AssertionType;
 
     let is_focused = app.focused_pane == FocusedPane::ResultsView;
     let border_style = if is_focused {
@@ -556,7 +556,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 
 fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
     // Get support key
-    let support_key_text = match httprunner_lib::logging::get_support_key() {
+    let support_key_text = match httprunner_core::logging::get_support_key() {
         Ok(key) => format!("Support: {}", key.short_key),
         Err(_) => String::new(),
     };

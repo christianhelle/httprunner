@@ -44,7 +44,7 @@ This implementation adds comprehensive editing capabilities to the HTTP File Run
 
 ### New Components
 
-#### 1. Serializer Module (`src/lib/src/serializer.rs`)
+#### 1. Serializer Module (`src/core/src/serializer.rs`)
 - Converts `HttpRequest` objects back to .http file format
 - Preserves all directives (@name, @timeout, @dependsOn, @if, @assert)
 - Maintains proper formatting
@@ -79,7 +79,7 @@ Key types:
 - Unsaved changes indicator (orange dot)
 - Integrated RequestViewAction handling
 
-#### 2. Library Exports (`src/lib/src/lib.rs`)
+#### 2. Library Exports (`src/core/src/core.rs`)
 - Added serializer module to public API
 
 ## Testing
@@ -136,7 +136,7 @@ Lines Added: 825+
 Lines Removed: 58-
 
 New Files:
-- src/lib/src/serializer.rs (244 lines)
+- src/core/src/serializer.rs (244 lines)
 - src/gui/src/request_editor.rs (213 lines)
 - docs/GUI_EDITING.md (106 lines)
 - docs/GUI_UI_WALKTHROUGH.md (188 lines)
@@ -145,7 +145,7 @@ Modified Files:
 - src/gui/src/app.rs (+65, -13)
 - src/gui/src/request_view.rs (+199, -58)
 - src/gui/src/main.rs (+1)
-- src/lib/src/lib.rs (+1)
+- src/core/src/core.rs (+1)
 ```
 
 ## How to Use
