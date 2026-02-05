@@ -30,6 +30,8 @@ fn test_evaluate_status_condition_success() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -73,6 +75,8 @@ fn test_evaluate_status_condition_failure() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -109,6 +113,8 @@ fn test_check_dependency_success() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -145,6 +151,8 @@ fn test_check_dependency_not_200() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -181,6 +189,8 @@ fn test_check_dependency_201_created() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -230,6 +240,8 @@ fn test_evaluate_body_jsonpath_condition_success() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -273,6 +285,8 @@ fn test_evaluate_body_jsonpath_condition_failure() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -324,6 +338,8 @@ fn test_evaluate_multiple_conditions_all_met() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -375,6 +391,8 @@ fn test_evaluate_multiple_conditions_one_fails() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -418,6 +436,8 @@ fn test_evaluate_status_condition_negated_success() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -461,6 +481,8 @@ fn test_evaluate_status_condition_negated_failure() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -504,6 +526,8 @@ fn test_evaluate_body_jsonpath_condition_negated_success() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -547,6 +571,8 @@ fn test_evaluate_body_jsonpath_condition_negated_failure() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -617,6 +643,8 @@ fn test_evaluate_conditions_verbose_result_is_none() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -654,6 +682,8 @@ fn test_evaluate_conditions_verbose_no_response_body() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -702,6 +732,8 @@ fn test_evaluate_conditions_verbose_json_path_not_found() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result = HttpResult {
@@ -728,3 +760,5 @@ fn test_evaluate_conditions_verbose_json_path_not_found() {
     assert!(!results[0].condition_met);
     assert_eq!(results[0].actual_value, Some("<not found>".to_string()));
 }
+
+

@@ -91,6 +91,8 @@ mod tests {
             connection_timeout: None,
             depends_on: None,
             conditions: Vec::new(),
+            pre_delay_ms: None,
+            post_delay_ms: None,
         }
     }
 

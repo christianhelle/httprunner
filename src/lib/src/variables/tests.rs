@@ -148,7 +148,9 @@ fn test_substitute_request_variables_simple() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: Some(HttpResult {
             request_name: Some("login".to_string()),
             status_code: 200,
@@ -185,7 +187,9 @@ fn test_substitute_request_variables_multiple() {
                 connection_timeout: None,
                 depends_on: None,
                 conditions: vec![],
-            },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
             result: Some(HttpResult {
                 request_name: Some("config".to_string()),
                 status_code: 200,
@@ -211,7 +215,9 @@ fn test_substitute_request_variables_multiple() {
                 connection_timeout: None,
                 depends_on: None,
                 conditions: vec![],
-            },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
             result: Some(HttpResult {
                 request_name: Some("user".to_string()),
                 status_code: 200,
@@ -262,7 +268,9 @@ fn test_substitute_request_variables_from_headers() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: Some(HttpResult {
             request_name: Some("login".to_string()),
             status_code: 200,
@@ -298,7 +306,9 @@ fn test_substitute_request_variables_from_request_body() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: None,
     }];
 
@@ -325,7 +335,9 @@ fn test_substitute_request_variables_nested_json() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: Some(HttpResult {
             request_name: Some("getUser".to_string()),
             status_code: 200,
@@ -499,3 +511,5 @@ fn test_substitute_request_variables_extraction_error() {
     let result = substitute_request_variables("{{req.response.body.$.data}}", &context).unwrap();
     assert_eq!(result, "{{req.response.body.$.data}}");
 }
+
+

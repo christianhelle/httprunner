@@ -27,7 +27,9 @@ fn create_test_context() -> Vec<RequestContext> {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: Some(HttpResult {
             request_name: Some("login".to_string()),
             status_code: 200,
@@ -168,7 +170,9 @@ fn test_extract_request_variable_value_no_result() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: None,
     }];
 
@@ -200,7 +204,9 @@ fn test_extract_request_variable_value_missing_response_body() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: Some(HttpResult {
             request_name: Some("test".to_string()),
             status_code: 204,
@@ -241,7 +247,9 @@ fn test_extract_request_variable_value_missing_request_body() {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
-        },
+        pre_delay_ms: None,
+        post_delay_ms: None,
+    },
         result: None,
     }];
 
@@ -319,6 +327,8 @@ fn test_extract_request_variable_value_request_header_not_found() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let context = vec![RequestContext {
@@ -355,6 +365,8 @@ fn test_extract_request_variable_value_response_body_no_jsonpath() {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     };
 
     let result_data = HttpResult {
@@ -387,3 +399,5 @@ fn test_extract_request_variable_value_response_body_no_jsonpath() {
     assert!(extracted.is_ok());
     assert_eq!(extracted.unwrap(), Some("plain text response".to_string()));
 }
+
+

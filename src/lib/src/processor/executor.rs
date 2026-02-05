@@ -539,19 +539,31 @@ where
     substitute_request_variables_in_request(&mut processed_request, request_contexts)?;
     substitute_functions_in_request(&mut processed_request)?;
 
+    // Apply pre-delay if specified
+    if let Some(pre_delay) = processed_request.pre_delay_ms {
+        std::thread::sleep(std::time::Duration::from_millis(pre_delay));
+    }
+
     // Log request details if verbose
     if config.verbose {
         log_request_details(&processed_request, log, config.pretty_json);
     }
 
     // Execute the request
-    match executor(&processed_request, config.verbose, config.insecure) {
+    let result = match executor(&processed_request, config.verbose, config.insecure) {
         Ok(result) => Ok((RequestProcessResult::Completed(result), processed_request)),
         Err(e) => {
             log_execution_error(&processed_request, &e, log);
             Ok((RequestProcessResult::ExecutionError, processed_request))
         }
+    };
+
+    // Apply post-delay if specified (even if request failed)
+    if let Some(post_delay) = result.as_ref().ok().and_then(|(_, req)| req.post_delay_ms) {
+        std::thread::sleep(std::time::Duration::from_millis(post_delay));
     }
+
+    result
 }
 
 fn process_single_file<F>(

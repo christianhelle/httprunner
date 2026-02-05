@@ -109,6 +109,8 @@ mod tests {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         };
 
         let serialized = serialize_http_request(&request);
@@ -130,6 +132,8 @@ mod tests {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         };
 
         let serialized = serialize_http_request(&request);
@@ -159,6 +163,8 @@ mod tests {
             connection_timeout: None,
             depends_on: None,
             conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         };
 
         let serialized = serialize_http_request(&request);
@@ -267,3 +273,4 @@ GET https://httpbin.org/get
         let _ = fs::remove_file(&output_file);
     }
 }
+

@@ -18,6 +18,8 @@ fn sample_request(name: &str, method: &str, url: &str) -> HttpRequest {
         connection_timeout: None,
         depends_on: None,
         conditions: vec![],
+        pre_delay_ms: None,
+        post_delay_ms: None,
     }
 }
 
@@ -869,3 +871,5 @@ fn export_handles_various_status_codes() {
         }
     }
 }
+
+
