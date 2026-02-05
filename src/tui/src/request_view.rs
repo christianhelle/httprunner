@@ -1,6 +1,6 @@
 use crossterm::event::{KeyCode, KeyEvent};
-use httprunner_lib::parser::parse_http_file;
-use httprunner_lib::types::HttpRequest;
+use httprunner_core::parser::parse_http_file;
+use httprunner_core::types::HttpRequest;
 use std::path::Path;
 
 pub struct RequestView {

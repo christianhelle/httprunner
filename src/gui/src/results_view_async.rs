@@ -1,6 +1,6 @@
 // WASM-specific async execution for results view
 use crate::results_view::{ExecutionResult, ResultsView};
-use httprunner_lib::parser;
+use httprunner_core::parser;
 use std::sync::{Arc, Mutex};
 
 impl ResultsView {
@@ -129,7 +129,7 @@ impl ResultsView {
         wasm_bindgen_futures::spawn_local(async move {
             // Parse the content
             if let Ok(requests) =
-                httprunner_lib::parser::parse_http_content(&content, env.as_deref())
+                httprunner_core::parser::parse_http_content(&content, env.as_deref())
             {
                 if let Some(request) = requests.get(index) {
                     let result = execute_request_async(request.clone()).await;
@@ -162,7 +162,7 @@ impl ResultsView {
     }
 }
 
-async fn execute_request_async(request: httprunner_lib::HttpRequest) -> ExecutionResult {
+async fn execute_request_async(request: httprunner_core::HttpRequest) -> ExecutionResult {
     #[cfg(not(target_arch = "wasm32"))]
     use std::time::Instant;
     #[cfg(target_arch = "wasm32")]
@@ -170,7 +170,7 @@ async fn execute_request_async(request: httprunner_lib::HttpRequest) -> Executio
 
     let start = Instant::now();
 
-    match httprunner_lib::execute_http_request_async(&request, false, false).await {
+    match httprunner_core::execute_http_request_async(&request, false, false).await {
         Ok(result) => {
             let duration_ms = start.elapsed().as_millis() as u64;
 

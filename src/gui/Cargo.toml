@@ -25,7 +25,7 @@ name = "httprunner_gui_lib"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-httprunner-lib = { path = "../lib" }
+httprunner-core = { path = "../core" }
 eframe = { workspace = true, default-features = false, features = [
     "accesskit",
     "default_fonts",

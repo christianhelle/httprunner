@@ -6,7 +6,7 @@ use super::{
     text_editor::TextEditor,
 };
 #[cfg(not(target_arch = "wasm32"))]
-use httprunner_lib::telemetry;
+use httprunner_core::telemetry;
 use std::path::{Path, PathBuf};
 
 enum KeyboardAction {
@@ -335,7 +335,7 @@ impl HttpRunnerApp {
                     ui.label(format!("Selected: {}", file.display()));
                 }
                 ui.separator();
-                if let Ok(support_key) = httprunner_lib::logging::get_support_key() {
+                if let Ok(support_key) = httprunner_core::logging::get_support_key() {
                     ui.label(format!("Support: {}", support_key.short_key));
                 }
             });
@@ -345,8 +345,8 @@ impl HttpRunnerApp {
     fn load_environments(&mut self, file: &Path) {
         // Try to find and parse http-client.env.json
         if let Some(file_str) = file.to_str()
-            && let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
-            && let Ok(env_config) = httprunner_lib::environment::parse_environment_file(&env_file)
+            && let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str)
+            && let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file)
         {
             // Extract environment names from the config
             self.environments = env_config.keys().cloned().collect();

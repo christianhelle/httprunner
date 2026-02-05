@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent};
-use httprunner_lib::types::{AssertionResult, ProcessorResults};
+use httprunner_core::types::{AssertionResult, ProcessorResults};
 use std::sync::{Arc, Mutex};
 
 /// Individual execution result for incremental display

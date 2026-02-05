@@ -1,5 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use httprunner_lib::telemetry;
+use httprunner_core::telemetry;
 use std::path::PathBuf;
 
 use crate::file_tree::FileTree;
@@ -214,9 +214,9 @@ impl App {
 
     fn load_environments(&mut self, file: &std::path::Path) {
         if let Some(file_str) = file.to_str()
-            && let Ok(Some(env_file)) = httprunner_lib::environment::find_environment_file(file_str)
+            && let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str)
         {
-            if let Ok(env_config) = httprunner_lib::environment::parse_environment_file(&env_file) {
+            if let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file) {
                 self.environments = env_config.keys().cloned().collect();
                 self.environments.sort();
                 self.status_message = format!("Loaded {} environments", self.environments.len());
@@ -255,7 +255,7 @@ impl App {
                 let mut total_count = 0usize;
 
                 // Use the incremental processor which handles all features
-                let result = httprunner_lib::processor::process_http_file_incremental(
+                let result = httprunner_core::processor::process_http_file_incremental(
                     &path_str,
                     env.as_deref(),
                     false, // insecure
@@ -263,7 +263,7 @@ impl App {
                     |_idx, total, process_result| {
                         total_count = total;
 
-                        use httprunner_lib::processor::RequestProcessingResult;
+                        use httprunner_core::processor::RequestProcessingResult;
                         match process_result {
                             RequestProcessingResult::Skipped { request, reason } => {
                                 skipped_count += 1;
@@ -362,7 +362,7 @@ impl App {
     fn run_selected_request(&mut self) {
         // Note: Running individual requests requires library support for single-request execution
         // Currently, the library's process_http_files function processes all requests in a file
-        // This would need to be enhanced in httprunner-lib to support executing a single request by index
+        // This would need to be enhanced in httprunner-core to support executing a single request by index
         if let Some(file) = &self.selected_file
             && self.request_view.get_selected_index().is_some()
         {

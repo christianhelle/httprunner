@@ -93,7 +93,7 @@ State is stored in `~/.config/httprunner/tui_state.json` (or platform equivalent
 
 - **TUI Framework**: [Ratatui](https://github.com/ratatui/ratatui) - Terminal UI library
 - **Terminal Backend**: [Crossterm](https://github.com/crossterm-rs/crossterm) - Cross-platform terminal manipulation
-- **HTTP Execution**: Shared httprunner-lib for request parsing and execution
+- **HTTP Execution**: Shared httprunner-core for request parsing and execution
 
 ## Comparison with GUI
 

@@ -6,7 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'src/gui/**'
-      - 'src/lib/**'
+      - 'src/core/**'
       - 'install.sh'
       - 'install.ps1'
       - '.github/workflows/docs.yml'
@@ -42,7 +42,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            src/lib
+            src/core
             src/gui
 
       - name: Build WASM app
