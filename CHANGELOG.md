@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Update TUI app keyboard shortcuts for request delay to \[ and \] [\#176](https://github.com/christianhelle/httprunner/pull/176) ([christianhelle](https://github.com/christianhelle))
 - Add request delay features with global and per-request controls [\#175](https://github.com/christianhelle/httprunner/pull/175) ([christianhelle](https://github.com/christianhelle))
 - Show Request Body in GUI results when in Verbose Mode [\#174](https://github.com/christianhelle/httprunner/pull/174) ([christianhelle](https://github.com/christianhelle))
 - Introduce anonymous telemetry data collection to Azure App Insights [\#171](https://github.com/christianhelle/httprunner/pull/171) ([christianhelle](https://github.com/christianhelle))
