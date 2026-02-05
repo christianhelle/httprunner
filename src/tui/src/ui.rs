@@ -601,7 +601,7 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             Span::raw(" Env | "),
             Span::styled("Ctrl+T", Style::default().fg(Color::Yellow)),
             Span::raw(" Telemetry | "),
-            Span::styled("Ctrl+±", Style::default().fg(Color::Yellow)),
+            Span::styled("[/]", Style::default().fg(Color::Yellow)),
             Span::raw(" Delay"),
         ]),
     ];
