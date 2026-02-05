@@ -696,26 +696,8 @@ pub fn process_http_files(
     })
 }
 
-pub fn process_http_files_with_silent(
-    files: &[String],
-    verbose: bool,
-    log_filename: Option<&str>,
-    environment: Option<&str>,
-    insecure: bool,
-    pretty_json: bool,
-    silent: bool,
-    delay_ms: u64,
-) -> Result<ProcessorResults> {
-    let config = ProcessorConfig::new(files)
-        .with_verbose(verbose)
-        .with_log_filename(log_filename)
-        .with_environment(environment)
-        .with_insecure(insecure)
-        .with_pretty_json(pretty_json)
-        .with_silent(silent)
-        .with_delay(delay_ms);
-
-    process_http_files_with_config(&config, &|request, verbose, insecure| {
+pub fn process_http_files_with_silent(config: &ProcessorConfig) -> Result<ProcessorResults> {
+    process_http_files_with_config(config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
     })
 }
