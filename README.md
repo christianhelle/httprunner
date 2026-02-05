@@ -26,6 +26,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- ⏱️ **Request delay** for rate limiting compliance with `--delay` flag (CLI) and UI controls (TUI/GUI)
 - 📝 **Custom headers support** with full request header implementation
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
@@ -226,6 +227,9 @@ httprunner <http-file> --verbose
 
 # Run a single .http file with verbose output and pretty-printed JSON
 httprunner <http-file> --verbose --pretty-json
+
+# Run a single .http file with a 500ms delay between requests
+httprunner <http-file> --delay 500
 
 # Run a single .http file with insecure HTTPS (accept invalid certificates)
 httprunner <http-file> --insecure
@@ -694,6 +698,51 @@ httprunner api-test.http --insecure
 ```
 
 **Security Note**: The `--insecure` flag should **only** be used in development and testing environments. Never use it in production as it disables important security checks that protect against man-in-the-middle attacks.
+
+## Request Delay
+
+The HTTP File Runner supports adding delays between consecutive HTTP requests. This is useful for:
+- **Rate limiting compliance**: Respect API rate limits by spacing requests
+- **Load testing**: Simulate realistic user behavior with delays
+- **Server protection**: Avoid overwhelming servers with rapid requests
+- **Debugging**: Slow down execution to observe behavior
+
+### CLI Usage
+
+Use the `--delay` flag to specify delay in milliseconds:
+
+```bash
+# Add 500ms delay between requests
+httprunner examples/multiple-requests.http --delay 500
+
+# Add 1 second delay between requests
+httprunner examples/api-chain.http --delay 1000
+
+# Combine with other flags
+httprunner examples/api-test.http --delay 250 --verbose
+httprunner --discover --delay 500 --log results.txt
+```
+
+### TUI Usage
+
+In the Terminal UI application:
+- Press `Ctrl++` to increase delay by 100ms (max 10 seconds)
+- Press `Ctrl+-` to decrease delay by 100ms (min 0ms)
+- Current delay is displayed in the status bar
+
+### GUI Usage
+
+In the GUI application:
+1. Open the **Settings** menu
+2. Adjust the **Request Delay (ms)** slider (0-10,000ms range)
+3. The setting is automatically saved and persists between sessions
+
+### Notes
+
+- Delay is applied **between** consecutive requests (not before the first request)
+- Default delay is 0ms (no delay)
+- When running a single request file with only one request, no delay is applied
+- The delay setting persists in TUI and GUI applications
 
 ## Suppressing the Donation Banner
 
