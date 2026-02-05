@@ -26,7 +26,9 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
 - 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
-- ⏱️ **Request delay** for rate limiting compliance with `--delay` flag (CLI) and UI controls (TUI/GUI)
+- ⏱️ **Request delay** for rate limiting compliance:
+  - Global `--delay` flag (CLI) and UI controls (TUI/GUI) for delays between consecutive requests
+  - Per-request `@pre-delay` and `@post-delay` keywords in .http files
 - 📝 **Custom headers support** with full request header implementation
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
@@ -743,6 +745,42 @@ In the GUI application:
 - Default delay is 0ms (no delay)
 - When running a single request file with only one request, no delay is applied
 - The delay setting persists in TUI and GUI applications
+
+### Per-Request Delays
+
+You can also specify delays for individual requests using the `@pre-delay` and `@post-delay` keywords in your `.http` files:
+
+```http
+# @pre-delay waits before executing the request
+# @name delayedRequest
+# @pre-delay 1000
+GET https://api.example.com/rate-limited
+
+###
+
+# @post-delay waits after the request completes
+# @name slowRequest
+# @post-delay 2000
+POST https://api.example.com/submit
+Content-Type: application/json
+
+{"data": "value"}
+
+###
+
+# Combine both pre and post delays
+# @name combinedDelay
+# @pre-delay 500
+# @post-delay 500
+GET https://api.example.com/resource
+```
+
+**Per-request delay keywords:**
+- `@pre-delay <milliseconds>` - Delay before executing the request
+- `@post-delay <milliseconds>` - Delay after the request completes
+- Values are in milliseconds
+- Can be combined with other directives (`@name`, `@timeout`, `@dependsOn`, etc.)
+- Per-request delays are independent of the global `--delay` CLI flag
 
 ## Suppressing the Donation Banner
 
