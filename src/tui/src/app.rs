@@ -239,6 +239,7 @@ impl App {
             let env = self.selected_environment.clone();
             let incremental_results = self.results_view.incremental_results();
             let is_running = self.results_view.is_running_arc();
+            let delay_ms = self.delay_ms; // Copy the delay value
 
             // Clear for async run
             self.results_view.clear_for_async_run();
@@ -258,7 +259,7 @@ impl App {
                     &path_str,
                     env.as_deref(),
                     false, // insecure
-                    self.delay_ms,
+                    delay_ms,
                     |_idx, total, process_result| {
                         total_count = total;
 
