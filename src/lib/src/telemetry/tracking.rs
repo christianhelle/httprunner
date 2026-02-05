@@ -376,6 +376,7 @@ pub struct CliArgPatterns {
     pub report_format: Option<String>,
     pub export: bool,
     pub file_count: usize,
+    pub delay: u64,
 }
 
 pub fn track_cli_args(args: &CliArgPatterns) {
@@ -391,6 +392,7 @@ pub fn track_cli_args(args: &CliArgPatterns) {
     properties.insert("report".to_string(), args.report.to_string());
     properties.insert("export".to_string(), args.export.to_string());
     properties.insert("file_count".to_string(), args.file_count.to_string());
+    properties.insert("delay".to_string(), args.delay.to_string());
 
     if let Some(ref format) = args.report_format {
         properties.insert("report_format".to_string(), format.clone());

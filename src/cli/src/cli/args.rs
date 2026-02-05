@@ -72,6 +72,10 @@ pub struct Cli {
     /// Disable anonymous telemetry data collection
     #[arg(long)]
     pub no_telemetry: bool,
+
+    /// Delay between requests in milliseconds (default: 0)
+    #[arg(long, value_name = "MILLISECONDS", default_value = "0")]
+    pub delay: u64,
 }
 
 impl Cli {
