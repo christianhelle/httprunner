@@ -17,7 +17,7 @@ documentation = "https://github.com/christianhelle/httprunner"
 reqwest = { version = "0.12.28", features = ["blocking", "json", "native-tls"], default-features = false }
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 anyhow = { version = "1.0", default-features = false, features = ["std"] }
-walkdir = "2.5"
+walkdir = "2.5.0"
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 regex = { version = "1.12.3", default-features = false, features = ["std", "perf", "unicode-perl", "unicode-case"] }
 base64 = { version = "0.22.1", default-features = false, features = ["std"] }
