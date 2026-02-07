@@ -20,7 +20,7 @@ default = ["telemetry"]
 telemetry = ["appinsights", "tokio"]
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
 walkdir = { workspace = true }
@@ -40,12 +40,12 @@ appinsights = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-reqwest = { version = "0.12", features = ["json"], default-features = false }
-getrandom = { version = "0.2", features = ["js"] }
+reqwest = { version = "0.12.28", features = ["json"], default-features = false }
+getrandom = { version = "0.2.17", features = ["js"] }
 uuid = { workspace = true, features = ["js"] }
-wasm-bindgen-futures = "0.4"
-web-time = "1.1"
-web-sys = { version = "0.3", features = ["Storage", "Window"] }
+wasm-bindgen-futures = "0.4.58"
+web-time = "1.1.0"
+web-sys = { version = "0.3.85", features = ["Storage", "Window"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
