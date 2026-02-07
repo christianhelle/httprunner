@@ -46,14 +46,15 @@ jobs:
     - name: Build release
       run: cargo build --release
 
-    - name: Prepare artifacts for Docker build
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Docker build
       run: |
         mkdir artifacts
         cp ./target/release/httprunner* ./artifacts
         chmod +x ./artifacts/httprunner*
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+        docker build
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v6
