@@ -12,7 +12,7 @@ COPY artifacts/httprunner /usr/local/bin/httprunner
 COPY artifacts/httprunner-tui /usr/local/bin/httprunner-tui
 
 # Make it executable
-RUN chmod +x /usr/local/bin/httprunner
+RUN chmod +x /usr/local/bin/httprunner*
 
 # Set the entrypoint
 ENTRYPOINT ["/usr/local/bin/httprunner"]
