@@ -214,9 +214,11 @@ impl App {
 
     fn load_environments(&mut self, file: &std::path::Path) {
         if let Some(file_str) = file.to_str()
-            && let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str)
+            && let Ok(Some(env_file)) =
+                httprunner_core::environment::find_environment_file(file_str)
         {
-            if let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file) {
+            if let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file)
+            {
                 self.environments = env_config.keys().cloned().collect();
                 self.environments.sort();
                 self.status_message = format!("Loaded {} environments", self.environments.len());
