@@ -156,9 +156,10 @@ where
 
         // Apply pre-request delay
         if let Some(pre_delay) = request.pre_delay_ms
-            && pre_delay > 0 {
-                std::thread::sleep(std::time::Duration::from_millis(pre_delay));
-            }
+            && pre_delay > 0
+        {
+            std::thread::sleep(std::time::Duration::from_millis(pre_delay));
+        }
 
         // Capture post-delay before request is moved
         let post_delay = request.post_delay_ms;
@@ -199,9 +200,10 @@ where
 
         // Apply post-request delay
         if let Some(post_delay) = post_delay
-            && post_delay > 0 {
-                std::thread::sleep(std::time::Duration::from_millis(post_delay));
-            }
+            && post_delay > 0
+        {
+            std::thread::sleep(std::time::Duration::from_millis(post_delay));
+        }
     }
 
     Ok(())

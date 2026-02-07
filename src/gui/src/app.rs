@@ -345,7 +345,8 @@ impl HttpRunnerApp {
     fn load_environments(&mut self, file: &Path) {
         // Try to find and parse http-client.env.json
         if let Some(file_str) = file.to_str()
-            && let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str)
+            && let Ok(Some(env_file)) =
+                httprunner_core::environment::find_environment_file(file_str)
             && let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file)
         {
             // Extract environment names from the config
