@@ -1,48 +1,45 @@
-use super::time_utils::{day_of_year_to_month_day, is_leap_year};
+use super::time_utils::DateTimeComponents;
+use crate::types::ProcessorResults;
 
 pub fn escape_markdown(s: &str) -> String {
     s.replace('|', "\\|")
 }
 
+pub struct ReportSummary {
+    pub total_success: u32,
+    pub total_failed: u32,
+    pub total_skipped: u32,
+    pub total_requests: u32,
+    pub success_rate: f64,
+}
+
+impl ReportSummary {
+    pub fn from_results(results: &ProcessorResults) -> Self {
+        let total_success: u32 = results.files.iter().map(|f| f.success_count).sum();
+        let total_failed: u32 = results.files.iter().map(|f| f.failed_count).sum();
+        let total_skipped: u32 = results.files.iter().map(|f| f.skipped_count).sum();
+        let total_requests = total_success + total_failed + total_skipped;
+        let success_rate = if total_requests > 0 {
+            (total_success as f64 / total_requests as f64) * 100.0
+        } else {
+            0.0
+        };
+        Self {
+            total_success,
+            total_failed,
+            total_skipped,
+            total_requests,
+            success_rate,
+        }
+    }
+}
+
 /// Formats the current local datetime as a string in the format: YYYY-MM-DD HH:MM:SS
 /// Uses system time to format timestamps.
 pub fn format_local_datetime() -> String {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let now = SystemTime::now();
-    let duration = now
-        .duration_since(UNIX_EPOCH)
-        .expect("System clock is set before Unix epoch (1970-01-01)");
-    let secs = duration.as_secs();
-
-    const SECS_PER_DAY: u64 = 86400;
-    const SECS_PER_HOUR: u64 = 3600;
-    const SECS_PER_MIN: u64 = 60;
-
-    let days = secs / SECS_PER_DAY;
-    let remaining = secs % SECS_PER_DAY;
-
-    let hours = remaining / SECS_PER_HOUR;
-    let minutes = (remaining % SECS_PER_HOUR) / SECS_PER_MIN;
-    let seconds = remaining % SECS_PER_MIN;
-
-    let mut year = 1970;
-    let mut day_of_year = days;
-
-    loop {
-        let days_in_year = if is_leap_year(year) { 366 } else { 365 };
-        if day_of_year >= days_in_year {
-            day_of_year -= days_in_year;
-            year += 1;
-        } else {
-            break;
-        }
-    }
-
-    let (month, day) = day_of_year_to_month_day(day_of_year as u32, is_leap_year(year));
-
+    let dt = DateTimeComponents::now();
     format!(
         "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
-        year, month, day, hours, minutes, seconds
+        dt.year, dt.month, dt.day, dt.hours, dt.minutes, dt.seconds
     )
 }
