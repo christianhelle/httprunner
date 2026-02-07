@@ -1,6 +1,6 @@
-use super::formatter::{escape_markdown, format_local_datetime};
+use super::formatter::{ReportSummary, escape_markdown, format_local_datetime};
 use super::writer::write_report;
-use crate::types::{AssertionType, ProcessorResults};
+use crate::types::ProcessorResults;
 
 pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::Error> {
     let mut report = String::new();
@@ -18,23 +18,16 @@ fn append_header(report: &mut String) {
 }
 
 fn append_overall_summary(report: &mut String, results: &ProcessorResults) {
-    let total_success: u32 = results.files.iter().map(|f| f.success_count).sum();
-    let total_failed: u32 = results.files.iter().map(|f| f.failed_count).sum();
-    let total_skipped: u32 = results.files.iter().map(|f| f.skipped_count).sum();
-    let total_requests = total_success + total_failed + total_skipped;
+    let summary = ReportSummary::from_results(results);
 
     report.push_str("## Overall Summary\n\n");
-    report.push_str(&format!("- **Total Requests:** {}\n", total_requests));
-    report.push_str(&format!("- **Passed:** ✅ {}\n", total_success));
-    report.push_str(&format!("- **Failed:** ❌ {}\n", total_failed));
-    report.push_str(&format!("- **Skipped:** ⏭️ {}\n", total_skipped));
+    report.push_str(&format!("- **Total Requests:** {}\n", summary.total_requests));
+    report.push_str(&format!("- **Passed:** ✅ {}\n", summary.total_success));
+    report.push_str(&format!("- **Failed:** ❌ {}\n", summary.total_failed));
+    report.push_str(&format!("- **Skipped:** ⏭️ {}\n", summary.total_skipped));
     report.push_str(&format!(
         "- **Success Rate:** {:.1}%\n\n",
-        if total_requests > 0 {
-            (total_success as f64 / total_requests as f64) * 100.0
-        } else {
-            0.0
-        }
+        summary.success_rate
     ));
 }
 
@@ -197,13 +190,9 @@ fn append_assertions(report: &mut String, assertions: &[crate::types::AssertionR
         report.push_str("|------|----------|--------|--------|\n");
 
         for assertion_result in assertions {
-            let assertion_type_str = match assertion_result.assertion.assertion_type {
-                AssertionType::Status => "Status Code",
-                AssertionType::Body => "Response Body",
-                AssertionType::Headers => "Response Headers",
-            };
+            let assertion_type_str = assertion_result.assertion.assertion_type.to_string();
 
-            let result_icon = if assertion_result.passed {
+            let result_icon= if assertion_result.passed {
                 "✅"
             } else {
                 "❌"

@@ -61,16 +61,15 @@ pub fn build_temp_result_for_assertions(
     response_headers: Option<HashMap<String, String>>,
     response_body: Option<String>,
 ) -> HttpResult {
-    HttpResult {
-        request_name: request.name.clone(),
+    build_success_result(
+        request,
         status_code,
         success,
-        error_message: None,
         duration_ms,
         response_headers,
         response_body,
-        assertion_results: Vec::new(),
-    }
+        Vec::new(),
+    )
 }
 
 #[cfg(test)]

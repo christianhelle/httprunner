@@ -8,7 +8,7 @@ use crate::logging::Log;
 use crate::parser;
 use crate::runner;
 use crate::types::{
-    AssertionType, HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
+    HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
 };
 use anyhow::Result;
 
@@ -137,24 +137,12 @@ impl TotalCounters {
     }
 }
 
-fn get_context_name(request: &HttpRequest, request_count: u32) -> String {
-    request
-        .name
-        .clone()
-        .unwrap_or_else(|| format!("request_{}", request_count))
-}
-
 fn add_skipped_request_context(
     request_contexts: &mut Vec<RequestContext>,
     processed_request: HttpRequest,
     request_count: u32,
 ) {
-    let context_name = get_context_name(&processed_request, request_count);
-    request_contexts.push(RequestContext {
-        name: context_name,
-        request: processed_request,
-        result: None,
-    });
+    request_contexts.push(RequestContext::new(processed_request, None, request_count));
 }
 
 fn add_request_context_with_result(
@@ -163,12 +151,7 @@ fn add_request_context_with_result(
     result: Option<HttpResult>,
     request_count: u32,
 ) {
-    let context_name = get_context_name(&processed_request, request_count);
-    request_contexts.push(RequestContext {
-        name: context_name,
-        request: processed_request,
-        result,
-    });
+    request_contexts.push(RequestContext::new(processed_request, result, request_count));
 }
 
 fn should_skip_due_to_dependency(
@@ -431,11 +414,7 @@ fn log_assertion_results(result: &HttpResult, log: &mut Log) {
 }
 
 fn log_single_assertion_result(assertion_result: &crate::types::AssertionResult, log: &mut Log) {
-    let assertion_type_str = match assertion_result.assertion.assertion_type {
-        AssertionType::Status => "Status Code",
-        AssertionType::Body => "Response Body",
-        AssertionType::Headers => "Response Headers",
-    };
+    let assertion_type_str = assertion_result.assertion.assertion_type.to_string();
 
     if assertion_result.passed {
         log.writeln(&format!(

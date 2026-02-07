@@ -58,7 +58,7 @@ fn export_response(
 ) -> Result<String, std::io::Error> {
     let base_filename = format!("{}_response", &test_results.name);
     let file = ExportFile::new(base_filename, timestamp)?;
-    write_http_request_response(&test_results, ExportType::Response, file.file, pretty_json)?;
+    write_http_response(&test_results, file.file, pretty_json)?;
     Ok(file.file_name)
 }
 
@@ -69,7 +69,7 @@ fn export_request(
 ) -> Result<String, std::io::Error> {
     let base_filename = format!("{}_request", &test_results.name);
     let file = ExportFile::new(base_filename, timestamp)?;
-    write_http_request_response(&test_results, ExportType::Request, file.file, pretty_json)?;
+    write_http_request(&test_results, file.file, pretty_json)?;
     Ok(file.file_name)
 }
 
@@ -80,16 +80,13 @@ fn get_timestamp() -> u64 {
         .as_secs()
 }
 
-fn write_http_request_response(
-    test_results: &&crate::types::RequestContext,
-    export_type: ExportType,
-    file: File,
-    pretty_json: bool,
-) -> Result<(), std::io::Error> {
-    match export_type {
-        ExportType::Request => write_http_request(test_results, file, pretty_json),
-        ExportType::Response => write_http_response(test_results, file, pretty_json),
-    }
+fn write_body(file: &mut File, body: &str, pretty_json: bool) -> Result<(), std::io::Error> {
+    let formatted = if pretty_json {
+        format_json_if_valid(body)
+    } else {
+        body.to_string()
+    };
+    file.write_all(format!("{}\r\n", formatted).as_bytes())
 }
 
 fn write_http_response(
@@ -102,13 +99,7 @@ fn write_http_response(
         file.write_all(status_line.as_bytes())?;
         write_http_headers(test_results, ExportType::Response, &file)?;
         if let Some(response_body) = &result.response_body {
-            if pretty_json {
-                let body = format!("{}\r\n", format_json_if_valid(response_body));
-                file.write_all(body.as_bytes())?;
-            } else {
-                let body = format!("{}\r\n", response_body);
-                file.write_all(body.as_bytes())?;
-            }
+            write_body(&mut file, response_body, pretty_json)?;
         }
     }
     Ok(())
@@ -121,13 +112,7 @@ fn write_http_request(
 ) -> Result<(), std::io::Error> {
     write_http_headers(test_results, ExportType::Request, &file)?;
     if let Some(request_body) = &test_results.request.body {
-        if pretty_json {
-            let body = format!("{}\r\n", format_json_if_valid(request_body));
-            file.write_all(body.as_bytes())?;
-        } else {
-            let body = format!("{}\r\n", request_body);
-            file.write_all(body.as_bytes())?;
-        }
+        write_body(&mut file, request_body, pretty_json)?;
     }
     Ok(())
 }
@@ -177,7 +162,7 @@ struct ExportFile {
 
 impl ExportFile {
     fn new(base_filename: String, timestamp: u64) -> Result<Self, std::io::Error> {
-        let log_filename = get_filename(base_filename, timestamp);
+        let log_filename = format!("{}_{}.log", base_filename, timestamp);
         let file = OpenOptions::new()
             .create(true)
             .write(true)
@@ -189,9 +174,4 @@ impl ExportFile {
             file,
         })
     }
-}
-
-fn get_filename(base_filename: String, timestamp: u64) -> String {
-    let log_filename = format!("{}_{}.log", base_filename, timestamp,);
-    log_filename
 }

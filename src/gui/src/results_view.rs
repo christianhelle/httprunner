@@ -463,11 +463,7 @@ impl ResultsView {
         // Show assertion results in compact form
         if !assertion_results.is_empty() {
             for assertion_result in assertion_results {
-                let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_core::types::AssertionType::Status => "Status Code",
-                    httprunner_core::types::AssertionType::Body => "Response Body",
-                    httprunner_core::types::AssertionType::Headers => "Response Headers",
-                };
+                let assertion_type_str = assertion_result.assertion.assertion_type.to_string();
 
                 if assertion_result.passed {
                     ui.horizontal(|ui| {
@@ -536,11 +532,7 @@ impl ResultsView {
             ui.label("🔍 Assertion Results:");
 
             for assertion_result in params.assertion_results {
-                let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_core::types::AssertionType::Status => "Status Code",
-                    httprunner_core::types::AssertionType::Body => "Response Body",
-                    httprunner_core::types::AssertionType::Headers => "Response Headers",
-                };
+                let assertion_type_str = assertion_result.assertion.assertion_type.to_string();
 
                 if assertion_result.passed {
                     ui.horizontal(|ui| {

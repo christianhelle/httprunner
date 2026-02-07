@@ -1,6 +1,6 @@
-use super::formatter::format_local_datetime;
+use super::formatter::{ReportSummary, format_local_datetime};
 use super::writer::write_report_with_extension;
-use crate::types::{AssertionType, ProcessorResults};
+use crate::types::ProcessorResults;
 
 pub fn generate_html(results: &ProcessorResults) -> Result<String, std::io::Error> {
     let mut html = String::new();
@@ -38,39 +38,30 @@ fn append_html_header(html: &mut String) {
 }
 
 fn append_overall_summary(html: &mut String, results: &ProcessorResults) {
-    let total_success: u32 = results.files.iter().map(|f| f.success_count).sum();
-    let total_failed: u32 = results.files.iter().map(|f| f.failed_count).sum();
-    let total_skipped: u32 = results.files.iter().map(|f| f.skipped_count).sum();
-    let total_requests = total_success + total_failed + total_skipped;
-
-    let success_rate = if total_requests > 0 {
-        (total_success as f64 / total_requests as f64) * 100.0
-    } else {
-        0.0
-    };
+    let summary = ReportSummary::from_results(results);
 
     html.push_str("        <section class=\"summary\">\n");
     html.push_str("            <h2>Overall Summary</h2>\n");
     html.push_str("            <div class=\"stats-grid\">\n");
     html.push_str(&format!(
         "                <div class=\"stat-card\"><div class=\"stat-label\">Total Requests</div><div class=\"stat-value\">{}</div></div>\n",
-        total_requests
+        summary.total_requests
     ));
     html.push_str(&format!(
         "                <div class=\"stat-card success\"><div class=\"stat-label\">Passed</div><div class=\"stat-value\">✅ {}</div></div>\n",
-        total_success
+        summary.total_success
     ));
     html.push_str(&format!(
         "                <div class=\"stat-card failed\"><div class=\"stat-label\">Failed</div><div class=\"stat-value\">❌ {}</div></div>\n",
-        total_failed
+        summary.total_failed
     ));
     html.push_str(&format!(
         "                <div class=\"stat-card skipped\"><div class=\"stat-label\">Skipped</div><div class=\"stat-value\">⏭️ {}</div></div>\n",
-        total_skipped
+        summary.total_skipped
     ));
     html.push_str(&format!(
         "                <div class=\"stat-card\"><div class=\"stat-label\">Success Rate</div><div class=\"stat-value\">{:.1}%</div></div>\n",
-        success_rate
+        summary.success_rate
     ));
     html.push_str("            </div>\n");
     html.push_str("        </section>\n");
@@ -277,13 +268,9 @@ fn append_assertions(html: &mut String, assertions: &[crate::types::AssertionRes
         html.push_str("                        <tbody>\n");
 
         for assertion_result in assertions {
-            let assertion_type_str = match assertion_result.assertion.assertion_type {
-                AssertionType::Status => "Status Code",
-                AssertionType::Body => "Response Body",
-                AssertionType::Headers => "Response Headers",
-            };
+            let assertion_type_str = assertion_result.assertion.assertion_type.to_string();
 
-            let result_class = if assertion_result.passed {
+            let result_class= if assertion_result.passed {
                 "success"
             } else {
                 "failed"

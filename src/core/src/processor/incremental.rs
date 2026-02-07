@@ -215,16 +215,5 @@ fn add_request_context(
     result: Option<HttpResult>,
     request_count: u32,
 ) {
-    let context_name = if let Some(ref name) = request.name {
-        name.clone()
-    } else {
-        // Use same format as executor.rs for consistency
-        format!("request_{}", request_count)
-    };
-
-    contexts.push(RequestContext {
-        name: context_name,
-        request,
-        result,
-    });
+    contexts.push(RequestContext::new(request, result, request_count));
 }

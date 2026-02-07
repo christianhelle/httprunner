@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Assertion {
@@ -11,6 +12,16 @@ pub enum AssertionType {
     Status,
     Body,
     Headers,
+}
+
+impl fmt::Display for AssertionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AssertionType::Status => write!(f, "Status Code"),
+            AssertionType::Body => write!(f, "Response Body"),
+            AssertionType::Headers => write!(f, "Response Headers"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
