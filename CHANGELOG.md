@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.8.47...HEAD)
+
+**Implemented enhancements:**
+
+- Fix --upgrade CLI argument being ignored [\#178](https://github.com/christianhelle/httprunner/pull/178) ([christianhelle](https://github.com/christianhelle))
+
 ## [0.8.47](https://github.com/christianhelle/httprunner/tree/0.8.47) (2026-02-05)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.7.46...0.8.47)
