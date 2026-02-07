@@ -14,7 +14,7 @@ const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
 fn main() -> anyhow::Result<()> {
     let cli_args = cli::Cli::parse();
-    if cli_args.files.is_empty() && !cli_args.discover {
+    if cli_args.files.is_empty() && !cli_args.discover && !cli_args.upgrade {
         let mut cmd = cli::Cli::command();
         cmd.print_help()?;
         return Ok(());
