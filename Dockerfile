@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy the pre-built binary from the artifacts directory
 COPY artifacts/httprunner /usr/local/bin/httprunner
+COPY artifacts/httprunner-tui /usr/local/bin/httprunner-tui
 
 # Make it executable
 RUN chmod +x /usr/local/bin/httprunner
