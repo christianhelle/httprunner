@@ -46,6 +46,7 @@
                         <li><a href="#variables-syntax">Variables</a></li>
                         <li><a href="#built-in-functions-syntax">Built-in Functions</a></li>
                         <li><a href="#request-variables-syntax">Request Variables</a></li>
+                        <li><a href="#request-directives">Request Directives</a></li>
                         <li><a href="#environment-format">Environment Files</a></li>
                         <li><a href="#assertions-reference">Assertions</a></li>
                         <li><a href="#output-formats">Output Formats</a></li>
@@ -112,6 +113,21 @@ httprunner [OPTIONS] --discover</code>
                             <div class="param-desc">Export individual HTTP requests and responses to separate timestamped log files</div>
                         </div>
                         <div class="param">
+                            <div class="param-name">--delay &lt;milliseconds&gt;</div>
+                            <div class="param-type">number</div>
+                            <div class="param-desc">Add a delay between consecutive requests (in milliseconds)</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">--insecure</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Accept invalid/self-signed SSL certificates for HTTPS connections</div>
+                        </div>
+                        <div class="param">
+                            <div class="param-name">--no-banner</div>
+                            <div class="param-type">flag</div>
+                            <div class="param-desc">Run without displaying the donation banner</div>
+                        </div>
+                        <div class="param">
                             <div class="param-name">--env &lt;environment&gt;</div>
                             <div class="param-type">string</div>
                             <div class="param-desc">Specify environment from http-client.env.json</div>
@@ -139,6 +155,12 @@ httprunner auth.http users.http posts.http
 # Verbose mode with pretty-printed JSON
 httprunner api-tests.http --verbose --pretty-json
 
+# Add delay between requests
+httprunner api-tests.http --delay 500
+
+# Accept self-signed certificates
+httprunner api-tests.http --insecure
+
 # Discovery mode with logging
 httprunner --discover --verbose --log test-results.log
 
@@ -147,6 +169,12 @@ httprunner api-tests.http --report
 
 # Generate HTML summary report
 httprunner api-tests.http --report html
+
+# Run without donation banner
+httprunner api-tests.http --no-banner
+
+# Export individual requests and responses
+httprunner api-tests.http --export
 
 # Generate markdown summary report (explicit)
 httprunner api-tests.http --report markdown
@@ -518,6 +546,115 @@ Content-Type: application/json
                         <li>Referenced requests must have been executed successfully</li>
                         <li>Named requests must use the <code># @name</code> syntax</li>
                         <li>Variables are resolved at execution time</li>
+                    </ul>
+                </section>
+
+                <section id="request-directives" class="guide-section">
+                    <h2>Request Directives</h2>
+                    <p>Request directives are special comment annotations that control request behavior and execution.</p>
+                    
+                    <h3>Directive Syntax</h3>
+                    <div class="syntax-block">
+                        <code># @directive-name [value]
+// @directive-name [value]</code>
+                    </div>
+                    
+                    <h3>Available Directives</h3>
+                    <table class="reference-table">
+                        <thead>
+                            <tr>
+                                <th>Directive</th>
+                                <th>Description</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>@name</code></td>
+                                <td>Assign a name to a request for referencing in request variables</td>
+                                <td><code># @name authenticate</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>@timeout</code></td>
+                                <td>Set read timeout (max time to wait for response data). Units: s (seconds, default), m (minutes), ms (milliseconds)</td>
+                                <td><code># @timeout 120</code><br><code># @timeout 2 m</code><br><code># @timeout 5000 ms</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>@connection-timeout</code></td>
+                                <td>Set connection timeout (max time to establish connection). Units: s (seconds, default), m (minutes), ms (milliseconds)</td>
+                                <td><code>// @connection-timeout 10</code><br><code>// @connection-timeout 500 ms</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>@pre-delay</code></td>
+                                <td>Wait specified milliseconds before executing the request</td>
+                                <td><code># @pre-delay 1000</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>@post-delay</code></td>
+                                <td>Wait specified milliseconds after executing the request</td>
+                                <td><code># @post-delay 500</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>@dependsOn</code></td>
+                                <td>Execute only if specified request succeeded</td>
+                                <td><code># @dependsOn authenticate</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>@if</code></td>
+                                <td>Conditional execution based on status code or response body/header content</td>
+                                <td><code># @if authenticate.response.status 200</code><br><code># @if user.response.body.$.role admin</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>@if-not</code></td>
+                                <td>Conditional execution - execute only if condition does NOT match</td>
+                                <td><code># @if-not user.response.status 404</code><br><code># @if-not user.response.body.$.role guest</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Directive Examples</h3>
+                    <div class="code-block">
+                        <code># Named request with timeout
+# @name login
+# @timeout 30
+POST https://api.example.com/auth/login
+Content-Type: application/json
+
+{"username": "user", "password": "pass"}
+
+###
+
+# Request with pre-delay and connection timeout
+# @pre-delay 2000
+// @connection-timeout 5
+GET https://api.example.com/status
+
+###
+
+# Conditional execution with dependencies
+# @name getUser
+# @dependsOn login
+# @if login.response.status 200
+GET https://api.example.com/user/profile
+Authorization: Bearer {{login.response.body.$.token}}
+
+###
+
+# Negative condition - only if user doesn't exist
+# @if-not getUser.response.status 200
+POST https://api.example.com/user/create
+Content-Type: application/json
+
+{"username": "newuser"}</code>
+                    </div>
+
+                    <h3>Notes</h3>
+                    <ul>
+                        <li>Directives must appear before the HTTP request they apply to</li>
+                        <li>Both <code>#</code> and <code>//</code> comment styles are supported</li>
+                        <li>Multiple directives can be applied to a single request</li>
+                        <li>Timeout values default to seconds if no unit is specified</li>
+                        <li>Delay values are always in milliseconds</li>
                     </ul>
                 </section>
 
