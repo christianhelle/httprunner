@@ -336,6 +336,9 @@ jobs:
           $toml = (Get-Content -Path src/gui/Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path src/gui/Cargo.toml
 
+          $toml = (Get-Content -Path src/tui/Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
+          $toml | Set-Content -Path src/tui/Cargo.toml
+
           $readme = (Get-Content -Path src/core/README.md -Raw) -replace 'httprunner-core = version = "0.1.0"', 'httprunner-core = version = "${{ env.VERSION }}"'
           $readme | Set-Content -Path src/core/README.md
 
