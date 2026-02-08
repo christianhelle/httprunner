@@ -750,6 +750,9 @@ impl eframe::App for HttpRunnerApp {
                         });
                     }
                     ViewMode::EnvironmentEditor => {
+                        let had_changes_before = self.environment_editor.has_changes();
+                        let env_count_before = self.environments.len();
+
                         egui::ScrollArea::vertical()
                             .id_salt("environment_editor_scroll")
                             .max_height(available_height)
@@ -758,8 +761,13 @@ impl eframe::App for HttpRunnerApp {
                                 self.environment_editor.show(ui);
                             });
 
-                        // Refresh environment list after editor changes
-                        if self.environment_editor.has_changes() {
+                        // Only refresh environment list when the change state transitions
+                        let has_changes_now = self.environment_editor.has_changes();
+                        if has_changes_now != had_changes_before
+                            || (has_changes_now
+                                && self.environment_editor.environment_names().len()
+                                    != env_count_before)
+                        {
                             self.environments = self.environment_editor.environment_names();
                             // If the selected environment was deleted, clear selection
                             if let Some(ref env) = self.selected_environment {

@@ -81,16 +81,9 @@ impl App {
         if self.focused_pane == FocusedPane::EnvironmentEditor
             && self.environment_editor.is_in_input_mode()
         {
+            let env_count_before = self.environments.len();
             self.environment_editor.handle_key_event(key);
-            // Refresh environments if changes were made
-            if self.environment_editor.has_changes() {
-                self.environments = self.environment_editor.environment_names();
-                if let Some(ref env) = self.selected_environment {
-                    if !self.environments.contains(env) {
-                        self.selected_environment = None;
-                    }
-                }
-            }
+            self.sync_environments_from_editor(env_count_before);
             if let Some(msg) = &self.environment_editor.status_message {
                 self.status_message = msg.clone();
             }
@@ -176,16 +169,9 @@ impl App {
                 self.results_view.handle_key_event(key);
             }
             FocusedPane::EnvironmentEditor => {
+                let env_count_before = self.environments.len();
                 self.environment_editor.handle_key_event(key);
-                // Refresh environments if changes were made
-                if self.environment_editor.has_changes() {
-                    self.environments = self.environment_editor.environment_names();
-                    if let Some(ref env) = self.selected_environment {
-                        if !self.environments.contains(env) {
-                            self.selected_environment = None;
-                        }
-                    }
-                }
+                self.sync_environments_from_editor(env_count_before);
                 if let Some(msg) = &self.environment_editor.status_message {
                     self.status_message = msg.clone();
                 }
@@ -193,6 +179,19 @@ impl App {
         }
 
         Ok(())
+    }
+
+    /// Sync environments list from editor only when the environment structure changes
+    fn sync_environments_from_editor(&mut self, env_count_before: usize) {
+        let editor_env_count = self.environment_editor.environment_names().len();
+        if editor_env_count != env_count_before {
+            self.environments = self.environment_editor.environment_names();
+            if let Some(ref env) = self.selected_environment {
+                if !self.environments.contains(env) {
+                    self.selected_environment = None;
+                }
+            }
+        }
     }
 
     fn cycle_focus(&mut self) {
@@ -211,11 +210,16 @@ impl App {
     }
 
     fn cycle_focus_reverse(&mut self) {
+        // Exact reverse of cycle_focus:
+        // Forward: FileTree → RequestView → ResultsView → EnvironmentEditor → FileTree
+        // Reverse: FileTree → EnvironmentEditor → ResultsView → RequestView → FileTree
         if !self.file_tree_visible {
+            // Forward (no tree): RequestView → ResultsView → EnvironmentEditor → RequestView
+            // Reverse (no tree): RequestView → EnvironmentEditor → ResultsView → RequestView
             self.focused_pane = match self.focused_pane {
                 FocusedPane::RequestView => FocusedPane::EnvironmentEditor,
-                FocusedPane::EnvironmentEditor => FocusedPane::ResultsView,
                 FocusedPane::ResultsView => FocusedPane::RequestView,
+                FocusedPane::EnvironmentEditor => FocusedPane::ResultsView,
                 FocusedPane::FileTree => FocusedPane::RequestView,
             };
             return;
