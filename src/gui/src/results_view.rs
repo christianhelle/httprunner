@@ -1,6 +1,5 @@
 use iced::{
-    widget::{column, scrollable, text, Column},
-    Color, Element, Length,
+    widget::{scrollable, text, Column}, Element,
 };
 use serde::{Deserialize, Serialize};
 
@@ -87,7 +86,7 @@ impl ResultsView {
         self.compact_mode = !self.compact_mode;
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let mut col = Column::new().spacing(10).padding(10);
 
         col = col.push(text("Results").size(20));
@@ -95,7 +94,7 @@ impl ResultsView {
         if self.results.is_empty() {
             col = col.push(text("No results yet. Run requests to see results."));
         } else {
-            for (idx, result) in self.results.iter().enumerate() {
+            for result in self.results.iter() {
                 match result {
                     ExecutionResult::Success {
                         method,

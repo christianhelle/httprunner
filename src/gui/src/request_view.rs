@@ -1,6 +1,6 @@
 use iced::{
-    widget::{column, scrollable, text, Column},
-    Element, Length,
+    widget::{scrollable, text, Column},
+    Element,
 };
 use std::path::Path;
 
@@ -31,7 +31,7 @@ impl RequestView {
         }
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let mut col = Column::new().spacing(10).padding(10);
 
         col = col.push(text("Request Details").size(20));

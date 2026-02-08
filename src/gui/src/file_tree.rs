@@ -1,5 +1,5 @@
 use iced::{
-    widget::{button, column, scrollable, text, Column},
+    widget::{button, scrollable, text, Column},
     Element, Length,
 };
 use std::path::PathBuf;
@@ -12,6 +12,7 @@ use crate::app::Message;
 pub struct FileTree {
     root_path: PathBuf,
     http_files: Arc<Mutex<Vec<PathBuf>>>,
+    #[allow(dead_code)]
     expanded_dirs: std::collections::HashSet<PathBuf>,
     is_discovering: Arc<Mutex<bool>>,
     discovered_count: Arc<Mutex<usize>>,
@@ -38,9 +39,9 @@ impl FileTree {
                 .into_iter()
                 .filter_map(|e| e.ok())
             {
-                if entry.file_type().is_file() {
-                    if let Some(ext) = entry.path().extension() {
-                        if ext == "http" {
+                if entry.file_type().is_file()
+                    && let Some(ext) = entry.path().extension()
+                        && ext == "http" {
                             let file_path = entry.path().to_path_buf();
                             temp_files.push(file_path.clone());
 
@@ -53,8 +54,6 @@ impl FileTree {
                                 *count = temp_files.len();
                             }
                         }
-                    }
-                }
             }
 
             // Mark discovery as complete
@@ -86,7 +85,7 @@ impl FileTree {
             .unwrap_or(0)
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let mut content = Column::new().spacing(5).padding(10);
 
         // Show discovery status

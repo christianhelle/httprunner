@@ -1,5 +1,5 @@
 use iced::{
-    widget::{column, scrollable, text, text_editor, Column},
+    widget::{scrollable, text, text_editor, Column},
     Element, Length,
 };
 use std::path::{Path, PathBuf};
@@ -47,6 +47,7 @@ impl TextEditor {
     }
 
     /// Get current content
+    #[allow(dead_code)]
     pub fn get_content(&self) -> String {
         self.content.text()
     }
@@ -63,7 +64,7 @@ impl TextEditor {
     }
 
     /// Display the text editor UI
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let mut col = Column::new().spacing(5).padding(10);
 
         if let Some(path) = &self.current_file {

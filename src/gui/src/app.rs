@@ -8,8 +8,7 @@ use super::{
 };
 use httprunner_core::telemetry;
 use iced::{
-    widget::{button, column, container, row, scrollable, text, Column, Row},
-    Alignment, Element, Length, Task,
+    widget::{button, column, container, row, text, Row}, Element, Length, Task,
 };
 use std::path::{Path, PathBuf};
 
@@ -26,37 +25,51 @@ pub enum Message {
     OpenFolder,
     FolderSelected(Option<PathBuf>),
     FileSelected(PathBuf),
+    #[allow(dead_code)]
     SaveFile,
+    #[allow(dead_code)]
     NewFile,
     
     // Request operations
     RunAllRequests,
+    #[allow(dead_code)]
     RunRequest(usize),
     
     // Environment operations
+    #[allow(dead_code)]
     EnvironmentChanged(String),
+    #[allow(dead_code)]
     SwitchEnvironment,
     
     // View operations
     ToggleView,
     ToggleFileTree,
+    #[allow(dead_code)]
     ToggleResultsView,
     
     // Settings
+    #[allow(dead_code)]
     DelayChanged(u64),
+    #[allow(dead_code)]
     ToggleTelemetry,
+    #[allow(dead_code)]
     FontSizeIncrease,
+    #[allow(dead_code)]
     FontSizeDecrease,
+    #[allow(dead_code)]
     FontSizeReset,
     
     // Editor operations
+    #[allow(dead_code)]
     TextEdited(String),
     
     // Results
     ResultsReceived(Vec<httprunner_core::HttpResult>),
     
     // Window operations
+    #[allow(dead_code)]
     Quit,
+    #[allow(dead_code)]
     WindowResized(f32, f32),
 }
 
@@ -67,11 +80,13 @@ pub struct HttpRunnerApp {
     results_view: ResultsView,
     environment_editor: EnvironmentEditor,
     selected_file: Option<PathBuf>,
+    #[allow(dead_code)]
     selected_request_index: Option<usize>,
     environments: Vec<String>,
     selected_environment: Option<String>,
     root_directory: PathBuf,
     font_size: f32,
+    #[allow(dead_code)]
     environment_selector_open: bool,
     view_mode: ViewMode,
     file_tree_visible: bool,
@@ -124,32 +139,28 @@ impl HttpRunnerApp {
         app.results_view
             .set_compact_mode(state.results_compact_mode.unwrap_or(true));
 
-        if let Some(saved_file) = state.selected_file {
-            if saved_file.exists() {
+        if let Some(saved_file) = state.selected_file
+            && saved_file.exists() {
                 app.selected_file = Some(saved_file.clone());
                 app.load_environments(&saved_file);
                 app.request_view.load_file(&saved_file);
                 app.text_editor.load_file(&saved_file);
 
-                if let Some(saved_env) = state.selected_environment {
-                    if app.environments.contains(&saved_env) {
+                if let Some(saved_env) = state.selected_environment
+                    && app.environments.contains(&saved_env) {
                         app.selected_environment = Some(saved_env);
                     }
-                }
             }
-        }
 
         (app, Task::none())
     }
 
     fn load_environments(&mut self, file_path: &Path) {
-        if let Some(file_str) = file_path.to_str() {
-            if let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str) {
-                if let Ok(config) = httprunner_core::environment::parse_environment_file(&env_file) {
+        if let Some(file_str) = file_path.to_str()
+            && let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str)
+                && let Ok(config) = httprunner_core::environment::parse_environment_file(&env_file) {
                     self.environments = config.keys().cloned().collect();
                 }
-            }
-        }
     }
 
     fn save_state(&self) {
@@ -165,7 +176,7 @@ impl HttpRunnerApp {
             results_compact_mode: Some(self.results_view.is_compact_mode()),
             last_results: Some(self.results_view.get_all_results()),
         };
-        state.save();
+        let _ = state.save();
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
@@ -243,7 +254,7 @@ impl HttpRunnerApp {
                     Task::none()
                 }
             }
-            Message::RunRequest(index) => {
+            Message::RunRequest(_index) => {
                 // TODO: Implement single request execution
                 Task::none()
             }
@@ -327,13 +338,13 @@ impl HttpRunnerApp {
             Message::WindowResized(width, height) => {
                 let mut state = AppState::load();
                 state.window_size = Some((width, height));
-                state.save();
+                let _ = state.save();
                 Task::none()
             }
         }
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let top_bar = self.view_top_bar();
         let main_content = self.view_main_content();
 
@@ -342,7 +353,7 @@ impl HttpRunnerApp {
             .into()
     }
 
-    fn view_top_bar(&self) -> Element<Message> {
+    fn view_top_bar(&self) -> Element<'_, Message> {
         let open_folder_btn = button("Open Folder").on_press(Message::OpenFolder);
         let run_btn = button("▶ Run All").on_press(Message::RunAllRequests);
         let toggle_view_btn = button("Toggle View").on_press(Message::ToggleView);
@@ -366,7 +377,7 @@ impl HttpRunnerApp {
             .into()
     }
 
-    fn view_main_content(&self) -> Element<Message> {
+    fn view_main_content(&self) -> Element<'_, Message> {
         let mut main_row = Row::new().spacing(5).padding(5);
 
         // File tree (left panel)
