@@ -1,3 +1,5 @@
+use httprunner_core::colors;
+
 #[cfg(not(windows))]
 pub fn enable_forceful_shutdown() {
     ctrlc::set_handler(|| {
