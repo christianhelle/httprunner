@@ -18,13 +18,15 @@ impl RequestView {
     }
 
     pub fn load_file(&mut self, path: &Path) {
-        match httprunner_core::parser::parse_http_file(path.to_str().unwrap_or("")) {
-            Ok(requests) => {
-                self.requests = requests;
-            }
-            Err(e) => {
-                eprintln!("Failed to parse HTTP file: {}", e);
-                self.requests = Vec::new();
+        if let Some(path_str) = path.to_str() {
+            match httprunner_core::parser::parse_http_file(path_str, None) {
+                Ok(requests) => {
+                    self.requests = requests;
+                }
+                Err(e) => {
+                    eprintln!("Failed to parse HTTP file: {}", e);
+                    self.requests = Vec::new();
+                }
             }
         }
     }

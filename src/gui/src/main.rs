@@ -30,7 +30,7 @@ fn main() -> iced::Result {
     );
 
     let result = iced::application(
-        HttpRunnerApp::title,
+        || HttpRunnerApp::new(),
         HttpRunnerApp::update,
         HttpRunnerApp::view,
     )

@@ -137,7 +137,7 @@ impl FileTree {
 
                         let file_clone = file.clone();
                         content = content.push(
-                            button(format!("  📄 {}", file_name))
+                            button(text(format!("  📄 {}", file_name)))
                                 .on_press(Message::FileSelected(file_clone))
                                 .width(Length::Fill),
                         );
@@ -152,7 +152,7 @@ impl FileTree {
 
                         let file_clone = file.clone();
                         content = content.push(
-                            button(format!("📄 {}", file_name))
+                            button(text(format!("📄 {}", file_name)))
                                 .on_press(Message::FileSelected(file_clone))
                                 .width(Length::Fill),
                         );

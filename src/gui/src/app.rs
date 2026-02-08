@@ -85,10 +85,6 @@ impl HttpRunnerApp {
     const MAX_FONT_SIZE: f32 = 32.0;
     const FONT_SIZE_STEP: f32 = 1.0;
 
-    pub fn title(&self) -> String {
-        "HTTP File Runner".to_string()
-    }
-
     pub fn new() -> (Self, Task<Message>) {
         let state = AppState::load();
 
@@ -148,7 +144,11 @@ impl HttpRunnerApp {
 
     fn load_environments(&mut self, file_path: &Path) {
         if let Some(file_str) = file_path.to_str() {
-            self.environments = httprunner_core::environment::discover_environments(file_str);
+            if let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str) {
+                if let Ok(config) = httprunner_core::environment::parse_environment_file(&env_file) {
+                    self.environments = config.keys().cloned().collect();
+                }
+            }
         }
     }
 
@@ -228,9 +228,9 @@ impl HttpRunnerApp {
                                 env.as_deref(),
                                 false, // insecure
                                 delay_ms,
-                                |_idx, _total, result| {
-                                    if let httprunner_core::processor::RequestProcessingResult::Complete(http_result) = result {
-                                        results.push(http_result);
+                                |_idx, _total, processing_result| {
+                                    if let httprunner_core::processor::RequestProcessingResult::Executed { result, .. } = processing_result {
+                                        results.push(result);
                                     }
                                     true // Continue processing
                                 },
