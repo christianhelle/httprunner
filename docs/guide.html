@@ -43,6 +43,7 @@
                     <ul>
                         <li><a href="#getting-started">Getting Started</a></li>
                         <li><a href="#gui-application">GUI Application</a></li>
+                        <li><a href="#tui-application">Terminal UI (TUI)</a></li>
                         <li><a href="#http-file-format">HTTP File Format</a></li>
                         <li><a href="#variables">Variables</a></li>
                         <li><a href="#built-in-functions">Built-in Functions</a></li>
@@ -50,6 +51,7 @@
                         <li><a href="#conditional-execution">Conditional Execution</a></li>
                         <li><a href="#environment-files">Environment Files</a></li>
                         <li><a href="#assertions">Response Assertions</a></li>
+                        <li><a href="#timeout-configuration">Timeout Configuration</a></li>
                         <li><a href="#command-line-options">Command Line Options</a></li>
                         <li><a href="#examples">Examples</a></li>
                         <li><a href="#best-practices">Best Practices</a></li>
@@ -93,7 +95,12 @@ httprunner --discover</code>
                     <h2>GUI Application</h2>
                     <p>HTTP File Runner includes a native graphical user interface (GUI) application for a visual, interactive experience.</p>
                     
-                    <h3>Features</h3>
+                    <div class="callout callout-warning">
+                        <h4>⚠️ Note</h4>
+                        <p>The GUI and TUI (Terminal UI) applications are experimental and subject to change. The CLI is the primary, stable interface.</p>
+                    </div>
+
+                    <h3>GUI Features</h3>
                     <ul>
                         <li><strong>Visual File Browser:</strong> Browse and select .http files from a directory tree</li>
                         <li><strong>Request Execution:</strong> Run individual requests or all requests in a file</li>
@@ -146,6 +153,33 @@ Ctrl+0 / Cmd+0   Reset font size to default</code>
                         <li>Quit the application</li>
                     </ul>
                     <p>Just close the application and your workspace will be exactly as you left it when you return. No manual saving required!</p>
+                </section>
+
+                <section id="tui-application" class="guide-section">
+                    <h2>Terminal UI (TUI)</h2>
+                    <p>HTTP File Runner includes a Terminal User Interface (TUI) for an interactive, text-based experience directly in your terminal.</p>
+                    
+                    <div class="callout callout-warning">
+                        <h4>⚠️ Note</h4>
+                        <p>The TUI application is experimental and subject to change. The CLI is the primary, stable interface.</p>
+                    </div>
+
+                    <h3>Features</h3>
+                    <ul>
+                        <li><strong>Interactive File Browser:</strong> Navigate and select .http files using keyboard</li>
+                        <li><strong>Request Execution:</strong> Run individual requests or all requests in a file</li>
+                        <li><strong>Response Viewer:</strong> View status codes, headers, and formatted response bodies in the terminal</li>
+                        <li><strong>Environment Management:</strong> Switch between different environments</li>
+                        <li><strong>Keyboard Navigation:</strong> Full keyboard control for efficient workflow</li>
+                    </ul>
+
+                    <h3>Running the TUI</h3>
+                    <div class="code-block">
+                        <code># Start the Terminal UI
+httprunner-tui</code>
+                    </div>
+
+                    <p>The TUI provides a rich, interactive experience while staying within your terminal, making it perfect for remote sessions, SSH connections, or workflows that prefer staying in the terminal.</p>
                 </section>
 
                 <section id="http-file-format" class="guide-section">
@@ -755,6 +789,106 @@ EXPECTED_RESPONSE_HEADERS "Cache-Control: no-cache"</code>
                     </ul>
                 </section>
 
+                <section id="timeout-configuration" class="guide-section">
+                    <h2>Timeout Configuration</h2>
+                    <p>Customize request timeouts for better control over HTTP operations. You can set both connection timeouts (for establishing connections) and read timeouts (for waiting for responses).</p>
+
+                    <h3>Default Timeouts</h3>
+                    <ul>
+                        <li><strong>Connection timeout:</strong> 30 seconds (time to establish a connection)</li>
+                        <li><strong>Read timeout:</strong> 60 seconds (time to wait for response data)</li>
+                    </ul>
+
+                    <h3>Timeout Directives</h3>
+                    
+                    <h4>Read Timeout (@timeout)</h4>
+                    <p>Sets the maximum time to wait for response data from an established connection:</p>
+                    <div class="code-block">
+                        <code># @timeout 600
+GET https://example.com/api/long-running</code>
+                    </div>
+
+                    <h4>Connection Timeout (@connection-timeout)</h4>
+                    <p>Sets the maximum time to establish a connection with the server:</p>
+                    <div class="code-block">
+                        <code>// @connection-timeout 10
+GET https://example.com/api</code>
+                    </div>
+
+                    <h3>Time Units</h3>
+                    <p>By default, timeout values are in <strong>seconds</strong>, but you can specify explicit units:</p>
+                    <ul>
+                        <li><code>ms</code> - milliseconds (supports sub-second precision like 999ms or 1500ms)</li>
+                        <li><code>s</code> - seconds</li>
+                        <li><code>m</code> - minutes</li>
+                    </ul>
+
+                    <h3>Examples with Units</h3>
+                    <div class="code-block">
+                        <code># Timeout in seconds (default)
+# @timeout 30
+GET https://example.com/api
+
+###
+
+# Timeout in minutes
+# @timeout 2 m
+GET https://example.com/api/slow
+
+###
+
+# Timeout in milliseconds (full precision supported)
+# @timeout 5000 ms
+GET https://example.com/api/fast
+
+###
+
+# Sub-second timeout (1.5 seconds)
+# @timeout 1500 ms
+GET https://example.com/api/quick
+
+###
+
+# Both timeouts customized
+# @timeout 120
+// @connection-timeout 10
+GET https://example.com/api/data</code>
+                    </div>
+
+                    <h3>Practical Use Cases</h3>
+                    <div class="code-block">
+                        <code># Long-running operations - wait up to 10 minutes
+# @timeout 600
+POST https://example.com/api/process
+Content-Type: application/json
+
+{"data": "large_dataset"}
+
+###
+
+# Quick health checks
+# @timeout 5
+// @connection-timeout 2
+GET https://example.com/health
+
+###
+
+# Slow network conditions - allow more time
+# @timeout 2 m
+// @connection-timeout 30
+GET https://dev.example.com/api</code>
+                    </div>
+
+                    <div class="callout callout-tip">
+                        <h4>💡 Tips</h4>
+                        <ul>
+                            <li>Both <code>#</code> and <code>//</code> comment styles are supported</li>
+                            <li>Timeout directives must appear before the HTTP request they apply to</li>
+                            <li>Can be combined with other directives (<code>@name</code>, <code>@dependsOn</code>, etc.)</li>
+                        </ul>
+                    </div>
+                </section>
+
                 <section id="command-line-options" class="guide-section">
                     <h2>Command Line Options</h2>
                     
@@ -799,6 +933,22 @@ EXPECTED_RESPONSE_HEADERS "Cache-Control: no-cache"</code>
                         <div class="option">
                             <div class="option-name"><code>--export</code></div>
                             <div class="option-desc">Export individual HTTP requests and responses to separate timestamped log files</div>
+                        </div>
+                        <div class="option">
+                            <div class="option-name"><code>--no-banner</code></div>
+                            <div class="option-desc">Run without displaying the donation banner</div>
+                        </div>
+                    </div>
+
+                    <h3>Request Control Options</h3>
+                    <div class="options-table">
+                        <div class="option">
+                            <div class="option-name"><code>--delay &lt;milliseconds&gt;</code></div>
+                            <div class="option-desc">Add a delay between consecutive requests (in milliseconds). Example: --delay 500</div>
+                        </div>
+                        <div class="option">
+                            <div class="option-name"><code>--insecure</code></div>
+                            <div class="option-desc">Accept invalid/self-signed SSL certificates for HTTPS connections (useful for development environments)</div>
                         </div>
                     </div>
 
