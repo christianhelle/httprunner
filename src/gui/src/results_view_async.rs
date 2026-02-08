@@ -163,23 +163,19 @@ impl ResultsView {
 }
 
 async fn execute_request_async(request: httprunner_core::HttpRequest) -> ExecutionResult {
-    #[cfg(not(target_arch = "wasm32"))]
-    use std::time::Instant;
-    #[cfg(target_arch = "wasm32")]
-    use web_time::Instant;
+    // Note: Pre-delay and post-delay are not currently implemented for WASM async execution
+    // TODO: Add gloo-timers dependency to support delays in WASM
+    // For now, delays are only supported in the non-WASM GUI path which uses process_http_file_incremental
 
-    let start = Instant::now();
-
+    // Execute the request (timing is handled inside execute_http_request_async)
     match httprunner_core::execute_http_request_async(&request, false, false).await {
         Ok(result) => {
-            let duration_ms = start.elapsed().as_millis() as u64;
-
             if result.success {
                 ExecutionResult::Success {
                     method: request.method,
                     url: request.url,
                     status: result.status_code,
-                    duration_ms,
+                    duration_ms: result.duration_ms, // Use duration from HttpResult, not our own timing
                     response_body: result.response_body.unwrap_or_default(),
                     assertion_results: result.assertion_results.clone(),
                 }
