@@ -1,4 +1,5 @@
 mod app;
+mod environment_editor;
 mod file_tree;
 mod request_view;
 mod results_view;

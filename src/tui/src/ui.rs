@@ -50,30 +50,40 @@ fn render_title(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_main_content(f: &mut Frame, area: Rect, app: &App) {
+    let show_env_editor = app.focused_pane == FocusedPane::EnvironmentEditor;
+
     if app.file_tree_visible {
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(25), // File tree
                 Constraint::Percentage(40), // Request view
-                Constraint::Percentage(35), // Results view
+                Constraint::Percentage(35), // Results / Environment editor
             ])
             .split(area);
 
         render_file_tree(f, chunks[0], app);
         render_request_view(f, chunks[1], app);
-        render_results_view(f, chunks[2], app);
+        if show_env_editor {
+            render_environment_editor(f, chunks[2], app);
+        } else {
+            render_results_view(f, chunks[2], app);
+        }
     } else {
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(50), // Request view
-                Constraint::Percentage(50), // Results view
+                Constraint::Percentage(50), // Results / Environment editor
             ])
             .split(area);
 
         render_request_view(f, chunks[0], app);
-        render_results_view(f, chunks[1], app);
+        if show_env_editor {
+            render_environment_editor(f, chunks[1], app);
+        } else {
+            render_results_view(f, chunks[1], app);
+        }
     }
 }
 
@@ -552,6 +562,163 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
             .alignment(Alignment::Center);
         f.render_widget(empty_msg, area);
     }
+}
+
+fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
+    let border_style = Style::default().fg(Color::Cyan);
+    let editor = &app.environment_editor;
+
+    let mut lines = Vec::new();
+
+    // Help text
+    lines.push(Line::from(vec![
+        Span::styled("Tab", Style::default().fg(Color::Yellow)),
+        Span::raw(" Switch | "),
+        Span::styled("n", Style::default().fg(Color::Yellow)),
+        Span::raw(" New Env | "),
+        Span::styled("a", Style::default().fg(Color::Yellow)),
+        Span::raw(" Add Var | "),
+        Span::styled("e/Enter", Style::default().fg(Color::Yellow)),
+        Span::raw(" Edit | "),
+        Span::styled("d", Style::default().fg(Color::Yellow)),
+        Span::raw(" Delete | "),
+        Span::styled("Ctrl+S", Style::default().fg(Color::Yellow)),
+        Span::raw(" Save"),
+    ]));
+    lines.push(Line::from(""));
+
+    let env_names = editor.env_names();
+
+    if env_names.is_empty() {
+        lines.push(Line::from(Span::styled(
+            "No environments defined. Press 'n' to add one.",
+            Style::default().fg(Color::Gray),
+        )));
+    } else {
+        // Show environments list
+        lines.push(Line::from(Span::styled(
+            "Environments:",
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        )));
+
+        for (i, env_name) in env_names.iter().enumerate() {
+            let is_selected = i == editor.selected_env_index();
+            let marker = if is_selected && editor.is_env_list_focused() {
+                "▸ "
+            } else if is_selected {
+                "› "
+            } else {
+                "  "
+            };
+            let style = if is_selected && editor.is_env_list_focused() {
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD)
+            } else if is_selected {
+                Style::default().fg(Color::White)
+            } else {
+                Style::default().fg(Color::Gray)
+            };
+            lines.push(Line::from(vec![
+                Span::raw(marker),
+                Span::styled(env_name, style),
+            ]));
+        }
+
+        lines.push(Line::from(""));
+
+        // Show variables for selected environment
+        if let Some(selected_env) = editor.selected_env_name() {
+            lines.push(Line::from(vec![
+                Span::styled(
+                    format!("Variables for '{}':", selected_env),
+                    Style::default()
+                        .fg(Color::Green)
+                        .add_modifier(Modifier::BOLD),
+                ),
+            ]));
+
+            let var_names = editor.var_names();
+            if var_names.is_empty() {
+                lines.push(Line::from(Span::styled(
+                    "  No variables. Press 'a' to add one.",
+                    Style::default().fg(Color::Gray),
+                )));
+            } else {
+                for (i, var_name) in var_names.iter().enumerate() {
+                    let is_selected = i == editor.selected_var_index();
+                    let marker = if is_selected && editor.is_var_list_focused() {
+                        "▸ "
+                    } else if is_selected {
+                        "› "
+                    } else {
+                        "  "
+                    };
+                    let style = if is_selected && editor.is_var_list_focused() {
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD)
+                    } else {
+                        Style::default()
+                    };
+
+                    let value = editor
+                        .get_var_value(selected_env, var_name)
+                        .unwrap_or("");
+
+                    lines.push(Line::from(vec![
+                        Span::raw(marker),
+                        Span::styled(format!("{}: ", var_name), style),
+                        Span::styled(value, Style::default().fg(Color::Cyan)),
+                    ]));
+                }
+            }
+        }
+    }
+
+    // Show input prompt if in input mode
+    if editor.is_in_input_mode() {
+        lines.push(Line::from(""));
+        lines.push(Line::from(vec![
+            Span::styled(
+                editor.input_prompt(),
+                Style::default().fg(Color::Yellow),
+            ),
+            Span::styled(
+                editor.input_buffer(),
+                Style::default().fg(Color::White),
+            ),
+            Span::styled("▌", Style::default().fg(Color::White)),
+        ]));
+    }
+
+    // Show unsaved changes indicator
+    if editor.has_changes() {
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            "● Unsaved changes (Ctrl+S to save)",
+            Style::default().fg(Color::Yellow),
+        )));
+    }
+
+    let title = if editor.has_changes() {
+        "🌍 Environment Editor [modified]"
+    } else {
+        "🌍 Environment Editor"
+    };
+
+    let paragraph = Paragraph::new(lines)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(title)
+                .border_style(border_style),
+        )
+        .wrap(Wrap { trim: true });
+
+    f.render_widget(paragraph, area);
 }
 
 fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
