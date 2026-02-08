@@ -175,6 +175,13 @@ The httprunner is available as a Docker image on Docker Hub at `christianhelle/h
 docker pull christianhelle/httprunner
 ```
 
+The httprunner-tui is also available as a separate Docker image at `christianhelle/httprunner-tui`.
+
+```bash
+# Pull the latest TUI image
+docker pull christianhelle/httprunner-tui
+```
+
 ## Upgrading
 
 ### Quick Upgrade
@@ -539,6 +546,21 @@ httprunner examples/simple.http --verbose --log detailed_test.log
 httprunner examples/simple.http --report
 httprunner examples/simple.http
 ```
+
+### If using Docker with TUI
+
+The TUI (Terminal User Interface) is also available as a Docker image. Note that the TUI requires an interactive terminal:
+
+```bash
+# Run the TUI (requires interactive terminal with -it flags)
+docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner-tui
+
+# Alternative: Create an alias for the TUI
+alias httprunner-tui='docker run -it --mount "type=bind,source=${PWD},target=/app,readonly" christianhelle/httprunner-tui'
+httprunner-tui
+```
+
+**Note**: The TUI Docker image requires the `-it` flags to provide an interactive terminal. Without these flags, the TUI will not be able to render properly.
 
 **Note**: The Docker container mounts your current directory as `/app` in read-only mode to access your `.http` files. Make sure your `.http` files are in the current directory or subdirectories.
 
