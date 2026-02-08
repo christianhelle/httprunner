@@ -89,3 +89,31 @@ pub fn parse_environment_file(
 
     Ok(config)
 }
+
+pub fn save_environment_file(
+    file_path: &Path,
+    config: &HashMap<String, HashMap<String, String>>,
+) -> Result<()> {
+    // Build a sorted JSON object for deterministic output
+    let mut root = serde_json::Map::new();
+    let mut env_names: Vec<&String> = config.keys().collect();
+    env_names.sort();
+
+    for env_name in env_names {
+        let vars = &config[env_name];
+        let mut env_obj = serde_json::Map::new();
+        let mut var_names: Vec<&String> = vars.keys().collect();
+        var_names.sort();
+        for var_name in var_names {
+            env_obj.insert(
+                var_name.clone(),
+                Value::String(vars[var_name].clone()),
+            );
+        }
+        root.insert(env_name.clone(), Value::Object(env_obj));
+    }
+
+    let json = serde_json::to_string_pretty(&root)?;
+    fs::write(file_path, json)?;
+    Ok(())
+}

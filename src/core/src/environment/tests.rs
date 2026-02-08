@@ -87,3 +87,52 @@ fn load_environment_file_handles_missing_environment_name() {
     let vars = load_environment_file(http_file.to_str().unwrap(), Some("dev")).unwrap();
     assert!(vars.is_empty());
 }
+
+#[test]
+fn save_environment_file_writes_valid_json() {
+    let temp = tempdir().unwrap();
+    let env_file = temp.path().join("http-client.env.json");
+
+    let mut config = std::collections::HashMap::new();
+    let mut dev_vars = std::collections::HashMap::new();
+    dev_vars.insert("API_URL".to_string(), "http://localhost".to_string());
+    dev_vars.insert("TOKEN".to_string(), "abc123".to_string());
+    config.insert("dev".to_string(), dev_vars);
+
+    save_environment_file(&env_file, &config).unwrap();
+
+    // Read back and verify
+    let parsed = parse_environment_file(&env_file).unwrap();
+    let dev = parsed.get("dev").unwrap();
+    assert_eq!(dev.get("API_URL").unwrap(), "http://localhost");
+    assert_eq!(dev.get("TOKEN").unwrap(), "abc123");
+}
+
+#[test]
+fn save_environment_file_preserves_multiple_environments() {
+    let temp = tempdir().unwrap();
+    let env_file = temp.path().join("http-client.env.json");
+
+    let mut config = std::collections::HashMap::new();
+
+    let mut dev_vars = std::collections::HashMap::new();
+    dev_vars.insert("URL".to_string(), "http://dev.example.com".to_string());
+    config.insert("dev".to_string(), dev_vars);
+
+    let mut prod_vars = std::collections::HashMap::new();
+    prod_vars.insert("URL".to_string(), "https://prod.example.com".to_string());
+    config.insert("prod".to_string(), prod_vars);
+
+    save_environment_file(&env_file, &config).unwrap();
+
+    let parsed = parse_environment_file(&env_file).unwrap();
+    assert_eq!(parsed.len(), 2);
+    assert_eq!(
+        parsed.get("dev").unwrap().get("URL").unwrap(),
+        "http://dev.example.com"
+    );
+    assert_eq!(
+        parsed.get("prod").unwrap().get("URL").unwrap(),
+        "https://prod.example.com"
+    );
+}
