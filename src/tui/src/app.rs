@@ -2,6 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use httprunner_core::telemetry;
 use std::path::PathBuf;
 
+use crate::environment_editor::EnvironmentEditor;
 use crate::file_tree::FileTree;
 use crate::request_view::RequestView;
 use crate::results_view::ResultsView;
@@ -12,6 +13,7 @@ pub enum FocusedPane {
     FileTree,
     RequestView,
     ResultsView,
+    EnvironmentEditor,
 }
 
 pub struct App {
@@ -19,6 +21,7 @@ pub struct App {
     pub file_tree: FileTree,
     pub request_view: RequestView,
     pub results_view: ResultsView,
+    pub environment_editor: EnvironmentEditor,
     pub focused_pane: FocusedPane,
     pub root_directory: PathBuf,
     pub selected_file: Option<PathBuf>,
@@ -52,6 +55,7 @@ impl App {
             file_tree: FileTree::new(root_directory.clone()),
             request_view: RequestView::new(),
             results_view,
+            environment_editor: EnvironmentEditor::new(),
             focused_pane: FocusedPane::FileTree,
             root_directory,
             selected_file: None,
@@ -73,6 +77,19 @@ impl App {
     }
 
     pub fn handle_key_event(&mut self, key: KeyEvent) -> anyhow::Result<()> {
+        // When environment editor is in input mode, forward all keys to it
+        if self.focused_pane == FocusedPane::EnvironmentEditor
+            && self.environment_editor.is_in_input_mode()
+        {
+            let env_count_before = self.environments.len();
+            self.environment_editor.handle_key_event(key);
+            self.sync_environments_from_editor(env_count_before);
+            if let Some(msg) = &self.environment_editor.status_message {
+                self.status_message = msg.clone();
+            }
+            return Ok(());
+        }
+
         // Global shortcuts
         match (key.code, key.modifiers) {
             (KeyCode::Char('q'), KeyModifiers::CONTROL)
@@ -111,19 +128,25 @@ impl App {
                 return Ok(());
             }
             (KeyCode::Char(']'), KeyModifiers::NONE) => {
-                self.increase_delay();
-                return Ok(());
+                if self.focused_pane != FocusedPane::EnvironmentEditor {
+                    self.increase_delay();
+                    return Ok(());
+                }
             }
             (KeyCode::Char('['), KeyModifiers::NONE) => {
-                self.decrease_delay();
-                return Ok(());
+                if self.focused_pane != FocusedPane::EnvironmentEditor {
+                    self.decrease_delay();
+                    return Ok(());
+                }
             }
             (KeyCode::F(5), _)
             | (KeyCode::Char('r'), KeyModifiers::CONTROL)
             | (KeyCode::Char('r'), KeyModifiers::NONE)
             | (KeyCode::Char('R'), KeyModifiers::SHIFT) => {
-                self.run_all_requests();
-                return Ok(());
+                if self.focused_pane != FocusedPane::EnvironmentEditor {
+                    self.run_all_requests();
+                    return Ok(());
+                }
             }
             _ => {}
         }
@@ -145,16 +168,38 @@ impl App {
             FocusedPane::ResultsView => {
                 self.results_view.handle_key_event(key);
             }
+            FocusedPane::EnvironmentEditor => {
+                let env_count_before = self.environments.len();
+                self.environment_editor.handle_key_event(key);
+                self.sync_environments_from_editor(env_count_before);
+                if let Some(msg) = &self.environment_editor.status_message {
+                    self.status_message = msg.clone();
+                }
+            }
         }
 
         Ok(())
+    }
+
+    /// Sync environments list from editor only when the environment structure changes
+    fn sync_environments_from_editor(&mut self, env_count_before: usize) {
+        let editor_env_count = self.environment_editor.environment_names().len();
+        if editor_env_count != env_count_before {
+            self.environments = self.environment_editor.environment_names();
+            if let Some(ref env) = self.selected_environment
+                && !self.environments.contains(env)
+            {
+                self.selected_environment = None;
+            }
+        }
     }
 
     fn cycle_focus(&mut self) {
         self.focused_pane = match self.focused_pane {
             FocusedPane::FileTree => FocusedPane::RequestView,
             FocusedPane::RequestView => FocusedPane::ResultsView,
-            FocusedPane::ResultsView => {
+            FocusedPane::ResultsView => FocusedPane::EnvironmentEditor,
+            FocusedPane::EnvironmentEditor => {
                 if self.file_tree_visible {
                     FocusedPane::FileTree
                 } else {
@@ -165,16 +210,26 @@ impl App {
     }
 
     fn cycle_focus_reverse(&mut self) {
+        // Exact reverse of cycle_focus:
+        // Forward: FileTree → RequestView → ResultsView → EnvironmentEditor → FileTree
+        // Reverse: FileTree → EnvironmentEditor → ResultsView → RequestView → FileTree
         if !self.file_tree_visible {
-            // When the file tree is hidden, always normalize focus to RequestView.
-            self.focused_pane = FocusedPane::RequestView;
+            // Forward (no tree): RequestView → ResultsView → EnvironmentEditor → RequestView
+            // Reverse (no tree): RequestView → EnvironmentEditor → ResultsView → RequestView
+            self.focused_pane = match self.focused_pane {
+                FocusedPane::RequestView => FocusedPane::EnvironmentEditor,
+                FocusedPane::ResultsView => FocusedPane::RequestView,
+                FocusedPane::EnvironmentEditor => FocusedPane::ResultsView,
+                FocusedPane::FileTree => FocusedPane::RequestView,
+            };
             return;
         }
 
         self.focused_pane = match self.focused_pane {
-            FocusedPane::FileTree => FocusedPane::ResultsView,
+            FocusedPane::FileTree => FocusedPane::EnvironmentEditor,
             FocusedPane::RequestView => FocusedPane::FileTree,
             FocusedPane::ResultsView => FocusedPane::RequestView,
+            FocusedPane::EnvironmentEditor => FocusedPane::ResultsView,
         };
     }
 
@@ -213,6 +268,9 @@ impl App {
     }
 
     fn load_environments(&mut self, file: &std::path::Path) {
+        // Load environment editor
+        self.environment_editor.load_for_file(file);
+
         if let Some(file_str) = file.to_str()
             && let Ok(Some(env_file)) =
                 httprunner_core::environment::find_environment_file(file_str)

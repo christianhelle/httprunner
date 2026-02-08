@@ -1,4 +1,5 @@
 use super::{
+    environment_editor::EnvironmentEditor,
     file_tree::FileTree,
     request_view::{RequestView, RequestViewAction},
     results_view::ResultsView,
@@ -25,6 +26,7 @@ enum KeyboardAction {
 enum ViewMode {
     TextEditor,
     RequestDetails,
+    EnvironmentEditor,
 }
 
 pub struct HttpRunnerApp {
@@ -32,6 +34,7 @@ pub struct HttpRunnerApp {
     request_view: RequestView,
     text_editor: TextEditor,
     results_view: ResultsView,
+    environment_editor: EnvironmentEditor,
     selected_file: Option<PathBuf>,
     selected_request_index: Option<usize>,
     environments: Vec<String>,
@@ -71,6 +74,7 @@ impl HttpRunnerApp {
             request_view: RequestView::new(),
             text_editor: TextEditor::new(),
             results_view: ResultsView::new(),
+            environment_editor: EnvironmentEditor::new(),
             selected_file: None,
             selected_request_index: None,
             environments: Vec::new(),
@@ -346,6 +350,9 @@ impl HttpRunnerApp {
     }
 
     fn load_environments(&mut self, file: &Path) {
+        // Load environment editor
+        self.environment_editor.load_for_file(file);
+
         // Try to find and parse http-client.env.json
         if let Some(file_str) = file.to_str()
             && let Ok(Some(env_file)) =
@@ -465,10 +472,11 @@ impl eframe::App for HttpRunnerApp {
                 }
             }
             KeyboardAction::ToggleView => {
-                // Toggle between text editor and request details view
+                // Toggle between text editor, request details, and environment editor views
                 self.view_mode = match self.view_mode {
                     ViewMode::TextEditor => ViewMode::RequestDetails,
-                    ViewMode::RequestDetails => ViewMode::TextEditor,
+                    ViewMode::RequestDetails => ViewMode::EnvironmentEditor,
+                    ViewMode::EnvironmentEditor => ViewMode::TextEditor,
                 };
             }
             KeyboardAction::ToggleFileTree => {
@@ -504,6 +512,11 @@ impl eframe::App for HttpRunnerApp {
                                 self.text_editor.load_file(file);
                             }
                         }
+                    }
+                    ViewMode::EnvironmentEditor => {
+                        self.environment_editor.save();
+                        // Refresh environments after saving
+                        self.environments = self.environment_editor.environment_names();
                     }
                 }
             }
@@ -572,6 +585,11 @@ impl eframe::App for HttpRunnerApp {
                         &mut self.view_mode,
                         ViewMode::RequestDetails,
                         "📋 Request Details",
+                    );
+                    ui.selectable_value(
+                        &mut self.view_mode,
+                        ViewMode::EnvironmentEditor,
+                        "🌍 Environment",
                     );
 
                     #[cfg(not(target_arch = "wasm32"))]
@@ -733,6 +751,35 @@ impl eframe::App for HttpRunnerApp {
                                 );
                             }
                         });
+                    }
+                    ViewMode::EnvironmentEditor => {
+                        let had_changes_before = self.environment_editor.has_changes();
+                        let env_count_before = self.environments.len();
+
+                        egui::ScrollArea::vertical()
+                            .id_salt("environment_editor_scroll")
+                            .max_height(available_height)
+                            .auto_shrink([false, false])
+                            .show(ui, |ui| {
+                                self.environment_editor.show(ui);
+                            });
+
+                        // Only refresh environment list when the change state transitions
+                        let has_changes_now = self.environment_editor.has_changes();
+                        if has_changes_now != had_changes_before
+                            || (has_changes_now
+                                && self.environment_editor.environment_names().len()
+                                    != env_count_before)
+                        {
+                            self.environments = self.environment_editor.environment_names();
+                            // If the selected environment was deleted, clear selection
+                            if let Some(ref env) = self.selected_environment
+                                && !self.environments.contains(env)
+                            {
+                                self.selected_environment = None;
+                                self.save_state();
+                            }
+                        }
                     }
                 }
             });
