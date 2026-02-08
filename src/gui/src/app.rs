@@ -326,11 +326,14 @@ impl HttpRunnerApp {
     fn show_bottom_panel(&self, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label(format!(
-                    "Working Directory: {}",
-                    self.root_directory.display()
-                ));
-                ui.separator();
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    ui.label(format!(
+                        "Working Directory: {}",
+                        self.root_directory.display()
+                    ));
+                    ui.separator();
+                }
                 if let Some(file) = &self.selected_file {
                     ui.label(format!("Selected: {}", file.display()));
                 }
