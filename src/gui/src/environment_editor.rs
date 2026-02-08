@@ -252,7 +252,7 @@ impl EnvironmentEditor {
                 egui::Grid::new("env_vars_grid")
                     .striped(true)
                     .num_columns(3)
-                    .min_col_width(100.0)
+                    .min_col_width(300.0)
                     .show(ui, |ui| {
                         ui.strong("Variable");
                         ui.strong("Value");
