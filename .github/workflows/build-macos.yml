@@ -48,3 +48,4 @@ jobs:
         path: |
           target/release/httprunner
           target/release/httprunner-gui
+          target/release/httprunner-tui

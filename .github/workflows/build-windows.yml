@@ -48,3 +48,5 @@ jobs:
         path: |
           target/release/httprunner.exe
           target/release/httprunner-gui.exe
+          target/release/httprunner-tui.exe
+
