@@ -22,15 +22,15 @@ pub fn run_upgrade() -> Result<()> {
         ("/bin/bash", vec!["-c", command])
     };
 
-    let output = Command::new(shell).args(args).output()?;
+    let status = Command::new(shell).args(args).status()?;
 
-    if output.status.success() {
+    if status.success() {
         println!("{} Upgrade completed successfully!", colors::green("✅"));
     } else {
         println!(
             "{} Upgrade failed with exit code: {:?}",
             colors::red("❌"),
-            output.status.code()
+            status.code()
         );
     }
 

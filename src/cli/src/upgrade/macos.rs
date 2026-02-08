@@ -11,15 +11,15 @@ pub fn run_upgrade() -> Result<()> {
     let command = "curl -fsSL https://christianhelle.com/httprunner/install | bash";
     println!("{} Running: {}", colors::yellow("📦"), command);
 
-    let output = Command::new("/bin/bash").args(["-c", command]).output()?;
+    let status = Command::new("/bin/bash").args(["-c", command]).status()?;
 
-    if output.status.success() {
+    if status.success() {
         println!("{} Upgrade completed successfully!", colors::green("✅"));
     } else {
         println!(
             "{} Upgrade failed with exit code: {:?}",
             colors::red("❌"),
-            output.status.code()
+            status.code()
         );
     }
 
