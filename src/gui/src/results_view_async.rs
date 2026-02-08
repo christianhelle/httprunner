@@ -180,6 +180,7 @@ async fn execute_request_async(request: httprunner_core::HttpRequest) -> Executi
                     url: request.url,
                     status: result.status_code,
                     duration_ms,
+                    request_body: request.body,
                     response_body: result.response_body.unwrap_or_default(),
                     assertion_results: result.assertion_results.clone(),
                 }
