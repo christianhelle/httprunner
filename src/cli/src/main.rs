@@ -13,6 +13,8 @@ const VERSION: &str = env!("VERSION");
 const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
 fn main() -> anyhow::Result<()> {
+    setup_forceful_shutdown();
+
     let cli_args = cli::Cli::parse();
     if cli_args.files.is_empty() && !cli_args.discover && !cli_args.upgrade {
         let mut cmd = cli::Cli::command();
@@ -47,6 +49,53 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn setup_forceful_shutdown() {
+    #[cfg(windows)]
+    {
+        // On Windows, we need to use both ctrlc and direct Windows Console API
+        // to properly handle CTRL+C in both cmd.exe and PowerShell
+        use windows_sys::Win32::Foundation::TRUE;
+        use windows_sys::Win32::System::Console::{SetConsoleCtrlHandler, CTRL_C_EVENT, CTRL_BREAK_EVENT};
+        
+        unsafe extern "system" fn console_handler(ctrl_type: u32) -> i32 {
+            match ctrl_type {
+                CTRL_C_EVENT | CTRL_BREAK_EVENT => {
+                    use std::io::{self, Write};
+                    let _ = writeln!(
+                        io::stderr(),
+                        "\n{} Received CTRL+C, shutting down...",
+                        colors::yellow("⚠️")
+                    );
+                    let _ = io::stderr().flush();
+                    std::process::exit(130);
+                }
+                _ => 0, // Let default handler process other events
+            }
+        }
+
+        unsafe {
+            // Register Windows console control handler for PowerShell compatibility
+            SetConsoleCtrlHandler(Some(console_handler), TRUE);
+        }
+    }
+
+    #[cfg(not(windows))]
+    {
+        // On Unix systems, use ctrlc crate's standard handler
+        ctrlc::set_handler(|| {
+            use std::io::{self, Write};
+            let _ = writeln!(
+                io::stderr(),
+                "\n{} Received CTRL+C, shutting down...",
+                colors::yellow("⚠️")
+            );
+            let _ = io::stderr().flush();
+            std::process::exit(130);
+        })
+        .expect("Error setting Ctrl-C handler");
+    }
 }
 
 fn track_cli_usage(cli_args: &cli::Cli) {
