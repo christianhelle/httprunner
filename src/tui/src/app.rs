@@ -186,10 +186,10 @@ impl App {
         let editor_env_count = self.environment_editor.environment_names().len();
         if editor_env_count != env_count_before {
             self.environments = self.environment_editor.environment_names();
-            if let Some(ref env) = self.selected_environment {
-                if !self.environments.contains(env) {
-                    self.selected_environment = None;
-                }
+            if let Some(ref env) = self.selected_environment
+                && !self.environments.contains(env)
+            {
+                self.selected_environment = None;
             }
         }
     }

@@ -214,8 +214,9 @@ impl EnvironmentEditor {
         ui.separator();
 
         // Show variables for the selected environment
-        if let Some(ref editing_env) = self.editing_environment.clone() {
-            if let Some(vars) = self.config.get(editing_env).cloned() {
+        if let Some(ref editing_env) = self.editing_environment.clone()
+            && let Some(vars) = self.config.get(editing_env).cloned()
+        {
                 ui.horizontal(|ui| {
                     ui.heading(
                         egui::RichText::new(format!("📋 {}", editing_env)).size(16.0),
@@ -313,7 +314,6 @@ impl EnvironmentEditor {
                         self.new_var_value.clear();
                     }
                 });
-            }
         }
 
         ui.separator();

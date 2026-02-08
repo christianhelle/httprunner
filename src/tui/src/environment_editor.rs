@@ -265,17 +265,14 @@ impl EnvironmentEditor {
                 if self.focus == EditorFocus::VariableList
                     && !self.var_names.is_empty()
                     && !self.env_names.is_empty()
+                    && let Some(env_name) = self.env_names.get(self.selected_env_index)
+                    && let Some(var_name) = self.var_names.get(self.selected_var_index)
+                    && let Some(current_value) = self.get_var_value(env_name, var_name)
                 {
-                    if let Some(env_name) = self.env_names.get(self.selected_env_index) {
-                        if let Some(var_name) = self.var_names.get(self.selected_var_index) {
-                            if let Some(current_value) = self.get_var_value(env_name, var_name) {
-                                self.input_buffer = current_value.to_string();
-                                self.pending_var_name = var_name.clone();
-                                self.input_mode = InputMode::EditVariableValue;
-                                self.focus = EditorFocus::Input;
-                            }
-                        }
-                    }
+                    self.input_buffer = current_value.to_string();
+                    self.pending_var_name = var_name.clone();
+                    self.input_mode = InputMode::EditVariableValue;
+                    self.focus = EditorFocus::Input;
                 }
             }
             // Delete
@@ -294,18 +291,15 @@ impl EnvironmentEditor {
                     }
                     EditorFocus::VariableList => {
                         if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
-                        {
-                            if let Some(var_name) =
+                            && let Some(var_name) =
                                 self.var_names.get(self.selected_var_index).cloned()
-                            {
-                                if let Some(vars) = self.config.get_mut(&env_name) {
-                                    vars.remove(&var_name);
-                                    self.has_changes = true;
-                                    self.refresh_var_names();
-                                    self.status_message =
-                                        Some(format!("Deleted variable '{}'", var_name));
-                                }
-                            }
+                            && let Some(vars) = self.config.get_mut(&env_name)
+                        {
+                            vars.remove(&var_name);
+                            self.has_changes = true;
+                            self.refresh_var_names();
+                            self.status_message =
+                                Some(format!("Deleted variable '{}'", var_name));
                         }
                     }
                     EditorFocus::Input => {}
@@ -351,16 +345,15 @@ impl EnvironmentEditor {
                         InputMode::NewVariableValue => {
                             if let Some(env_name) =
                                 self.env_names.get(self.selected_env_index).cloned()
+                                && let Some(vars) = self.config.get_mut(&env_name)
                             {
-                                if let Some(vars) = self.config.get_mut(&env_name) {
-                                    vars.insert(self.pending_var_name.clone(), value);
-                                    self.has_changes = true;
-                                    self.refresh_var_names();
-                                    self.status_message = Some(format!(
-                                        "Added variable '{}'",
-                                        self.pending_var_name
-                                    ));
-                                }
+                                vars.insert(self.pending_var_name.clone(), value);
+                                self.has_changes = true;
+                                self.refresh_var_names();
+                                self.status_message = Some(format!(
+                                    "Added variable '{}'",
+                                    self.pending_var_name
+                                ));
                             }
                             self.pending_var_name.clear();
                             self.focus = EditorFocus::VariableList;
@@ -368,15 +361,14 @@ impl EnvironmentEditor {
                         InputMode::EditVariableValue => {
                             if let Some(env_name) =
                                 self.env_names.get(self.selected_env_index).cloned()
+                                && let Some(vars) = self.config.get_mut(&env_name)
                             {
-                                if let Some(vars) = self.config.get_mut(&env_name) {
-                                    vars.insert(self.pending_var_name.clone(), value);
-                                    self.has_changes = true;
-                                    self.status_message = Some(format!(
-                                        "Updated variable '{}'",
-                                        self.pending_var_name
-                                    ));
-                                }
+                                vars.insert(self.pending_var_name.clone(), value);
+                                self.has_changes = true;
+                                self.status_message = Some(format!(
+                                    "Updated variable '{}'",
+                                    self.pending_var_name
+                                ));
                             }
                             self.pending_var_name.clear();
                             self.focus = EditorFocus::VariableList;

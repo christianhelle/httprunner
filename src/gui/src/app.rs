@@ -770,11 +770,11 @@ impl eframe::App for HttpRunnerApp {
                         {
                             self.environments = self.environment_editor.environment_names();
                             // If the selected environment was deleted, clear selection
-                            if let Some(ref env) = self.selected_environment {
-                                if !self.environments.contains(env) {
-                                    self.selected_environment = None;
-                                    self.save_state();
-                                }
+                            if let Some(ref env) = self.selected_environment
+                                && !self.environments.contains(env)
+                            {
+                                self.selected_environment = None;
+                                self.save_state();
                             }
                         }
                     }
