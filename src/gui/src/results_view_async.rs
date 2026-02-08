@@ -163,23 +163,14 @@ impl ResultsView {
 }
 
 async fn execute_request_async(request: httprunner_core::HttpRequest) -> ExecutionResult {
-    #[cfg(not(target_arch = "wasm32"))]
-    use std::time::Instant;
-    #[cfg(target_arch = "wasm32")]
-    use web_time::Instant;
-
-    let start = Instant::now();
-
     match httprunner_core::execute_http_request_async(&request, false, false).await {
         Ok(result) => {
-            let duration_ms = start.elapsed().as_millis() as u64;
-
             if result.success {
                 ExecutionResult::Success {
                     method: request.method,
                     url: request.url,
                     status: result.status_code,
-                    duration_ms,
+                    duration_ms: result.duration_ms,
                     request_body: request.body,
                     response_body: result.response_body.unwrap_or_default(),
                     assertion_results: result.assertion_results.clone(),

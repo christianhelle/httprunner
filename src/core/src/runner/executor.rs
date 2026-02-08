@@ -27,10 +27,10 @@ pub fn execute_http_request(
     verbose: bool,
     insecure: bool,
 ) -> Result<HttpResult> {
-    let start_time = Instant::now();
-
     let client = build_client(request, insecure)?;
     let req_builder = build_request(&client, request)?;
+
+    let start_time = Instant::now();
 
     let response = match req_builder.send() {
         Ok(resp) => resp,

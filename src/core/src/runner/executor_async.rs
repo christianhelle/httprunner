@@ -18,10 +18,10 @@ pub async fn execute_http_request_async(
     verbose: bool,
     insecure: bool,
 ) -> Result<HttpResult> {
-    let start_time = Instant::now();
-
     let client = build_client_async(request, insecure)?;
     let req_builder = build_request_async(&client, request)?;
+
+    let start_time = Instant::now();
 
     let response = match req_builder.send().await {
         Ok(resp) => resp,
