@@ -28,7 +28,7 @@ reqwest = { workspace = true }
 ctrlc = { version = "3.4.5", features = ["termination"] }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.59", features = ["Win32_System_Console", "Win32_Foundation"] }
+windows-sys = { version = "0.61", features = ["Win32_System_Console", "Win32_Foundation"] }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1.12"
