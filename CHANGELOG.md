@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased](https://github.com/christianhelle/httprunner/tree/HEAD)
+
+[Full Changelog](https://github.com/christianhelle/httprunner/compare/0.8.48...HEAD)
+
+**Implemented enhancements:**
+
+- Add support to shutdown CLI app using CTRL+C [\#190](https://github.com/christianhelle/httprunner/pull/190) ([christianhelle](https://github.com/christianhelle))
+- Fix request duration calculation to only show the actual HTTP request duration [\#188](https://github.com/christianhelle/httprunner/pull/188) ([christianhelle](https://github.com/christianhelle))
+
+**Merged pull requests:**
+
+- Add .http environment file editing to GUI and TUI apps [\#187](https://github.com/christianhelle/httprunner/pull/187) ([christianhelle](https://github.com/christianhelle))
+- Hide "Working Directory" in WASM GUI build [\#185](https://github.com/christianhelle/httprunner/pull/185) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Separate TUI Docker Hub publishing from CLI [\#184](https://github.com/christianhelle/httprunner/pull/184) ([Copilot](https://github.com/apps/copilot-swe-agent))
+- Sync static website docs with README - add TUI, timeouts, and missing CLI options [\#183](https://github.com/christianhelle/httprunner/pull/183) ([Copilot](https://github.com/apps/copilot-swe-agent))
+
 ## [0.8.48](https://github.com/christianhelle/httprunner/tree/0.8.48) (2026-02-07)
 
 [Full Changelog](https://github.com/christianhelle/httprunner/compare/0.8.47...0.8.48)
