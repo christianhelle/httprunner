@@ -24,6 +24,13 @@ pub fn enable_forceful_shutdown() {
 
     unsafe {
         // Register Windows console control handler for PowerShell compatibility
-        SetConsoleCtrlHandler(Some(console_handler), TRUE);
+        let result = SetConsoleCtrlHandler(Some(console_handler), TRUE);
+        if result == 0 {
+            // Registration failed; make this diagnosable without changing shutdown behavior
+            eprintln!(
+                "{} Failed to register Windows CTRL+C handler; PowerShell CTRL+C handling may not work as expected.",
+                colors::yellow("⚠️"),
+            );
+        }
     }
 }
