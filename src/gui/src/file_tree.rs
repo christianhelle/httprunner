@@ -1,9 +1,13 @@
+use iced::{
+    widget::{button, column, scrollable, text, Column},
+    Element, Length,
+};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-#[cfg(not(target_arch = "wasm32"))]
 use std::thread;
-#[cfg(not(target_arch = "wasm32"))]
 use walkdir::WalkDir;
+
+use crate::app::Message;
 
 pub struct FileTree {
     root_path: PathBuf,
@@ -19,55 +23,45 @@ impl FileTree {
         let is_discovering = Arc::new(Mutex::new(true));
         let discovered_count = Arc::new(Mutex::new(0usize));
 
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            // Clone for the background thread
-            let files_clone = Arc::clone(&http_files);
-            let discovering_clone = Arc::clone(&is_discovering);
-            let count_clone = Arc::clone(&discovered_count);
-            let path_clone = root_path.clone();
+        // Clone for the background thread
+        let files_clone = Arc::clone(&http_files);
+        let discovering_clone = Arc::clone(&is_discovering);
+        let count_clone = Arc::clone(&discovered_count);
+        let path_clone = root_path.clone();
 
-            // Start async discovery in background thread
-            thread::spawn(move || {
-                let mut temp_files = Vec::new();
+        // Start async discovery in background thread
+        thread::spawn(move || {
+            let mut temp_files = Vec::new();
 
-                for entry in WalkDir::new(&path_clone)
-                    .follow_links(true)
-                    .into_iter()
-                    .filter_map(|e| e.ok())
-                {
-                    if entry.file_type().is_file()
-                        && let Some(ext) = entry.path().extension()
-                        && ext == "http"
-                    {
-                        let file_path = entry.path().to_path_buf();
-                        temp_files.push(file_path.clone());
+            for entry in WalkDir::new(&path_clone)
+                .follow_links(true)
+                .into_iter()
+                .filter_map(|e| e.ok())
+            {
+                if entry.file_type().is_file() {
+                    if let Some(ext) = entry.path().extension() {
+                        if ext == "http" {
+                            let file_path = entry.path().to_path_buf();
+                            temp_files.push(file_path.clone());
 
-                        // Update shared state incrementally
-                        if let Ok(mut files) = files_clone.lock() {
-                            files.push(file_path);
-                            files.sort();
-                        }
-                        if let Ok(mut count) = count_clone.lock() {
-                            *count = temp_files.len();
+                            // Update shared state incrementally
+                            if let Ok(mut files) = files_clone.lock() {
+                                files.push(file_path);
+                                files.sort();
+                            }
+                            if let Ok(mut count) = count_clone.lock() {
+                                *count = temp_files.len();
+                            }
                         }
                     }
                 }
+            }
 
-                // Mark discovery as complete
-                if let Ok(mut discovering) = discovering_clone.lock() {
-                    *discovering = false;
-                }
-            });
-        }
-
-        #[cfg(target_arch = "wasm32")]
-        {
-            // In WASM, there's no real filesystem, so immediately mark as not discovering
-            if let Ok(mut discovering) = is_discovering.lock() {
+            // Mark discovery as complete
+            if let Ok(mut discovering) = discovering_clone.lock() {
                 *discovering = false;
             }
-        }
+        });
 
         Self {
             root_path,
@@ -92,21 +86,15 @@ impl FileTree {
             .unwrap_or(0)
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui) -> Option<PathBuf> {
-        let mut selected_file = None;
+    pub fn view(&self) -> Element<Message> {
+        let mut content = Column::new().spacing(5).padding(10);
 
         // Show discovery status
         if self.is_discovering() {
-            ui.horizontal(|ui| {
-                ui.spinner();
-                ui.label(format!(
-                    "Discovering .http files... ({})",
-                    self.discovered_count()
-                ));
-            });
-            ui.separator();
-            // Request repaint to keep updating during discovery
-            ui.ctx().request_repaint();
+            content = content.push(text(format!(
+                "Discovering .http files... ({})",
+                self.discovered_count()
+            )));
         }
 
         // Get a snapshot of current files
@@ -116,7 +104,11 @@ impl FileTree {
             .map(|guard| guard.clone())
             .unwrap_or_default();
 
-        egui::ScrollArea::vertical().show(ui, |ui| {
+        if http_files.is_empty() && !self.is_discovering() {
+            content = content
+                .push(text("No .http files found."))
+                .push(text("Use Open Folder to choose a directory."));
+        } else {
             // Group files by directory
             let mut dir_files: std::collections::BTreeMap<Option<PathBuf>, Vec<PathBuf>> =
                 std::collections::BTreeMap::new();
@@ -128,44 +120,27 @@ impl FileTree {
 
             // Show files organized by directory
             for (dir, files) in dir_files {
-                if let Some(dir_path) = dir {
+                if let Some(dir_path) = &dir {
                     let dir_name = dir_path
                         .strip_prefix(&self.root_path)
-                        .unwrap_or(&dir_path)
+                        .unwrap_or(dir_path)
                         .display()
                         .to_string();
 
-                    let is_expanded = self.expanded_dirs.contains(&dir_path);
-                    let header_text = if is_expanded {
-                        format!("📂 {}", dir_name)
-                    } else {
-                        format!("📁 {}", dir_name)
-                    };
+                    content = content.push(text(format!("📁 {}", dir_name)));
 
-                    let header = egui::CollapsingHeader::new(header_text)
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            for file in &files {
-                                let file_name = file
-                                    .file_name()
-                                    .and_then(|n| n.to_str())
-                                    .unwrap_or("unknown");
+                    for file in &files {
+                        let file_name = file
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or("unknown");
 
-                                if ui
-                                    .selectable_label(false, format!("📄 {}", file_name))
-                                    .clicked()
-                                {
-                                    selected_file = Some(file.clone());
-                                }
-                            }
-                        });
-
-                    if header.header_response.clicked() {
-                        if is_expanded {
-                            self.expanded_dirs.remove(&dir_path);
-                        } else {
-                            self.expanded_dirs.insert(dir_path.clone());
-                        }
+                        let file_clone = file.clone();
+                        content = content.push(
+                            button(format!("  📄 {}", file_name))
+                                .on_press(Message::FileSelected(file_clone))
+                                .width(Length::Fill),
+                        );
                     }
                 } else {
                     // Files in root directory
@@ -175,22 +150,17 @@ impl FileTree {
                             .and_then(|n| n.to_str())
                             .unwrap_or("unknown");
 
-                        if ui
-                            .selectable_label(false, format!("📄 {}", file_name))
-                            .clicked()
-                        {
-                            selected_file = Some(file.clone());
-                        }
+                        let file_clone = file.clone();
+                        content = content.push(
+                            button(format!("📄 {}", file_name))
+                                .on_press(Message::FileSelected(file_clone))
+                                .width(Length::Fill),
+                        );
                     }
                 }
             }
+        }
 
-            if http_files.is_empty() && !self.is_discovering() {
-                ui.label("No .http files found in this directory.");
-                ui.label("Use File -> Open Directory to choose a different folder.");
-            }
-        });
-
-        selected_file
+        scrollable(content).into()
     }
 }

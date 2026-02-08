@@ -1,32 +1,63 @@
 use super::{
     environment_editor::EnvironmentEditor,
     file_tree::FileTree,
-    request_view::{RequestView, RequestViewAction},
+    request_view::RequestView,
     results_view::ResultsView,
     state::AppState,
     text_editor::TextEditor,
 };
-#[cfg(not(target_arch = "wasm32"))]
 use httprunner_core::telemetry;
+use iced::{
+    widget::{button, column, container, row, scrollable, text, Column, Row},
+    Alignment, Element, Length, Task,
+};
 use std::path::{Path, PathBuf};
-
-enum KeyboardAction {
-    None,
-    RunAllRequests,
-    OpenFolder,
-    Quit,
-    SwitchEnvironment,
-    ToggleView,
-    ToggleFileTree,
-    ToggleResultsView,
-    SaveFile,
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ViewMode {
     TextEditor,
     RequestDetails,
     EnvironmentEditor,
+}
+
+#[derive(Debug, Clone)]
+pub enum Message {
+    // File operations
+    OpenFolder,
+    FolderSelected(Option<PathBuf>),
+    FileSelected(PathBuf),
+    SaveFile,
+    NewFile,
+    
+    // Request operations
+    RunAllRequests,
+    RunRequest(usize),
+    
+    // Environment operations
+    EnvironmentChanged(String),
+    SwitchEnvironment,
+    
+    // View operations
+    ToggleView,
+    ToggleFileTree,
+    ToggleResultsView,
+    
+    // Settings
+    DelayChanged(u64),
+    ToggleTelemetry,
+    FontSizeIncrease,
+    FontSizeDecrease,
+    FontSizeReset,
+    
+    // Editor operations
+    TextEdited(String),
+    
+    // Results
+    ResultsReceived(Vec<httprunner_core::HttpResult>),
+    
+    // Window operations
+    Quit,
+    WindowResized(f32, f32),
 }
 
 pub struct HttpRunnerApp {
@@ -42,7 +73,6 @@ pub struct HttpRunnerApp {
     root_directory: PathBuf,
     font_size: f32,
     environment_selector_open: bool,
-    last_saved_window_size: Option<(f32, f32)>,
     view_mode: ViewMode,
     file_tree_visible: bool,
     telemetry_enabled: bool,
@@ -55,7 +85,11 @@ impl HttpRunnerApp {
     const MAX_FONT_SIZE: f32 = 32.0;
     const FONT_SIZE_STEP: f32 = 1.0;
 
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn title(&self) -> String {
+        "HTTP File Runner".to_string()
+    }
+
+    pub fn new() -> (Self, Task<Message>) {
         let state = AppState::load();
 
         let root_directory = state
@@ -64,7 +98,6 @@ impl HttpRunnerApp {
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
         let font_size = state.font_size.unwrap_or(Self::DEFAULT_FONT_SIZE);
-
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
         let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
         let delay_ms = state.delay_ms.unwrap_or(0);
@@ -82,14 +115,11 @@ impl HttpRunnerApp {
             root_directory,
             font_size,
             environment_selector_open: false,
-            last_saved_window_size: state.window_size,
-            view_mode: ViewMode::TextEditor, // Default to text editor for new files
+            view_mode: ViewMode::TextEditor,
             file_tree_visible,
             telemetry_enabled,
             delay_ms,
         };
-
-        app.update_font_size(&cc.egui_ctx);
 
         if let Some(last_results) = state.last_results {
             app.results_view.restore_results(last_results);
@@ -98,710 +128,287 @@ impl HttpRunnerApp {
         app.results_view
             .set_compact_mode(state.results_compact_mode.unwrap_or(true));
 
-        if let Some(saved_file) = state.selected_file
-            && saved_file.exists()
-        {
-            app.selected_file = Some(saved_file.clone());
-            app.load_environments(&saved_file);
-            app.request_view.load_file(&saved_file);
-            app.text_editor.load_file(&saved_file);
+        if let Some(saved_file) = state.selected_file {
+            if saved_file.exists() {
+                app.selected_file = Some(saved_file.clone());
+                app.load_environments(&saved_file);
+                app.request_view.load_file(&saved_file);
+                app.text_editor.load_file(&saved_file);
 
-            if let Some(saved_env) = state.selected_environment
-                && app.environments.contains(&saved_env)
-            {
-                app.selected_environment = Some(saved_env);
+                if let Some(saved_env) = state.selected_environment {
+                    if app.environments.contains(&saved_env) {
+                        app.selected_environment = Some(saved_env);
+                    }
+                }
             }
         }
 
-        app
+        (app, Task::none())
     }
 
-    fn update_font_size(&mut self, ctx: &egui::Context) {
-        let mut style = (*ctx.style()).clone();
-
-        let base_size = self.font_size;
-        style.text_styles = [
-            (
-                egui::TextStyle::Small,
-                egui::FontId::proportional(base_size * 0.857),
-            ),
-            (egui::TextStyle::Body, egui::FontId::proportional(base_size)),
-            (
-                egui::TextStyle::Button,
-                egui::FontId::proportional(base_size),
-            ),
-            (
-                egui::TextStyle::Heading,
-                egui::FontId::proportional(base_size * 1.286),
-            ),
-            (
-                egui::TextStyle::Monospace,
-                egui::FontId::monospace(base_size),
-            ),
-        ]
-        .into();
-
-        ctx.set_style(style);
-    }
-
-    fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) -> KeyboardAction {
-        if ctx.input(|i| {
-            i.modifiers.ctrl && (i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals))
-        }) {
-            self.font_size = (self.font_size + Self::FONT_SIZE_STEP).min(Self::MAX_FONT_SIZE);
-            self.update_font_size(ctx);
-            self.save_state();
+    fn load_environments(&mut self, file_path: &Path) {
+        if let Some(file_str) = file_path.to_str() {
+            self.environments = httprunner_core::environment::discover_environments(file_str);
         }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Minus)) {
-            self.font_size = (self.font_size - Self::FONT_SIZE_STEP).max(Self::MIN_FONT_SIZE);
-            self.update_font_size(ctx);
-            self.save_state();
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Num0)) {
-            self.font_size = Self::DEFAULT_FONT_SIZE;
-            self.update_font_size(ctx);
-            self.save_state();
-        }
-
-        if ctx.input(|i| i.key_pressed(egui::Key::F5)) {
-            return KeyboardAction::RunAllRequests;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::R)) {
-            return KeyboardAction::RunAllRequests;
-        }
-
-        #[cfg(not(target_arch = "wasm32"))]
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::O)) {
-            return KeyboardAction::OpenFolder;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Q)) {
-            return KeyboardAction::Quit;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::E)) {
-            return KeyboardAction::SwitchEnvironment;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::T)) {
-            return KeyboardAction::ToggleView;
-        }
-
-        #[cfg(not(target_arch = "wasm32"))]
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
-            return KeyboardAction::ToggleFileTree;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::D)) {
-            return KeyboardAction::ToggleResultsView;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::S)) {
-            return KeyboardAction::SaveFile;
-        }
-
-        KeyboardAction::None
-    }
-
-    #[allow(unused_variables)]
-    fn show_top_panel(&mut self, ctx: &egui::Context) {
-        #[cfg(not(target_arch = "wasm32"))]
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::MenuBar::new().ui(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Open Directory...").clicked() {
-                        if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                            self.root_directory = path.clone();
-                            self.file_tree = FileTree::new(path);
-                            self.selected_file = None;
-                            self.selected_request_index = None;
-                            self.save_state();
-                        }
-                        ui.close();
-                    }
-
-                    if ui.button("New .http File...").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
-                            .set_directory(&self.root_directory)
-                            .add_filter("HTTP Files", &["http"])
-                            .set_file_name("new.http")
-                            .save_file()
-                        {
-                            if let Err(e) = std::fs::write(
-                                &path,
-                                "### New Request\nGET https://httpbin.org/get\n",
-                            ) {
-                                eprintln!("Failed to create file: {}", e);
-                            } else {
-                                // Refresh file tree and select the new file
-                                self.file_tree = FileTree::new(self.root_directory.clone());
-                                self.selected_file = Some(path.clone());
-                                self.request_view.load_file(&path);
-                                self.text_editor.load_file(&path);
-                                // Switch to text editor view for new files
-                                self.view_mode = ViewMode::TextEditor;
-                                self.save_state();
-                            }
-                        }
-                        ui.close();
-                    }
-
-                    ui.separator();
-
-                    if ui.button("Quit").clicked() {
-                        self.save_state();
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
-                });
-
-                ui.menu_button("Settings", |ui| {
-                    let telemetry_text = if self.telemetry_enabled {
-                        "✓ Telemetry Enabled"
-                    } else {
-                        "  Telemetry Disabled"
-                    };
-
-                    if ui.button(telemetry_text).clicked() {
-                        self.telemetry_enabled = !self.telemetry_enabled;
-
-                        // Update the global telemetry state and persist
-                        #[cfg(not(target_arch = "wasm32"))]
-                        if let Err(e) = telemetry::set_enabled(self.telemetry_enabled) {
-                            eprintln!("Failed to save telemetry setting: {}", e);
-                        }
-
-                        self.save_state();
-                        ui.close();
-                    }
-
-                    ui.separator();
-
-                    ui.label("Request Delay (ms):");
-                    let mut delay_value = self.delay_ms as i32;
-                    if ui
-                        .add(egui::Slider::new(&mut delay_value, 0..=10000).suffix(" ms"))
-                        .changed()
-                    {
-                        self.delay_ms = delay_value.max(0) as u64;
-                        self.save_state();
-                    }
-
-                    ui.separator();
-
-                    ui.label(
-                        egui::RichText::new(
-                            "Telemetry helps improve the app.\nNo personal data is collected.",
-                        )
-                        .small()
-                        .color(egui::Color32::GRAY),
-                    );
-                });
-
-                ui.separator();
-
-                ui.label("Environment:");
-                let combo = egui::ComboBox::from_id_salt("env_selector")
-                    .selected_text(self.selected_environment.as_deref().unwrap_or("None"));
-
-                let previous_env = self.selected_environment.clone();
-                let response = combo.show_ui(ui, |ui| {
-                    ui.selectable_value(&mut self.selected_environment, None, "None");
-                    for env in &self.environments {
-                        let env_clone = Some(env.clone());
-                        ui.selectable_value(&mut self.selected_environment, env_clone, env);
-                    }
-                });
-
-                // Save state if environment changed
-                if previous_env != self.selected_environment {
-                    self.save_state();
-                }
-
-                // Track whether the combo box is open by checking if the popup is actually open
-                self.environment_selector_open = response.response.has_focus()
-                    || egui::containers::Popup::is_id_open(ui.ctx(), response.response.id);
-            });
-        });
-    }
-
-    fn show_bottom_panel(&self, ctx: &egui::Context) {
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    ui.label(format!(
-                        "Working Directory: {}",
-                        self.root_directory.display()
-                    ));
-                    ui.separator();
-                }
-                if let Some(file) = &self.selected_file {
-                    ui.label(format!("Selected: {}", file.display()));
-                }
-                ui.separator();
-                if let Ok(support_key) = httprunner_core::logging::get_support_key() {
-                    ui.label(format!("Support: {}", support_key.short_key));
-                }
-            });
-        });
-    }
-
-    fn load_environments(&mut self, file: &Path) {
-        // Load environment editor
-        self.environment_editor.load_for_file(file);
-
-        // Try to find and parse http-client.env.json
-        if let Some(file_str) = file.to_str()
-            && let Ok(Some(env_file)) =
-                httprunner_core::environment::find_environment_file(file_str)
-            && let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file)
-        {
-            // Extract environment names from the config
-            self.environments = env_config.keys().cloned().collect();
-            self.environments.sort(); // Sort alphabetically for consistent UI
-            return;
-        }
-        // No environments found or error occurred
-        self.environments = Vec::new();
     }
 
     fn save_state(&self) {
-        self.save_state_internal(None);
-    }
-
-    fn save_state_with_window(&self, ctx: &egui::Context) {
-        // Get viewport size from context
-        let window_size = ctx.input(|i| {
-            i.viewport()
-                .inner_rect
-                .map(|r| r.size())
-                .unwrap_or(egui::vec2(1200.0, 800.0))
-        });
-        self.save_state_internal(Some((window_size.x, window_size.y)));
-    }
-
-    fn save_state_internal(&self, window_size: Option<(f32, f32)>) {
         let state = AppState {
             root_directory: Some(self.root_directory.clone()),
             selected_file: self.selected_file.clone(),
             selected_environment: self.selected_environment.clone(),
+            window_size: None, // Will be updated by window resize events
             font_size: Some(self.font_size),
-            window_size,
-            last_results: Some(self.results_view.get_results()),
             file_tree_visible: Some(self.file_tree_visible),
-            results_compact_mode: Some(self.results_view.is_compact_mode()),
             telemetry_enabled: Some(self.telemetry_enabled),
             delay_ms: Some(self.delay_ms),
+            results_compact_mode: Some(self.results_view.is_compact_mode()),
+            last_results: Some(self.results_view.get_all_results()),
         };
-
-        if let Err(e) = state.save() {
-            eprintln!("Failed to save application state: {}", e);
-        }
+        state.save();
     }
-}
 
-impl eframe::App for HttpRunnerApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let keyboard_action = self.handle_keyboard_shortcuts(ctx);
-
-        // Process keyboard actions
-        match keyboard_action {
-            KeyboardAction::RunAllRequests => {
-                #[cfg(not(target_arch = "wasm32"))]
-                if !self.request_view.has_changes()
-                    && let Some(file) = &self.selected_file
-                {
-                    self.results_view.run_file(
-                        file,
-                        self.selected_environment.as_deref(),
-                        self.delay_ms,
-                    );
-                }
-
-                #[cfg(target_arch = "wasm32")]
-                if !self.request_view.has_changes() && self.selected_file.is_some() {
-                    self.results_view.run_content_async(
-                        self.text_editor.get_content().to_string(),
-                        self.selected_environment.as_deref(),
-                        ctx,
-                    );
-                }
+    pub fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::OpenFolder => {
+                // In Iced, file dialogs need to be handled async
+                Task::perform(
+                    async {
+                        rfd::AsyncFileDialog::new()
+                            .pick_folder()
+                            .await
+                            .map(|handle| handle.path().to_path_buf())
+                    },
+                    Message::FolderSelected,
+                )
             }
-            KeyboardAction::OpenFolder =>
-            {
-                #[cfg(not(target_arch = "wasm32"))]
-                if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                    self.root_directory = path.clone();
-                    self.file_tree = FileTree::new(path);
-                    self.selected_file = None;
-                    self.selected_request_index = None;
-                    self.save_state();
-                }
+            Message::FolderSelected(Some(path)) => {
+                self.root_directory = path.clone();
+                self.file_tree = FileTree::new(path);
+                self.selected_file = None;
+                self.selected_request_index = None;
+                self.save_state();
+                Task::none()
             }
-            KeyboardAction::Quit => {
-                self.save_state_with_window(ctx);
-                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            Message::FolderSelected(None) => Task::none(),
+            Message::FileSelected(path) => {
+                self.selected_file = Some(path.clone());
+                self.load_environments(&path);
+                self.request_view.load_file(&path);
+                self.text_editor.load_file(&path);
+                self.save_state();
+                Task::none()
             }
-            KeyboardAction::SwitchEnvironment => {
-                #[cfg(not(target_arch = "wasm32"))]
-                if !self.environment_selector_open {
-                    // Cycle through environments
-                    if self.environments.is_empty() {
-                        // No environments available
-                    } else if let Some(ref current_env) = self.selected_environment {
-                        // Find current index and move to next
-                        if let Some(idx) = self.environments.iter().position(|e| e == current_env) {
-                            let next_idx = (idx + 1) % (self.environments.len() + 1);
-                            self.selected_environment = if next_idx == self.environments.len() {
-                                None
-                            } else {
-                                Some(self.environments[next_idx].clone())
-                            };
-                        } else {
-                            // Current environment not found; reset to first environment
-                            self.selected_environment = self.environments.first().cloned();
-                        }
-                    } else {
-                        // Currently "None", switch to first environment
-                        self.selected_environment = self.environments.first().cloned();
+            Message::SaveFile => {
+                if let Err(e) = self.text_editor.save_to_file() {
+                    eprintln!("Failed to save file: {}", e);
+                } else {
+                    // Reload request view after saving
+                    if let Some(path) = &self.selected_file {
+                        self.request_view.load_file(path);
                     }
-                    self.save_state();
+                }
+                Task::none()
+            }
+            Message::NewFile => {
+                // TODO: Implement new file creation dialog
+                Task::none()
+            }
+            Message::RunAllRequests => {
+                if let Some(file_path) = &self.selected_file {
+                    let file_path_str = file_path.to_string_lossy().to_string();
+                    let env = self.selected_environment.clone();
+                    let delay_ms = self.delay_ms;
+                    
+                    Task::perform(
+                        async move {
+                            let mut results = Vec::new();
+                            let _ = httprunner_core::processor::process_http_file_incremental(
+                                &file_path_str,
+                                env.as_deref(),
+                                false, // insecure
+                                delay_ms,
+                                |_idx, _total, result| {
+                                    if let httprunner_core::processor::RequestProcessingResult::Complete(http_result) = result {
+                                        results.push(http_result);
+                                    }
+                                    true // Continue processing
+                                },
+                            );
+                            results
+                        },
+                        Message::ResultsReceived,
+                    )
+                } else {
+                    Task::none()
                 }
             }
-            KeyboardAction::ToggleView => {
-                // Toggle between text editor, request details, and environment editor views
+            Message::RunRequest(index) => {
+                // TODO: Implement single request execution
+                Task::none()
+            }
+            Message::EnvironmentChanged(env) => {
+                self.selected_environment = if env.is_empty() { None } else { Some(env) };
+                self.save_state();
+                Task::none()
+            }
+            Message::SwitchEnvironment => {
+                if !self.environments.is_empty() {
+                    let current_idx = self
+                        .selected_environment
+                        .as_ref()
+                        .and_then(|env| self.environments.iter().position(|e| e == env))
+                        .unwrap_or(0);
+                    let next_idx = (current_idx + 1) % self.environments.len();
+                    self.selected_environment = Some(self.environments[next_idx].clone());
+                    self.save_state();
+                }
+                Task::none()
+            }
+            Message::ToggleView => {
                 self.view_mode = match self.view_mode {
                     ViewMode::TextEditor => ViewMode::RequestDetails,
                     ViewMode::RequestDetails => ViewMode::EnvironmentEditor,
                     ViewMode::EnvironmentEditor => ViewMode::TextEditor,
                 };
+                Task::none()
             }
-            KeyboardAction::ToggleFileTree => {
-                // Toggle file tree visibility
+            Message::ToggleFileTree => {
                 self.file_tree_visible = !self.file_tree_visible;
                 self.save_state();
+                Task::none()
             }
-            KeyboardAction::ToggleResultsView => {
-                // Toggle results view mode between compact and verbose
-                self.results_view
-                    .set_compact_mode(!self.results_view.is_compact_mode());
+            Message::ToggleResultsView => {
+                self.results_view.toggle_compact_mode();
                 self.save_state();
+                Task::none()
             }
-            KeyboardAction::SaveFile => {
-                // Save file based on current view mode
-                match self.view_mode {
-                    ViewMode::TextEditor => {
-                        // Only attempt to save when a file is currently selected
-                        if self.selected_file.is_some()
-                            && let Err(e) = self.text_editor.save_to_file()
-                        {
-                            eprintln!("Failed to save file: {}", e);
-                        }
-                    }
-                    ViewMode::RequestDetails => {
-                        if let Err(e) = self.request_view.save_to_file() {
-                            eprintln!("Failed to save file: {}", e);
-                        } else {
-                            // Refresh the file tree to show any new files
-                            self.file_tree = FileTree::new(self.root_directory.clone());
-                            // Reload text editor with updated content
-                            if let Some(file) = &self.selected_file {
-                                self.text_editor.load_file(file);
-                            }
-                        }
-                    }
-                    ViewMode::EnvironmentEditor => {
-                        self.environment_editor.save();
-                        // Refresh environments after saving
-                        self.environments = self.environment_editor.environment_names();
-                    }
+            Message::DelayChanged(delay) => {
+                self.delay_ms = delay;
+                self.save_state();
+                Task::none()
+            }
+            Message::ToggleTelemetry => {
+                self.telemetry_enabled = !self.telemetry_enabled;
+                if let Err(e) = telemetry::set_enabled(self.telemetry_enabled) {
+                    eprintln!("Failed to save telemetry setting: {}", e);
                 }
+                self.save_state();
+                Task::none()
             }
-            KeyboardAction::None => {}
+            Message::FontSizeIncrease => {
+                self.font_size = (self.font_size + Self::FONT_SIZE_STEP).min(Self::MAX_FONT_SIZE);
+                self.save_state();
+                Task::none()
+            }
+            Message::FontSizeDecrease => {
+                self.font_size = (self.font_size - Self::FONT_SIZE_STEP).max(Self::MIN_FONT_SIZE);
+                self.save_state();
+                Task::none()
+            }
+            Message::FontSizeReset => {
+                self.font_size = Self::DEFAULT_FONT_SIZE;
+                self.save_state();
+                Task::none()
+            }
+            Message::TextEdited(content) => {
+                self.text_editor.set_content(content);
+                Task::none()
+            }
+            Message::ResultsReceived(results) => {
+                self.results_view.set_results(results);
+                self.save_state();
+                Task::none()
+            }
+            Message::Quit => {
+                self.save_state();
+                iced::exit()
+            }
+            Message::WindowResized(width, height) => {
+                let mut state = AppState::load();
+                state.window_size = Some((width, height));
+                state.save();
+                Task::none()
+            }
         }
+    }
 
-        self.show_top_panel(ctx);
-        self.show_bottom_panel(ctx);
+    pub fn view(&self) -> Element<Message> {
+        let top_bar = self.view_top_bar();
+        let main_content = self.view_main_content();
 
-        // Left panel - File tree (only show if visible and not WASM)
-        #[cfg(not(target_arch = "wasm32"))]
+        column![top_bar, main_content]
+            .spacing(0)
+            .into()
+    }
+
+    fn view_top_bar(&self) -> Element<Message> {
+        let open_folder_btn = button("Open Folder").on_press(Message::OpenFolder);
+        let run_btn = button("▶ Run All").on_press(Message::RunAllRequests);
+        let toggle_view_btn = button("Toggle View").on_press(Message::ToggleView);
+        let toggle_tree_btn = button("Toggle Tree").on_press(Message::ToggleFileTree);
+        
+        let current_env = self.selected_environment.clone().unwrap_or_else(|| "None".to_string());
+        let env_text = format!("Environment: {}", current_env);
+        
+        let toolbar = row![
+            open_folder_btn,
+            run_btn,
+            toggle_view_btn,
+            toggle_tree_btn,
+            text(env_text),
+        ]
+        .spacing(10)
+        .padding(10);
+
+        container(toolbar)
+            .width(Length::Fill)
+            .into()
+    }
+
+    fn view_main_content(&self) -> Element<Message> {
+        let mut main_row = Row::new().spacing(5).padding(5);
+
+        // File tree (left panel)
         if self.file_tree_visible {
-            egui::SidePanel::left("file_tree_panel")
-                .resizable(true)
-                .default_width(300.0)
-                .show(ctx, |ui| {
-                    ui.heading("HTTP Files");
-                    ui.separator();
-
-                    if let Some(selected) = self.file_tree.show(ui) {
-                        self.selected_file = Some(selected.clone());
-                        self.selected_request_index = None;
-
-                        // Load environments for this file
-                        self.load_environments(&selected);
-
-                        // Update both request view and text editor
-                        self.request_view.load_file(&selected);
-                        self.text_editor.load_file(&selected);
-
-                        // Save state after file selection
-                        self.save_state();
-                    }
-                });
+            let file_tree_content = self.file_tree.view();
+            main_row = main_row.push(
+                container(file_tree_content)
+                    .width(Length::FillPortion(2))
+                    .height(Length::Fill)
+            );
         }
 
-        // Right panel - Results (from main branch)
-        egui::SidePanel::right("results_panel")
-            .resizable(true)
-            .default_width(500.0)
-            .min_width(300.0)
-            .show(ctx, |ui| {
-                ui.heading("Results");
-                ui.separator();
-
-                let available_height = ui.available_height();
-
-                egui::ScrollArea::vertical()
-                    .id_salt("results_scroll")
-                    .max_height(available_height)
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        self.results_view.show(ui);
-                    });
-            });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::TextEditor,
-                        "📝 Text Editor",
-                    );
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::RequestDetails,
-                        "📋 Request Details",
-                    );
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::EnvironmentEditor,
-                        "🌍 Environment",
-                    );
-
-                    #[cfg(not(target_arch = "wasm32"))]
-                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree)");
-
-                    #[cfg(target_arch = "wasm32")]
-                    ui.label("(Ctrl+T to toggle | Ctrl+S to save)");
-                });
-                ui.separator();
-
-                let available_height = ui.available_height() - 40.0;
-
-                match self.view_mode {
-                    ViewMode::TextEditor => {
-                        egui::ScrollArea::vertical()
-                            .id_salt("text_editor_scroll")
-                            .max_height(available_height)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| self.text_editor.show(ui, &self.selected_file));
-
-                        ui.separator();
-
-                        ui.horizontal(|ui| {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            let run_all_enabled =
-                                self.selected_file.is_some() && !self.text_editor.has_changes();
-
-                            #[cfg(target_arch = "wasm32")]
-                            let run_all_enabled = !self.text_editor.get_content().trim().is_empty();
-
-                            if ui
-                                .add_enabled(
-                                    run_all_enabled,
-                                    egui::Button::new("▶ Run All Requests"),
-                                )
-                                .clicked()
-                            {
-                                #[cfg(not(target_arch = "wasm32"))]
-                                if let Some(file) = &self.selected_file {
-                                    self.results_view.run_file(
-                                        file,
-                                        self.selected_environment.as_deref(),
-                                        self.delay_ms,
-                                    );
-                                }
-
-                                #[cfg(target_arch = "wasm32")]
-                                {
-                                    // On WASM, run from in-memory content
-                                    let content = self.text_editor.get_content().to_string();
-                                    self.results_view.run_content_async(
-                                        content,
-                                        self.selected_environment.as_deref(),
-                                        ctx,
-                                    );
-                                }
-                            }
-
-                            // Show save indicator if there are unsaved changes
-                            if self.text_editor.has_changes() {
-                                ui.colored_label(
-                                    egui::Color32::from_rgb(255, 165, 0),
-                                    "● Unsaved changes",
-                                );
-                            }
-                        });
-                    }
-                    ViewMode::RequestDetails => {
-                        // Wrap the request view in a scroll area with fixed height
-                        egui::ScrollArea::vertical()
-                            .id_salt("request_details_scroll")
-                            .max_height(available_height)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                match self.request_view.show(ui, &self.selected_file) {
-                                    RequestViewAction::RunRequest(idx) => {
-                                        self.selected_request_index = Some(idx);
-                                        // When a request button is clicked, run it immediately
-                                        #[cfg(not(target_arch = "wasm32"))]
-                                        if let Some(file) = &self.selected_file {
-                                            self.results_view.run_single_request(
-                                                file,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                                self.delay_ms,
-                                            );
-                                        }
-
-                                        #[cfg(target_arch = "wasm32")]
-                                        if self.selected_file.is_some() {
-                                            // On WASM we cannot read from the filesystem,
-                                            // so execute the single request from the
-                                            // current text editor content instead of a file path.
-                                            let editor_content = self.text_editor.get_content();
-                                            self.results_view.run_single_request_async(
-                                                editor_content,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                                ctx,
-                                            );
-                                        }
-                                    }
-                                    RequestViewAction::SaveFile => {
-                                        // Save the file and reload both views
-                                        if let Err(e) = self.request_view.save_to_file() {
-                                            eprintln!("Failed to save file: {}", e);
-                                        } else {
-                                            // Refresh the file tree to show any new files
-                                            self.file_tree =
-                                                FileTree::new(self.root_directory.clone());
-                                            // Reload text editor with updated content
-                                            if let Some(file) = &self.selected_file {
-                                                self.text_editor.load_file(file);
-                                            }
-                                        }
-                                    }
-                                    RequestViewAction::None => {}
-                                }
-                            });
-
-                        ui.separator();
-
-                        // Run buttons - always visible at bottom
-                        ui.horizontal(|ui| {
-                            let run_all_enabled =
-                                self.selected_file.is_some() && !self.request_view.has_changes();
-
-                            if ui
-                                .add_enabled(
-                                    run_all_enabled,
-                                    egui::Button::new("▶ Run All Requests"),
-                                )
-                                .clicked()
-                            {
-                                #[cfg(not(target_arch = "wasm32"))]
-                                if let Some(file) = &self.selected_file {
-                                    self.results_view.run_file(
-                                        file,
-                                        self.selected_environment.as_deref(),
-                                        self.delay_ms,
-                                    );
-                                }
-
-                                #[cfg(target_arch = "wasm32")]
-                                if self.selected_file.is_some() {
-                                    self.results_view.run_content_async(
-                                        self.text_editor.get_content().to_string(),
-                                        self.selected_environment.as_deref(),
-                                        ctx,
-                                    );
-                                }
-                            }
-
-                            // Show save indicator if there are unsaved changes
-                            if self.request_view.has_changes() {
-                                ui.colored_label(
-                                    egui::Color32::from_rgb(255, 165, 0),
-                                    "● Unsaved changes",
-                                );
-                            }
-                        });
-                    }
-                    ViewMode::EnvironmentEditor => {
-                        let had_changes_before = self.environment_editor.has_changes();
-                        let env_count_before = self.environments.len();
-
-                        egui::ScrollArea::vertical()
-                            .id_salt("environment_editor_scroll")
-                            .max_height(available_height)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                self.environment_editor.show(ui);
-                            });
-
-                        // Only refresh environment list when the change state transitions
-                        let has_changes_now = self.environment_editor.has_changes();
-                        if has_changes_now != had_changes_before
-                            || (has_changes_now
-                                && self.environment_editor.environment_names().len()
-                                    != env_count_before)
-                        {
-                            self.environments = self.environment_editor.environment_names();
-                            // If the selected environment was deleted, clear selection
-                            if let Some(ref env) = self.selected_environment
-                                && !self.environments.contains(env)
-                            {
-                                self.selected_environment = None;
-                                self.save_state();
-                            }
-                        }
-                    }
-                }
-            });
-        });
-
-        // Save window size if it changed (to avoid unnecessary file writes)
-        let current_window_size = ctx.input(|i| {
-            i.viewport()
-                .inner_rect
-                .map(|r| r.size())
-                .unwrap_or(egui::vec2(1200.0, 800.0))
-        });
-        let current_size = (current_window_size.x, current_window_size.y);
-
-        let should_save_window_size = match self.last_saved_window_size {
-            None => true,
-            Some(last_size) => last_size != current_size,
+        // Center panel (editor or request view)
+        let center_content = match self.view_mode {
+            ViewMode::TextEditor => self.text_editor.view(),
+            ViewMode::RequestDetails => self.request_view.view(),
+            ViewMode::EnvironmentEditor => self.environment_editor.view(),
         };
+        
+        main_row = main_row.push(
+            container(center_content)
+                .width(if self.file_tree_visible { Length::FillPortion(5) } else { Length::FillPortion(7) })
+                .height(Length::Fill)
+        );
 
-        if should_save_window_size {
-            self.last_saved_window_size = Some(current_size);
-            self.save_state_with_window(ctx);
-        }
+        // Results panel (right panel)
+        let results_content = self.results_view.view();
+        main_row = main_row.push(
+            container(results_content)
+                .width(Length::FillPortion(3))
+                .height(Length::Fill)
+        );
+
+        container(main_row)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+    }
+}
+
+impl Default for HttpRunnerApp {
+    fn default() -> Self {
+        Self::new().0
     }
 }

@@ -1,11 +1,15 @@
-use egui_code_editor::{CodeEditor, ColorTheme, Syntax};
-use std::collections::BTreeSet;
+use iced::{
+    widget::{column, scrollable, text, text_editor, Column},
+    Element, Length,
+};
 use std::path::{Path, PathBuf};
 
-/// Text editor component for editing .http files with syntax highlighting
+use crate::app::Message;
+
+/// Text editor component for editing .http files
 pub struct TextEditor {
-    /// Current file content
-    content: String,
+    /// Text editor content state
+    content: text_editor::Content,
     /// Path to the currently loaded file
     current_file: Option<PathBuf>,
     /// Whether the content has been modified since last save
@@ -16,59 +20,41 @@ impl TextEditor {
     /// Create a new text editor instance
     pub fn new() -> Self {
         Self {
-            content: String::new(),
+            content: text_editor::Content::new(),
             current_file: None,
             has_changes: false,
         }
     }
 
     /// Load a .http file into the editor
-    #[cfg(not(target_arch = "wasm32"))]
     pub fn load_file(&mut self, path: &Path) {
         match std::fs::read_to_string(path) {
-            Ok(content) => {
-                self.content = content;
+            Ok(file_content) => {
+                self.content = text_editor::Content::with_text(&file_content);
                 self.current_file = Some(path.to_path_buf());
                 self.has_changes = false;
             }
             Err(e) => {
                 eprintln!("Failed to load file {}: {}", path.display(), e);
-                // Keep existing content and file state on error
             }
         }
     }
 
-    /// Set content directly (for WASM where file loading doesn't work)
-    #[cfg(target_arch = "wasm32")]
-    pub fn load_file(&mut self, _path: &Path) {
-        // Try to load from LocalStorage first
-        use web_sys::window;
-
-        if let Some(window) = window()
-            && let Ok(Some(storage)) = window.local_storage()
-            && let Ok(Some(saved_content)) = storage.get_item("httprunner_editor_content")
-        {
-            self.content = saved_content;
-            self.has_changes = false;
-        }
-    }
-
     /// Set content programmatically
-    pub fn set_content(&mut self, content: String) {
-        self.content = content;
+    pub fn set_content(&mut self, new_content: String) {
+        self.content = text_editor::Content::with_text(&new_content);
         self.has_changes = true;
     }
 
     /// Get current content
-    pub fn get_content(&self) -> &str {
-        &self.content
+    pub fn get_content(&self) -> String {
+        self.content.text()
     }
 
     /// Save the current content to the loaded file
-    #[cfg(not(target_arch = "wasm32"))]
     pub fn save_to_file(&mut self) -> anyhow::Result<()> {
         if let Some(path) = &self.current_file {
-            std::fs::write(path, &self.content)?;
+            std::fs::write(path, self.content.text())?;
             self.has_changes = false;
             Ok(())
         } else {
@@ -76,149 +62,33 @@ impl TextEditor {
         }
     }
 
-    /// Save editor content to LocalStorage on WASM
-    #[cfg(target_arch = "wasm32")]
-    pub fn save_to_file(&mut self) -> anyhow::Result<()> {
-        use web_sys::window;
+    /// Display the text editor UI
+    pub fn view(&self) -> Element<Message> {
+        let mut col = Column::new().spacing(5).padding(10);
 
-        if let Some(window) = window() {
-            if let Ok(Some(storage)) = window.local_storage() {
-                // Save editor content to LocalStorage under a specific key
-                storage
-                    .set_item("httprunner_editor_content", &self.content)
-                    .map_err(|e| anyhow::anyhow!("Failed to save to LocalStorage: {:?}", e))?;
-                self.has_changes = false;
-                Ok(())
-            } else {
-                Err(anyhow::anyhow!("LocalStorage is not available"))
-            }
+        if let Some(path) = &self.current_file {
+            let file_name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+            
+            let status = if self.has_changes { " (modified)" } else { "" };
+            col = col.push(text(format!("📝 {}{}", file_name, status)));
         } else {
-            Err(anyhow::anyhow!("Window object is not available"))
-        }
-    }
-
-    /// Display the text editor UI and handle user interactions
-    pub fn show(&mut self, ui: &mut egui::Ui, file: &Option<PathBuf>) {
-        #[cfg(not(target_arch = "wasm32"))]
-        if file.is_none() {
-            ui.label("No file selected. Select a .http file from the left panel.");
-            return;
+            col = col.push(text("No file loaded"));
         }
 
-        #[cfg(target_arch = "wasm32")]
-        if file.is_none() && self.content.is_empty() {
-            ui.vertical(|ui| {
-                ui.heading("✏️ Paste your HTTP requests here");
-                ui.add_space(10.0);
-                ui.label("You can paste the contents of an .http file below:");
-                ui.label("Example:");
-                ui.monospace("GET https://api.example.com/users");
-                ui.monospace("Accept: application/json");
-                ui.add_space(10.0);
-            });
-        }
+        let editor = text_editor(&self.content)
+            .height(Length::Fill);
 
-        let original_content = self.content.clone();
+        col = col.push(editor);
 
-        // Detect system theme and use appropriate color scheme
-        let theme = if ui.visuals().dark_mode {
-            ColorTheme::GITHUB_DARK
-        } else {
-            ColorTheme::GITHUB_LIGHT
-        };
-
-        // Calculate the number of rows needed to fill available space
-        let available_height = ui.available_height();
-        let line_height = ui.text_style_height(&egui::TextStyle::Monospace);
-        // Reserve space for separator (2px) + button row (~30px) + spacing (~10px)
-        let reserved_space = 45.0;
-        let rows = ((available_height - reserved_space) / line_height).max(10.0) as usize;
-
-        CodeEditor::default()
-            .with_rows(rows)
-            .with_fontsize(14.0)
-            .with_theme(theme)
-            .with_syntax(http_syntax())
-            .with_numlines(true)
-            .show(ui, &mut self.content);
-
-        if self.content != original_content {
-            self.has_changes = true;
-        }
-
-        ui.separator();
-        ui.horizontal(|ui| {
-            if ui.button("💾 Save").clicked()
-                && let Err(e) = self.save_to_file()
-            {
-                eprintln!("Failed to save file: {}", e);
-            }
-
-            if self.has_changes {
-                ui.colored_label(egui::Color32::from_rgb(255, 165, 0), "● Unsaved changes");
-            }
-        });
-    }
-
-    /// Check if the editor has unsaved changes
-    pub fn has_changes(&self) -> bool {
-        self.has_changes
+        scrollable(col).into()
     }
 }
 
-/// Custom syntax highlighting for .http files
-fn http_syntax() -> Syntax {
-    Syntax {
-        language: "HTTP",
-        case_sensitive: true,
-        comment: "#",
-        comment_multiline: ["###", "###"],
-        hyperlinks: BTreeSet::new(), // Empty set for now
-        keywords: vec![
-            // HTTP Methods
-            "GET",
-            "POST",
-            "PUT",
-            "DELETE",
-            "PATCH",
-            "HEAD",
-            "OPTIONS",
-            "CONNECT",
-            "TRACE",
-            // Common headers
-            "Content-Type",
-            "Authorization",
-            "Accept",
-            "User-Agent",
-            "Host",
-            "Connection",
-            "Cache-Control",
-            "Cookie",
-            "Set-Cookie",
-            // httprunner specific
-            "ASSERT",
-            "VAR",
-        ]
-        .into_iter()
-        .collect(),
-        types: vec![
-            "http",
-            "https",
-            "HTTP/1.1",
-            "HTTP/2",
-            "HTTP/3",
-            "application/json",
-            "application/xml",
-            "text/html",
-            "text/plain",
-        ]
-        .into_iter()
-        .collect(),
-        special: vec![
-            // Status codes
-            "200", "201", "204", "301", "302", "400", "401", "403", "404", "500", "502", "503",
-        ]
-        .into_iter()
-        .collect(),
+impl Default for TextEditor {
+    fn default() -> Self {
+        Self::new()
     }
 }

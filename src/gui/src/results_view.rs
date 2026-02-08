@@ -1,26 +1,10 @@
-#[cfg(not(target_arch = "wasm32"))]
-use httprunner_core::telemetry;
-use httprunner_core::types::AssertionResult;
+use iced::{
+    widget::{column, scrollable, text, Column},
+    Color, Element, Length,
+};
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::Path;
-
-#[cfg(not(target_arch = "wasm32"))]
-use std::thread;
-
-/// Parameters for displaying verbose success results
-struct VerboseSuccessParams<'a> {
-    result_idx: usize,
-    method: &'a str,
-    url: &'a str,
-    status: u16,
-    duration_ms: u64,
-    request_body: &'a Option<String>,
-    response_body: &'a str,
-    assertion_results: &'a [AssertionResult],
-}
+use crate::app::Message;
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ExecutionResult {
@@ -31,7 +15,7 @@ pub enum ExecutionResult {
         duration_ms: u64,
         request_body: Option<String>,
         response_body: String,
-        assertion_results: Vec<AssertionResult>,
+        assertion_results: Vec<httprunner_core::types::AssertionResult>,
     },
     Failure {
         method: String,
@@ -44,36 +28,50 @@ pub enum ExecutionResult {
 }
 
 pub struct ResultsView {
-    pub(crate) results: Arc<Mutex<Vec<ExecutionResult>>>,
-    pub(crate) is_running: Arc<Mutex<bool>>,
+    results: Vec<ExecutionResult>,
     compact_mode: bool,
 }
 
 impl ResultsView {
     pub fn new() -> Self {
         Self {
-            results: Arc::new(Mutex::new(Vec::new())),
-            is_running: Arc::new(Mutex::new(false)),
-            compact_mode: true, // Default to compact mode
+            results: Vec::new(),
+            compact_mode: true,
         }
     }
 
-    pub fn get_results(&self) -> Vec<ExecutionResult> {
-        if let Ok(results) = self.results.lock() {
-            // Filter out Running results as they are transient
-            results
-                .iter()
-                .filter(|r| !matches!(r, ExecutionResult::Running { .. }))
-                .cloned()
-                .collect()
-        } else {
-            Vec::new()
-        }
+    pub fn get_all_results(&self) -> Vec<ExecutionResult> {
+        self.results
+            .iter()
+            .filter(|r| !matches!(r, ExecutionResult::Running { .. }))
+            .cloned()
+            .collect()
     }
 
     pub fn restore_results(&mut self, saved_results: Vec<ExecutionResult>) {
-        if let Ok(mut results) = self.results.lock() {
-            *results = saved_results;
+        self.results = saved_results;
+    }
+
+    pub fn set_results(&mut self, results: Vec<httprunner_core::HttpResult>) {
+        self.results.clear();
+        for result in results {
+            if result.success {
+                self.results.push(ExecutionResult::Success {
+                    method: result.request_name.clone().unwrap_or_else(|| "GET".to_string()),
+                    url: String::new(), // URL not available in HttpResult
+                    status: result.status_code,
+                    duration_ms: result.duration_ms,
+                    request_body: None,
+                    response_body: result.response_body.clone().unwrap_or_default(),
+                    assertion_results: result.assertion_results.clone(),
+                });
+            } else if let Some(error) = result.error_message {
+                self.results.push(ExecutionResult::Failure {
+                    method: result.request_name.clone().unwrap_or_else(|| "GET".to_string()),
+                    url: String::new(),
+                    error: error.clone(),
+                });
+            }
         }
     }
 
@@ -85,314 +83,19 @@ impl ResultsView {
         self.compact_mode
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn run_file(&mut self, path: &Path, environment: Option<&str>, delay_ms: u64) {
-        let path = path.to_path_buf();
-        let env = environment.map(|s| s.to_string());
-        let results = Arc::clone(&self.results);
-        let is_running = Arc::clone(&self.is_running);
-
-        // Track feature usage
-        telemetry::track_feature_usage("run_file");
-
-        // Clear previous results
-        if let Ok(mut r) = results.lock() {
-            r.clear();
-            r.push(ExecutionResult::Running {
-                message: format!("Parsing {}...", path.display()),
-            });
-        }
-
-        if let Ok(mut running) = is_running.lock() {
-            *running = true;
-        }
-
-        thread::spawn(move || {
-            let execution_start = std::time::Instant::now();
-
-            if let Some(path_str) = path.to_str() {
-                // Clear the parsing message
-                if let Ok(mut r) = results.lock() {
-                    r.clear();
-                }
-
-                let mut success_count = 0usize;
-                let mut failed_count = 0usize;
-                let mut skipped_count = 0usize;
-                let mut total_count = 0usize;
-
-                // Use the incremental processor which handles all features
-                let result = httprunner_core::processor::process_http_file_incremental(
-                    path_str,
-                    env.as_deref(),
-                    false, // insecure
-                    delay_ms,
-                    |_idx, total, process_result| {
-                        total_count = total;
-
-                        use httprunner_core::processor::RequestProcessingResult;
-                        match process_result {
-                            RequestProcessingResult::Skipped { request, reason } => {
-                                skipped_count += 1;
-                                if let Ok(mut r) = results.lock() {
-                                    r.push(ExecutionResult::Failure {
-                                        method: format!("⏭️ {}", request.method),
-                                        url: request.url,
-                                        error: format!("Skipped: {}", reason),
-                                    });
-                                }
-                            }
-                            RequestProcessingResult::Executed { request, result } => {
-                                let request_body = request.body.clone();
-                                if result.success {
-                                    success_count += 1;
-                                    if let Ok(mut r) = results.lock() {
-                                        r.push(ExecutionResult::Success {
-                                            method: request.method,
-                                            url: request.url,
-                                            status: result.status_code,
-                                            duration_ms: result.duration_ms,
-                                            request_body,
-                                            response_body: result.response_body.unwrap_or_default(),
-                                            assertion_results: result.assertion_results,
-                                        });
-                                    }
-                                } else {
-                                    failed_count += 1;
-                                    if let Ok(mut r) = results.lock() {
-                                        r.push(ExecutionResult::Failure {
-                                            method: request.method,
-                                            url: request.url,
-                                            error: result
-                                                .error_message
-                                                .unwrap_or_else(|| "Unknown error".to_string()),
-                                        });
-                                    }
-                                }
-                            }
-                            RequestProcessingResult::Failed { request, error } => {
-                                failed_count += 1;
-                                if let Ok(mut r) = results.lock() {
-                                    r.push(ExecutionResult::Failure {
-                                        method: request.method,
-                                        url: request.url,
-                                        error,
-                                    });
-                                }
-                            }
-                        }
-                        // Continue processing all requests for "Run All"
-                        true
-                    },
-                );
-
-                if let Err(e) = result {
-                    // Track parse error
-                    telemetry::track_error_message(&format!("Parse error: {}", e));
-
-                    if let Ok(mut r) = results.lock() {
-                        r.clear();
-                        r.push(ExecutionResult::Failure {
-                            method: "PARSE".to_string(),
-                            url: path.display().to_string(),
-                            error: format!("Failed to parse file: {}", e),
-                        });
-                    }
-                } else {
-                    // Track execution completion
-                    let total_duration = execution_start.elapsed().as_millis() as u64;
-
-                    // Track parse metrics (approximate, since parsing is now integrated)
-                    telemetry::track_parse_complete(total_count, 0);
-
-                    telemetry::track_execution_complete(
-                        success_count,
-                        failed_count,
-                        skipped_count,
-                        total_duration,
-                    );
-                }
-            } else if let Ok(mut r) = results.lock() {
-                r.clear();
-                r.push(ExecutionResult::Failure {
-                    method: "READ".to_string(),
-                    url: path.display().to_string(),
-                    error: "Failed to convert path to string".to_string(),
-                });
-            }
-
-            if let Ok(mut running) = is_running.lock() {
-                *running = false;
-            }
-        });
+    pub fn toggle_compact_mode(&mut self) {
+        self.compact_mode = !self.compact_mode;
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn run_single_request(
-        &mut self,
-        path: &Path,
-        index: usize,
-        environment: Option<&str>,
-        delay_ms: u64,
-    ) {
-        let path = path.to_path_buf();
-        let env = environment.map(|s| s.to_string());
-        let results = Arc::clone(&self.results);
-        let is_running = Arc::clone(&self.is_running);
+    pub fn view(&self) -> Element<Message> {
+        let mut col = Column::new().spacing(10).padding(10);
 
-        // Clear previous results
-        if let Ok(mut r) = results.lock() {
-            r.clear();
-            r.push(ExecutionResult::Running {
-                message: format!("Running request {} from {}...", index + 1, path.display()),
-            });
-        }
+        col = col.push(text("Results").size(20));
 
-        if let Ok(mut running) = is_running.lock() {
-            *running = true;
-        }
-
-        thread::spawn(move || {
-            if let Some(path_str) = path.to_str() {
-                // Use the incremental processor to properly handle all features
-                // We process all requests up to the selected index to maintain context
-                // but only show the result of the selected request
-                let mut target_result: Option<ExecutionResult> = None;
-
-                let result = httprunner_core::processor::process_http_file_incremental(
-                    path_str,
-                    env.as_deref(),
-                    false, // insecure
-                    delay_ms,
-                    |idx, _total, process_result| {
-                        // Only capture the result for the target index
-                        if idx == index {
-                            use httprunner_core::processor::RequestProcessingResult;
-                            target_result = Some(match process_result {
-                                RequestProcessingResult::Skipped { request, reason } => {
-                                    ExecutionResult::Failure {
-                                        method: format!("⏭️ {}", request.method),
-                                        url: request.url,
-                                        error: format!("Skipped: {}", reason),
-                                    }
-                                }
-                                RequestProcessingResult::Executed { request, result } => {
-                                    let request_body = request.body.clone();
-                                    if result.success {
-                                        ExecutionResult::Success {
-                                            method: request.method,
-                                            url: request.url,
-                                            status: result.status_code,
-                                            duration_ms: result.duration_ms,
-                                            request_body,
-                                            response_body: result.response_body.unwrap_or_default(),
-                                            assertion_results: result.assertion_results,
-                                        }
-                                    } else {
-                                        ExecutionResult::Failure {
-                                            method: request.method,
-                                            url: request.url,
-                                            error: result
-                                                .error_message
-                                                .unwrap_or_else(|| "Unknown error".to_string()),
-                                        }
-                                    }
-                                }
-                                RequestProcessingResult::Failed { request, error } => {
-                                    ExecutionResult::Failure {
-                                        method: request.method,
-                                        url: request.url,
-                                        error,
-                                    }
-                                }
-                            });
-                            // Stop processing after capturing the target result
-                            false
-                        } else {
-                            // Continue processing to maintain context
-                            true
-                        }
-                    },
-                );
-
-                if let Err(e) = result {
-                    if let Ok(mut r) = results.lock() {
-                        r.clear();
-                        r.push(ExecutionResult::Failure {
-                            method: "PARSE".to_string(),
-                            url: path.display().to_string(),
-                            error: format!("Failed to parse file: {}", e),
-                        });
-                    }
-                } else if let Some(result) = target_result {
-                    if let Ok(mut r) = results.lock() {
-                        r.clear();
-                        r.push(result);
-                    }
-                } else if let Ok(mut r) = results.lock() {
-                    r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "INDEX".to_string(),
-                        url: path.display().to_string(),
-                        error: format!("Request index {} not found", index),
-                    });
-                }
-            } else if let Ok(mut r) = results.lock() {
-                r.clear();
-                r.push(ExecutionResult::Failure {
-                    method: "PATH".to_string(),
-                    url: path.display().to_string(),
-                    error: "Failed to convert path to string".to_string(),
-                });
-            }
-
-            if let Ok(mut running) = is_running.lock() {
-                *running = false;
-            }
-        });
-    }
-
-    pub fn show(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            if ui
-                .selectable_label(self.compact_mode, "📋 Compact")
-                .on_hover_text("Show compact results (Ctrl+D to toggle)")
-                .clicked()
-            {
-                self.compact_mode = true;
-            }
-            if ui
-                .selectable_label(!self.compact_mode, "📄 Verbose")
-                .on_hover_text("Show verbose results (Ctrl+D to toggle)")
-                .clicked()
-            {
-                self.compact_mode = false;
-            }
-
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(
-                    egui::RichText::new("(Ctrl+D to toggle compact/verbose)")
-                        .small()
-                        .color(egui::Color32::from_rgb(128, 128, 128)),
-                );
-            });
-        });
-
-        ui.separator();
-
-        if let Ok(is_running) = self.is_running.lock()
-            && *is_running
-        {
-            ui.spinner();
-        }
-
-        if let Ok(results) = self.results.lock() {
-            if results.is_empty() {
-                ui.label("No results yet. Select and run a request.");
-                return;
-            }
-
-            for (result_idx, result) in results.iter().enumerate() {
+        if self.results.is_empty() {
+            col = col.push(text("No results yet. Run requests to see results."));
+        } else {
+            for (idx, result) in self.results.iter().enumerate() {
                 match result {
                     ExecutionResult::Success {
                         method,
@@ -403,221 +106,52 @@ impl ResultsView {
                         response_body,
                         assertion_results,
                     } => {
-                        if self.compact_mode {
-                            self.show_compact_success(
-                                ui,
-                                method,
-                                url,
-                                *status,
-                                *duration_ms,
-                                assertion_results,
-                            );
-                        } else {
-                            self.show_verbose_success(
-                                ui,
-                                VerboseSuccessParams {
-                                    result_idx,
-                                    method,
-                                    url,
-                                    status: *status,
-                                    duration_ms: *duration_ms,
-                                    request_body,
-                                    response_body,
-                                    assertion_results,
-                                },
-                            );
+                        col = col.push(text(format!("✓ {} {}", method, url)));
+                        col = col.push(text(format!("Status: {} | Duration: {}ms", status, duration_ms)));
+
+                        if !self.compact_mode {
+                            if let Some(req_body) = request_body {
+                                col = col.push(text("Request Body:"));
+                                col = col.push(text(req_body).size(12));
+                            }
+                            col = col.push(text("Response Body:"));
+                            col = col.push(text(response_body).size(12));
+
+                            if !assertion_results.is_empty() {
+                                col = col.push(text("Assertions:"));
+                                for assertion in assertion_results {
+                                    let result_text = if assertion.passed {
+                                        format!("  ✓ {:?}: {}", assertion.assertion.assertion_type, assertion.assertion.expected_value)
+                                    } else {
+                                        format!("  ✗ {:?}: {} ({})", 
+                                            assertion.assertion.assertion_type, 
+                                            assertion.assertion.expected_value,
+                                            assertion.error_message.as_ref().unwrap_or(&"failed".to_string()))
+                                    };
+                                    col = col.push(text(result_text));
+                                }
+                            }
                         }
                     }
                     ExecutionResult::Failure { method, url, error } => {
-                        if self.compact_mode {
-                            self.show_compact_failure(ui, method, url, error);
-                        } else {
-                            self.show_verbose_failure(ui, method, url, error);
-                        }
+                        col = col.push(text(format!("✗ {} {}", method, url)));
+                        col = col.push(text(format!("Error: {}", error)));
                     }
                     ExecutionResult::Running { message } => {
-                        ui.colored_label(egui::Color32::from_rgb(0, 100, 200), "⏳ RUNNING");
-                        ui.label(message);
-                        ui.separator();
+                        col = col.push(text(format!("⏳ {}", message)));
                     }
                 }
-            }
-        }
-    }
 
-    fn show_compact_success(
-        &self,
-        ui: &mut egui::Ui,
-        method: &str,
-        url: &str,
-        status: u16,
-        duration_ms: u64,
-        assertion_results: &[AssertionResult],
-    ) {
-        ui.horizontal(|ui| {
-            ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅");
-            ui.monospace(format!("{} {}", method, url));
-            ui.label(format!("| {} | {} ms", status, duration_ms));
-        });
-
-        // Show assertion results in compact form
-        if !assertion_results.is_empty() {
-            for assertion_result in assertion_results {
-                let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_core::types::AssertionType::Status => "Status Code",
-                    httprunner_core::types::AssertionType::Body => "Response Body",
-                    httprunner_core::types::AssertionType::Headers => "Response Headers",
-                };
-
-                if assertion_result.passed {
-                    ui.horizontal(|ui| {
-                        ui.label("  ");
-                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅");
-                        ui.label(format!(
-                            "{}: Expected '{}'",
-                            assertion_type_str, assertion_result.assertion.expected_value
-                        ));
-                    });
-                } else {
-                    ui.horizontal(|ui| {
-                        ui.label("  ");
-                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌");
-                        ui.label(format!(
-                            "{}: {}",
-                            assertion_type_str,
-                            assertion_result
-                                .error_message
-                                .as_ref()
-                                .unwrap_or(&"Failed".to_string())
-                        ));
-                    });
-
-                    if let Some(ref actual) = assertion_result.actual_value {
-                        ui.horizontal(|ui| {
-                            ui.label("      ");
-                            ui.colored_label(
-                                egui::Color32::from_rgb(255, 200, 0),
-                                format!(
-                                    "Expected: '{}', Actual: '{}'",
-                                    assertion_result.assertion.expected_value, actual
-                                ),
-                            );
-                        });
-                    }
-                }
-            }
-        }
-        ui.separator();
-    }
-
-    fn show_compact_failure(&self, ui: &mut egui::Ui, method: &str, url: &str, error: &str) {
-        ui.horizontal(|ui| {
-            ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌");
-            ui.monospace(format!("{} {}", method, url));
-        });
-        ui.horizontal(|ui| {
-            ui.label("  ");
-            ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
-        });
-        ui.separator();
-    }
-
-    fn show_verbose_success(&self, ui: &mut egui::Ui, params: VerboseSuccessParams) {
-        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅ SUCCESS");
-        ui.monospace(format!("{} {}", params.method, params.url));
-        ui.label(format!("Status: {}", params.status));
-        ui.label(format!("Duration: {} ms", params.duration_ms));
-
-        // Verbose mode display order: 1. Assertion Results -> 2. Request Body -> 3. Response Body
-
-        // 1. Display assertion results if any
-        if !params.assertion_results.is_empty() {
-            ui.separator();
-            ui.label("🔍 Assertion Results:");
-
-            for assertion_result in params.assertion_results {
-                let assertion_type_str = match assertion_result.assertion.assertion_type {
-                    httprunner_core::types::AssertionType::Status => "Status Code",
-                    httprunner_core::types::AssertionType::Body => "Response Body",
-                    httprunner_core::types::AssertionType::Headers => "Response Headers",
-                };
-
-                if assertion_result.passed {
-                    ui.horizontal(|ui| {
-                        ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "  ✅");
-                        ui.label(format!(
-                            "{}: Expected '{}'",
-                            assertion_type_str, assertion_result.assertion.expected_value
-                        ));
-                    });
-                } else {
-                    ui.horizontal(|ui| {
-                        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "  ❌");
-                        ui.label(format!(
-                            "{}: {}",
-                            assertion_type_str,
-                            assertion_result
-                                .error_message
-                                .as_ref()
-                                .unwrap_or(&"Failed".to_string())
-                        ));
-                    });
-
-                    if let Some(ref actual) = assertion_result.actual_value {
-                        ui.horizontal(|ui| {
-                            ui.label("     ");
-                            ui.colored_label(
-                                egui::Color32::from_rgb(255, 200, 0),
-                                format!(
-                                    "Expected: '{}'",
-                                    assertion_result.assertion.expected_value
-                                ),
-                            );
-                        });
-                        ui.horizontal(|ui| {
-                            ui.label("     ");
-                            ui.colored_label(
-                                egui::Color32::from_rgb(255, 200, 0),
-                                format!("Actual: '{}'", actual),
-                            );
-                        });
-                    }
-                }
+                col = col.push(text("───────────────"));
             }
         }
 
-        // 2. Display request body if present (skip if empty or whitespace only)
-        if let Some(request_body) = params.request_body
-            && !request_body.trim().is_empty()
-        {
-            ui.separator();
-            ui.label("Request Body:");
-            egui::ScrollArea::vertical()
-                .id_salt(format!("request_body_{}", params.result_idx))
-                .max_height(150.0)
-                .show(ui, |ui| {
-                    ui.monospace(request_body);
-                });
-        }
-
-        // 3. Display response body (only if not empty or whitespace only)
-        if !params.response_body.trim().is_empty() {
-            ui.separator();
-            ui.label("Response:");
-            egui::ScrollArea::vertical()
-                .id_salt(format!("response_body_{}", params.result_idx))
-                .max_height(300.0)
-                .show(ui, |ui| {
-                    ui.monospace(params.response_body);
-                });
-        }
-        ui.separator();
+        scrollable(col).into()
     }
+}
 
-    fn show_verbose_failure(&self, ui: &mut egui::Ui, method: &str, url: &str, error: &str) {
-        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌ FAILED");
-        ui.monospace(format!("{} {}", method, url));
-        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
-        ui.separator();
+impl Default for ResultsView {
+    fn default() -> Self {
+        Self::new()
     }
 }
