@@ -382,7 +382,7 @@ impl EnvironmentEditor {
             KeyCode::Backspace => {
                 self.input_buffer.pop();
             }
-            KeyCode::Char(c) => {
+            KeyCode::Char(c) if key.modifiers.is_empty() || key.modifiers == KeyModifiers::SHIFT => {
                 self.input_buffer.push(c);
             }
             _ => {}
