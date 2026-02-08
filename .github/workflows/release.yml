@@ -82,7 +82,7 @@ jobs:
         shell: pwsh
         run: |
           # Update workspace version
-          $rootToml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $rootToml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
           $rootToml | Set-Content -Path Cargo.toml
 
       - name: Setup Rust
@@ -213,8 +213,8 @@ jobs:
             ghcr.io/${{ github.repository }}
             ${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}},value=${{ env.VESRION }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ env.VESRION }}
+            type=semver,pattern={{version}},value=${{ env.VERSION }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.VERSION }}
             type=semver,pattern={{major}},value=${{ env.VERSION }}
             type=raw,value=latest
 
@@ -324,16 +324,16 @@ jobs:
       - name: Update Version
         shell: pwsh
         run: |
-          $toml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path Cargo.toml
 
-          $toml = (Get-Content -Path src/core/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml = (Get-Content -Path src/core/Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path src/core/Cargo.toml
 
-          $toml = (Get-Content -Path src/cli/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml = (Get-Content -Path src/cli/Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path src/cli/Cargo.toml
 
-          $toml = (Get-Content -Path src/gui/Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
+          $toml = (Get-Content -Path src/gui/Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
           $toml | Set-Content -Path src/gui/Cargo.toml
 
           $readme = (Get-Content -Path src/core/README.md -Raw) -replace 'httprunner-core = version = "0.1.0"', 'httprunner-core = version = "${{ env.VERSION }}"'
