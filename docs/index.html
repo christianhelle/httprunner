@@ -43,7 +43,7 @@
                         HTTP File Runner
                     </h1>
                     <p class="hero-subtitle">
-                        A powerful tool for executing HTTP requests from .http files, available as both a command-line interface and a native GUI application. Features colored output with emojis to indicate success, failure, or skipped requests.
+                        A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as WASM) written in Rust that parses .http files and executes HTTP requests. Features colored output with emojis to indicate success, failure, or skipped requests.
                     </p>
                     <p class="hero-note" style="font-size: 0.9em; margin-top: 1em; margin-bottom: 2em; opacity: 0.9;">
                         <em>Originally written in Zig, ported to Rust due to limitations in Zig's standard library HTTP client APIs for configuring insecure HTTPS connections.</em>
@@ -117,10 +117,15 @@
                         Desktop-only features below (file browser, OS shortcuts) are not available in the web app.
                     </p>
                 </div>
-                <p style="text-align: center; max-width: 800px; margin: 0 auto 2rem; color: var(--text-secondary);">
-                    HTTP Runner is available in three interfaces: a powerful CLI for automation and scripting, 
-                    a native desktop GUI for local development, and a web-based GUI for quick testing and collaboration.
+                <p style="text-align: center; max-width: 800px; margin: 0 auto 1rem; color: var(--text-secondary);">
+                    HTTP Runner is available in multiple interfaces: a powerful CLI for automation and scripting, 
+                    a Terminal UI (TUI) for interactive terminal sessions, a native desktop GUI for local development, and a web-based GUI for quick testing and collaboration.
                 </p>
+                <div style="max-width: 800px; margin: 0 auto 1.5rem; padding: 1rem; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                    <p style="margin: 0; color: #92400e;">
+                        <strong>⚠️ Note:</strong> The GUI and TUI applications are experimental and subject to change. The CLI is the primary, stable interface.
+                    </p>
+                </div>
                 <div style="max-width: 1200px; margin: 0 auto;">
                     <img src="../images/gui.png" alt="HTTP Runner GUI" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 </div>
@@ -346,6 +351,15 @@ httprunner requests.http
 # Run with verbose output
 httprunner requests.http --verbose
 
+# Run with verbose output and pretty-printed JSON
+httprunner requests.http --verbose --pretty-json
+
+# Add delay between requests (in milliseconds)
+httprunner requests.http --delay 500
+
+# Accept insecure HTTPS (self-signed certificates)
+httprunner requests.http --insecure
+
 # Discover and run all .http files
 httprunner --discover
 
@@ -355,8 +369,11 @@ httprunner requests.http --log results.txt
 # Export requests and responses to files
 httprunner requests.http --export
 
-# Generate summary report
-httprunner requests.http --report html</code>
+# Generate summary report (HTML or markdown)
+httprunner requests.http --report html
+
+# Run without the donation banner
+httprunner requests.http --no-banner</code>
                         </div>
                     </div>
                     
