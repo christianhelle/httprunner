@@ -1,18 +1,18 @@
 ### Example 1: Pre-delay - Wait before executing request
 # @name example1
 # @pre-delay 1000
-GET https://httpbin.org/delay/1
+GET https://httpbin.org/get
 
 ### Example 2: Post-delay - Wait after request completes
 # @name example2
 # @post-delay 1500
-GET https://httpbin.org/delay/1
+GET https://httpbin.org/get
 
 ### Example 3: Both pre and post delays
 # @name example3
 # @pre-delay 500
 # @post-delay 500
-GET https://httpbin.org/delay/1
+GET https://httpbin.org/get
 
 ### Example 4: Combined with other directives
 # @name chainedRequest
