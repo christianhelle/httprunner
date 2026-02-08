@@ -1,4 +1,5 @@
 mod cli;
+mod shutdown;
 mod upgrade;
 
 use crate::cli::ReportFormat;
@@ -13,6 +14,8 @@ const VERSION: &str = env!("VERSION");
 const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
 fn main() -> anyhow::Result<()> {
+    shutdown::enable_forceful_shutdown();
+
     let cli_args = cli::Cli::parse();
     if cli_args.files.is_empty() && !cli_args.discover && !cli_args.upgrade {
         let mut cmd = cli::Cli::command();
