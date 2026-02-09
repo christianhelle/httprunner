@@ -9,10 +9,6 @@
 
 A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as WASM) written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
 
-🌐 **[Try the WASM app online](https://christianhelle.com/httprunner/app/)** - No installation required!
-
-> **⚠️ Note**: The GUI and TUI applications are experimental and subject to change. The CLI is the primary, stable interface.
-
 ## Features
 
 - 🚀 Parse and execute HTTP requests from `.http` files
