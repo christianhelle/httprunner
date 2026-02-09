@@ -82,7 +82,7 @@ jobs:
         shell: pwsh
         run: |
           # Update workspace version
-          $rootToml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "[^"]+"', 'version = "${{ env.VERSION }}"'
+          $rootToml = (Get-Content -Path Cargo.toml -Raw) -replace 'version = "0.1.0"', 'version = "${{ env.VERSION }}"'
           $rootToml | Set-Content -Path Cargo.toml
 
       - name: Setup Rust
