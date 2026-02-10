@@ -553,23 +553,6 @@ impl eframe::App for HttpRunnerApp {
                 });
         }
 
-        // Right panel - Results (from main branch)
-        egui::SidePanel::right("results_panel")
-            .resizable(true)
-            .default_width(500.0)
-            .min_width(300.0)
-            .show(ctx, |ui| {
-                ui.heading("Results");
-                ui.separator();
-
-                egui::ScrollArea::vertical()
-                    .id_salt("results_scroll")
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        self.results_view.show(ui);
-                    });
-            });
-
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
@@ -597,7 +580,8 @@ impl eframe::App for HttpRunnerApp {
                 });
                 ui.separator();
 
-                let available_height = ui.available_height() - 40.0;
+                let total_height = ui.available_height() - 40.0;
+                let available_height = (total_height / 2.0).max(100.0);
 
                 match self.view_mode {
                     ViewMode::TextEditor => {
@@ -779,6 +763,17 @@ impl eframe::App for HttpRunnerApp {
                         }
                     }
                 }
+
+                ui.separator();
+                ui.heading("Results");
+                ui.separator();
+
+                egui::ScrollArea::vertical()
+                    .id_salt("results_scroll")
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        self.results_view.show(ui);
+                    });
             });
         });
 
