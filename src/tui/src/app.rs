@@ -197,9 +197,9 @@ impl App {
     fn cycle_focus(&mut self) {
         self.focused_pane = match self.focused_pane {
             FocusedPane::FileTree => FocusedPane::RequestView,
-            FocusedPane::RequestView => FocusedPane::ResultsView,
-            FocusedPane::ResultsView => FocusedPane::EnvironmentEditor,
-            FocusedPane::EnvironmentEditor => {
+            FocusedPane::RequestView => FocusedPane::EnvironmentEditor,
+            FocusedPane::EnvironmentEditor => FocusedPane::ResultsView,
+            FocusedPane::ResultsView => {
                 if self.file_tree_visible {
                     FocusedPane::FileTree
                 } else {
@@ -210,26 +210,25 @@ impl App {
     }
 
     fn cycle_focus_reverse(&mut self) {
-        // Exact reverse of cycle_focus:
-        // Forward: FileTree → RequestView → ResultsView → EnvironmentEditor → FileTree
-        // Reverse: FileTree → EnvironmentEditor → ResultsView → RequestView → FileTree
+        // Forward: FileTree → RequestView → EnvironmentEditor → ResultsView → FileTree
+        // Reverse: FileTree → ResultsView → EnvironmentEditor → RequestView → FileTree
         if !self.file_tree_visible {
-            // Forward (no tree): RequestView → ResultsView → EnvironmentEditor → RequestView
-            // Reverse (no tree): RequestView → EnvironmentEditor → ResultsView → RequestView
+            // Forward (no tree): RequestView → EnvironmentEditor → ResultsView → RequestView
+            // Reverse (no tree): RequestView → ResultsView → EnvironmentEditor → RequestView
             self.focused_pane = match self.focused_pane {
-                FocusedPane::RequestView => FocusedPane::EnvironmentEditor,
-                FocusedPane::ResultsView => FocusedPane::RequestView,
-                FocusedPane::EnvironmentEditor => FocusedPane::ResultsView,
+                FocusedPane::RequestView => FocusedPane::ResultsView,
+                FocusedPane::EnvironmentEditor => FocusedPane::RequestView,
+                FocusedPane::ResultsView => FocusedPane::EnvironmentEditor,
                 FocusedPane::FileTree => FocusedPane::RequestView,
             };
             return;
         }
 
         self.focused_pane = match self.focused_pane {
-            FocusedPane::FileTree => FocusedPane::EnvironmentEditor,
+            FocusedPane::FileTree => FocusedPane::ResultsView,
             FocusedPane::RequestView => FocusedPane::FileTree,
-            FocusedPane::ResultsView => FocusedPane::RequestView,
-            FocusedPane::EnvironmentEditor => FocusedPane::ResultsView,
+            FocusedPane::EnvironmentEditor => FocusedPane::RequestView,
+            FocusedPane::ResultsView => FocusedPane::EnvironmentEditor,
         };
     }
 
