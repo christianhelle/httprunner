@@ -454,7 +454,7 @@ impl ResultsView {
         duration_ms: u64,
         assertion_results: &[AssertionResult],
     ) {
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "✅");
             ui.monospace(format!("{} {}", method, url));
             ui.label(format!("| {} | {} ms", status, duration_ms));
@@ -511,11 +511,11 @@ impl ResultsView {
     }
 
     fn show_compact_failure(&self, ui: &mut egui::Ui, method: &str, url: &str, error: &str) {
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌");
             ui.monospace(format!("{} {}", method, url));
         });
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             ui.label("  ");
             ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
         });
