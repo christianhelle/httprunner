@@ -562,11 +562,8 @@ impl eframe::App for HttpRunnerApp {
                 ui.heading("Results");
                 ui.separator();
 
-                let available_height = ui.available_height();
-
                 egui::ScrollArea::vertical()
                     .id_salt("results_scroll")
-                    .max_height(available_height)
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
                         self.results_view.show(ui);
