@@ -50,14 +50,12 @@ fn render_title(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_main_content(f: &mut Frame, area: Rect, app: &App) {
-    let show_env_editor = app.focused_pane == FocusedPane::EnvironmentEditor;
-
     if app.file_tree_visible {
         let h_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(25), // File tree
-                Constraint::Percentage(75), // Request + Results
+                Constraint::Percentage(75), // Request + Environment + Results
             ])
             .split(area);
 
@@ -66,49 +64,41 @@ fn render_main_content(f: &mut Frame, area: Rect, app: &App) {
         let v_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Percentage(50), // Request view / Environment editor
+                Constraint::Percentage(50), // Request view + Environment editor
                 Constraint::Percentage(50), // Results
             ])
             .split(h_chunks[1]);
 
-        if show_env_editor {
-            let top_h_chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([
-                    Constraint::Percentage(50), // Request view
-                    Constraint::Percentage(50), // Environment editor
-                ])
-                .split(v_chunks[0]);
+        let top_h_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(50), // Request view
+                Constraint::Percentage(50), // Environment editor
+            ])
+            .split(v_chunks[0]);
 
-            render_request_view(f, top_h_chunks[0], app);
-            render_environment_editor(f, top_h_chunks[1], app);
-        } else {
-            render_request_view(f, v_chunks[0], app);
-        }
+        render_request_view(f, top_h_chunks[0], app);
+        render_environment_editor(f, top_h_chunks[1], app);
         render_results_view(f, v_chunks[1], app);
     } else {
         let v_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Percentage(50), // Request view / Environment editor
+                Constraint::Percentage(50), // Request view + Environment editor
                 Constraint::Percentage(50), // Results
             ])
             .split(area);
 
-        if show_env_editor {
-            let top_h_chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([
-                    Constraint::Percentage(50), // Request view
-                    Constraint::Percentage(50), // Environment editor
-                ])
-                .split(v_chunks[0]);
+        let top_h_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(50), // Request view
+                Constraint::Percentage(50), // Environment editor
+            ])
+            .split(v_chunks[0]);
 
-            render_request_view(f, top_h_chunks[0], app);
-            render_environment_editor(f, top_h_chunks[1], app);
-        } else {
-            render_request_view(f, v_chunks[0], app);
-        }
+        render_request_view(f, top_h_chunks[0], app);
+        render_environment_editor(f, top_h_chunks[1], app);
         render_results_view(f, v_chunks[1], app);
     }
 }
