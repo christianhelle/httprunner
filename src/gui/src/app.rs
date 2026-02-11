@@ -47,6 +47,8 @@ pub struct HttpRunnerApp {
     file_tree_visible: bool,
     telemetry_enabled: bool,
     delay_ms: u64,
+    /// Ratio of editor panel height to total available height (0.0-1.0)
+    editor_panel_ratio: f32,
 }
 
 impl HttpRunnerApp {
@@ -68,6 +70,7 @@ impl HttpRunnerApp {
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
         let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
         let delay_ms = state.delay_ms.unwrap_or(0);
+        let editor_panel_ratio = state.results_panel_ratio.unwrap_or(0.5);
 
         let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
@@ -87,6 +90,7 @@ impl HttpRunnerApp {
             file_tree_visible,
             telemetry_enabled,
             delay_ms,
+            editor_panel_ratio,
         };
 
         app.update_font_size(&cc.egui_ctx);
@@ -395,6 +399,7 @@ impl HttpRunnerApp {
             results_compact_mode: Some(self.results_view.is_compact_mode()),
             telemetry_enabled: Some(self.telemetry_enabled),
             delay_ms: Some(self.delay_ms),
+            results_panel_ratio: Some(self.editor_panel_ratio),
         };
 
         if let Err(e) = state.save() {
@@ -581,7 +586,8 @@ impl eframe::App for HttpRunnerApp {
                 ui.separator();
 
                 let total_height = ui.available_height() - 40.0;
-                let available_height = (total_height / 2.0).max(100.0);
+                let editor_height = (total_height * self.editor_panel_ratio).max(50.0);
+                let available_height = editor_height;
 
                 match self.view_mode {
                     ViewMode::TextEditor => {
@@ -764,7 +770,41 @@ impl eframe::App for HttpRunnerApp {
                     }
                 }
 
-                ui.separator();
+                // Draggable splitter between editor and results
+                let splitter_id = ui.id().with("vertical_splitter");
+                let splitter_rect = ui.available_rect_before_wrap();
+                let splitter_rect = egui::Rect::from_min_size(
+                    splitter_rect.min,
+                    egui::vec2(splitter_rect.width(), 6.0),
+                );
+                let splitter_response = ui.interact(
+                    splitter_rect,
+                    splitter_id,
+                    egui::Sense::drag(),
+                );
+                if splitter_response.dragged() {
+                    let delta = splitter_response.drag_delta().y;
+                    self.editor_panel_ratio =
+                        ((self.editor_panel_ratio * total_height + delta) / total_height)
+                            .clamp(0.1, 0.9);
+                }
+                if splitter_response.drag_stopped() {
+                    self.save_state();
+                }
+
+                let visuals = if splitter_response.hovered() || splitter_response.dragged() {
+                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::ResizeVertical);
+                    ui.visuals().widgets.active
+                } else {
+                    ui.visuals().widgets.noninteractive
+                };
+                ui.painter().rect_filled(
+                    splitter_rect,
+                    visuals.corner_radius,
+                    visuals.bg_fill,
+                );
+                ui.advance_cursor_after_rect(splitter_rect);
+
                 ui.heading("Results");
                 ui.separator();
 
