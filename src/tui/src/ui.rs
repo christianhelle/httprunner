@@ -581,7 +581,12 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
-    let border_style = Style::default().fg(Color::Cyan);
+    let is_focused = app.focused_pane == FocusedPane::EnvironmentEditor;
+    let border_style = if is_focused {
+        Style::default().fg(Color::Cyan)
+    } else {
+        Style::default()
+    };
     let editor = &app.environment_editor;
 
     let mut lines = Vec::new();
