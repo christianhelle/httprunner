@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Change GUI and TUI layout to have Results below Requests [\#195](https://github.com/christianhelle/httprunner/pull/195) ([christianhelle](https://github.com/christianhelle))
 - Disable Results view auto-resizing in GUI app [\#194](https://github.com/christianhelle/httprunner/pull/194) ([christianhelle](https://github.com/christianhelle))
 - Fix --upgrade fails on Linux and MacOS due to captured stdio [\#193](https://github.com/christianhelle/httprunner/pull/193) ([christianhelle](https://github.com/christianhelle))
 - Add support to shutdown CLI app using CTRL+C [\#190](https://github.com/christianhelle/httprunner/pull/190) ([christianhelle](https://github.com/christianhelle))
