@@ -146,7 +146,7 @@ Example output: `Senior Software Engineer`
 
 Generates Lorem Ipsum placeholder text with a specified number of words:
 
-```
+```text
 {{lorem_ipsum(50)}}
 ```
 

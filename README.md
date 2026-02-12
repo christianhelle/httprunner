@@ -1046,6 +1046,20 @@ Content-Type: application/json
 }
 ```
 
+#### `lorem_ipsum(n)` - Generate Lorem Ipsum Text
+Generates Lorem Ipsum placeholder text with the specified number of words. The parameter `n` determines how many words to generate. If the requested count exceeds the available word list (approximately 285 words), words will be repeated cyclically.
+
+```http
+POST https://api.example.com/content
+Content-Type: application/json
+
+{
+  "summary": "lorem_ipsum(20)",
+  "description": "LOREM_IPSUM(50)",
+  "content": "Lorem_Ipsum(100)"
+}
+```
+
 #### `getdate()` - Get Current Date
 Returns the current local date in `YYYY-MM-DD` format.
 
