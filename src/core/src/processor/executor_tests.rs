@@ -1835,6 +1835,6 @@ GET https://api.example.com/not-found
         let res = result.unwrap();
         assert!(!res.success); // overall failure because one request failed
         assert_eq!(res.files[0].success_count, 2); // 200 and 400 both passed
-        assert_eq!(res.files[0].failed_count, 1);   // 404 with wrong assertion failed
+        assert_eq!(res.files[0].failed_count, 1); // 404 with wrong assertion failed
     }
 }

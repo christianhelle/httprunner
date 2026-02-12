@@ -75,7 +75,8 @@ impl EnvironmentEditor {
         if let Some(window) = window()
             && let Ok(Some(storage)) = window.local_storage()
             && let Ok(Some(json_str)) = storage.get_item("httprunner_env_config")
-            && let Ok(config) = serde_json::from_str::<HashMap<String, HashMap<String, String>>>(&json_str)
+            && let Ok(config) =
+                serde_json::from_str::<HashMap<String, HashMap<String, String>>>(&json_str)
         {
             self.config = config;
         } else {
@@ -116,8 +117,7 @@ impl EnvironmentEditor {
                         self.status_message = Some("Environment config saved".to_string());
                     }
                     Err(_) => {
-                        self.status_message =
-                            Some("Failed to save to localStorage".to_string());
+                        self.status_message = Some("Failed to save to localStorage".to_string());
                     }
                 }
             }
@@ -201,10 +201,7 @@ impl EnvironmentEditor {
         ui.horizontal_wrapped(|ui| {
             for env_name in &env_names {
                 let is_selected = self.editing_environment.as_ref() == Some(env_name);
-                if ui
-                    .selectable_label(is_selected, env_name)
-                    .clicked()
-                {
+                if ui.selectable_label(is_selected, env_name).clicked() {
                     self.editing_environment = Some(env_name.clone());
                     self.pending_delete_env = None;
                 }
@@ -217,103 +214,98 @@ impl EnvironmentEditor {
         if let Some(ref editing_env) = self.editing_environment.clone()
             && let Some(vars) = self.config.get(editing_env).cloned()
         {
-                ui.horizontal(|ui| {
-                    ui.heading(
-                        egui::RichText::new(format!("📋 {}", editing_env)).size(16.0),
-                    );
+            ui.horizontal(|ui| {
+                ui.heading(egui::RichText::new(format!("📋 {}", editing_env)).size(16.0));
 
-                    // Delete environment button
-                    if self.pending_delete_env.as_ref() == Some(editing_env) {
-                        ui.colored_label(egui::Color32::RED, "Delete this environment?");
-                        if ui.button("Yes").clicked() {
-                            self.config.remove(editing_env);
-                            self.editing_environment = None;
-                            self.pending_delete_env = None;
-                            self.has_changes = true;
-                            return;
-                        }
-                        if ui.button("No").clicked() {
-                            self.pending_delete_env = None;
-                        }
-                    } else if ui.button("🗑 Delete").clicked() {
-                        self.pending_delete_env = Some(editing_env.clone());
-                    }
-                });
-
-                ui.separator();
-
-                // Variable table
-                let mut vars_to_remove: Vec<String> = Vec::new();
-                let mut vars_to_update: Vec<(String, String)> = Vec::new();
-
-                let mut sorted_vars: Vec<(String, String)> = vars.into_iter().collect();
-                sorted_vars.sort_by(|a, b| a.0.cmp(&b.0));
-
-                egui::Grid::new("env_vars_grid")
-                    .striped(true)
-                    .num_columns(3)
-                    .min_col_width(300.0)
-                    .show(ui, |ui| {
-                        ui.strong("Variable");
-                        ui.strong("Value");
-                        ui.strong("");
-                        ui.end_row();
-
-                        for (var_name, var_value) in &sorted_vars {
-                            ui.label(var_name);
-
-                            let mut value = var_value.clone();
-                            let response = ui.add(
-                                egui::TextEdit::singleline(&mut value).desired_width(300.0),
-                            );
-                            if response.changed() {
-                                vars_to_update.push((var_name.clone(), value));
-                            }
-
-                            if ui.button("🗑").clicked() {
-                                vars_to_remove.push(var_name.clone());
-                            }
-                            ui.end_row();
-                        }
-                    });
-
-                // Apply updates
-                if let Some(env_vars) = self.config.get_mut(editing_env) {
-                    for (name, value) in vars_to_update {
-                        env_vars.insert(name, value);
+                // Delete environment button
+                if self.pending_delete_env.as_ref() == Some(editing_env) {
+                    ui.colored_label(egui::Color32::RED, "Delete this environment?");
+                    if ui.button("Yes").clicked() {
+                        self.config.remove(editing_env);
+                        self.editing_environment = None;
+                        self.pending_delete_env = None;
                         self.has_changes = true;
-                        self.status_message = None;
+                        return;
                     }
-                    for name in vars_to_remove {
-                        env_vars.remove(&name);
-                        self.has_changes = true;
-                        self.status_message = None;
+                    if ui.button("No").clicked() {
+                        self.pending_delete_env = None;
                     }
+                } else if ui.button("🗑 Delete").clicked() {
+                    self.pending_delete_env = Some(editing_env.clone());
                 }
+            });
 
-                ui.separator();
+            ui.separator();
 
-                // Add new variable
-                ui.horizontal(|ui| {
-                    ui.label("Name:");
-                    ui.text_edit_singleline(&mut self.new_var_name);
-                    ui.label("Value:");
-                    ui.text_edit_singleline(&mut self.new_var_value);
-                    if ui.button("➕ Add Variable").clicked()
-                        && !self.new_var_name.trim().is_empty()
-                    {
-                        if let Some(env_vars) = self.config.get_mut(editing_env) {
-                            env_vars.insert(
-                                self.new_var_name.trim().to_string(),
-                                self.new_var_value.clone(),
-                            );
-                            self.has_changes = true;
-                            self.status_message = None;
+            // Variable table
+            let mut vars_to_remove: Vec<String> = Vec::new();
+            let mut vars_to_update: Vec<(String, String)> = Vec::new();
+
+            let mut sorted_vars: Vec<(String, String)> = vars.into_iter().collect();
+            sorted_vars.sort_by(|a, b| a.0.cmp(&b.0));
+
+            egui::Grid::new("env_vars_grid")
+                .striped(true)
+                .num_columns(3)
+                .min_col_width(300.0)
+                .show(ui, |ui| {
+                    ui.strong("Variable");
+                    ui.strong("Value");
+                    ui.strong("");
+                    ui.end_row();
+
+                    for (var_name, var_value) in &sorted_vars {
+                        ui.label(var_name);
+
+                        let mut value = var_value.clone();
+                        let response =
+                            ui.add(egui::TextEdit::singleline(&mut value).desired_width(300.0));
+                        if response.changed() {
+                            vars_to_update.push((var_name.clone(), value));
                         }
-                        self.new_var_name.clear();
-                        self.new_var_value.clear();
+
+                        if ui.button("🗑").clicked() {
+                            vars_to_remove.push(var_name.clone());
+                        }
+                        ui.end_row();
                     }
                 });
+
+            // Apply updates
+            if let Some(env_vars) = self.config.get_mut(editing_env) {
+                for (name, value) in vars_to_update {
+                    env_vars.insert(name, value);
+                    self.has_changes = true;
+                    self.status_message = None;
+                }
+                for name in vars_to_remove {
+                    env_vars.remove(&name);
+                    self.has_changes = true;
+                    self.status_message = None;
+                }
+            }
+
+            ui.separator();
+
+            // Add new variable
+            ui.horizontal(|ui| {
+                ui.label("Name:");
+                ui.text_edit_singleline(&mut self.new_var_name);
+                ui.label("Value:");
+                ui.text_edit_singleline(&mut self.new_var_value);
+                if ui.button("➕ Add Variable").clicked() && !self.new_var_name.trim().is_empty() {
+                    if let Some(env_vars) = self.config.get_mut(editing_env) {
+                        env_vars.insert(
+                            self.new_var_name.trim().to_string(),
+                            self.new_var_value.clone(),
+                        );
+                        self.has_changes = true;
+                        self.status_message = None;
+                    }
+                    self.new_var_name.clear();
+                    self.new_var_value.clear();
+                }
+            });
         }
 
         ui.separator();
@@ -325,10 +317,7 @@ impl EnvironmentEditor {
             }
 
             if self.has_changes {
-                ui.colored_label(
-                    egui::Color32::from_rgb(255, 165, 0),
-                    "● Unsaved changes",
-                );
+                ui.colored_label(egui::Color32::from_rgb(255, 165, 0), "● Unsaved changes");
             }
         });
     }

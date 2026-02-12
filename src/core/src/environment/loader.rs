@@ -105,10 +105,7 @@ pub fn save_environment_file(
         let mut var_names: Vec<&String> = vars.keys().collect();
         var_names.sort();
         for var_name in var_names {
-            env_obj.insert(
-                var_name.clone(),
-                Value::String(vars[var_name].clone()),
-            );
+            env_obj.insert(var_name.clone(), Value::String(vars[var_name].clone()));
         }
         root.insert(env_name.clone(), Value::Object(env_obj));
     }

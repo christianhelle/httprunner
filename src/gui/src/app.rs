@@ -778,16 +778,13 @@ impl eframe::App for HttpRunnerApp {
                     splitter_rect.min,
                     egui::vec2(splitter_rect.width(), 6.0),
                 );
-                let splitter_response = ui.interact(
-                    splitter_rect,
-                    splitter_id,
-                    egui::Sense::drag(),
-                );
+                let splitter_response =
+                    ui.interact(splitter_rect, splitter_id, egui::Sense::drag());
                 if splitter_response.dragged() {
                     let delta = splitter_response.drag_delta().y;
-                    self.editor_panel_ratio =
-                        ((self.editor_panel_ratio * total_height + delta) / total_height)
-                            .clamp(0.1, 0.9);
+                    self.editor_panel_ratio = ((self.editor_panel_ratio * total_height + delta)
+                        / total_height)
+                        .clamp(0.1, 0.9);
                 }
                 if splitter_response.drag_stopped() {
                     self.save_state();
@@ -799,11 +796,8 @@ impl eframe::App for HttpRunnerApp {
                 } else {
                     ui.visuals().widgets.noninteractive
                 };
-                ui.painter().rect_filled(
-                    splitter_rect,
-                    visuals.corner_radius,
-                    visuals.bg_fill,
-                );
+                ui.painter()
+                    .rect_filled(splitter_rect, visuals.corner_radius, visuals.bg_fill);
                 ui.advance_cursor_after_rect(splitter_rect);
 
                 ui.heading("Results");

@@ -652,14 +652,12 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
 
         // Show variables for selected environment
         if let Some(selected_env) = editor.selected_env_name() {
-            lines.push(Line::from(vec![
-                Span::styled(
-                    format!("Variables for '{}':", selected_env),
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-            ]));
+            lines.push(Line::from(vec![Span::styled(
+                format!("Variables for '{}':", selected_env),
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            )]));
 
             let var_names = editor.var_names();
             if var_names.is_empty() {
@@ -685,9 +683,7 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
                         Style::default()
                     };
 
-                    let value = editor
-                        .get_var_value(selected_env, var_name)
-                        .unwrap_or("");
+                    let value = editor.get_var_value(selected_env, var_name).unwrap_or("");
 
                     lines.push(Line::from(vec![
                         Span::raw(marker),
@@ -703,14 +699,8 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
     if editor.is_in_input_mode() {
         lines.push(Line::from(""));
         lines.push(Line::from(vec![
-            Span::styled(
-                editor.input_prompt(),
-                Style::default().fg(Color::Yellow),
-            ),
-            Span::styled(
-                editor.input_buffer(),
-                Style::default().fg(Color::White),
-            ),
+            Span::styled(editor.input_prompt(), Style::default().fg(Color::Yellow)),
+            Span::styled(editor.input_buffer(), Style::default().fg(Color::White)),
             Span::styled("▌", Style::default().fg(Color::White)),
         ]));
     }

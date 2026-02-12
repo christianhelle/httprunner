@@ -150,7 +150,9 @@ impl EnvironmentEditor {
     }
 
     pub fn selected_env_name(&self) -> Option<&str> {
-        self.env_names.get(self.selected_env_index).map(|s| s.as_str())
+        self.env_names
+            .get(self.selected_env_index)
+            .map(|s| s.as_str())
     }
 
     pub fn var_names(&self) -> &[String] {
@@ -212,38 +214,34 @@ impl EnvironmentEditor {
                 };
             }
             // Navigate
-            (KeyCode::Up, _) | (KeyCode::Char('k'), KeyModifiers::NONE) => {
-                match self.focus {
-                    EditorFocus::EnvironmentList => {
-                        if self.selected_env_index > 0 {
-                            self.selected_env_index -= 1;
-                            self.refresh_var_names();
-                        }
+            (KeyCode::Up, _) | (KeyCode::Char('k'), KeyModifiers::NONE) => match self.focus {
+                EditorFocus::EnvironmentList => {
+                    if self.selected_env_index > 0 {
+                        self.selected_env_index -= 1;
+                        self.refresh_var_names();
                     }
-                    EditorFocus::VariableList => {
-                        if self.selected_var_index > 0 {
-                            self.selected_var_index -= 1;
-                        }
-                    }
-                    EditorFocus::Input => {}
                 }
-            }
-            (KeyCode::Down, _) | (KeyCode::Char('j'), KeyModifiers::NONE) => {
-                match self.focus {
-                    EditorFocus::EnvironmentList => {
-                        if self.selected_env_index + 1 < self.env_names.len() {
-                            self.selected_env_index += 1;
-                            self.refresh_var_names();
-                        }
+                EditorFocus::VariableList => {
+                    if self.selected_var_index > 0 {
+                        self.selected_var_index -= 1;
                     }
-                    EditorFocus::VariableList => {
-                        if self.selected_var_index + 1 < self.var_names.len() {
-                            self.selected_var_index += 1;
-                        }
-                    }
-                    EditorFocus::Input => {}
                 }
-            }
+                EditorFocus::Input => {}
+            },
+            (KeyCode::Down, _) | (KeyCode::Char('j'), KeyModifiers::NONE) => match self.focus {
+                EditorFocus::EnvironmentList => {
+                    if self.selected_env_index + 1 < self.env_names.len() {
+                        self.selected_env_index += 1;
+                        self.refresh_var_names();
+                    }
+                }
+                EditorFocus::VariableList => {
+                    if self.selected_var_index + 1 < self.var_names.len() {
+                        self.selected_var_index += 1;
+                    }
+                }
+                EditorFocus::Input => {}
+            },
             // Add new environment
             (KeyCode::Char('n'), KeyModifiers::NONE) => {
                 if self.focus == EditorFocus::EnvironmentList {
@@ -276,35 +274,29 @@ impl EnvironmentEditor {
                 }
             }
             // Delete
-            (KeyCode::Char('d'), KeyModifiers::NONE) | (KeyCode::Delete, _) => {
-                match self.focus {
-                    EditorFocus::EnvironmentList => {
-                        if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
-                        {
-                            self.config.remove(&env_name);
-                            self.has_changes = true;
-                            self.refresh_env_names();
-                            self.refresh_var_names();
-                            self.status_message =
-                                Some(format!("Deleted environment '{}'", env_name));
-                        }
+            (KeyCode::Char('d'), KeyModifiers::NONE) | (KeyCode::Delete, _) => match self.focus {
+                EditorFocus::EnvironmentList => {
+                    if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned() {
+                        self.config.remove(&env_name);
+                        self.has_changes = true;
+                        self.refresh_env_names();
+                        self.refresh_var_names();
+                        self.status_message = Some(format!("Deleted environment '{}'", env_name));
                     }
-                    EditorFocus::VariableList => {
-                        if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
-                            && let Some(var_name) =
-                                self.var_names.get(self.selected_var_index).cloned()
-                            && let Some(vars) = self.config.get_mut(&env_name)
-                        {
-                            vars.remove(&var_name);
-                            self.has_changes = true;
-                            self.refresh_var_names();
-                            self.status_message =
-                                Some(format!("Deleted variable '{}'", var_name));
-                        }
-                    }
-                    EditorFocus::Input => {}
                 }
-            }
+                EditorFocus::VariableList => {
+                    if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
+                        && let Some(var_name) = self.var_names.get(self.selected_var_index).cloned()
+                        && let Some(vars) = self.config.get_mut(&env_name)
+                    {
+                        vars.remove(&var_name);
+                        self.has_changes = true;
+                        self.refresh_var_names();
+                        self.status_message = Some(format!("Deleted variable '{}'", var_name));
+                    }
+                }
+                EditorFocus::Input => {}
+            },
             _ => {}
         }
     }
@@ -350,10 +342,8 @@ impl EnvironmentEditor {
                                 vars.insert(self.pending_var_name.clone(), value);
                                 self.has_changes = true;
                                 self.refresh_var_names();
-                                self.status_message = Some(format!(
-                                    "Added variable '{}'",
-                                    self.pending_var_name
-                                ));
+                                self.status_message =
+                                    Some(format!("Added variable '{}'", self.pending_var_name));
                             }
                             self.pending_var_name.clear();
                             self.focus = EditorFocus::VariableList;
@@ -365,10 +355,8 @@ impl EnvironmentEditor {
                             {
                                 vars.insert(self.pending_var_name.clone(), value);
                                 self.has_changes = true;
-                                self.status_message = Some(format!(
-                                    "Updated variable '{}'",
-                                    self.pending_var_name
-                                ));
+                                self.status_message =
+                                    Some(format!("Updated variable '{}'", self.pending_var_name));
                             }
                             self.pending_var_name.clear();
                             self.focus = EditorFocus::VariableList;
@@ -382,7 +370,9 @@ impl EnvironmentEditor {
             KeyCode::Backspace => {
                 self.input_buffer.pop();
             }
-            KeyCode::Char(c) if key.modifiers.is_empty() || key.modifiers == KeyModifiers::SHIFT => {
+            KeyCode::Char(c)
+                if key.modifiers.is_empty() || key.modifiers == KeyModifiers::SHIFT =>
+            {
                 self.input_buffer.push(c);
             }
             _ => {}

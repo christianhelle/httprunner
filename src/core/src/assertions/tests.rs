@@ -248,7 +248,11 @@ fn status_assertion_fails_when_expected_400_but_got_200() {
 
     let eval = evaluate_assertion(&assertion, &result);
     assert!(!eval.passed);
-    assert!(eval.error_message.unwrap().contains("Expected status 400, got 200"));
+    assert!(
+        eval.error_message
+            .unwrap()
+            .contains("Expected status 400, got 200")
+    );
 }
 
 #[test]
@@ -294,7 +298,7 @@ fn mixed_assertions_fail_when_body_does_not_match_for_non_2xx() {
 
     let results = evaluate_assertions(&assertions, &result);
     assert_eq!(results.len(), 2);
-    assert!(results[0].passed);  // status matches
+    assert!(results[0].passed); // status matches
     assert!(!results[1].passed); // body does not match
     assert!(!results.iter().all(|r| r.passed));
 }
