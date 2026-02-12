@@ -47,7 +47,9 @@ pub struct HttpRunnerApp {
     file_tree_visible: bool,
     telemetry_enabled: bool,
     delay_ms: u64,
-    /// Ratio of editor panel height to total available height (0.0-1.0)
+    /// Ratio of editor panel height to adjusted total height
+    /// (`total_height = ui.available_height() - 40.0`), after reserving space
+    /// for fixed UI chrome (0.0-1.0)
     editor_panel_ratio: f32,
 }
 
@@ -70,7 +72,7 @@ impl HttpRunnerApp {
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);
         let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
         let delay_ms = state.delay_ms.unwrap_or(0);
-        let editor_panel_ratio = state.results_panel_ratio.unwrap_or(0.5);
+        let editor_panel_ratio = state.editor_panel_ratio.unwrap_or(0.5);
 
         let mut app = Self {
             file_tree: FileTree::new(root_directory.clone()),
@@ -399,7 +401,7 @@ impl HttpRunnerApp {
             results_compact_mode: Some(self.results_view.is_compact_mode()),
             telemetry_enabled: Some(self.telemetry_enabled),
             delay_ms: Some(self.delay_ms),
-            results_panel_ratio: Some(self.editor_panel_ratio),
+            editor_panel_ratio: Some(self.editor_panel_ratio),
         };
 
         if let Err(e) = state.save() {
@@ -585,9 +587,8 @@ impl eframe::App for HttpRunnerApp {
                 });
                 ui.separator();
 
-                let total_height = ui.available_height() - 40.0;
-                let editor_height = (total_height * self.editor_panel_ratio).max(50.0);
-                let available_height = editor_height;
+                let total_height = (ui.available_height() - 40.0).max(100.0);
+                let available_height = (total_height * self.editor_panel_ratio).max(50.0);
 
                 match self.view_mode {
                     ViewMode::TextEditor => {

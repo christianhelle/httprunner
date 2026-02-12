@@ -19,7 +19,8 @@ pub struct AppState {
     /// Delay between requests in milliseconds
     pub delay_ms: Option<u64>,
     /// Ratio of the editor panel height to total height (0.0-1.0)
-    pub results_panel_ratio: Option<f32>,
+    #[serde(alias = "results_panel_ratio")]
+    pub editor_panel_ratio: Option<f32>,
 }
 
 impl AppState {
