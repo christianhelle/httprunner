@@ -15,8 +15,10 @@ enum EditorFocus {
 enum InputMode {
     None,
     NewEnvironment,
+    RenameEnvironment,
     NewVariableName,
     NewVariableValue,
+    EditVariableName,
     EditVariableValue,
 }
 
@@ -186,8 +188,10 @@ impl EnvironmentEditor {
         match self.input_mode {
             InputMode::None => "",
             InputMode::NewEnvironment => "New environment name: ",
+            InputMode::RenameEnvironment => "Rename environment: ",
             InputMode::NewVariableName => "New variable name: ",
             InputMode::NewVariableValue => "Variable value: ",
+            InputMode::EditVariableName => "Rename variable: ",
             InputMode::EditVariableValue => "Edit value: ",
         }
     }
@@ -273,6 +277,28 @@ impl EnvironmentEditor {
                     self.focus = EditorFocus::Input;
                 }
             }
+            // Rename environment or variable name
+            (KeyCode::Char('r'), KeyModifiers::NONE) => match self.focus {
+                EditorFocus::EnvironmentList => {
+                    if let Some(env_name) = self.env_names.get(self.selected_env_index) {
+                        self.input_buffer = env_name.clone();
+                        self.pending_var_name = env_name.clone();
+                        self.input_mode = InputMode::RenameEnvironment;
+                        self.focus = EditorFocus::Input;
+                    }
+                }
+                EditorFocus::VariableList => {
+                    if !self.var_names.is_empty()
+                        && let Some(var_name) = self.var_names.get(self.selected_var_index)
+                    {
+                        self.input_buffer = var_name.clone();
+                        self.pending_var_name = var_name.clone();
+                        self.input_mode = InputMode::EditVariableName;
+                        self.focus = EditorFocus::Input;
+                    }
+                }
+                EditorFocus::Input => {}
+            },
             // Delete
             (KeyCode::Char('d'), KeyModifiers::NONE) | (KeyCode::Delete, _) => match self.focus {
                 EditorFocus::EnvironmentList => {
@@ -311,58 +337,96 @@ impl EnvironmentEditor {
             }
             KeyCode::Enter => {
                 let value = self.input_buffer.trim().to_string();
-                if !value.is_empty() {
-                    match self.input_mode {
-                        InputMode::NewEnvironment => {
-                            if !self.config.contains_key(&value) {
-                                self.config.insert(value.clone(), HashMap::new());
-                                self.has_changes = true;
-                                self.refresh_env_names();
-                                // Select the new environment
-                                if let Some(idx) = self.env_names.iter().position(|e| e == &value) {
-                                    self.selected_env_index = idx;
-                                }
-                                self.refresh_var_names();
-                                self.status_message =
-                                    Some(format!("Added environment '{}'", value));
+                match self.input_mode {
+                    InputMode::NewEnvironment => {
+                        if !value.is_empty() && !self.config.contains_key(&value) {
+                            self.config.insert(value.clone(), HashMap::new());
+                            self.has_changes = true;
+                            self.refresh_env_names();
+                            // Select the new environment
+                            if let Some(idx) = self.env_names.iter().position(|e| e == &value) {
+                                self.selected_env_index = idx;
                             }
-                            self.focus = EditorFocus::EnvironmentList;
+                            self.refresh_var_names();
+                            self.status_message = Some(format!("Added environment '{}'", value));
                         }
-                        InputMode::NewVariableName => {
+                        self.focus = EditorFocus::EnvironmentList;
+                    }
+                    InputMode::RenameEnvironment => {
+                        let old_name = self.pending_var_name.clone();
+                        if !value.is_empty()
+                            && value != old_name
+                            && !self.config.contains_key(&value)
+                            && let Some(vars) = self.config.remove(&old_name)
+                        {
+                            self.config.insert(value.clone(), vars);
+                            self.has_changes = true;
+                            self.refresh_env_names();
+                            if let Some(idx) = self.env_names.iter().position(|e| e == &value) {
+                                self.selected_env_index = idx;
+                            }
+                            self.refresh_var_names();
+                            self.status_message =
+                                Some(format!("Renamed environment '{}' to '{}'", old_name, value));
+                        }
+                        self.pending_var_name.clear();
+                        self.focus = EditorFocus::EnvironmentList;
+                    }
+                    InputMode::NewVariableName => {
+                        if !value.is_empty() {
                             self.pending_var_name = value;
                             self.input_buffer.clear();
                             self.input_mode = InputMode::NewVariableValue;
                             return; // Don't clear input mode yet
                         }
-                        InputMode::NewVariableValue => {
-                            if let Some(env_name) =
-                                self.env_names.get(self.selected_env_index).cloned()
-                                && let Some(vars) = self.config.get_mut(&env_name)
-                            {
-                                vars.insert(self.pending_var_name.clone(), value);
-                                self.has_changes = true;
-                                self.refresh_var_names();
-                                self.status_message =
-                                    Some(format!("Added variable '{}'", self.pending_var_name));
-                            }
-                            self.pending_var_name.clear();
-                            self.focus = EditorFocus::VariableList;
-                        }
-                        InputMode::EditVariableValue => {
-                            if let Some(env_name) =
-                                self.env_names.get(self.selected_env_index).cloned()
-                                && let Some(vars) = self.config.get_mut(&env_name)
-                            {
-                                vars.insert(self.pending_var_name.clone(), value);
-                                self.has_changes = true;
-                                self.status_message =
-                                    Some(format!("Updated variable '{}'", self.pending_var_name));
-                            }
-                            self.pending_var_name.clear();
-                            self.focus = EditorFocus::VariableList;
-                        }
-                        InputMode::None => {}
                     }
+                    InputMode::NewVariableValue => {
+                        if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
+                            && let Some(vars) = self.config.get_mut(&env_name)
+                        {
+                            vars.insert(self.pending_var_name.clone(), value);
+                            self.has_changes = true;
+                            self.refresh_var_names();
+                            self.status_message =
+                                Some(format!("Added variable '{}'", self.pending_var_name));
+                        }
+                        self.pending_var_name.clear();
+                        self.focus = EditorFocus::VariableList;
+                    }
+                    InputMode::EditVariableName => {
+                        let old_name = self.pending_var_name.clone();
+                        if !value.is_empty()
+                            && value != old_name
+                            && let Some(env_name) =
+                                self.env_names.get(self.selected_env_index).cloned()
+                            && let Some(vars) = self.config.get_mut(&env_name)
+                            && let Some(old_value) = vars.remove(&old_name)
+                        {
+                            vars.insert(value.clone(), old_value);
+                            self.has_changes = true;
+                            self.refresh_var_names();
+                            if let Some(idx) = self.var_names.iter().position(|v| v == &value) {
+                                self.selected_var_index = idx;
+                            }
+                            self.status_message =
+                                Some(format!("Renamed variable '{}' to '{}'", old_name, value));
+                        }
+                        self.pending_var_name.clear();
+                        self.focus = EditorFocus::VariableList;
+                    }
+                    InputMode::EditVariableValue => {
+                        if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
+                            && let Some(vars) = self.config.get_mut(&env_name)
+                        {
+                            vars.insert(self.pending_var_name.clone(), value);
+                            self.has_changes = true;
+                            self.status_message =
+                                Some(format!("Updated variable '{}'", self.pending_var_name));
+                        }
+                        self.pending_var_name.clear();
+                        self.focus = EditorFocus::VariableList;
+                    }
+                    InputMode::None => {}
                 }
                 self.input_mode = InputMode::None;
                 self.input_buffer.clear();

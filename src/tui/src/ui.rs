@@ -593,7 +593,7 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
 
     // Help text
     lines.push(Line::from(vec![
-        Span::styled("Tab", Style::default().fg(Color::Yellow)),
+        Span::styled("←/→", Style::default().fg(Color::Yellow)),
         Span::raw(" Switch | "),
         Span::styled("n", Style::default().fg(Color::Yellow)),
         Span::raw(" New Env | "),
@@ -601,6 +601,8 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
         Span::raw(" Add Var | "),
         Span::styled("e/Enter", Style::default().fg(Color::Yellow)),
         Span::raw(" Edit | "),
+        Span::styled("r", Style::default().fg(Color::Yellow)),
+        Span::raw(" Rename | "),
         Span::styled("d", Style::default().fg(Color::Yellow)),
         Span::raw(" Delete | "),
         Span::styled("Ctrl+S", Style::default().fg(Color::Yellow)),
