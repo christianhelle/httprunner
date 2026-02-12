@@ -3357,6 +3357,6 @@ fn test_lorem_ipsum_exceeding_max_length() {
 fn test_lorem_ipsum_case_insensitive() {
     let lorem_ipsum = LoremIpsumSubstitutor {};
     let input = "LOREM_IPSUM(5)";
-    let result= lorem_ipsum.replace(input).unwrap();
+    let result = lorem_ipsum.replace(input).unwrap();
     assert!(result.contains("lorem ipsum dolor sit amet"));
 }

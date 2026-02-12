@@ -3,8 +3,8 @@ use crate::functions::date_functions::{
 };
 use crate::functions::generator_functions::{
     AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor, GuidSubstitutor,
-    JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
-    StringSubstitutor, LoremIpsumSubstitutor
+    JobTitleSubstitutor, LastNameSubstitutor, LoremIpsumSubstitutor, NameSubstitutor,
+    NumberSubstitutor, StringSubstitutor,
 };
 use crate::functions::transform_functions::{
     Base64EncodeSubstitutor, LowerSubstitutor, UpperSubstitutor,
