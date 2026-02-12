@@ -1,3 +1,4 @@
+use crate::functions::values::LOREM_IPSUM_WORDS;
 use crate::functions::{substitution::FunctionSubstitutor, values};
 
 pub struct GuidSubstitutor {}
@@ -147,9 +148,49 @@ impl FunctionSubstitutor for EmailSubstitutor {
         .to_string()
     }
 }
+
 fn normalize_name_for_email(name: String) -> String {
     name.chars()
         .filter(|c| c.is_ascii_alphanumeric())
         .collect::<String>()
         .to_lowercase()
+}
+
+pub struct LoremIpsumSubstitutor {}
+impl FunctionSubstitutor for LoremIpsumSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"(?!)"
+    }
+
+    fn generate(&self) -> String {
+        String::new()
+    }
+
+    fn replace(&self, input: &str) -> Result<String, regex::Error> {
+        use regex::RegexBuilder;
+
+        let pattern = r"\blorem_ipsum\(\s*(\d+)\s*\)";
+        let regex = RegexBuilder::new(pattern).case_insensitive(true).build()?;
+        Ok(regex
+            .replace_all(input, |caps: &regex::Captures| {
+                let val = &caps[1]
+                    .parse::<usize>()
+                    .expect("Could not parse number of words");
+                if val < &LOREM_IPSUM_WORDS.len() {
+                    LOREM_IPSUM_WORDS
+                        .iter()
+                        .take(*val)
+                        .map(|w| w.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                } else {
+                    let mut words = Vec::new();
+                    for i in 0..*val {
+                        words.push(LOREM_IPSUM_WORDS[i % LOREM_IPSUM_WORDS.len()].to_string());
+                    }
+                    words.join(" ")
+                }
+            })
+            .to_string())
+    }
 }

@@ -4,7 +4,7 @@ use crate::functions::date_functions::{
 use crate::functions::generator_functions::{
     AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor, GuidSubstitutor,
     JobTitleSubstitutor, LastNameSubstitutor, NameSubstitutor, NumberSubstitutor,
-    StringSubstitutor,
+    StringSubstitutor, LoremIpsumSubstitutor
 };
 use crate::functions::transform_functions::{
     Base64EncodeSubstitutor, LowerSubstitutor, UpperSubstitutor,
@@ -43,6 +43,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &GetTimeSubstitutor {},
         &GetDateTimeSubstitutor {},
         &GetUtcDateTimeSubstitutor {},
+        &LoremIpsumSubstitutor {},
     ];
 
     let mut result = input.to_string();
