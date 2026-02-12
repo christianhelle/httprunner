@@ -17,6 +17,7 @@
 
 **Merged pull requests:**
 
+- Make Results view vertically resizable in GUI app [\#196](https://github.com/christianhelle/httprunner/pull/196) ([christianhelle](https://github.com/christianhelle))
 - Update Rust crate windows-sys to 0.61 [\#191](https://github.com/christianhelle/httprunner/pull/191) ([renovate[bot]](https://github.com/apps/renovate))
 - Sync static website docs with README - add TUI, timeouts, and missing CLI options [\#183](https://github.com/christianhelle/httprunner/pull/183) ([Copilot](https://github.com/apps/copilot-swe-agent))
 
