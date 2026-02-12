@@ -24,7 +24,8 @@ Content-Type: application/json
     "getdate": "getdate()",
     "gettime": "gettime()",
     "getdatetime": "getdatetime()",
-    "getutcdatetime": "getutcdatetime()"
+    "getutcdatetime": "getutcdatetime()",
+    "lorem_ipsum": "lorem_ipsum(50)"
 }
 
 #
@@ -62,5 +63,6 @@ Content-Type: application/json
     "getdate": "getdate()",
     "gettime": "gettime()",
     "getdatetime": "getdatetime()",
-    "getutcdatetime": "getutcdatetime()"
+    "getutcdatetime": "getutcdatetime()",
+    "lorem_ipsum": "LOREM_IPSUM(50)"
 }

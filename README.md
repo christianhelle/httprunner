@@ -32,7 +32,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
@@ -1043,6 +1043,20 @@ Content-Type: application/json
 {
   "title": "job_title()",
   "position": "JOB_TITLE()"
+}
+```
+
+#### `lorem_ipsum(n)` - Generate Lorem Ipsum Text
+Generates Lorem Ipsum placeholder text with the specified number of words. The parameter `n` determines how many words to generate. If the requested count exceeds the available word list (approximately 285 words), words will be repeated cyclically.
+
+```http
+POST https://api.example.com/content
+Content-Type: application/json
+
+{
+  "summary": "lorem_ipsum(20)",
+  "description": "LOREM_IPSUM(50)",
+  "content": "Lorem_Ipsum(100)"
 }
 ```
 

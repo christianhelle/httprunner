@@ -3,12 +3,14 @@ use crate::functions::date_functions::{
 };
 use crate::functions::generator_functions::{
     AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor, GuidSubstitutor,
-    LastNameSubstitutor, NameSubstitutor, NumberSubstitutor, StringSubstitutor,
+    LastNameSubstitutor, LoremIpsumSubstitutor, NameSubstitutor, NumberSubstitutor,
+    StringSubstitutor,
 };
 use crate::functions::substitution::FunctionSubstitutor;
 use crate::functions::transform_functions::{
     Base64EncodeSubstitutor, LowerSubstitutor, UpperSubstitutor,
 };
+use crate::functions::values::LOREM_IPSUM_WORDS;
 use regex::Regex;
 
 #[test]
@@ -3330,4 +3332,39 @@ fn test_upper_lower_very_long_strings() {
     let result_lower = sub_lower.replace(&input_lower).unwrap();
     assert!(!result_lower.contains("lower"));
     assert_eq!(result_lower, long_lower);
+}
+
+#[test]
+fn test_lorem_ipsum() {
+    let lorem_ipsum = LoremIpsumSubstitutor {};
+    let input = "lorem_ipsum(5)";
+    let result = lorem_ipsum.replace(input).unwrap();
+    assert!(result.contains("lorem ipsum dolor sit amet"));
+    assert_eq!(result.split_whitespace().count(), 5);
+}
+
+#[test]
+fn test_lorem_ipsum_exceeding_max_length() {
+    let len = LOREM_IPSUM_WORDS.len() * 2;
+    let lorem_ipsum = LoremIpsumSubstitutor {};
+    let input = format!("lorem_ipsum({})", len);
+    let result = lorem_ipsum.replace(&input).unwrap();
+    assert!(result.contains("lorem ipsum dolor sit amet"));
+    assert_eq!(result.split_whitespace().count(), len);
+}
+
+#[test]
+fn test_lorem_ipsum_case_insensitive() {
+    let lorem_ipsum = LoremIpsumSubstitutor {};
+    let input = "LOREM_IPSUM(5)";
+    let result = lorem_ipsum.replace(input).unwrap();
+    assert!(result.contains("lorem ipsum dolor sit amet"));
+}
+
+#[test]
+fn test_lorem_ipsum_empty() {
+    let lorem_ipsum = LoremIpsumSubstitutor {};
+    let input = "lorem_ipsum()";
+    let result = lorem_ipsum.replace(input).unwrap();
+    assert_eq!(result.split_whitespace().count(), 100);
 }

@@ -142,6 +142,18 @@ Generates a random job title:
 
 Example output: `Senior Software Engineer`
 
+### Lorem Ipsum Text Generation
+
+Generates Lorem Ipsum placeholder text with a specified number of words:
+
+```text
+{{lorem_ipsum(50)}}
+```
+
+Example output: `lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum fugiat nulla pariatur`
+
+The function accepts a parameter specifying the number of words to generate. If the requested number exceeds the available word list, words will be repeated cyclically.
+
 ## Implementation Details
 
 Functions are case-insensitive and processed through the `FunctionSubstitutor` trait, which provides:

@@ -414,6 +414,20 @@ Content-Type: application/json
 }</code>
                     </div>
 
+                    <h4>lorem_ipsum(N) - Generate Lorem Ipsum Text</h4>
+                    <p>Generates Lorem Ipsum placeholder text with N words. The function is case-insensitive.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/content
+Content-Type: application/json
+
+{
+  "description": "lorem_ipsum(50)",
+  "summary": "LOREM_IPSUM(20)",
+  "content": "Lorem_Ipsum(100)"
+}</code>
+                    </div>
+                    <p><strong>Note:</strong> The parameter specifies the number of words to generate. If the requested count exceeds the available word list (approximately 285 words), words will be repeated cyclically.</p>
+
                     <h4>getdate() - Get Current Date</h4>
                     <p>Returns the current local date in <code>YYYY-MM-DD</code> format.</p>
                     <div class="code-block">

@@ -172,6 +172,11 @@ Available functions:
 - `address()` - Generate random full mailing address (street, city, postal code, country), e.g., "123 Main Street, Springfield, 12345, USA"
 - `email()` - Generate random email address (e.g., "john.smith@example.com")
 - `job_title()` - Generate random job title (e.g., "Senior Software Engineer")
+- `lorem_ipsum(N)` - Generate Lorem Ipsum placeholder text with N words (e.g., "lorem_ipsum(50)")
+- `getdate()` - Get current local date in YYYY-MM-DD format
+- `gettime()` - Get current local time in HH:MM:SS format
+- `getdatetime()` - Get current local datetime in YYYY-MM-DD HH:MM:SS format
+- `getutcdatetime()` - Get current UTC datetime in YYYY-MM-DD HH:MM:SS format
 
 All functions are case-insensitive and can be used in URLs, headers, and request bodies.
 
@@ -380,7 +385,7 @@ EXPECTED_RESPONSE_STATUS 500
 5. **JSONPath**: Use `$.property.nested` for extracting JSON values
 6. **Headers**: Multiple headers can be specified, one per line after the request line
 7. **Pretty JSON**: Use `--verbose --pretty-json` to format JSON payloads for easier reading and debugging
-8. **Built-in Functions**: Use `guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, and `email()` for dynamic values
+8. **Built-in Functions**: Use `guid()`, `string()`, `number()`, `base64_encode()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, and `getutcdatetime()` for dynamic values
 9. **Export for Documentation**: Use `--export` to generate file-based documentation of API requests and responses
 10. **Combine Flags**: Use `--export --pretty-json` to create well-formatted API documentation files
 
