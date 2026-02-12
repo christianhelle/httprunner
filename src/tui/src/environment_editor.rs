@@ -348,25 +348,26 @@ impl EnvironmentEditor {
                                 self.selected_env_index = idx;
                             }
                             self.refresh_var_names();
-                            self.status_message =
-                                Some(format!("Added environment '{}'", value));
+                            self.status_message = Some(format!("Added environment '{}'", value));
                         }
                         self.focus = EditorFocus::EnvironmentList;
                     }
                     InputMode::RenameEnvironment => {
                         let old_name = self.pending_var_name.clone();
-                        if !value.is_empty() && value != old_name && !self.config.contains_key(&value) {
-                            if let Some(vars) = self.config.remove(&old_name) {
-                                self.config.insert(value.clone(), vars);
-                                self.has_changes = true;
-                                self.refresh_env_names();
-                                if let Some(idx) = self.env_names.iter().position(|e| e == &value) {
-                                    self.selected_env_index = idx;
-                                }
-                                self.refresh_var_names();
-                                self.status_message =
-                                    Some(format!("Renamed environment '{}' to '{}'", old_name, value));
+                        if !value.is_empty()
+                            && value != old_name
+                            && !self.config.contains_key(&value)
+                            && let Some(vars) = self.config.remove(&old_name)
+                        {
+                            self.config.insert(value.clone(), vars);
+                            self.has_changes = true;
+                            self.refresh_env_names();
+                            if let Some(idx) = self.env_names.iter().position(|e| e == &value) {
+                                self.selected_env_index = idx;
                             }
+                            self.refresh_var_names();
+                            self.status_message =
+                                Some(format!("Renamed environment '{}' to '{}'", old_name, value));
                         }
                         self.pending_var_name.clear();
                         self.focus = EditorFocus::EnvironmentList;
@@ -380,8 +381,7 @@ impl EnvironmentEditor {
                         }
                     }
                     InputMode::NewVariableValue => {
-                        if let Some(env_name) =
-                            self.env_names.get(self.selected_env_index).cloned()
+                        if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
                             && let Some(vars) = self.config.get_mut(&env_name)
                         {
                             vars.insert(self.pending_var_name.clone(), value);
@@ -395,28 +395,27 @@ impl EnvironmentEditor {
                     }
                     InputMode::EditVariableName => {
                         let old_name = self.pending_var_name.clone();
-                        if !value.is_empty() && value != old_name {
-                            if let Some(env_name) =
+                        if !value.is_empty()
+                            && value != old_name
+                            && let Some(env_name) =
                                 self.env_names.get(self.selected_env_index).cloned()
-                                && let Some(vars) = self.config.get_mut(&env_name)
-                                && let Some(old_value) = vars.remove(&old_name)
-                            {
-                                vars.insert(value.clone(), old_value);
-                                self.has_changes = true;
-                                self.refresh_var_names();
-                                if let Some(idx) = self.var_names.iter().position(|v| v == &value) {
-                                    self.selected_var_index = idx;
-                                }
-                                self.status_message =
-                                    Some(format!("Renamed variable '{}' to '{}'", old_name, value));
+                            && let Some(vars) = self.config.get_mut(&env_name)
+                            && let Some(old_value) = vars.remove(&old_name)
+                        {
+                            vars.insert(value.clone(), old_value);
+                            self.has_changes = true;
+                            self.refresh_var_names();
+                            if let Some(idx) = self.var_names.iter().position(|v| v == &value) {
+                                self.selected_var_index = idx;
                             }
+                            self.status_message =
+                                Some(format!("Renamed variable '{}' to '{}'", old_name, value));
                         }
                         self.pending_var_name.clear();
                         self.focus = EditorFocus::VariableList;
                     }
                     InputMode::EditVariableValue => {
-                        if let Some(env_name) =
-                            self.env_names.get(self.selected_env_index).cloned()
+                        if let Some(env_name) = self.env_names.get(self.selected_env_index).cloned()
                             && let Some(vars) = self.config.get_mut(&env_name)
                         {
                             vars.insert(self.pending_var_name.clone(), value);
