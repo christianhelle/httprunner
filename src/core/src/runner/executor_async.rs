@@ -52,7 +52,7 @@ pub async fn execute_http_request_async(
 
         let results = assertions::evaluate_assertions(&request.assertions, &temp_result);
         let all_passed = results.iter().all(|r| r.passed);
-        success = success && all_passed;
+        success = all_passed;
         results
     } else {
         Vec::new()
