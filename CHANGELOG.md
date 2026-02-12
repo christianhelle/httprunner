@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Environment Editing from TUI app [\#198](https://github.com/christianhelle/httprunner/pull/198) ([christianhelle](https://github.com/christianhelle))
 - Use assertion results to determine request success when assertions exist [\#197](https://github.com/christianhelle/httprunner/pull/197) ([christianhelle](https://github.com/christianhelle))
 - Change GUI and TUI layout to have Results below Requests [\#195](https://github.com/christianhelle/httprunner/pull/195) ([christianhelle](https://github.com/christianhelle))
 - Disable Results view auto-resizing in GUI app [\#194](https://github.com/christianhelle/httprunner/pull/194) ([christianhelle](https://github.com/christianhelle))
