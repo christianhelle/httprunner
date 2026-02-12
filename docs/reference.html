@@ -406,6 +406,11 @@ GET {{baseUrl}}/users</code>
                                 <td>Senior Software Engineer</td>
                             </tr>
                             <tr>
+                                <td><code>lorem_ipsum(N)</code></td>
+                                <td>Generate Lorem Ipsum placeholder text with N words</td>
+                                <td>lorem ipsum dolor sit amet...</td>
+                            </tr>
+                            <tr>
                                 <td><code>getdate()</code></td>
                                 <td>Get current local date (YYYY-MM-DD)</td>
                                 <td>2026-01-26</td>
@@ -435,6 +440,7 @@ GET {{baseUrl}}/users</code>
                         <li>Values are generated dynamically for each request</li>
                         <li>Can be combined with variables</li>
                         <li><code>base64_encode()</code>, <code>upper()</code>, and <code>lower()</code> require single-quoted string arguments</li>
+                        <li><code>lorem_ipsum(N)</code> requires a numeric parameter specifying the number of words to generate</li>
                     </ul>
 
                     <h3>Example</h3>
@@ -450,6 +456,7 @@ Content-Type: application/json
   "name": "name()",
   "email": "email()",
   "address": "address()",
+  "description": "lorem_ipsum(50)",
   "eventDate": "getdate()",
   "timestamp": "getdatetime()",
   "utcTime": "getutcdatetime()"
