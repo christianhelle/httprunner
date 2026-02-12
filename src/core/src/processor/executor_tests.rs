@@ -1426,4 +1426,415 @@ Content-Type: application/json
         let res = result.unwrap();
         assert_eq!(res.files[0].result_contexts[0].name, "myRequest");
     }
+
+    // Tests for assertion-based success determination.
+    // Requests with assertions should be treated as successful when all assertions pass,
+    // even if the HTTP status code is non-2xx (e.g., testing for expected 400/404 responses).
+
+    #[test]
+    fn test_non_2xx_with_passing_assertions_counts_as_success() {
+        let file_content = "GET https://api.example.com/bad-request\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 400,
+            success: true, // assertions all passed, so success = true
+            error_message: None,
+            duration_ms: 5,
+            response_headers: None,
+            response_body: Some(r#"{"error":"bad request"}"#.to_string()),
+            assertion_results: vec![crate::types::AssertionResult {
+                assertion: crate::types::Assertion {
+                    assertion_type: crate::types::AssertionType::Status,
+                    expected_value: "400".to_string(),
+                },
+                passed: true,
+                actual_value: Some("400".to_string()),
+                error_message: None,
+            }],
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(res.success);
+        assert_eq!(res.files[0].success_count, 1);
+        assert_eq!(res.files[0].failed_count, 0);
+    }
+
+    #[test]
+    fn test_404_with_passing_status_assertion_counts_as_success() {
+        let file_content = "GET https://api.example.com/not-found\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 404,
+            success: true,
+            error_message: None,
+            duration_ms: 3,
+            response_headers: None,
+            response_body: Some(r#"{"error":"not found"}"#.to_string()),
+            assertion_results: vec![crate::types::AssertionResult {
+                assertion: crate::types::Assertion {
+                    assertion_type: crate::types::AssertionType::Status,
+                    expected_value: "404".to_string(),
+                },
+                passed: true,
+                actual_value: Some("404".to_string()),
+                error_message: None,
+            }],
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(res.success);
+        assert_eq!(res.files[0].success_count, 1);
+        assert_eq!(res.files[0].failed_count, 0);
+    }
+
+    #[test]
+    fn test_500_with_passing_assertions_counts_as_success() {
+        let file_content = "GET https://api.example.com/error\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 500,
+            success: true,
+            error_message: None,
+            duration_ms: 10,
+            response_headers: None,
+            response_body: Some("Internal Server Error".to_string()),
+            assertion_results: vec![crate::types::AssertionResult {
+                assertion: crate::types::Assertion {
+                    assertion_type: crate::types::AssertionType::Status,
+                    expected_value: "500".to_string(),
+                },
+                passed: true,
+                actual_value: Some("500".to_string()),
+                error_message: None,
+            }],
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(res.success);
+        assert_eq!(res.files[0].success_count, 1);
+        assert_eq!(res.files[0].failed_count, 0);
+    }
+
+    #[test]
+    fn test_non_2xx_with_failing_assertions_counts_as_failure() {
+        let file_content = "GET https://api.example.com/wrong-error\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 500,
+            success: false, // assertion failed
+            error_message: None,
+            duration_ms: 8,
+            response_headers: None,
+            response_body: None,
+            assertion_results: vec![crate::types::AssertionResult {
+                assertion: crate::types::Assertion {
+                    assertion_type: crate::types::AssertionType::Status,
+                    expected_value: "400".to_string(),
+                },
+                passed: false,
+                actual_value: Some("500".to_string()),
+                error_message: Some("Expected status 400, got 500".to_string()),
+            }],
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        assert_eq!(res.files[0].success_count, 0);
+        assert_eq!(res.files[0].failed_count, 1);
+    }
+
+    #[test]
+    fn test_non_2xx_with_multiple_passing_assertions_counts_as_success() {
+        let file_content = "GET https://api.example.com/bad-request\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 400,
+            success: true,
+            error_message: None,
+            duration_ms: 5,
+            response_headers: None,
+            response_body: Some(r#"{"error":"validation failed"}"#.to_string()),
+            assertion_results: vec![
+                crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Status,
+                        expected_value: "400".to_string(),
+                    },
+                    passed: true,
+                    actual_value: Some("400".to_string()),
+                    error_message: None,
+                },
+                crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Body,
+                        expected_value: "validation failed".to_string(),
+                    },
+                    passed: true,
+                    actual_value: Some(r#"{"error":"validation failed"}"#.to_string()),
+                    error_message: None,
+                },
+            ],
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(res.success);
+        assert_eq!(res.files[0].success_count, 1);
+        assert_eq!(res.files[0].failed_count, 0);
+    }
+
+    #[test]
+    fn test_non_2xx_with_mixed_assertions_counts_as_failure() {
+        let file_content = "GET https://api.example.com/bad-request\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        // Status assertion passes but body assertion fails
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 400,
+            success: false, // not all assertions passed
+            error_message: None,
+            duration_ms: 5,
+            response_headers: None,
+            response_body: Some(r#"{"error":"unexpected error"}"#.to_string()),
+            assertion_results: vec![
+                crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Status,
+                        expected_value: "400".to_string(),
+                    },
+                    passed: true,
+                    actual_value: Some("400".to_string()),
+                    error_message: None,
+                },
+                crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Body,
+                        expected_value: "validation failed".to_string(),
+                    },
+                    passed: false,
+                    actual_value: Some(r#"{"error":"unexpected error"}"#.to_string()),
+                    error_message: Some("Expected body to contain 'validation failed'".to_string()),
+                },
+            ],
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        assert_eq!(res.files[0].success_count, 0);
+        assert_eq!(res.files[0].failed_count, 1);
+    }
+
+    #[test]
+    fn test_2xx_with_failing_assertions_counts_as_failure() {
+        let file_content = "GET https://api.example.com/test\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        // 200 OK but assertion expects different status
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 200,
+            success: false, // assertion failed
+            error_message: None,
+            duration_ms: 5,
+            response_headers: None,
+            response_body: Some("OK".to_string()),
+            assertion_results: vec![crate::types::AssertionResult {
+                assertion: crate::types::Assertion {
+                    assertion_type: crate::types::AssertionType::Status,
+                    expected_value: "201".to_string(),
+                },
+                passed: false,
+                actual_value: Some("200".to_string()),
+                error_message: Some("Expected status 201, got 200".to_string()),
+            }],
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        assert_eq!(res.files[0].success_count, 0);
+        assert_eq!(res.files[0].failed_count, 1);
+    }
+
+    #[test]
+    fn test_multiple_requests_mixed_assertion_success() {
+        let file_content = r#"
+GET https://api.example.com/ok
+###
+GET https://api.example.com/bad-request
+###
+GET https://api.example.com/not-found
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![
+            // First request: 200 with passing assertion
+            HttpResult {
+                request_name: None,
+                status_code: 200,
+                success: true,
+                error_message: None,
+                duration_ms: 5,
+                response_headers: None,
+                response_body: Some("OK".to_string()),
+                assertion_results: vec![crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Status,
+                        expected_value: "200".to_string(),
+                    },
+                    passed: true,
+                    actual_value: Some("200".to_string()),
+                    error_message: None,
+                }],
+            },
+            // Second request: 400 with passing assertion (expected bad request)
+            HttpResult {
+                request_name: None,
+                status_code: 400,
+                success: true, // all assertions passed
+                error_message: None,
+                duration_ms: 5,
+                response_headers: None,
+                response_body: Some(r#"{"error":"bad request"}"#.to_string()),
+                assertion_results: vec![crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Status,
+                        expected_value: "400".to_string(),
+                    },
+                    passed: true,
+                    actual_value: Some("400".to_string()),
+                    error_message: None,
+                }],
+            },
+            // Third request: 404 with failing assertion (expected 200)
+            HttpResult {
+                request_name: None,
+                status_code: 404,
+                success: false, // assertion failed
+                error_message: None,
+                duration_ms: 5,
+                response_headers: None,
+                response_body: None,
+                assertion_results: vec![crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Status,
+                        expected_value: "200".to_string(),
+                    },
+                    passed: false,
+                    actual_value: Some("404".to_string()),
+                    error_message: Some("Expected status 200, got 404".to_string()),
+                }],
+            },
+        ]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success); // overall failure because one request failed
+        assert_eq!(res.files[0].success_count, 2); // 200 and 400 both passed
+        assert_eq!(res.files[0].failed_count, 1);   // 404 with wrong assertion failed
+    }
 }
