@@ -593,7 +593,7 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
 
     // Help text
     lines.push(Line::from(vec![
-        Span::styled("Tab", Style::default().fg(Color::Yellow)),
+        Span::styled("←/→", Style::default().fg(Color::Yellow)),
         Span::raw(" Switch | "),
         Span::styled("n", Style::default().fg(Color::Yellow)),
         Span::raw(" New Env | "),
