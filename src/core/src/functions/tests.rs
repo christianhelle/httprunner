@@ -3360,3 +3360,11 @@ fn test_lorem_ipsum_case_insensitive() {
     let result = lorem_ipsum.replace(input).unwrap();
     assert!(result.contains("lorem ipsum dolor sit amet"));
 }
+
+#[test]
+fn test_lorem_ipsum_empty() {
+    let lorem_ipsum = LoremIpsumSubstitutor {};
+    let input = "lorem_ipsum()";
+    let result = lorem_ipsum.replace(input).unwrap();
+    assert_eq!(result.split_whitespace().count(), 100);
+}

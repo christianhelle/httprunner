@@ -169,23 +169,21 @@ impl FunctionSubstitutor for LoremIpsumSubstitutor {
     fn replace(&self, input: &str) -> Result<String, regex::Error> {
         use regex::RegexBuilder;
 
-        let pattern = r"\blorem_ipsum\(\s*(\d+)\s*\)";
+        let pattern = r"\blorem_ipsum\(\s*(\d*)\s*\)";
         let regex = RegexBuilder::new(pattern).case_insensitive(true).build()?;
         Ok(regex
             .replace_all(input, |caps: &regex::Captures| {
-                let val = &caps[1]
-                    .parse::<usize>()
-                    .expect("Could not parse number of words");
-                if val < &LOREM_IPSUM_WORDS.len() {
+                let val = caps[1].parse::<usize>().unwrap_or(100);
+                if val < LOREM_IPSUM_WORDS.len() {
                     LOREM_IPSUM_WORDS
                         .iter()
-                        .take(*val)
+                        .take(val)
                         .map(|w| w.to_string())
                         .collect::<Vec<String>>()
                         .join(" ")
                 } else {
                     let mut words = Vec::new();
-                    for i in 0..*val {
+                    for i in 0..val {
                         words.push(LOREM_IPSUM_WORDS[i % LOREM_IPSUM_WORDS.len()].to_string());
                     }
                     words.join(" ")
