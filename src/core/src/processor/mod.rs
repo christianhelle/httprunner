@@ -10,7 +10,13 @@ pub use executor::{
 
 pub use formatter::format_json_if_valid;
 
-pub use incremental::{RequestProcessingResult, process_http_file_incremental};
+pub use incremental::{
+    RequestProcessingResult, process_http_file_incremental,
+    process_http_file_incremental_with_executor,
+};
+
+#[cfg(test)]
+mod mock_executor;
 
 #[cfg(test)]
 mod tests;

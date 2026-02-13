@@ -1,7 +1,22 @@
-use super::incremental::{RequestProcessingResult, process_http_file_incremental};
+use super::incremental::{RequestProcessingResult, process_http_file_incremental_with_executor};
+use super::mock_executor::MockHttpExecutor;
+use crate::types::HttpResult;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 use tempfile::NamedTempFile;
+
+fn create_response(status: u16) -> HttpResult {
+    HttpResult {
+        request_name: None,
+        status_code: status,
+        success: status >= 200 && status < 400,
+        error_message: None,
+        duration_ms: 1,
+        response_headers: None,
+        response_body: Some(r#"{"status":"ok"}"#.to_string()),
+        assertion_results: Vec::new(),
+    }
+}
 
 fn create_temp_http_file(content: &str) -> NamedTempFile {
     let mut file = NamedTempFile::new().unwrap();
@@ -12,17 +27,26 @@ fn create_temp_http_file(content: &str) -> NamedTempFile {
 
 #[test]
 fn test_basic_request_execution() {
-    let file_content = "GET https://httpbin.org/status/200\n";
+    let file_content = "GET https://api.example.com/test\n";
     let temp_file = create_temp_http_file(file_content);
     let file_path = temp_file.path().to_str().unwrap();
 
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ = process_http_file_incremental(file_path, None, false, 0, |idx, total, result| {
-        results_clone.lock().unwrap().push((idx, total, result));
-        true // Continue processing
-    });
+    let mock = MockHttpExecutor::new(vec![create_response(200)]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        |idx, total, result| {
+            results_clone.lock().unwrap().push((idx, total, result));
+            true
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 1);
@@ -33,11 +57,11 @@ fn test_basic_request_execution() {
 #[test]
 fn test_early_termination() {
     let file_content = r#"
-GET https://httpbin.org/status/200
+GET https://api.example.com/a
 
-GET https://httpbin.org/status/201
+GET https://api.example.com/b
 
-GET https://httpbin.org/status/202
+GET https://api.example.com/c
 "#;
     let temp_file = create_temp_http_file(file_content);
     let file_path = temp_file.path().to_str().unwrap();
@@ -45,12 +69,20 @@ GET https://httpbin.org/status/202
     let execution_count = Arc::new(Mutex::new(0));
     let execution_count_clone = Arc::clone(&execution_count);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |idx, _total, _result| {
+    let mock = MockHttpExecutor::new(vec![]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |idx, _total, _result| {
             *execution_count_clone.lock().unwrap() += 1;
             // Stop after processing index 1 (second request)
             idx < 1
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let count = *execution_count.lock().unwrap();
     assert_eq!(
@@ -61,17 +93,15 @@ GET https://httpbin.org/status/202
 
 #[test]
 fn test_skipped_request_with_failed_dependency() {
-    // Note: Dependencies are only skipped if a previous named request failed assertions
-    // A 404 status by itself doesn't fail a dependency - you need a failed assertion
     let file_content = r#"
 ### First request with failed assertion
 # @name first
-GET https://httpbin.org/status/200
+GET https://api.example.com/first
 # @assert status == 404
 
 ### Second request depends on first  
 # @depends-on first
-GET https://httpbin.org/status/200
+GET https://api.example.com/second
 "#;
     let temp_file = create_temp_http_file(file_content);
     let file_path = temp_file.path().to_str().unwrap();
@@ -79,17 +109,23 @@ GET https://httpbin.org/status/200
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+    // First request returns 200 but asserts status == 404, so assertion fails
+    let mock = MockHttpExecutor::new(vec![create_response(200), create_response(200)]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
             results_clone.lock().unwrap().push(result);
             true
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 2, "Should process both requests");
-
-    // Both should execute since assertions are evaluated
-    // (dependency checking may vary based on assertion results)
     assert!(!results.is_empty());
 }
 
@@ -98,15 +134,15 @@ fn test_condition_evaluation() {
     let file_content = r#"
 ### First request
 # @name first
-GET https://httpbin.org/status/200
+GET https://api.example.com/first
 
 ### Second request with condition that should fail
 # @condition first.status == 404
-GET https://httpbin.org/status/200
+GET https://api.example.com/second
 
 ### Third request with condition that should pass
 # @condition first.status == 200
-GET https://httpbin.org/status/200
+GET https://api.example.com/third
 "#;
     let temp_file = create_temp_http_file(file_content);
     let file_path = temp_file.path().to_str().unwrap();
@@ -114,11 +150,23 @@ GET https://httpbin.org/status/200
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+    let mock = MockHttpExecutor::new(vec![
+        create_response(200),
+        create_response(200),
+        create_response(200),
+    ]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
             results_clone.lock().unwrap().push(result);
             true
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert!(results.len() >= 2, "Should process at least 2 requests");
@@ -155,15 +203,13 @@ GET https://httpbin.org/status/200
 
 #[test]
 fn test_variable_substitution() {
-    // This test verifies that the processor handles requests with variable syntax
-    // Actual substitution logic is tested in substitution module tests
     let file_content = r#"
 ### First request
 # @name first
-GET https://httpbin.org/json
+GET https://api.example.com/json
 
 ### Second request with variable reference
-POST https://httpbin.org/anything
+POST https://api.example.com/anything
 Content-Type: application/json
 
 {
@@ -176,16 +222,23 @@ Content-Type: application/json
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+    let mock = MockHttpExecutor::new(vec![]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
             results_clone.lock().unwrap().push(result);
             true
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 2, "Should process both requests");
 
-    // Both requests should execute (substitution happens in the processor)
     for result in results.iter() {
         match result {
             RequestProcessingResult::Executed { .. } => {}
@@ -197,10 +250,8 @@ Content-Type: application/json
 
 #[test]
 fn test_function_substitution() {
-    // This test verifies that the processor handles requests with function syntax
-    // Actual function substitution is tested in substitution module tests
     let file_content = r#"
-POST https://httpbin.org/anything
+POST https://api.example.com/anything
 Content-Type: application/json
 
 {
@@ -214,16 +265,23 @@ Content-Type: application/json
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+    let mock = MockHttpExecutor::new(vec![]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
             results_clone.lock().unwrap().push(result);
             true
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 1, "Should process one request");
 
-    // Request should execute (function substitution happens in the processor)
     match &results[0] {
         RequestProcessingResult::Executed { .. } => {}
         RequestProcessingResult::Failed { .. } => {}
@@ -236,14 +294,14 @@ fn test_context_naming_consistency() {
     let file_content = r#"
 ### Named request
 # @name myRequest
-GET https://httpbin.org/status/200
+GET https://api.example.com/first
 
 ### Second request can reference the named request
 # @condition myRequest.status == 200
-GET https://httpbin.org/status/200
+GET https://api.example.com/second
 
 ### Unnamed request (should get request_3 as name)
-GET https://httpbin.org/status/200
+GET https://api.example.com/third
 "#;
     let temp_file = create_temp_http_file(file_content);
     let file_path = temp_file.path().to_str().unwrap();
@@ -251,16 +309,23 @@ GET https://httpbin.org/status/200
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+    let mock = MockHttpExecutor::new(vec![]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
             results_clone.lock().unwrap().push(result);
             true
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 3);
 
-    // All requests should execute successfully
     for result in results.iter() {
         match result {
             RequestProcessingResult::Executed { .. } => {}
@@ -278,10 +343,19 @@ fn test_empty_file() {
     let callback_called = Arc::new(Mutex::new(false));
     let callback_called_clone = Arc::clone(&callback_called);
 
-    let result = process_http_file_incremental(file_path, None, false, 0, move |_, _, _| {
-        *callback_called_clone.lock().unwrap() = true;
-        true
-    });
+    let mock = MockHttpExecutor::new(vec![]);
+
+    let result = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_, _, _| {
+            *callback_called_clone.lock().unwrap() = true;
+            true
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     assert!(result.is_ok());
     assert!(
@@ -299,23 +373,28 @@ fn test_parse_error_handling() {
     let callback_called = Arc::new(Mutex::new(false));
     let callback_called_clone = Arc::clone(&callback_called);
 
-    let result = process_http_file_incremental(file_path, None, false, 0, move |_, _, _| {
-        *callback_called_clone.lock().unwrap() = true;
-        true
-    });
+    let mock = MockHttpExecutor::new(vec![]);
+
+    let result = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_, _, _| {
+            *callback_called_clone.lock().unwrap() = true;
+            true
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     // Parser may be lenient and ignore invalid lines, so we just check it doesn't crash
-    // The important thing is that invalid content doesn't cause panics
     let _ = result;
-    // If callback wasn't called, the file was parsed as empty (lenient parsing)
 }
 
 #[test]
 fn test_assertion_results_propagation() {
-    // This test verifies that the processor propagates assertion results
-    // Actual assertion evaluation is tested in other modules
     let file_content = r#"
-GET https://httpbin.org/json
+GET https://api.example.com/json
 # @assert status == 200
 "#;
     let temp_file = create_temp_http_file(file_content);
@@ -324,16 +403,23 @@ GET https://httpbin.org/json
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+    let mock = MockHttpExecutor::new(vec![create_response(200)]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
             results_clone.lock().unwrap().push(result);
             true
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 1, "Should process one request");
 
-    // Request should execute
     match &results[0] {
         RequestProcessingResult::Executed { .. } => {}
         RequestProcessingResult::Failed { .. } => {}
@@ -345,13 +431,13 @@ GET https://httpbin.org/json
 fn test_multiple_requests_with_mixed_results() {
     let file_content = r#"
 ### Success request
-GET https://httpbin.org/status/200
+GET https://api.example.com/ok
 
 ### Another success
-GET https://httpbin.org/status/201
+GET https://api.example.com/created
 
 ### Failure request
-GET https://httpbin.org/status/404
+GET https://api.example.com/notfound
 "#;
     let temp_file = create_temp_http_file(file_content);
     let file_path = temp_file.path().to_str().unwrap();
@@ -359,11 +445,23 @@ GET https://httpbin.org/status/404
     let results = Arc::new(Mutex::new(Vec::new()));
     let results_clone = Arc::clone(&results);
 
-    let _ =
-        process_http_file_incremental(file_path, None, false, 0, move |_idx, _total, result| {
+    let mock = MockHttpExecutor::new(vec![
+        create_response(200),
+        create_response(201),
+        create_response(404),
+    ]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
             results_clone.lock().unwrap().push(result);
             true
-        });
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
 
     let results = results.lock().unwrap();
     assert_eq!(results.len(), 3);
