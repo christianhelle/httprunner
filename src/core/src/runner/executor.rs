@@ -6,7 +6,7 @@ use super::response_processor::{
 #[cfg(not(target_arch = "wasm32"))]
 use crate::assertions;
 #[cfg(not(target_arch = "wasm32"))]
-use crate::telemetry::{ConnectionErrorCategory, track_connection_error};
+use crate::telemetry::{track_connection_error, ConnectionErrorCategory};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::types::{HttpRequest, HttpResult};
 #[cfg(not(target_arch = "wasm32"))]

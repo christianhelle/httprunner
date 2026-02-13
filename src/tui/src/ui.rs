@@ -1,10 +1,10 @@
 use crate::app::{App, FocusedPane};
 use ratatui::{
-    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
+    Frame,
 };
 
 pub fn render(f: &mut Frame, app: &App) {

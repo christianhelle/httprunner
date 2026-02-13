@@ -1,5 +1,5 @@
 use crate::types::{RequestVariable, RequestVariableSource, RequestVariableTarget};
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 pub fn parse_request_variable(reference: &str) -> Result<RequestVariable> {
     let mut cleaned = reference;
