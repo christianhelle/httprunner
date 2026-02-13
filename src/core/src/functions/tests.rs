@@ -1,8 +1,4 @@
 use crate::functions::address::AddressSubstitutor;
-use crate::functions::base64_encode::Base64EncodeSubstitutor;
-use crate::functions::date::GetDateSubstitutor;
-use crate::functions::datetime::GetDateTimeSubstitutor;
-use crate::functions::email::EmailSubstitutor;
 use crate::functions::first_name::FirstNameSubstitutor;
 use crate::functions::guid::GuidSubstitutor;
 use crate::functions::last_name::LastNameSubstitutor;
@@ -11,9 +7,7 @@ use crate::functions::name::NameSubstitutor;
 use crate::functions::number::NumberSubstitutor;
 use crate::functions::string_gen::StringSubstitutor;
 use crate::functions::substitution::FunctionSubstitutor;
-use crate::functions::time::GetTimeSubstitutor;
 use crate::functions::upper::UpperSubstitutor;
-use crate::functions::utc_datetime::GetUtcDateTimeSubstitutor;
 use regex::Regex;
 
 #[test]
