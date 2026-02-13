@@ -315,7 +315,8 @@ mod tests {
     #[test]
     fn test_base64_with_all_base64_chars() {
         let sub = Base64EncodeSubstitutor {};
-        let input = "base64_encode('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')";
+        let input =
+            "base64_encode('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/')";
         let result = sub.replace(input).unwrap();
 
         assert!(!result.contains("base64_encode"));
