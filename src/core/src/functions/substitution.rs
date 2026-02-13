@@ -1,14 +1,20 @@
-use crate::functions::date_functions::{
-    GetDateSubstitutor, GetDateTimeSubstitutor, GetTimeSubstitutor, GetUtcDateTimeSubstitutor,
-};
-use crate::functions::generator_functions::{
-    AddressSubstitutor, EmailSubstitutor, FirstNameSubstitutor, GuidSubstitutor,
-    JobTitleSubstitutor, LastNameSubstitutor, LoremIpsumSubstitutor, NameSubstitutor,
-    NumberSubstitutor, StringSubstitutor,
-};
-use crate::functions::transform_functions::{
-    Base64EncodeSubstitutor, LowerSubstitutor, UpperSubstitutor,
-};
+use crate::functions::address::AddressSubstitutor;
+use crate::functions::base64_encode::Base64EncodeSubstitutor;
+use crate::functions::date::GetDateSubstitutor;
+use crate::functions::datetime::GetDateTimeSubstitutor;
+use crate::functions::email::EmailSubstitutor;
+use crate::functions::first_name::FirstNameSubstitutor;
+use crate::functions::guid::GuidSubstitutor;
+use crate::functions::job_title::JobTitleSubstitutor;
+use crate::functions::last_name::LastNameSubstitutor;
+use crate::functions::lorem_ipsum::LoremIpsumSubstitutor;
+use crate::functions::lower::LowerSubstitutor;
+use crate::functions::name::NameSubstitutor;
+use crate::functions::number::NumberSubstitutor;
+use crate::functions::string_gen::StringSubstitutor;
+use crate::functions::time::GetTimeSubstitutor;
+use crate::functions::upper::UpperSubstitutor;
+use crate::functions::utc_datetime::GetUtcDateTimeSubstitutor;
 use anyhow::Result;
 use regex::RegexBuilder;
 

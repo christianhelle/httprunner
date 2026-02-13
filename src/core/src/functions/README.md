@@ -6,10 +6,14 @@ This module handles the substitution of dynamic function calls in HTTP request f
 
 - `mod.rs` - Module entry point and public API
 - `substitution.rs` - Function substitution trait and orchestration
-- `generator_functions.rs` - Built-in generator function implementations
-- `date_functions.rs` - Built-in date function implementations
-- `transform_functions.rs` - Built-in transformation function implementations
-- `tests.rs` - Test suite
+- Each substitutor lives in its own file with its data and tests:
+  - `guid.rs`, `string_gen.rs`, `number.rs` - Basic generators
+  - `first_name.rs`, `last_name.rs`, `name.rs` - Name generators (with name data)
+  - `address.rs`, `job_title.rs`, `email.rs` - Other data generators (with data)
+  - `lorem_ipsum.rs` - Lorem ipsum generator (with word data)
+  - `date.rs`, `time.rs`, `datetime.rs`, `utc_datetime.rs` - Date/time functions
+  - `base64_encode.rs`, `upper.rs`, `lower.rs` - Transform functions
+- `tests.rs` - Integration tests for cross-cutting concerns
 
 ## Usage
 
