@@ -1,0 +1,423 @@
+use super::substitution::FunctionSubstitutor;
+
+pub(crate) static ADDRESSES: &[&str] = &[
+    // Argentina
+    "123 Calle Florida, Buenos Aires, C1005AAC, Argentina",
+    "456 Avenida Corrientes, Buenos Aires, C1043AAB, Argentina",
+    "789 Paseo de la Reforma, Rosario, S2000AKA, Argentina",
+    "101 Calle San Martín, Mendoza, M5500AEA, Argentina",
+    "202 Avenida Libertador, Córdoba, X5000JJC, Argentina",
+    "303 Calle Principal, La Plata, B1900AAA, Argentina",
+    "404 Paseo Colón, Mar del Plata, B7600ACA, Argentina",
+    "505 Avenida Mitre, Salta, A4400ABK, Argentina",
+    "606 Calle Belgrano, Tucumán, T4000APA, Argentina",
+    "707 Paseo Independencia, Santiago del Estero, G4200AHA, Argentina",
+    // Austria
+    "123 Kärntner Straße, Vienna, 1010, Austria",
+    "456 Mariahilfer Straße, Vienna, 1070, Austria",
+    "789 Graben, Vienna, 1010, Austria",
+    "101 Stephansplatz, Vienna, 1010, Austria",
+    "202 Neuer Markt, Vienna, 1010, Austria",
+    "303 Opernring, Vienna, 1010, Austria",
+    "404 Ringstraße, Vienna, 1010, Austria",
+    "505 Rotenturmstraße, Vienna, 1010, Austria",
+    "606 Tuchlauben, Vienna, 1010, Austria",
+    "707 Habsburgergasse, Vienna, 1010, Austria",
+    // Australia
+    "123 Main St, Sydney, NSW 2000, Australia",
+    "456 Oak Ave, Melbourne, VIC 3000, Australia",
+    "789 Pine Rd, Brisbane, QLD 4000, Australia",
+    "101 Maple Dr, Perth, WA 6000, Australia",
+    "202 Birch Ln, Adelaide, SA 5000, Australia",
+    "303 Cedar St, Hobart, TAS 7000, Australia",
+    "404 Elm St, Darwin, NT 0800, Australia",
+    "505 Walnut Ave, Canberra, ACT 2600, Australia",
+    "606 Chestnut Rd, Gold Coast, QLD 4217, Australia",
+    "707 Spruce Dr, Newcastle, NSW 2300, Australia",
+    // Belgium
+    "123 Rue Neuve, Brussels, 1000, Belgium",
+    "456 Rue de la Paix, Brussels, 1000, Belgium",
+    "789 Place Saint-Géry, Brussels, 1000, Belgium",
+    "101 Boulevard Anspach, Brussels, 1000, Belgium",
+    "202 Rue du Marché au Charbon, Brussels, 1000, Belgium",
+    "303 Rue de Sablons, Brussels, 1200, Belgium",
+    "404 Chaussée de Wavre, Brussels, 1050, Belgium",
+    "505 Avenue Louise, Brussels, 1050, Belgium",
+    "606 Rue Royale, Brussels, 1000, Belgium",
+    "707 Boulevard de Waterloo, Brussels, 1000, Belgium",
+    // Brazil
+    "123 Avenida Paulista, São Paulo, SP 01311-100, Brazil",
+    "456 Rua Oscar Freire, São Paulo, SP 01426-100, Brazil",
+    "789 Avenida Atlântica, Rio de Janeiro, RJ 20040020, Brazil",
+    "101 Rua do Ouvidor, Rio de Janeiro, RJ 20040030, Brazil",
+    "202 Avenida Getúlio Vargas, Belo Horizonte, MG 30140071, Brazil",
+    "303 Rua Augusta, Salvador, BA 40000000, Brazil",
+    "404 Avenida Brasil, Brasília, DF 70040902, Brazil",
+    "505 Rua das Flores, Recife, PE 50010000, Brazil",
+    "606 Avenida Independência, Porto Alegre, RS 90040130, Brazil",
+    "707 Rua XV de Novembro, Curitiba, PR 80015000, Brazil",
+    // Canada
+    "123 King St, Toronto, ON M5H 2A1, Canada",
+    "456 Queen Ave, Vancouver, BC V6B 2A8, Canada",
+    "789 Yonge Rd, Montreal, QC H2X 1Y9, Canada",
+    "101 Jasper Dr, Edmonton, AB T5J 2H1, Canada",
+    "202 Stephen Ln, Calgary, AB T2P 2K7, Canada",
+    "303 Portage St, Winnipeg, MB R3B 3A7, Canada",
+    "404 Bloor St, Ottawa, ON K1P 5B4, Canada",
+    "505 Granville Ave, Quebec City, QC G1R 2A4, Canada",
+    "606 Main Rd, Hamilton, ON L8P 1A1, Canada",
+    "707 Dundas Dr, London, ON N6A 1W9, Canada",
+    // China
+    "123 Nanjing Road, Shanghai, 200000, China",
+    "456 Huimin Street, Beijing, 100000, China",
+    "789 Chunxi Road, Chengdu, 610000, China",
+    "101 Dongmen Road, Guangzhou, 510000, China",
+    "202 Jinghan Avenue, Wuhan, 430000, China",
+    "303 Xianyang Road, Xi'an, 710000, China",
+    "404 South Huanhu Road, Hangzhou, 310000, China",
+    "505 Taohe Road, Shenyang, 110000, China",
+    "606 Quanzhou Road, Chongqing, 400000, China",
+    "707 Binjiang Avenue, Suzhou, 215000, China",
+    // Czech Republic
+    "123 Celetná, Prague, 110 00, Czech Republic",
+    "456 Václavské Náměstí, Prague, 110 00, Czech Republic",
+    "789 Nerudova, Prague, 118 00, Czech Republic",
+    "101 Mostecká, Prague, 118 00, Czech Republic",
+    "202 Pařížská, Prague, 110 00, Czech Republic",
+    "303 Dlouhá, Prague, 110 00, Czech Republic",
+    "404 Náprstkova, Prague, 110 00, Czech Republic",
+    "505 Na Příkopě, Prague, 110 00, Czech Republic",
+    "606 Revoluční, Prague, 110 00, Czech Republic",
+    "707 Krakovská, Prague, 110 00, Czech Republic",
+    // Denmark
+    "123 Strøget, Copenhagen, 1100, Denmark",
+    "456 Nygade, Copenhagen, 1100, Denmark",
+    "789 Gråbrødretorv, Copenhagen, 1154, Denmark",
+    "101 Gammel Strand, Copenhagen, 1202, Denmark",
+    "202 Silkegade, Copenhagen, 1113, Denmark",
+    "303 Larsbjørnstræde, Copenhagen, 1454, Denmark",
+    "404 Vimmelskaftet, Copenhagen, 1100, Denmark",
+    "505 Østergade, Copenhagen, 1100, Denmark",
+    "606 Kompagnistræde, Copenhagen, 1208, Denmark",
+    "707 Lavendelstræde, Copenhagen, 1320, Denmark",
+    // France
+    "123 Rue de la Paix, Paris, 75000, France",
+    "456 Avenue des Champs, Paris, 75008, France",
+    "789 Boulevard Saint-Germain, Paris, 75005, France",
+    "101 Rue de Rivoli, Paris, 75001, France",
+    "202 Rue de la République, Lyon, 69000, France",
+    "303 Rue Gambetta, Marseille, 13000, France",
+    "404 Avenue de la Liberté, Toulouse, 31000, France",
+    "505 Rue de Strasbourg, Bordeaux, 33000, France",
+    "606 Rue de la Monnaie, Lille, 59000, France",
+    "707 Rue Nationale, Nice, 06000, France",
+    // Germany
+    "123 Unter den Linden, Berlin, 10117, Germany",
+    "456 Königstraße, Stuttgart, 70173, Germany",
+    "789 Marienplatz, Munich, 80331, Germany",
+    "101 Zeil, Frankfurt, 60313, Germany",
+    "202 Kurfürstendamm, Berlin, 10719, Germany",
+    "303 Neuer Weg, Cologne, 50667, Germany",
+    "404 Bahnhofstraße, Hamburg, 20095, Germany",
+    "505 Fußgängerzone, Düsseldorf, 40213, Germany",
+    "606 Königstraße, Nuremberg, 90402, Germany",
+    "707 Altstadt, Leipzig, 04109, Germany",
+    // Greece
+    "123 Ermou Street, Athens, 10563, Greece",
+    "456 Syntagma Square, Athens, 10564, Greece",
+    "789 Stadiou Street, Athens, 10564, Greece",
+    "101 Mitropoleos Street, Athens, 10563, Greece",
+    "202 Voukourestiou Street, Athens, 10564, Greece",
+    "303 Tsakalof Street, Athens, 10673, Greece",
+    "404 Panepistimiou Street, Athens, 10564, Greece",
+    "505 Adrianou Street, Athens, 10555, Greece",
+    "606 Nikis Street, Thessaloniki, 54624, Greece",
+    "707 Tsimiski Street, Thessaloniki, 54624, Greece",
+    // Hungary
+    "123 Váci utca, Budapest, 1052, Hungary",
+    "456 Andrássy út, Budapest, 1061, Hungary",
+    "789 Vörösmarty Square, Budapest, 1051, Hungary",
+    "101 Zoltán utca, Budapest, 1011, Hungary",
+    "202 Tanács körút, Budapest, 1066, Hungary",
+    "303 Ferenczy István utca, Budapest, 1011, Hungary",
+    "404 Halász Street, Budapest, 1014, Hungary",
+    "505 Petőfi Sándor utca, Budapest, 1052, Hungary",
+    "606 Duna körút, Budapest, 1013, Hungary",
+    "707 Múzeum körút, Budapest, 1088, Hungary",
+    // Ireland
+    "123 Grafton Street, Dublin, D02 AF84, Ireland",
+    "456 O'Connell Street, Dublin, D01 VX80, Ireland",
+    "789 Temple Bar, Dublin, D02 EY35, Ireland",
+    "101 Henry Street, Dublin, D01 V4F5, Ireland",
+    "202 Stephens Green, Dublin, D02 HR82, Ireland",
+    "303 Dawson Street, Dublin, D02 EG15, Ireland",
+    "404 Merrion Street, Dublin, D02 K7AX, Ireland",
+    "505 Westmoreland Street, Dublin, D02 FN73, Ireland",
+    "606 Liffey Street, Dublin, D01 H7V7, Ireland",
+    "707 South William Street, Dublin, D02 E836, Ireland",
+    // India
+    "123 MG Road, Bangalore, 560001, India",
+    "456 Brigade Road, Bangalore, 560025, India",
+    "789 Connaught Place, New Delhi, 110001, India",
+    "101 Linking Road, Mumbai, 400052, India",
+    "202 M G Road, Pune, 411001, India",
+    "303 Commercial Street, Bangalore, 560001, India",
+    "404 Bund Garden Road, Pune, 411001, India",
+    "505 Park Street, Kolkata, 700016, India",
+    "606 Thandi Khad, Jaipur, 302001, India",
+    "707 Residency Road, Bangalore, 560025, India",
+    // Italy
+    "123 Via del Corso, Rome, 00186, Italy",
+    "456 Via Veneto, Rome, 00187, Italy",
+    "789 Piazza San Marco, Venice, 30124, Italy",
+    "101 Via Tornabuoni, Florence, 50123, Italy",
+    "202 Via Montenapoleone, Milan, 20121, Italy",
+    "303 Via San Gregorio Armeno, Naples, 80138, Italy",
+    "404 Corso Vittorio Emanuele, Palermo, 90134, Italy",
+    "505 Via Garibaldi, Genoa, 16124, Italy",
+    "606 Piazza Erbe, Verona, 37121, Italy",
+    "707 Via Oberdan, Turin, 10124, Italy",
+    // Japan
+    "123 Chiyoda, Tokyo, 100-0001, Japan",
+    "456 Shibuya, Tokyo, 150-0001, Japan",
+    "789 Shinjuku, Tokyo, 160-0022, Japan",
+    "101 Chuo, Osaka, 540-0001, Japan",
+    "202 Naka, Nagoya, 460-0003, Japan",
+    "303 Shimogyo, Kyoto, 600-8001, Japan",
+    "404 Hakodate, Hokkaido, 040-0063, Japan",
+    "505 Kobe, Hyogo, 650-0001, Japan",
+    "606 Fukuoka, Fukuoka, 810-0001, Japan",
+    "707 Sapporo, Hokkaido, 060-0001, Japan",
+    // Mexico
+    "123 Avenida Paseo de la Reforma, Mexico City, 06500, Mexico",
+    "456 Calle Madero, Mexico City, 06500, Mexico",
+    "789 Avenida Juárez, Mexico City, 06050, Mexico",
+    "101 Paseo Montejo, Merida, 97000, Mexico",
+    "202 Avenida Revolución, Monterrey, 64000, Mexico",
+    "303 Calle Comercial, Guadalajara, 44100, Mexico",
+    "404 Avenida México, Puebla, 72000, Mexico",
+    "505 Paseo Malécon, Puerto Vallarta, 48350, Mexico",
+    "606 Boulevard Kukulkan, Cancun, 77500, Mexico",
+    "707 Avenida Primero de Mayo, Veracruz, 91700, Mexico",
+    // Netherlands
+    "123 Kalverstraat, Amsterdam, 1012NX, Netherlands",
+    "456 Leidsestraat, Amsterdam, 1017PG, Netherlands",
+    "789 Stratum, Eindhoven, 5611EE, Netherlands",
+    "101 Hoog Catharijne, Utrecht, 3511LJ, Netherlands",
+    "202 Wagenstraat, The Hague, 2512AE, Netherlands",
+    "303 Meent, Rotterdam, 3011JE, Netherlands",
+    "404 Brouwersstraat, Amsterdam, 1054ZX, Netherlands",
+    "505 Venestraat, Groningen, 9711PD, Netherlands",
+    "606 Grotestraat, Arnhem, 6811ET, Netherlands",
+    "707 Steenstraat, Maastricht, 6211DS, Netherlands",
+    // Poland
+    "123 Ulica Nowy Świat, Warsaw, 00-021, Poland",
+    "456 Ulica Marszałkowska, Warsaw, 00-012, Poland",
+    "789 Krakowskie Przedmieście, Warsaw, 00-071, Poland",
+    "101 Ulica Chmielna, Warsaw, 00-021, Poland",
+    "202 Plac Defilad, Warsaw, 00-901, Poland",
+    "303 Aleje Jerozolimskie, Warsaw, 00-024, Poland",
+    "404 Ulica Świętokrzyska, Warsaw, 00-008, Poland",
+    "505 Ulica Piotrkowska, Łódź, 90-964, Poland",
+    "606 Rynek Główny, Kraków, 31-999, Poland",
+    "707 Ulica Floriańska, Kraków, 31-019, Poland",
+    // Portugal
+    "123 Rua Garrett, Lisbon, 1200-204, Portugal",
+    "456 Avenida da Liberdade, Lisbon, 1250-096, Portugal",
+    "789 Praça Marquês de Pombal, Lisbon, 1050-076, Portugal",
+    "101 Rua Augusta, Lisbon, 1100-053, Portugal",
+    "202 Rua de Santa Justa, Lisbon, 1100-385, Portugal",
+    "303 Chiado, Lisbon, 1200-093, Portugal",
+    "404 Praça do Comércio, Lisbon, 1100-148, Portugal",
+    "505 Avenida Dos Aliados, Porto, 4000-063, Portugal",
+    "606 Rua de Santa Catarina, Porto, 4000-442, Portugal",
+    "707 Ribeira, Porto, 4050-506, Portugal",
+    // Russia
+    "123 Arbat Street, Moscow, 119002, Russia",
+    "456 Nevsky Prospect, Saint Petersburg, 191186, Russia",
+    "789 Red Square, Moscow, 109012, Russia",
+    "101 Palace Square, Saint Petersburg, 190000, Russia",
+    "202 Petrovka Street, Moscow, 127051, Russia",
+    "303 Bolshaya Dmitrovka, Moscow, 103009, Russia",
+    "404 Myasnitskaya Street, Moscow, 101000, Russia",
+    "505 Karavannaya Street, Saint Petersburg, 191023, Russia",
+    "606 Sadovoe Ring, Moscow, 109012, Russia",
+    "707 Morskoy Prospect, Saint Petersburg, 197046, Russia",
+    // Spain
+    "123 Gran Vía, Madrid, 28013, Spain",
+    "456 Paseo de la Castellana, Madrid, 28046, Spain",
+    "789 Las Ramblas, Barcelona, 08001, Spain",
+    "101 Paseo de Gracia, Barcelona, 08007, Spain",
+    "202 Calle Alcalá, Madrid, 28009, Spain",
+    "303 Paseo Marítimo, Málaga, 29001, Spain",
+    "404 Calle Sierpes, Seville, 41001, Spain",
+    "505 Calle Mayor, Valencia, 46003, Spain",
+    "606 Avenida Diagonal, Barcelona, 08005, Spain",
+    "707 Paseo Independencia, Zaragoza, 50001, Spain",
+    // Sweden
+    "123 Drottninggatan, Stockholm, 111 51, Sweden",
+    "456 Stureplan, Stockholm, 114 35, Sweden",
+    "789 Gamla Stan, Stockholm, 111 28, Sweden",
+    "101 Sergels Torg, Stockholm, 103 86, Sweden",
+    "202 Kungsgatan, Stockholm, 111 43, Sweden",
+    "303 Birger Jarlsgatan, Stockholm, 114 34, Sweden",
+    "404 Norrlandsgatan, Stockholm, 111 43, Sweden",
+    "505 Nybrokajen, Stockholm, 114 39, Sweden",
+    "606 Storgatan, Gothenburg, 411 38, Sweden",
+    "707 Avenyn, Gothenburg, 411 36, Sweden",
+    // Switzerland
+    "123 Bahnhofstrasse, Zurich, 8001, Switzerland",
+    "456 Limmatquai, Zurich, 8001, Switzerland",
+    "789 Nidplatz, Zurich, 8001, Switzerland",
+    "101 Münsterhof, Zurich, 8001, Switzerland",
+    "202 Rennweg, Zurich, 8001, Switzerland",
+    "303 Augustinergasse, Zurich, 8001, Switzerland",
+    "404 Storchengasse, Zurich, 8001, Switzerland",
+    "505 Sihlstrasse, Zurich, 8001, Switzerland",
+    "606 Rue de la Croix d'Or, Geneva, 1204, Switzerland",
+    "707 Rue du Marché, Geneva, 1204, Switzerland",
+    // Russia
+    "123 Arbat Street, Moscow, 119002, Russia",
+    "456 Nevsky Prospect, Saint Petersburg, 191186, Russia",
+    "789 Red Square, Moscow, 109012, Russia",
+    "101 Palace Square, Saint Petersburg, 190000, Russia",
+    "202 Petrovka Street, Moscow, 127051, Russia",
+    "303 Bolshaya Dmitrovka, Moscow, 103009, Russia",
+    "404 Myasnitskaya Street, Moscow, 101000, Russia",
+    "505 Karavannaya Street, Saint Petersburg, 191023, Russia",
+    "606 Sadovoe Ring, Moscow, 109012, Russia",
+    "707 Morskoy Prospect, Saint Petersburg, 197046, Russia",
+    // South Africa
+    "123 Sandton Drive, Johannesburg, 2146, South Africa",
+    "456 Kliptown Street, Soweto, 1809, South Africa",
+    "789 Long Street, Cape Town, 8001, South Africa",
+    "101 Commissioner Street, Johannesburg, 2001, South Africa",
+    "202 Adderley Street, Cape Town, 8000, South Africa",
+    "303 Bree Street, Cape Town, 8001, South Africa",
+    "404 Eloff Street, Johannesburg, 2000, South Africa",
+    "505 Church Street, Pretoria, 0001, South Africa",
+    "606 Smith Street, Durban, 4001, South Africa",
+    "707 Main Street, Port Elizabeth, 6001, South Africa",
+    // South Korea
+    "123 Gangnam-daero, Seoul, 06000, South Korea",
+    "456 Myeong-dong Street, Seoul, 04557, South Korea",
+    "789 Insadong-gil, Seoul, 03149, South Korea",
+    "101 Hongik-ro, Seoul, 04040, South Korea",
+    "202 Taepyeong-ro, Seoul, 03161, South Korea",
+    "303 Jongno, Seoul, 03150, South Korea",
+    "404 Apgujeong-ro, Seoul, 06011, South Korea",
+    "505 Garosu-gil, Seoul, 03998, South Korea",
+    "606 Cheonggyecheon-ro, Seoul, 03155, South Korea",
+    "707 Banpo-daero, Seoul, 06591, South Korea",
+    // Thailand
+    "123 Sukhumvit Road, Bangkok, 10110, Thailand",
+    "456 Silom Road, Bangkok, 10500, Thailand",
+    "789 Rama I Road, Bangkok, 10330, Thailand",
+    "101 Samsen Road, Bangkok, 10300, Thailand",
+    "202 Lad Prao Road, Bangkok, 10900, Thailand",
+    "303 Ratchadamri Road, Bangkok, 10330, Thailand",
+    "404 Asok Road, Bangkok, 10110, Thailand",
+    "505 Petchburi Road, Bangkok, 10400, Thailand",
+    "606 Rajadamri Avenue, Bangkok, 10330, Thailand",
+    "707 Rama IV Road, Bangkok, 10500, Thailand",
+    // United Kingdom
+    "123 Oxford St, London, W1A 1AA, United Kingdom",
+    "456 Regent St, London, W1B 5AH, United Kingdom",
+    "789 Bond St, London, W1S 3AB, United Kingdom",
+    "101 Baker St, London, NW1 6XE, United Kingdom",
+    "202 Piccadilly, London, W1J 9HA, United Kingdom",
+    "303 High St, Manchester, M1 1AD, United Kingdom",
+    "404 Corn Exchange, Leeds, LS1 6HB, United Kingdom",
+    "505 Park Row, Birmingham, B15 1NT, United Kingdom",
+    "606 North St, Bristol, BS1 3JQ, United Kingdom",
+    "707 Princes St, Edinburgh, EH2 2QP, United Kingdom",
+    // United States
+    "123 Main St, Springfield, IL 62701, USA",
+    "456 Oak Ave, Metropolis, NY 10001, USA",
+    "789 Pine Rd, Gotham, NJ 07097, USA",
+    "101 Maple Dr, Smallville, KS 66002, USA",
+    "202 Birch Ln, Star City, CA 90001, USA",
+    "303 Cedar St, Central City, MO 64101, USA",
+    "404 Elm St, Coast City, FL 33001, USA",
+    "505 Walnut Ave, Blüdhaven, PA 19019, USA",
+    "606 Chestnut Rd, National City, TX 75001, USA",
+    "707 Spruce Dr, Fawcett City, OH 43085, USA",
+];
+
+pub struct AddressSubstitutor {}
+impl FunctionSubstitutor for AddressSubstitutor {
+    fn get_regex(&self) -> &str {
+        r"\baddress\(\)"
+    }
+
+    fn generate(&self) -> String {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let index = rng.gen_range(0..ADDRESSES.len());
+        ADDRESSES[index].to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_address_substitutor_generates_value() {
+        let sub = AddressSubstitutor {};
+        let address = sub.generate();
+        assert!(!address.is_empty(), "Generated address should not be empty");
+    }
+
+    #[test]
+    fn test_address_substitutor_regex() {
+        let sub = AddressSubstitutor {};
+        let regex = regex::Regex::new(sub.get_regex()).unwrap();
+
+        assert!(regex.is_match("address()"));
+        assert!(regex.is_match("Location: address()"));
+        assert!(!regex.is_match("noaddress()"));
+        assert!(!regex.is_match("myaddress()"));
+    }
+
+    #[test]
+    fn test_address_substitutor_generates_different_values() {
+        let sub = AddressSubstitutor {};
+        let addr1 = sub.generate();
+        let addr2 = sub.generate();
+
+        assert!(!addr1.is_empty());
+        assert!(!addr2.is_empty());
+    }
+
+    #[test]
+    fn test_address_word_boundary_strict() {
+        let sub = AddressSubstitutor {};
+        let regex = regex::Regex::new(sub.get_regex()).unwrap();
+
+        assert!(!regex.is_match("addressextra()"));
+        assert!(!regex.is_match("prefixaddress()"));
+    }
+
+    #[test]
+    fn test_address_substitutor_produces_non_empty() {
+        let sub = AddressSubstitutor {};
+
+        for _ in 0..50 {
+            let addr = sub.generate();
+            assert!(!addr.is_empty(), "Address should not be empty");
+            assert!(addr.len() > 5, "Address should have meaningful length");
+        }
+    }
+
+    #[test]
+    fn test_address_substitutor_contains_typical_components() {
+        let sub = AddressSubstitutor {};
+        let addr = sub.generate();
+
+        assert!(
+            addr.contains(|c: char| c.is_numeric()) || addr.contains(' '),
+            "Address should contain numbers or spaces"
+        );
+    }
+}
