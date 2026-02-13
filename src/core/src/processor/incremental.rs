@@ -37,10 +37,36 @@ pub fn process_http_file_incremental<F>(
     environment: Option<&str>,
     insecure: bool,
     delay_ms: u64,
-    mut callback: F,
+    callback: F,
 ) -> Result<()>
 where
     F: FnMut(usize, usize, RequestProcessingResult) -> bool,
+{
+    process_http_file_incremental_with_executor(
+        file_path,
+        environment,
+        insecure,
+        delay_ms,
+        callback,
+        &|request, _verbose, insecure| runner::execute_http_request(request, false, insecure),
+    )
+}
+
+/// Process HTTP requests from a file with incremental callbacks and a custom executor.
+///
+/// Like `process_http_file_incremental`, but accepts a custom executor function
+/// for HTTP request execution. This is useful for testing with mock executors.
+pub fn process_http_file_incremental_with_executor<F, E>(
+    file_path: &str,
+    environment: Option<&str>,
+    insecure: bool,
+    delay_ms: u64,
+    mut callback: F,
+    executor: &E,
+) -> Result<()>
+where
+    F: FnMut(usize, usize, RequestProcessingResult) -> bool,
+    E: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
 {
     // Parse the file
     let requests = parser::parse_http_file(file_path, environment)?;
@@ -165,7 +191,7 @@ where
         let post_delay = request.post_delay_ms;
 
         // Execute the request
-        match runner::execute_http_request(&request, false, insecure) {
+        match executor(&request, false, insecure) {
             Ok(result) => {
                 add_request_context(
                     &mut request_contexts,
