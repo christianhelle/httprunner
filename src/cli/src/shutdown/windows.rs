@@ -2,7 +2,7 @@ use httprunner_core::colors;
 // On Windows, we need to use both ctrlc and direct Windows Console API
 // to properly handle CTRL+C in both cmd.exe and PowerShell
 use windows_sys::Win32::Foundation::TRUE;
-use windows_sys::Win32::System::Console::{SetConsoleCtrlHandler, CTRL_BREAK_EVENT, CTRL_C_EVENT};
+use windows_sys::Win32::System::Console::{CTRL_BREAK_EVENT, CTRL_C_EVENT, SetConsoleCtrlHandler};
 
 #[cfg(windows)]
 pub fn enable_forceful_shutdown() {

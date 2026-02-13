@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 pub fn extract_json_property(json_body: &str, property: &str) -> Result<Option<String>> {
     // Handle nested properties like "json.token" and array indexing like "data[0].version"

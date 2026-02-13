@@ -1,4 +1,4 @@
-use super::incremental::{process_http_file_incremental_with_executor, RequestProcessingResult};
+use super::incremental::{RequestProcessingResult, process_http_file_incremental_with_executor};
 use super::mock_executor::MockHttpExecutor;
 use crate::types::HttpResult;
 use std::io::Write;
