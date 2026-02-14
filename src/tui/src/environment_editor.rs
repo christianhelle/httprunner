@@ -214,9 +214,10 @@ impl EnvironmentEditor {
     /// Compute the line index of the currently selected item within the rendered content.
     /// This must mirror the line layout in render_environment_editor in ui.rs.
     fn selected_item_line(&self) -> usize {
-        // Line 0: help text
-        // Line 1: blank
-        let mut line = 2;
+        // Line 0: help text line 1
+        // Line 1: help text line 2
+        // Line 2: blank
+        let mut line = 3;
 
         if self.env_names.is_empty() {
             return line;

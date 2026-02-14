@@ -597,12 +597,18 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
 
     // Help text
     lines.push(Line::from(vec![
+        Span::styled("↑/↓", Style::default().fg(Color::Yellow)),
+        Span::raw(" Nav | "),
+        Span::styled("PgUp/PgDn", Style::default().fg(Color::Yellow)),
+        Span::raw(" Scroll | "),
         Span::styled("←/→", Style::default().fg(Color::Yellow)),
         Span::raw(" Switch | "),
         Span::styled("n", Style::default().fg(Color::Yellow)),
         Span::raw(" New Env | "),
         Span::styled("a", Style::default().fg(Color::Yellow)),
-        Span::raw(" Add Var | "),
+        Span::raw(" Add Var"),
+    ]));
+    lines.push(Line::from(vec![
         Span::styled("e/Enter", Style::default().fg(Color::Yellow)),
         Span::raw(" Edit | "),
         Span::styled("r", Style::default().fg(Color::Yellow)),
