@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -47,6 +48,10 @@ pub struct EnvironmentEditor {
     pending_var_name: String,
     /// Status message
     pub status_message: Option<String>,
+    /// Vertical scroll offset for the editor view
+    scroll_offset: usize,
+    /// Visible height of the editor (set during rendering)
+    visible_height: Cell<usize>,
 }
 
 impl EnvironmentEditor {
@@ -64,6 +69,8 @@ impl EnvironmentEditor {
             input_buffer: String::new(),
             pending_var_name: String::new(),
             status_message: None,
+            scroll_offset: 0,
+            visible_height: Cell::new(0),
         }
     }
 
@@ -196,6 +203,66 @@ impl EnvironmentEditor {
         }
     }
 
+    pub fn scroll_offset(&self) -> usize {
+        self.scroll_offset
+    }
+
+    pub fn set_visible_height(&self, height: usize) {
+        self.visible_height.set(height);
+    }
+
+    /// Compute the line index of the currently selected item within the rendered content.
+    /// This must mirror the line layout in render_environment_editor in ui.rs.
+    fn selected_item_line(&self) -> usize {
+        // Line 0: help text
+        // Line 1: blank
+        let mut line = 2;
+
+        if self.env_names.is_empty() {
+            return line;
+        }
+
+        // "Environments:" header
+        line += 1;
+
+        if self.focus == EditorFocus::EnvironmentList {
+            // Selected env is at line + selected_env_index
+            return line + self.selected_env_index;
+        }
+
+        // All env names
+        line += self.env_names.len();
+        // Blank line after env list
+        line += 1;
+
+        // "Variables for '...':" header
+        line += 1;
+
+        if self.var_names.is_empty() {
+            return line; // "No variables" message line
+        }
+
+        // Selected var is at line + selected_var_index
+        line + self.selected_var_index
+    }
+
+    /// Ensure the selected item is visible by adjusting scroll_offset
+    fn ensure_visible(&mut self) {
+        let vh = self.visible_height.get();
+        if vh == 0 {
+            return;
+        }
+        let target_line = self.selected_item_line();
+        // Scroll up if target is above the visible area
+        if target_line < self.scroll_offset {
+            self.scroll_offset = target_line;
+        }
+        // Scroll down if target is below the visible area (leave 1 line margin)
+        if target_line >= self.scroll_offset + vh.saturating_sub(1) {
+            self.scroll_offset = target_line.saturating_sub(vh.saturating_sub(2));
+        }
+    }
+
     /// Handle key events
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         // Handle input mode first
@@ -224,11 +291,13 @@ impl EnvironmentEditor {
                         self.selected_env_index -= 1;
                         self.refresh_var_names();
                     }
+                    self.ensure_visible();
                 }
                 EditorFocus::VariableList => {
                     if self.selected_var_index > 0 {
                         self.selected_var_index -= 1;
                     }
+                    self.ensure_visible();
                 }
                 EditorFocus::Input => {}
             },
@@ -238,14 +307,26 @@ impl EnvironmentEditor {
                         self.selected_env_index += 1;
                         self.refresh_var_names();
                     }
+                    self.ensure_visible();
                 }
                 EditorFocus::VariableList => {
                     if self.selected_var_index + 1 < self.var_names.len() {
                         self.selected_var_index += 1;
                     }
+                    self.ensure_visible();
                 }
                 EditorFocus::Input => {}
             },
+            // Scroll without changing selection
+            (KeyCode::PageUp, _) => {
+                self.scroll_offset = self.scroll_offset.saturating_sub(10);
+            }
+            (KeyCode::PageDown, _) => {
+                self.scroll_offset += 10;
+            }
+            (KeyCode::Home, _) => {
+                self.scroll_offset = 0;
+            }
             // Add new environment
             (KeyCode::Char('n'), KeyModifiers::NONE) => {
                 if self.focus == EditorFocus::EnvironmentList {
