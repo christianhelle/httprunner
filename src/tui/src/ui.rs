@@ -589,6 +589,10 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
     };
     let editor = &app.environment_editor;
 
+    // Update visible height for scroll calculations (inner area minus borders)
+    let inner_height = area.height.saturating_sub(2) as usize;
+    editor.set_visible_height(inner_height);
+
     let mut lines = Vec::new();
 
     // Help text
@@ -729,7 +733,8 @@ fn render_environment_editor(f: &mut Frame, area: Rect, app: &App) {
                 .title(title)
                 .border_style(border_style),
         )
-        .wrap(Wrap { trim: true });
+        .wrap(Wrap { trim: true })
+        .scroll((app.environment_editor.scroll_offset() as u16, 0));
 
     f.render_widget(paragraph, area);
 }
