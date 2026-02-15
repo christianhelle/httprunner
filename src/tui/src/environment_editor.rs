@@ -323,7 +323,19 @@ impl EnvironmentEditor {
                 self.scroll_offset = self.scroll_offset.saturating_sub(10);
             }
             (KeyCode::PageDown, _) => {
-                self.scroll_offset += 10;
+                // Clamp scroll offset so we don't scroll past the end of the active list
+                let list_len = match self.focus {
+                    EditorFocus::EnvironmentList => self.env_names.len(),
+                    EditorFocus::VariableList => self.var_names.len(),
+                    EditorFocus::Input => 0,
+                };
+                if list_len == 0 {
+                    self.scroll_offset = 0;
+                } else {
+                    let max_offset = list_len.saturating_sub(1);
+                    let new_offset = self.scroll_offset.saturating_add(10);
+                    self.scroll_offset = new_offset.min(max_offset);
+                }
             }
             (KeyCode::Home, _) => {
                 self.scroll_offset = 0;
