@@ -211,6 +211,43 @@ impl EnvironmentEditor {
         self.visible_height.set(height);
     }
 
+    /// Calculate the total number of lines in the rendered content.
+    /// This must mirror the line layout in render_environment_editor in ui.rs.
+    fn total_content_lines(&self) -> usize {
+        // Line 0: help text line 1
+        // Line 1: help text line 2
+        // Line 2: blank
+        let mut line = 3;
+
+        if self.env_names.is_empty() {
+            // "No environments defined" message
+            line += 1;
+            return line;
+        }
+
+        // "Environments:" header
+        line += 1;
+        // All env names
+        line += self.env_names.len();
+        // Blank line after env list
+        line += 1;
+
+        // "Variables for '...':" header
+        line += 1;
+
+        if self.var_names.is_empty() {
+            // "No variables" message
+            line += 1;
+        } else {
+            // All variable entries
+            line += self.var_names.len();
+        }
+
+        // Note: Input prompt and unsaved changes indicator are not included
+        // in scroll calculations as they appear at the bottom
+        line
+    }
+
     /// Compute the line index of the currently selected item within the rendered content.
     /// This must mirror the line layout in render_environment_editor in ui.rs.
     fn selected_item_line(&self) -> usize {
@@ -323,16 +360,15 @@ impl EnvironmentEditor {
                 self.scroll_offset = self.scroll_offset.saturating_sub(10);
             }
             (KeyCode::PageDown, _) => {
-                // Clamp scroll offset so we don't scroll past the end of the active list
-                let list_len = match self.focus {
-                    EditorFocus::EnvironmentList => self.env_names.len(),
-                    EditorFocus::VariableList => self.var_names.len(),
-                    EditorFocus::Input => 0,
-                };
-                if list_len == 0 {
+                // Clamp scroll offset so we don't scroll past the end of the content
+                let total_lines = self.total_content_lines();
+                let vh = self.visible_height.get();
+                
+                if total_lines == 0 || vh == 0 {
                     self.scroll_offset = 0;
                 } else {
-                    let max_offset = list_len.saturating_sub(1);
+                    // Maximum scroll offset ensures last line of content is still visible
+                    let max_offset = total_lines.saturating_sub(vh);
                     let new_offset = self.scroll_offset.saturating_add(10);
                     self.scroll_offset = new_offset.min(max_offset);
                 }
