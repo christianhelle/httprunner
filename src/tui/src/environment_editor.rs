@@ -363,7 +363,7 @@ impl EnvironmentEditor {
                 // Clamp scroll offset so we don't scroll past the end of the content
                 let total_lines = self.total_content_lines();
                 let vh = self.visible_height.get();
-                
+
                 if total_lines == 0 || vh == 0 {
                     self.scroll_offset = 0;
                 } else {
