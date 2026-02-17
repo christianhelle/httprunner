@@ -5,6 +5,9 @@ fn main() {
     {
         let mut res = winres::WindowsResource::new();
         res.set_icon("../../images/icon.ico");
+        res.set("FileDescription", "HTTP File Runner GUI");
+        res.set("ProductName", "httprunner-gui");
+        res.set("OriginalFilename", "httprunner-gui.exe");
         if let Err(e) = res.compile() {
             eprintln!("Warning: Failed to embed icon: {}", e);
         }
