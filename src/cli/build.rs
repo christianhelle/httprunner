@@ -1,8 +1,8 @@
 use std::process::Command;
 
 fn main() {
-    let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
-    if target_os == "windows" {
+    #[cfg(windows)]
+    {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
         let icon_path = std::path::Path::new(&manifest_dir)
             .parent()
