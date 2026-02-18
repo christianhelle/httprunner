@@ -6,6 +6,7 @@
 
 **Implemented enhancements:**
 
+- Hide support key when telemetry collection is disabled [\#203](https://github.com/christianhelle/httprunner/pull/203) ([christianhelle](https://github.com/christianhelle))
 - Fix missing windows icon on TUI and GUI apps [\#202](https://github.com/christianhelle/httprunner/pull/202) ([christianhelle](https://github.com/christianhelle))
 - Add scroll bounds validation to PageDown in environment editor [\#201](https://github.com/christianhelle/httprunner/pull/201) ([Copilot](https://github.com/apps/copilot-swe-agent))
 - Add vertical scrolling support in the Environment Editor for the TUI app [\#200](https://github.com/christianhelle/httprunner/pull/200) ([christianhelle](https://github.com/christianhelle))
