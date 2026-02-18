@@ -78,7 +78,7 @@ fn run(cli_args: &cli::Cli) -> Result<()> {
     let results = process_http_files(cli_args, files)?;
     generate_report(cli_args, &results)?;
     export_results(cli_args, &results)?;
-    show_support_key();
+    show_support_key(cli_args);
     if !cli_args.no_banner {
         cli::show_donation_banner();
     }
@@ -171,7 +171,10 @@ fn export_results(cli_args: &cli::Cli, results: &ProcessorResults) -> Result<()>
     Ok(())
 }
 
-fn show_support_key() {
+fn show_support_key(cli_args: &cli::Cli) {
+    if cli_args.no_telemetry {
+        return;
+    }
     match logging::get_support_key() {
         Ok(support_key) => {
             println!(
