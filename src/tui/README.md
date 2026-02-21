@@ -74,6 +74,7 @@ cargo build --bin httprunner-tui --release
 
 - **`main.rs`** - Application entry point and event loop
 - **`app.rs`** - Main application state and event handling
+- **`environment_editor.rs`** - Environment variable selection and editing
 - **`file_tree.rs`** - File browser with .http file discovery
 - **`request_view.rs`** - Request details display
 - **`results_view.rs`** - Execution results display

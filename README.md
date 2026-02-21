@@ -2269,42 +2269,51 @@ The tool handles various error conditions gracefully:
 
 ## Code Structure
 
-The codebase is organized into multiple modules for better maintainability:
+The project is a Cargo workspace. Each crate is organized into focused sub-modules for better maintainability.
+
+### Core Library (`src/core/`)
+
+Contains all HTTP processing logic shared by the CLI, TUI, and GUI applications:
 
 ```text
-src/
-├── main.rs              # Main application entry point
-├── cli.rs               # Command-line interface parsing
-├── types.rs             # Data structures (HttpRequest, HttpResult, etc.)
-├── colors.rs            # Terminal color output
-├── parser.rs            # HTTP file parsing functionality
-├── runner.rs            # HTTP request execution logic
-├── processor.rs         # Request processing and output management
-├── discovery.rs         # Recursive .http file discovery
-├── assertions.rs        # Response assertion validation
-├── request_variables.rs # Request chaining and variable extraction
-├── environment.rs       # Environment variable handling
-├── log.rs               # Logging functionality
-└── upgrade.rs           # Self-update feature
+src/core/src/
+├── assertions/      # Response assertion evaluation (status, body, headers)
+├── colors/          # Terminal color output helpers
+├── conditions/      # Conditional execution (@dependsOn, @if, @if-not)
+├── discovery/       # Recursive .http file discovery
+├── environment/     # Environment file loading (http-client.env.json)
+├── export/          # Per-request file export to timestamped log files
+├── functions/       # Built-in dynamic value functions (guid, string, number, …)
+├── logging/         # File-based output logging
+├── parser/          # .http file parsing and variable substitution
+├── processor/       # High-level request orchestration
+├── report/          # Markdown and HTML report generation
+├── runner/          # HTTP request execution (sync + async/WASM)
+├── telemetry/       # Application Insights telemetry
+├── types/           # Core data structures (HttpRequest, HttpResult, …)
+├── variables/       # Variable extraction and substitution
+└── serializer.rs    # Serialization helpers
 ```
 
-### Module Overview
+### CLI Application (`src/cli/`)
 
-- **`main.rs`**: Application entry point that orchestrates the overall workflow
-- **`cli.rs`**: Handles command-line argument parsing using `clap`
-- **`types.rs`**: Defines the core data structures including `HttpRequest` and `HttpResult`
-- **`colors.rs`**: Contains color output using the `colored` crate
-- **`parser.rs`**: Handles parsing of `.http` files into structured requests
-- **`runner.rs`**: Manages HTTP request execution using `reqwest`
-- **`processor.rs`**: Processes requests, manages logging, and handles output formatting
-- **`discovery.rs`**: Implements recursive file system traversal using `walkdir`
-- **`assertions.rs`**: Validates response assertions (status, body, headers)
-- **`request_variables.rs`**: Handles request chaining and JSONPath extraction
-- **`environment.rs`**: Loads and processes environment files
-- **`log.rs`**: Manages file logging with timestamps
-- **`upgrade.rs`**: Implements self-update functionality
+Builds the `httprunner` binary:
 
-This modular structure makes the code easier to understand, test, and extend.
+```text
+src/cli/src/
+├── main.rs          # Application entry point
+├── cli/             # Argument parsing with clap (args.rs, banner.rs)
+├── shutdown/        # OS signal handling (Unix/Windows)
+└── upgrade/         # Self-update functionality (per-platform)
+```
+
+### TUI Application (`src/tui/`)
+
+Builds the `httprunner-tui` binary. See [TUI README](src/tui/README.md) for details.
+
+### GUI Application (`src/gui/`)
+
+Builds the `httprunner-gui` binary (native and WASM). See [GUI README](src/gui/README.md) for details.
 
 ## CI/CD Pipeline
 

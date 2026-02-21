@@ -163,11 +163,14 @@ Accept: application/json
 - **`main.rs`** - Native application entry point
 - **`lib.rs`** - WASM entry point (web version)
 - **`app.rs`** - Main application state and UI layout
+- **`environment_editor.rs`** - Environment variable selection and editing
 - **`file_tree.rs`** - File browser with tree view (native only)
-- **`text_editor.rs`** - Text editor for manual input (WASM-friendly)
+- **`request_editor.rs`** - HTTP request editor
 - **`request_view.rs`** - Request details display
 - **`results_view.rs`** - Execution results (sync for native)
 - **`results_view_async.rs`** - Execution results (async for WASM)
+- **`state.rs`** - Persistent state management (filesystem / LocalStorage)
+- **`text_editor.rs`** - Text editor for manual input (WASM-friendly)
 
 ### Dual Execution Modes
 
@@ -294,15 +297,17 @@ trunk build --release
 ```text
 src/gui/
 ├── src/
-│   ├── main.rs              # Native entry point
-│   ├── lib.rs               # WASM entry point
-│   ├── app.rs               # Main application logic
-│   ├── file_tree.rs         # File browser (native only)
-│   ├── text_editor.rs       # Text editor (WASM-friendly)
-│   ├── request_view.rs      # Request display
-│   ├── results_view.rs      # Results display (sync)
+│   ├── main.rs               # Native entry point
+│   ├── lib.rs                # WASM entry point
+│   ├── app.rs                # Main application logic
+│   ├── environment_editor.rs # Environment variable selection and editing
+│   ├── file_tree.rs          # File browser (native only)
+│   ├── request_editor.rs     # HTTP request editor
+│   ├── request_view.rs       # Request display
+│   ├── results_view.rs       # Results display (sync)
 │   ├── results_view_async.rs # Results display (async)
-│   └── state.rs             # Persistent state (FS/LocalStorage)
+│   ├── state.rs              # Persistent state (FS/LocalStorage)
+│   └── text_editor.rs        # Text editor (WASM-friendly)
 ├── index.html               # Web app HTML template
 ├── Trunk.toml               # WASM build configuration
 └── Cargo.toml               # Dependencies

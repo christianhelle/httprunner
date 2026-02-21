@@ -465,6 +465,24 @@ httprunner myfile.http --log
 httprunner myfile.http --log results.txt
 ```
 
+## Code Structure
+
+```text
+src/cli/src/
+├── main.rs          # Application entry point
+├── cli/             # Argument parsing with clap
+│   ├── args.rs      # CLI argument definitions
+│   └── banner.rs    # Startup banner output
+├── shutdown/        # OS signal handling
+│   ├── unix.rs      # SIGINT/SIGTERM handling (Unix)
+│   └── windows.rs   # Ctrl+C handling (Windows)
+└── upgrade/         # Self-update functionality
+    ├── linux.rs     # Linux update logic
+    ├── macos.rs     # macOS update logic
+    ├── windows.rs   # Windows update logic
+    └── unsupported.rs # Fallback for unsupported platforms
+```
+
 ## Documentation
 
 For complete documentation, installation options, and more examples, visit the [GitHub repository](https://github.com/christianhelle/httprunner).
