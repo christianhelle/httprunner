@@ -11,32 +11,32 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 
 ## Features
 
-- 🚀 Parse and execute HTTP requests from `.http` files
-- 📁 Support for multiple `.http` files in a single run
-- 🔍 `--discover` mode to recursively find and run all `.http` files
-- 📝 `--verbose` mode for detailed request and response information
-- 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
-- 📋 `--log` mode to save all output to a file for analysis and reporting
-- 📊 `--report` flag to generate summary reports in markdown or html format for test results
-- 💾 `--export` flag to save individual HTTP requests and responses to timestamped log files
-- ✅ Color-coded output (green for success, red for failure, yellow for skipped)
-- 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
-- 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
-- ⏱️ **Request delay** for rate limiting compliance:
-  - Global `--delay` flag (CLI) and UI controls (TUI/GUI) for delays between consecutive requests
-  - Per-request `@pre-delay` and `@post-delay` keywords in .http files
-- 📝 **Custom headers support** with full request header implementation
-- 🎯 Detailed error reporting with status codes
-- 🛡️ Robust error handling for network issues
-- 🔒 **Insecure HTTPS support** with `--insecure` flag for development environments
-- 🔍 **Response assertions** for status codes, body content, and headers
-- 🔧 **Variables support** with substitution in URLs, headers, and request bodies
-- 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
-- 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
-- ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
-- 📋 **Semantic versioning** with git tag and commit information
-- 🔍 **Build-time version generation** with automatic git integration
+- Parse and execute HTTP requests from `.http` files
+- Support for multiple `.http` files in a single run
+- `--discover` mode to recursively find and run all `.http` files
+- `--verbose` mode for detailed request and response information
+- `--pretty-json` flag to format JSON payloads in verbose output for improved readability
+- `--log` mode to save all output to a file for analysis and reporting
+- `--report` flag to generate summary reports in markdown or html format for test results
+- `--export` flag to save individual HTTP requests and responses to timestamped log files
+- Color-coded output (green for success, red for failure, yellow for skipped)
+- Summary statistics showing passed/failed/skipped counts (per file and overall)
+- Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- **Request delay** for rate limiting compliance:
+  Global `--delay` flag (CLI) and UI controls (TUI/GUI) for delays between consecutive requests
+  Per-request `@pre-delay` and `@post-delay` keywords in .http files
+- **Custom headers support** with full request header implementation
+- Detailed error reporting with status codes
+- Robust error handling for network issues
+- **Insecure HTTPS support** with `--insecure` flag for development environments
+- **Response assertions** for status codes, body content, and headers
+- **Variables support** with substitution in URLs, headers, and request bodies
+- **Request Variables** for chaining requests and passing data between HTTP calls
+- **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
+- **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
+- **Customizable timeouts** for connection and read operations with flexible time units
+- **Semantic versioning** with git tag and commit information
+- **Build-time version generation** with automatic git integration
 
 ## Version Information
 
@@ -641,7 +641,7 @@ For cross-platform compatibility, we recommend:
 GET http://{{hostname}}:8080/api/users
 ```
 
-2. **Create an environment file** (`http-client.env.json`):
+1. **Create an environment file** (`http-client.env.json`):
 
 ```json
 {
@@ -654,7 +654,7 @@ GET http://{{hostname}}:8080/api/users
 }
 ```
 
-3. **Run with the appropriate environment**:
+1. **Run with the appropriate environment**:
 
 ```bash
 # On host machine
@@ -699,6 +699,7 @@ httprunner https-endpoints.http --insecure --log test.log
 ### What --insecure Does
 
 When the `--insecure` flag is enabled:
+
 - ✅ Accepts invalid SSL/TLS certificates
 - ✅ Accepts invalid hostnames
 - ✅ Allows connections to servers with self-signed certificates
@@ -713,6 +714,7 @@ Authorization: Bearer {{token}}
 ```
 
 Run with:
+
 ```bash
 httprunner api-test.http --insecure
 ```
@@ -722,6 +724,7 @@ httprunner api-test.http --insecure
 ## Request Delay
 
 The HTTP File Runner supports adding delays between consecutive HTTP requests. This is useful for:
+
 - **Rate limiting compliance**: Respect API rate limits by spacing requests
 - **Load testing**: Simulate realistic user behavior with delays
 - **Server protection**: Avoid overwhelming servers with rapid requests
@@ -746,6 +749,7 @@ httprunner --discover --delay 500 --log results.txt
 ### TUI Usage
 
 In the Terminal UI application:
+
 - Press `]` to increase delay by 100ms (max 10 seconds)
 - Press `[` to decrease delay by 100ms (min 0ms)
 - Current delay is displayed in the status bar
@@ -753,6 +757,7 @@ In the Terminal UI application:
 ### GUI Usage
 
 In the GUI application:
+
 1. Open the **Settings** menu
 2. Adjust the **Request Delay (ms)** slider (0-10,000ms range)
 3. The setting is automatically saved and persists between sessions
@@ -794,6 +799,7 @@ GET https://api.example.com/resource
 ```
 
 **Per-request delay keywords:**
+
 - `@pre-delay <milliseconds>` - Delay before executing the request
 - `@post-delay <milliseconds>` - Delay after the request completes
 - Values are in milliseconds
@@ -814,6 +820,7 @@ httprunner --discover --no-banner --log results.txt
 ```
 
 This is particularly useful in:
+
 - **Automated scripts**: Keep output clean in scripts and CI/CD pipelines
 - **Log files**: Reduce banner noise in logged output
 - **User preference**: Suppress the banner if you're not interested in support options
@@ -844,11 +851,13 @@ All error messages are sanitized to remove file paths, URLs, IP addresses, and e
 You can disable telemetry using any of these methods:
 
 **CLI flag:**
+
 ```bash
 httprunner --no-telemetry examples/simple.http
 ```
 
 **Environment variables:**
+
 ```bash
 # httprunner-specific opt-out
 export HTTPRUNNER_TELEMETRY_OPTOUT=1
@@ -891,6 +900,7 @@ The HTTP File Runner provides built-in functions for dynamic value generation in
 ### Available Functions
 
 #### `guid()` - Generate UUID
+
 Generates a new UUID v4 (Universally Unique Identifier) in simple format (32 hex characters without dashes).
 
 ```http
@@ -904,6 +914,7 @@ Content-Type: application/json
 ```
 
 #### `string()` - Generate Random String
+
 Generates a random alphanumeric string of 20 characters.
 
 ```http
@@ -917,6 +928,7 @@ Content-Type: application/json
 ```
 
 #### `number()` - Generate Random Number
+
 Generates a random number between 0 and 100 (inclusive).
 
 ```http
@@ -930,6 +942,7 @@ Content-Type: application/json
 ```
 
 #### `base64_encode()` - Base64 Encoding
+
 Encodes a string to Base64 format. The string must be enclosed in single quotes.
 
 ```http
@@ -943,6 +956,7 @@ Content-Type: application/json
 ```
 
 #### `upper()` - Convert to Uppercase
+
 Converts a string to uppercase. The string must be enclosed in single quotes.
 
 ```http
@@ -956,6 +970,7 @@ Content-Type: application/json
 ```
 
 #### `lower()` - Convert to Lowercase
+
 Converts a string to lowercase. The string must be enclosed in single quotes.
 
 ```http
@@ -969,6 +984,7 @@ Content-Type: application/json
 ```
 
 #### `name()` - Generate Full Name
+
 Generates a random full name (first name + last name).
 
 ```http
@@ -982,6 +998,7 @@ Content-Type: application/json
 ```
 
 #### `first_name()` - Generate First Name
+
 Generates a random first name.
 
 ```http
@@ -995,6 +1012,7 @@ Content-Type: application/json
 ```
 
 #### `last_name()` - Generate Last Name
+
 Generates a random last name.
 
 ```http
@@ -1008,6 +1026,7 @@ Content-Type: application/json
 ```
 
 #### `address()` - Generate Address
+
 Generates a random full mailing address (street, city, postal code, country).
 
 ```http
@@ -1021,7 +1040,8 @@ Content-Type: application/json
 ```
 
 #### `email()` - Generate Email Address
-Generates a random email address in the format firstname.lastname@domain.com.
+
+Generates a random email address in the format <firstname.lastname@domain.com>.
 
 ```http
 POST https://api.example.com/users
@@ -1034,6 +1054,7 @@ Content-Type: application/json
 ```
 
 #### `job_title()` - Generate Job Title
+
 Generates a random job title.
 
 ```http
@@ -1047,6 +1068,7 @@ Content-Type: application/json
 ```
 
 #### `lorem_ipsum(n)` - Generate Lorem Ipsum Text
+
 Generates Lorem Ipsum placeholder text with the specified number of words. The parameter `n` determines how many words to generate. If the requested count exceeds the available word list (approximately 285 words), words will be repeated cyclically.
 
 ```http
@@ -1061,6 +1083,7 @@ Content-Type: application/json
 ```
 
 #### `getdate()` - Get Current Date
+
 Returns the current local date in `YYYY-MM-DD` format.
 
 ```http
@@ -1074,6 +1097,7 @@ Content-Type: application/json
 ```
 
 #### `gettime()` - Get Current Time
+
 Returns the current local time in `HH:MM:SS` format (24-hour).
 
 ```http
@@ -1087,6 +1111,7 @@ Content-Type: application/json
 ```
 
 #### `getdatetime()` - Get Current Date and Time
+
 Returns the current local date and time in `YYYY-MM-DD HH:MM:SS` format.
 
 ```http
@@ -1100,6 +1125,7 @@ Content-Type: application/json
 ```
 
 #### `getutcdatetime()` - Get Current UTC Date and Time
+
 Returns the current UTC date and time in `YYYY-MM-DD HH:MM:SS` format.
 
 ```http
@@ -1353,11 +1379,13 @@ Execute HTTP requests conditionally based on previous request results using `@de
 Execute a request only if a dependent request returns HTTP 200 status.
 
 **Syntax:**
+
 ```http
 # @dependsOn <request-name>
 ```
 
 **Example:**
+
 ```http
 # @name check-user
 GET https://api.example.com/user/123
@@ -1379,11 +1407,13 @@ Content-Type: application/json
 Execute a request only if a previous request returns a specific HTTP status code.
 
 **Syntax:**
+
 ```http
 # @if <request-name>.response.status <expected-status>
 ```
 
 **Example:**
+
 ```http
 # @name check-user
 GET https://api.example.com/user/123
@@ -1406,11 +1436,13 @@ Content-Type: application/json
 Execute a request only if a JSONPath expression in the response body matches an expected value.
 
 **Syntax:**
+
 ```http
 # @if <request-name>.response.body.$.<path> <expected-value>
 ```
 
 **Example:**
+
 ```http
 # @name create-user
 POST https://api.example.com/user
@@ -1435,12 +1467,14 @@ PUT https://api.example.com/user/activate
 Execute a request only if a condition does **NOT** match. Works the opposite way of `@if`.
 
 **Syntax:**
+
 ```http
 # @if-not <request-name>.response.status <status-code>
 # @if-not <request-name>.response.body.$.<path> <expected-value>
 ```
 
 **Example:**
+
 ```http
 # @name check-user
 GET https://api.example.com/user/123
@@ -1481,6 +1515,7 @@ PUT https://api.example.com/user/activate
 Multiple `@if` and `@if-not` directives can be specified for a single request. **All conditions must be met** for the request to execute (AND logic).
 
 **Example:**
+
 ```http
 # @name login
 POST https://api.example.com/login
@@ -1503,6 +1538,7 @@ Authorization: Bearer {{login.response.body.$.token}}
 ### Conditional Execution Use Cases
 
 **Progressive User Setup:**
+
 ```http
 # Check if user exists
 # @name check-user
@@ -1530,6 +1566,7 @@ Content-Type: application/json
 ```
 
 **Error Handling with Fallbacks:**
+
 ```http
 # @name primary-api
 GET https://primary-api.example.com/data
@@ -1564,7 +1601,8 @@ File Summary: 8 Passed, 0 Failed, 2 Skipped
 
 This makes it easy to understand why requests were not executed in your test workflows.
 
-**Note:** 
+**Note:**
+
 - Conditional directives support both `#` and `//` comment styles
 - Requests can have both `@dependsOn` and multiple `@if` or `@if-not` directives
 - `@if-not` works as the opposite of `@if` - condition must NOT match to execute
@@ -1663,6 +1701,7 @@ GET https://example.com/api
 ### Practical Use Cases
 
 **Long-running operations:**
+
 ```http
 # Wait up to 10 minutes for data processing
 # @timeout 600
@@ -1673,6 +1712,7 @@ Content-Type: application/json
 ```
 
 **Quick health checks:**
+
 ```http
 # Fast timeout for health check endpoints
 # @timeout 5
@@ -1681,6 +1721,7 @@ GET https://example.com/health
 ```
 
 **Slow network conditions:**
+
 ```http
 # Allow more time in development environments
 # @timeout 2 m
@@ -1866,12 +1907,14 @@ httprunner --discover --verbose --pretty-json
 **Example output with --pretty-json:**
 
 Before (without --pretty-json):
+
 ```
 Body:
 {"name":"John Doe","email":"john@example.com","address":{"city":"New York","zip":"10001"}}
 ```
 
 After (with --pretty-json):
+
 ```
 Body:
 {
@@ -1937,6 +1980,7 @@ httprunner api-tests.http --log test.log --report html
 **Example report output:**
 
 Both markdown and HTML reports include:
+
 - Execution timestamp
 - Overall statistics (total requests, passed, failed, skipped, success rate)
 - Per-file breakdown with request details
@@ -1944,6 +1988,7 @@ Both markdown and HTML reports include:
 - Visual indicators (✅ for passed, ❌ for failed, ⏭️ for skipped)
 
 HTML reports additionally feature:
+
 - Responsive design for mobile and desktop viewing
 - Automatic light/dark mode support based on system preferences
 - Color-coded statistics cards and status indicators
@@ -1994,6 +2039,7 @@ httprunner api-tests.http --env production --export
 **Example export output:**
 
 When you run `httprunner example.http --export`, you'll see:
+
 ```
 ✅ Exported requests and responses to files
    ✅ Exported GET_users_request_1738016400.log
@@ -2005,6 +2051,7 @@ When you run `httprunner example.http --export`, you'll see:
 **Export file format:**
 
 Request files contain:
+
 ```http
 GET https://api.example.com/users
 Authorization: Bearer token123
@@ -2013,6 +2060,7 @@ Accept: application/json
 ```
 
 Response files contain:
+
 ```http
 HTTP/1.1 200
 Content-Type: application/json
@@ -2379,7 +2427,7 @@ The project includes installer scripts for easy deployment:
 
 ### Prerequisites
 
-- Rust 1.92 or later (https://rustup.rs/)
+- Rust 1.92 or later (<https://rustup.rs/>)
 - Git (for version generation)
 
 ### Building
@@ -2406,18 +2454,21 @@ cargo run -- examples/simple.http --verbose
 For the easiest development experience, this repository includes a dev container configuration that provides a pre-configured environment with Rust and VS Code extensions.
 
 **GitHub Codespaces:**
+
 1. Open the repository on GitHub
 2. Click the green "Code" button → "Codespaces" → "Create codespace on main"
 3. Wait for the environment to set up automatically
 4. Start coding! 🚀
 
 **Local Development with VS Code:**
+
 1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 2. Clone this repository: `git clone https://github.com/christianhelle/httprunner.git`
 3. Open in VS Code: `code httprunner`
 4. When prompted, click "Reopen in Container" or use Command Palette: "Dev Containers: Reopen in Container"
 
 **What's included:**
+
 - Rust toolchain (stable) pre-installed
 - PowerShell Core for build scripts
 - VS Code Rust extensions (rust-analyzer)
@@ -2475,6 +2526,7 @@ HTTP Runner provides three interfaces to suit different workflows:
 The TUI provides an interactive terminal-based interface built with Ratatui.
 
 **Features:**
+
 - 📁 File tree navigation for browsing .http files
 - 📋 Request viewer with syntax highlighting
 - ▶️ Execute individual or all requests
@@ -2484,6 +2536,7 @@ The TUI provides an interactive terminal-based interface built with Ratatui.
 - 🚀 Minimal resource usage, perfect for SSH sessions
 
 **Quick Start:**
+
 ```bash
 # Build and run
 cargo build --bin httprunner-tui --release
@@ -2494,6 +2547,7 @@ cargo run --bin httprunner-tui
 ```
 
 **Keyboard Shortcuts:**
+
 - **Tab** - Switch between panes (File Tree → Request View → Results)
 - **↑/↓** or **k/j** - Navigate within current pane
 - **Enter** - Run selected request (in Request View pane)
@@ -2502,6 +2556,7 @@ cargo run --bin httprunner-tui
 - **Ctrl+Q** or **Ctrl+C** - Quit application
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │ HTTP File Runner - TUI                              │
@@ -2527,6 +2582,7 @@ See [src/tui/README.md](src/tui/README.md) for detailed documentation.
 ![HTTP Runner GUI](images/gui.png)
 
 The GUI provides a visual interface for:
+
 - Browsing and selecting `.http` files from a directory tree
 - Viewing request details and executing individual requests
 - Running all requests in a file
@@ -2547,6 +2603,7 @@ The GUI provides a visual interface for:
 #### State Persistence
 
 The GUI application automatically saves your workspace state, including:
+
 - Last opened directory
 - Currently selected `.http` file
 - Active environment selection
@@ -2555,11 +2612,13 @@ The GUI application automatically saves your workspace state, including:
 - **Last run results**: Your previous request execution results are preserved across restarts
 
 The state is saved to a platform-specific configuration directory:
+
 - **Windows**: `%APPDATA%\httprunner\httprunner-gui-state.json`
 - **macOS**: `~/Library/Application Support/httprunner/httprunner-gui-state.json`
 - **Linux**: `~/.config/httprunner/httprunner-gui-state.json`
 
 State is automatically saved when you:
+
 - Open a new directory
 - Select a different file
 - Switch environments
@@ -2587,6 +2646,7 @@ httprunner/
 ```
 
 **Building:**
+
 - `cargo build --release` - Build all applications (CLI, TUI, and GUI)
 - `cargo build --release -p httprunner` - Build CLI only
 - `cargo build --release -p httprunner-tui` - Build TUI only
