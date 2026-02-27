@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'docs/**'
+      - 'docs/website/**'
       - 'src/gui/**'
       - 'src/core/**'
       - 'install.sh'
@@ -53,7 +53,7 @@ jobs:
         run: |
           mkdir -p _site
           # Copy docs
-          cp -r docs/* _site/
+          cp -r docs/website/* _site/
           # Copy install scripts
           cp install.sh _site/install
           cp install.ps1 _site/install.ps1
