@@ -37,38 +37,41 @@ Our documentation website is built with:
 
 ```
 docs/
-├── index.html              # Homepage
-├── guide.html              # User guide
-├── reference.html          # API reference
-├── CI-CD-SETUP.html        # CI/CD documentation
-├── DOCKER-SETUP.html       # Docker setup guide
-├── styles.css              # Main stylesheet
-├── script.js               # JavaScript functionality
-├── 404.html                # Custom 404 page
-├── sitemap.xml             # SEO sitemap
-├── robots.txt              # Search engine directives
-└── _config.yml             # GitHub Pages config
+├── website/                # Static website (deployed to GitHub Pages)
+│   ├── index.html          # Homepage
+│   ├── guide.html          # User guide
+│   ├── reference.html      # API reference
+│   ├── styles.css          # Main stylesheet
+│   ├── script.js           # JavaScript functionality
+│   ├── 404.html            # Custom 404 page
+│   ├── sitemap.xml         # SEO sitemap
+│   ├── robots.txt          # Search engine directives
+│   └── _config.yml         # GitHub Pages config
+├── DOCKER-SETUP.md         # Docker publishing setup
+├── DOCKER-TROUBLESHOOTING.md # Docker troubleshooting
+├── SNAPCRAFT.md            # Snapcraft distribution
+└── README.md               # Documentation overview
 ```
 
 ## ✏️ Making Changes
 
 ### Content Updates
 
-1. **Edit HTML Files**: Update content directly in the appropriate HTML file
+1. **Edit HTML Files**: Update content directly in the appropriate HTML file in `docs/website/`
 2. **Follow Structure**: Maintain consistent HTML structure and classes
 3. **Update Navigation**: If adding new pages, update nav in all files
 4. **Test Locally**: Always test changes in a local server
 
 ### Style Changes
 
-1. **Edit styles.css**: All styling is in one file
+1. **Edit styles.css**: All styling is in `docs/website/styles.css`
 2. **Use CSS Variables**: Modify the `:root` variables for theme changes
 3. **Maintain Responsiveness**: Test on different screen sizes
 4. **Follow Naming**: Use existing class naming conventions
 
 ### Adding New Pages
 
-1. **Create HTML File**: Follow the structure of existing pages
+1. **Create HTML File**: Follow the structure of existing pages in `docs/website/`
 2. **Add Navigation**: Update the nav menu in all existing pages
 3. **Update Sitemap**: Add new pages to `sitemap.xml`
 4. **Test All Links**: Ensure all internal links work
@@ -149,7 +152,7 @@ Before submitting changes:
 ## 🚀 Deployment
 
 ### Automatic Deployment
-- **Trigger**: Push to `main` branch with changes to `docs/`
+- **Trigger**: Push to `main` branch with changes to `docs/website/`
 - **Workflow**: `.github/workflows/docs.yml`
 - **URL**: `https://christianhelle.github.io/httprunner/`
 
@@ -158,7 +161,7 @@ Test deployment locally before pushing:
 
 ```bash
 # Simulate the deployed environment
-cd docs
+cd docs/website
 python -m http.server 8000 --bind 127.0.0.1
 ```
 

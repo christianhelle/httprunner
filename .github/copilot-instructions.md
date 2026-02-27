@@ -183,7 +183,7 @@ When implementing features or fixes that affect user-facing functionality, you M
    - Focus on features, usage, and crates.io-specific installation
    - Keep in sync with README.md but more concise
 
-3. **docs/** (Static Website)
+3. **docs/website/** (Static Website)
    - GitHub Pages documentation site served at https://christianhelle.com/httprunner/
    - Key files to update:
      - `index.html` - Home page with features overview
@@ -217,7 +217,7 @@ When making feature changes or fixes:
 
 - [ ] Update README.md with detailed explanation and examples
 - [ ] Update src/README.md with concise description (remember: crates.io audience)
-- [ ] Check docs/ folder for pages that need updates
+- [ ] Check docs/website/ folder for pages that need updates
 - [ ] Add examples to demonstrate new features
 - [ ] Update command-line help text if adding flags
 - [ ] Update .http file format examples if syntax changes
@@ -233,7 +233,7 @@ When making feature changes or fixes:
 - Both should cover the same features but with different levels of detail
 - src/README.md should link to GitHub for complete documentation
 
-**docs/ folder:**
+**docs/website/ folder:**
 - Keep static website content aligned with README.md
 - Update feature pages when adding/changing functionality
 - Ensure examples and screenshots are current
