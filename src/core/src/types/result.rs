@@ -1,7 +1,8 @@
 use super::assertion::AssertionResult;
+use serde::Serialize;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct HttpResult {
     pub request_name: Option<String>,
     pub status_code: u16,

@@ -69,6 +69,10 @@ pub struct Cli {
     #[arg(long)]
     pub export: bool,
 
+    /// Export execution results as a JSON file
+    #[arg(long)]
+    pub export_json: bool,
+
     /// Disable anonymous telemetry data collection
     #[arg(long)]
     pub no_telemetry: bool,

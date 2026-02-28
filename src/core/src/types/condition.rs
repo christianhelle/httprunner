@@ -1,4 +1,6 @@
-#[derive(Debug, Clone)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
 pub struct Condition {
     pub request_name: String,
     pub condition_type: ConditionType,
@@ -6,7 +8,7 @@ pub struct Condition {
     pub negate: bool, // true for @if-not, false for @if
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum ConditionType {
     Status,               // Check response status code
     BodyJsonPath(String), // Check JSONPath expression in response body

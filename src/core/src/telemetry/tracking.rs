@@ -375,6 +375,7 @@ pub struct CliArgPatterns {
     pub report: bool,
     pub report_format: Option<String>,
     pub export: bool,
+    pub export_json: bool,
     pub file_count: usize,
     pub delay: u64,
 }
@@ -391,6 +392,7 @@ pub fn track_cli_args(args: &CliArgPatterns) {
     properties.insert("pretty_json".to_string(), args.pretty_json.to_string());
     properties.insert("report".to_string(), args.report.to_string());
     properties.insert("export".to_string(), args.export.to_string());
+    properties.insert("export_json".to_string(), args.export_json.to_string());
     properties.insert("file_count".to_string(), args.file_count.to_string());
     properties.insert("delay".to_string(), args.delay.to_string());
 
@@ -579,6 +581,7 @@ mod tests {
             report: true,
             report_format: Some("json".to_string()),
             export: true,
+            export_json: false,
             file_count: 5,
             delay: 0,
         };
@@ -729,6 +732,7 @@ mod tests {
             report: true,
             report_format: Some("html".to_string()),
             export: true,
+            export_json: false,
             file_count: 100,
             delay: 0,
         };
@@ -750,6 +754,7 @@ mod tests {
             report: false,
             report_format: None,
             export: false,
+            export_json: false,
             file_count: 0,
             delay: 0,
         };
@@ -874,6 +879,7 @@ mod tests {
             report: false,
             report_format: Some("json".to_string()),
             export: true,
+            export_json: false,
             file_count: 42,
             delay: 0,
         };

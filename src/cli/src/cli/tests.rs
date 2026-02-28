@@ -13,6 +13,7 @@ fn cli_with_log(log: Option<Option<&str>>) -> Cli {
         pretty_json: false,
         report: None,
         export: false,
+        export_json: false,
         no_telemetry: false,
         delay: 0,
     }

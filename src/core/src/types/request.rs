@@ -1,8 +1,9 @@
 use super::assertion::Assertion;
 use super::condition::Condition;
 use super::variable::Variable;
+use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct HttpRequest {
     pub name: Option<String>,
     pub method: String,
@@ -20,7 +21,7 @@ pub struct HttpRequest {
     pub post_delay_ms: Option<u64>,      // Delay after executing request (for @post-delay)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Header {
     pub name: String,
     pub value: String,
