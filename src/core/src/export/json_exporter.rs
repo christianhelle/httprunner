@@ -18,7 +18,7 @@ pub fn export_json_to_dir(
 
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .expect("system time is before UNIX epoch")
         .as_secs();
     let filename = format!("httprunner_results_{}.json", timestamp);
 
