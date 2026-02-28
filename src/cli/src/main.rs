@@ -64,6 +64,7 @@ fn track_cli_usage(cli_args: &cli::Cli) {
         report: cli_args.report.is_some(),
         report_format: cli_args.report.map(|f| format!("{:?}", f)),
         export: cli_args.export,
+        export_json: cli_args.export_json,
         file_count: cli_args.files.len(),
         delay: cli_args.delay,
     };
@@ -78,6 +79,7 @@ fn run(cli_args: &cli::Cli) -> Result<()> {
     let results = process_http_files(cli_args, files)?;
     generate_report(cli_args, &results)?;
     export_results(cli_args, &results)?;
+    export_json_results(cli_args, &results)?;
     show_support_key(cli_args);
     if !cli_args.no_banner {
         cli::show_donation_banner();
@@ -166,6 +168,31 @@ fn export_results(cli_args: &cli::Cli, results: &ProcessorResults) -> Result<()>
         Err(e) => {
             eprintln!("{} Failed to export results: {}", colors::red("❌"), e);
             anyhow::bail!("Failed to export results: {}", e);
+        }
+    }
+    Ok(())
+}
+
+fn export_json_results(cli_args: &cli::Cli, results: &ProcessorResults) -> Result<()> {
+    if !cli_args.export_json {
+        return Ok(());
+    }
+
+    match export::export_json(results) {
+        Ok(filename) => {
+            println!(
+                "{} Exported JSON results to {}",
+                colors::green("✅"),
+                filename
+            );
+        }
+        Err(e) => {
+            eprintln!(
+                "{} Failed to export JSON results: {}",
+                colors::red("❌"),
+                e
+            );
+            anyhow::bail!("Failed to export JSON results: {}", e);
         }
     }
     Ok(())

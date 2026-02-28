@@ -173,6 +173,7 @@ fn http_syntax() -> Syntax {
         case_sensitive: true,
         comment: "#",
         comment_multiline: ["###", "###"],
+        quotes: BTreeSet::from(['"', '\'']),
         hyperlinks: BTreeSet::new(), // Empty set for now
         keywords: vec![
             // HTTP Methods

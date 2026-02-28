@@ -1,14 +1,15 @@
 use super::request::HttpRequest;
 use super::result::HttpResult;
+use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RequestContext {
     pub name: String,
     pub request: HttpRequest,
     pub result: Option<HttpResult>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct HttpFileResults {
     pub filename: String,
     pub success_count: u32,
@@ -17,7 +18,7 @@ pub struct HttpFileResults {
     pub result_contexts: Vec<RequestContext>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProcessorResults {
     pub success: bool,
     pub files: Vec<HttpFileResults>,
