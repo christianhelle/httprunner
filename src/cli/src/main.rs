@@ -187,11 +187,7 @@ fn export_json_results(cli_args: &cli::Cli, results: &ProcessorResults) -> Resul
             );
         }
         Err(e) => {
-            eprintln!(
-                "{} Failed to export JSON results: {}",
-                colors::red("❌"),
-                e
-            );
+            eprintln!("{} Failed to export JSON results: {}", colors::red("❌"), e);
             anyhow::bail!("Failed to export JSON results: {}", e);
         }
     }

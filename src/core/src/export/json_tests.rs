@@ -38,7 +38,6 @@ fn sample_result(status: u16, success: bool, duration: u64) -> HttpResult {
     }
 }
 
-
 #[test]
 fn export_json_creates_file() {
     let tmp = TempDir::new().unwrap();
@@ -148,10 +147,7 @@ fn export_json_includes_response_details() {
     assert_eq!(res["success"], true);
     assert_eq!(res["duration_ms"], 250);
     assert_eq!(res["response_body"], r#"{"id":1}"#);
-    assert_eq!(
-        res["response_headers"]["Content-Type"],
-        "application/json"
-    );
+    assert_eq!(res["response_headers"]["Content-Type"], "application/json");
 }
 
 #[test]
