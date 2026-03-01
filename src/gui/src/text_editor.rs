@@ -220,5 +220,6 @@ fn http_syntax() -> Syntax {
         ]
         .into_iter()
         .collect(),
+        quotes: BTreeSet::from(['\'', '"', '`']),
     }
 }
