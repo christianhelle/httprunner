@@ -42,7 +42,7 @@ jobs:
       run: cargo build --release
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: httprunner-macos
         path: |

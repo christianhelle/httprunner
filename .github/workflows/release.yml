@@ -125,7 +125,7 @@ jobs:
           Compress-Archive -Path release\* -DestinationPath ${{ matrix.archive_name }}
 
       - name: Upload release artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.archive_name }}
           path: ${{ matrix.archive_name }}
@@ -145,7 +145,7 @@ jobs:
           fetch-tags: true
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
 
@@ -178,7 +178,7 @@ jobs:
           fetch-tags: true
 
       - name: Download Linux binary
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: httprunner-linux-x86_64.tar.gz
           path: artifacts
@@ -250,7 +250,7 @@ jobs:
           fetch-tags: true
 
       - name: Download Linux binary
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: httprunner-linux-x86_64.tar.gz
           path: artifacts
