@@ -85,6 +85,70 @@ hr { border: none; border-top: 1px solid #363a4f; margin: 6px 0; }
 input[type="range"] { accent-color: #8aadf4; }
 "#;
 
+// ─── Native-only helpers (compiled out entirely on WASM) ───────────────────
+
+#[cfg(not(target_arch = "wasm32"))]
+fn native_file_menu(
+    mut file_menu_open: Signal<bool>,
+    mut settings_menu_open: Signal<bool>,
+    mut root_directory: Signal<PathBuf>,
+    mut selected_file: Signal<Option<PathBuf>>,
+    do_save: impl Fn() + Clone + 'static,
+) -> Element {
+    let do_save2 = do_save.clone();
+    rsx! {
+        div {
+            class: "menu",
+            button {
+                onclick: move |_| { file_menu_open.set(!file_menu_open()); settings_menu_open.set(false); },
+                "File ▾"
+            }
+            if file_menu_open() {
+                div {
+                    class: "menu-popup",
+                    button {
+                        class: "menu-item",
+                        onclick: move |_| {
+                            file_menu_open.set(false);
+                            if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                root_directory.set(path);
+                                selected_file.set(None);
+                                do_save();
+                            }
+                        },
+                        "📁 Open Directory..."
+                    }
+                    div { class: "menu-separator" }
+                    button {
+                        class: "menu-item",
+                        onclick: move |_| { do_save2(); std::process::exit(0); },
+                        "⏻ Quit"
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn native_file_tree_panel(
+    file_tree_visible: Signal<bool>,
+    root_path: Signal<PathBuf>,
+    selected_file: Signal<Option<PathBuf>>,
+    on_file_selected: impl Fn(PathBuf) + Clone + 'static,
+) -> Element {
+    if file_tree_visible() {
+        rsx! {
+            div {
+                class: "file-tree",
+                FileTree { root_path, selected_file, on_file_selected }
+            }
+        }
+    } else {
+        rsx! {}
+    }
+}
+
 pub fn App() -> Element {
     let saved = AppState::load();
 
@@ -291,36 +355,11 @@ pub fn App() -> Element {
                 class: "top-bar",
                 onclick: move |_| { file_menu_open.set(false); settings_menu_open.set(false); },
 
-                #[cfg(not(target_arch = "wasm32"))]
-                div {
-                    class: "menu",
-                    button {
-                        onclick: move |_| { file_menu_open.set(!file_menu_open()); settings_menu_open.set(false); },
-                        "File ▾"
-                    }
-                    if file_menu_open() {
-                        div {
-                            class: "menu-popup",
-                            button {
-                                class: "menu-item",
-                                onclick: move |_| {
-                                    file_menu_open.set(false);
-                                    if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                                        root_directory.set(path);
-                                        selected_file.set(None);
-                                        do_save_state();
-                                    }
-                                },
-                                "📁 Open Directory..."
-                            }
-                            div { class: "menu-separator" }
-                            button {
-                                class: "menu-item",
-                                onclick: move |_| { do_save_state(); std::process::exit(0); },
-                                "⏻ Quit"
-                            }
-                        }
-                    }
+                {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    { native_file_menu(file_menu_open, settings_menu_open, root_directory, selected_file, do_save_state) }
+                    #[cfg(target_arch = "wasm32")]
+                    { rsx! {} }
                 }
 
                 div {
@@ -382,16 +421,11 @@ pub fn App() -> Element {
             div {
                 class: "content-area",
 
-                #[cfg(not(target_arch = "wasm32"))]
-                if file_tree_visible() {
-                    div {
-                        class: "file-tree",
-                        FileTree {
-                            root_path: root_directory,
-                            selected_file,
-                            on_file_selected: handle_file_selected,
-                        }
-                    }
+                {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    { native_file_tree_panel(file_tree_visible, root_directory, selected_file, handle_file_selected) }
+                    #[cfg(target_arch = "wasm32")]
+                    { rsx! {} }
                 }
 
                 div {
@@ -415,9 +449,7 @@ pub fn App() -> Element {
                             "🌍 Environment"
                         }
                         span { style: "margin-left: auto; font-size: 11px; color: #8087a2;",
-                            "Ctrl+T=cycle Ctrl+S=save"
-                            #[cfg(not(target_arch = "wasm32"))]
-                            " Ctrl+B=tree"
+                            { shortcuts_hint }
                         }
                     }
 
@@ -486,8 +518,9 @@ pub fn App() -> Element {
             // BOTTOM BAR
             div {
                 class: "bottom-bar",
-                #[cfg(not(target_arch = "wasm32"))]
-                span { "📁 {root_directory().display()}" }
+                if cfg!(not(target_arch = "wasm32")) {
+                    span { "📁 {root_directory().display()}" }
+                }
                 if let Some(ref f) = selected_file() {
                     span { "| 📄 {f.file_name().and_then(|n| n.to_str()).unwrap_or(\"\")}" }
                 }
