@@ -26,35 +26,28 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 httprunner-core = { path = "../core" }
-eframe = { workspace = true, default-features = false, features = [
-    "accesskit",
-    "default_fonts",
-    "glow",
-    "wayland",
-    "x11",
-] }
-egui = { workspace = true }
-env_logger = { workspace = true }
 anyhow = { workspace = true }
+dirs = "6.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }
-dirs = "6.0"
-egui_code_editor = "0.2.20"
+tokio = { workspace = true }
 
-# Platform-specific dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dioxus = { version = "0.7.3", features = ["desktop"] }
+dioxus-desktop = "0.7.3"
+env_logger = { workspace = true }
+image = { version = "0.25.8", default-features = false, features = ["png"] }
 rfd = { workspace = true }
 walkdir = { workspace = true }
 
-# Web-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3", features = ["console", "HtmlCanvasElement", "Storage", "Window"] }
-web-time = "1.1"
+dioxus = { version = "0.7.3", features = ["web"] }
 console_error_panic_hook = "0.1"
-tracing-wasm = "0.2"
 getrandom = { version = "0.2", features = ["js"] }
+tracing-wasm = "0.2"
 wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["Storage", "Window"] }
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"
