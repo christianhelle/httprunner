@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-/// Represents a request being edited
+/// Represents a request being edited.
 #[derive(Clone, Debug)]
 pub struct EditableRequest {
     pub name: String,
@@ -37,13 +37,16 @@ impl From<&httprunner_core::HttpRequest> for EditableRequest {
             headers: request
                 .headers
                 .iter()
-                .map(|h| (h.name.clone(), h.value.clone()))
+                .map(|header| (header.name.clone(), header.value.clone()))
                 .collect(),
             body: request.body.clone().unwrap_or_default(),
-            timeout: request.timeout.map(|t| t.to_string()).unwrap_or_default(),
+            timeout: request
+                .timeout
+                .map(|timeout| timeout.to_string())
+                .unwrap_or_default(),
             connection_timeout: request
                 .connection_timeout
-                .map(|t| t.to_string())
+                .map(|timeout| timeout.to_string())
                 .unwrap_or_default(),
             depends_on: request.depends_on.clone().unwrap_or_default(),
         }
@@ -90,8 +93,6 @@ impl EditableRequest {
         }
     }
 
-    /// Parse timeout value. Returns None if empty or invalid.
-    /// This is acceptable for GUI usage - invalid values are simply ignored.
     fn parse_timeout(value: &str) -> Option<u64> {
         if value.is_empty() {
             None
@@ -102,11 +103,11 @@ impl EditableRequest {
 }
 
 pub struct RequestEditor {
-    requests: Vec<httprunner_core::HttpRequest>,
-    editing_index: Option<usize>,
-    editing_request: Option<EditableRequest>,
-    current_file: Option<PathBuf>,
-    has_changes: bool,
+    pub(crate) requests: Vec<httprunner_core::HttpRequest>,
+    pub(crate) editing_index: Option<usize>,
+    pub(crate) editing_request: Option<EditableRequest>,
+    pub(crate) current_file: Option<PathBuf>,
+    pub(crate) has_changes: bool,
 }
 
 impl RequestEditor {
@@ -122,14 +123,22 @@ impl RequestEditor {
 
     pub fn load_file(&mut self, path: &Path) {
         if let Some(path_str) = path.to_str() {
-            let parsed_requests =
+            self.requests =
                 httprunner_core::parser::parse_http_file(path_str, None).unwrap_or_default();
-            self.requests = parsed_requests;
             self.current_file = Some(path.to_path_buf());
             self.editing_index = None;
             self.editing_request = None;
             self.has_changes = false;
         }
+    }
+
+    pub fn load_content(&mut self, content: &str) {
+        self.requests =
+            httprunner_core::parser::parse_http_content(content, None).unwrap_or_default();
+        self.current_file = None;
+        self.editing_index = None;
+        self.editing_request = None;
+        self.has_changes = false;
     }
 
     pub fn start_editing(&mut self, index: usize) {
@@ -167,6 +176,7 @@ impl RequestEditor {
             self.editing_index = None;
             return true;
         }
+
         false
     }
 
@@ -175,7 +185,6 @@ impl RequestEditor {
             self.requests.remove(index);
             self.has_changes = true;
 
-            // If we were editing this request, cancel the edit
             if self.editing_index == Some(index) {
                 self.editing_request = None;
                 self.editing_index = None;
@@ -199,6 +208,18 @@ impl RequestEditor {
 
     pub fn get_editing_request_mut(&mut self) -> Option<&mut EditableRequest> {
         self.editing_request.as_mut()
+    }
+
+    pub fn get_editing_request(&self) -> Option<&EditableRequest> {
+        self.editing_request.as_ref()
+    }
+
+    pub fn current_file(&self) -> Option<&PathBuf> {
+        self.current_file.as_ref()
+    }
+
+    pub fn mark_saved(&mut self) {
+        self.has_changes = false;
     }
 
     pub fn is_editing(&self) -> bool {
