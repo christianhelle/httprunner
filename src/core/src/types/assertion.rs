@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Assertion {
     pub assertion_type: AssertionType,
     pub expected_value: String,
@@ -13,7 +13,7 @@ pub enum AssertionType {
     Headers,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AssertionResult {
     pub assertion: Assertion,
     pub passed: bool,

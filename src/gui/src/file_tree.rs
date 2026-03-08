@@ -1,196 +1,152 @@
+use dioxus::prelude::*;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
-#[cfg(not(target_arch = "wasm32"))]
-use std::thread;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
 #[cfg(not(target_arch = "wasm32"))]
 use walkdir::WalkDir;
 
-pub struct FileTree {
-    root_path: PathBuf,
-    http_files: Arc<Mutex<Vec<PathBuf>>>,
-    expanded_dirs: std::collections::HashSet<PathBuf>,
-    is_discovering: Arc<Mutex<bool>>,
-    discovered_count: Arc<Mutex<usize>>,
-}
+#[component]
+pub fn FileTree(
+    root_path: Signal<PathBuf>,
+    selected_file: Signal<Option<PathBuf>>,
+    on_file_selected: EventHandler<PathBuf>,
+) -> Element {
+    let mut http_files: Signal<Vec<PathBuf>> = use_signal(Vec::new);
+    let mut is_discovering: Signal<bool> = use_signal(|| true);
+    let mut cancel: Signal<Arc<AtomicBool>> = use_signal(|| Arc::new(AtomicBool::new(false)));
 
-impl FileTree {
-    pub fn new(root_path: PathBuf) -> Self {
-        let http_files = Arc::new(Mutex::new(Vec::new()));
-        let is_discovering = Arc::new(Mutex::new(true));
-        let discovered_count = Arc::new(Mutex::new(0usize));
+    use_effect(move || {
+        let root = root_path().clone();
+
+        // Cancel previous discovery
+        cancel().store(true, Ordering::SeqCst);
+        let new_cancel = Arc::new(AtomicBool::new(false));
+        cancel.set(new_cancel.clone());
+
+        http_files.write().clear();
+        is_discovering.set(true);
 
         #[cfg(not(target_arch = "wasm32"))]
         {
-            // Clone for the background thread
-            let files_clone = Arc::clone(&http_files);
-            let discovering_clone = Arc::clone(&is_discovering);
-            let count_clone = Arc::clone(&discovered_count);
-            let path_clone = root_path.clone();
+            let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Option<PathBuf>>();
+            let c = new_cancel;
 
-            // Start async discovery in background thread
-            thread::spawn(move || {
-                let mut temp_files = Vec::new();
-
-                for entry in WalkDir::new(&path_clone)
+            std::thread::spawn(move || {
+                for entry in WalkDir::new(&root)
                     .follow_links(true)
                     .into_iter()
                     .filter_map(|e| e.ok())
                 {
+                    if c.load(Ordering::SeqCst) { return; }
                     if entry.file_type().is_file()
-                        && let Some(ext) = entry.path().extension()
-                        && ext == "http"
+                        && entry.path().extension().map(|e| e == "http").unwrap_or(false)
                     {
-                        let file_path = entry.path().to_path_buf();
-                        temp_files.push(file_path.clone());
-
-                        // Update shared state incrementally
-                        if let Ok(mut files) = files_clone.lock() {
-                            files.push(file_path);
-                            files.sort();
-                        }
-                        if let Ok(mut count) = count_clone.lock() {
-                            *count = temp_files.len();
-                        }
+                        tx.send(Some(entry.path().to_path_buf())).ok();
                     }
                 }
+                tx.send(None).ok();
+            });
 
-                // Mark discovery as complete
-                if let Ok(mut discovering) = discovering_clone.lock() {
-                    *discovering = false;
+            spawn(async move {
+                while let Some(msg) = rx.recv().await {
+                    match msg {
+                        Some(path) => {
+                            let mut w = http_files.write();
+                            w.push(path);
+                            w.sort();
+                        }
+                        None => break,
+                    }
                 }
+                is_discovering.set(false);
             });
         }
 
         #[cfg(target_arch = "wasm32")]
         {
-            // In WASM, there's no real filesystem, so immediately mark as not discovering
-            if let Ok(mut discovering) = is_discovering.lock() {
-                *discovering = false;
+            is_discovering.set(false);
+        }
+    });
+
+    let files = http_files();
+    let discovering = is_discovering();
+    let root = root_path().clone();
+
+    // Group files by directory
+    let mut dir_map: BTreeMap<Option<PathBuf>, Vec<PathBuf>> = BTreeMap::new();
+    for f in &files {
+        let parent = f.parent().map(|p| p.to_path_buf());
+        dir_map.entry(parent).or_default().push(f.clone());
+    }
+
+    rsx! {
+        div {
+            p {
+                class: "section-title",
+                style: "margin-bottom: 6px;",
+                "HTTP Files"
             }
-        }
+            hr {}
 
-        Self {
-            root_path,
-            http_files,
-            expanded_dirs: std::collections::HashSet::new(),
-            is_discovering,
-            discovered_count,
-        }
-    }
-
-    pub fn is_discovering(&self) -> bool {
-        self.is_discovering
-            .lock()
-            .map(|guard| *guard)
-            .unwrap_or(false)
-    }
-
-    pub fn discovered_count(&self) -> usize {
-        self.discovered_count
-            .lock()
-            .map(|guard| *guard)
-            .unwrap_or(0)
-    }
-
-    pub fn show(&mut self, ui: &mut egui::Ui) -> Option<PathBuf> {
-        let mut selected_file = None;
-
-        // Show discovery status
-        if self.is_discovering() {
-            ui.horizontal(|ui| {
-                ui.spinner();
-                ui.label(format!(
-                    "Discovering .http files... ({})",
-                    self.discovered_count()
-                ));
-            });
-            ui.separator();
-            // Request repaint to keep updating during discovery
-            ui.ctx().request_repaint();
-        }
-
-        // Get a snapshot of current files
-        let http_files = self
-            .http_files
-            .lock()
-            .map(|guard| guard.clone())
-            .unwrap_or_default();
-
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            // Group files by directory
-            let mut dir_files: std::collections::BTreeMap<Option<PathBuf>, Vec<PathBuf>> =
-                std::collections::BTreeMap::new();
-
-            for file in &http_files {
-                let parent = file.parent().map(|p| p.to_path_buf());
-                dir_files.entry(parent).or_default().push(file.clone());
+            if discovering {
+                div {
+                    class: "flex items-center gap-8",
+                    style: "padding: 6px 0; font-size: 12px; color: #8087a2;",
+                    span { class: "spinner" }
+                    span { "Discovering... ({files.len()} found)" }
+                }
             }
 
-            // Show files organized by directory
-            for (dir, files) in dir_files {
-                if let Some(dir_path) = dir {
-                    let dir_name = dir_path
-                        .strip_prefix(&self.root_path)
-                        .unwrap_or(&dir_path)
-                        .display()
-                        .to_string();
-
-                    let is_expanded = self.expanded_dirs.contains(&dir_path);
-                    let header_text = if is_expanded {
-                        format!("📂 {}", dir_name)
+            for (dir, dir_files) in dir_map.iter() {
+                {
+                    let dir_label = if let Some(dp) = &dir {
+                        dp.strip_prefix(&root)
+                            .unwrap_or(dp.as_path())
+                            .display()
+                            .to_string()
                     } else {
-                        format!("📁 {}", dir_name)
+                        root.display().to_string()
                     };
 
-                    let header = egui::CollapsingHeader::new(header_text)
-                        .default_open(true)
-                        .show(ui, |ui| {
-                            for file in &files {
-                                let file_name = file
-                                    .file_name()
-                                    .and_then(|n| n.to_str())
-                                    .unwrap_or("unknown");
-
-                                if ui
-                                    .selectable_label(false, format!("📄 {}", file_name))
-                                    .clicked()
+                    rsx! {
+                        div {
+                            key: "{dir_label}",
+                            div {
+                                class: "dir-header",
+                                span { "📂 {dir_label}" }
+                            }
+                            for f in dir_files.iter() {
                                 {
-                                    selected_file = Some(file.clone());
+                                    let fp = f.clone();
+                                    let file_name = fp.file_name()
+                                        .and_then(|n| n.to_str())
+                                        .unwrap_or("?")
+                                        .to_string();
+                                    let is_selected = selected_file().as_ref() == Some(&fp);
+                                    let fc = fp.clone();
+                                    rsx! {
+                                        div {
+                                            key: "{file_name}",
+                                            class: if is_selected { "file-item selected" } else { "file-item" },
+                                            onclick: move |_| on_file_selected.call(fc.clone()),
+                                            "📄 {file_name}"
+                                        }
+                                    }
                                 }
                             }
-                        });
-
-                    if header.header_response.clicked() {
-                        if is_expanded {
-                            self.expanded_dirs.remove(&dir_path);
-                        } else {
-                            self.expanded_dirs.insert(dir_path.clone());
-                        }
-                    }
-                } else {
-                    // Files in root directory
-                    for file in &files {
-                        let file_name = file
-                            .file_name()
-                            .and_then(|n| n.to_str())
-                            .unwrap_or("unknown");
-
-                        if ui
-                            .selectable_label(false, format!("📄 {}", file_name))
-                            .clicked()
-                        {
-                            selected_file = Some(file.clone());
                         }
                     }
                 }
             }
 
-            if http_files.is_empty() && !self.is_discovering() {
-                ui.label("No .http files found in this directory.");
-                ui.label("Use File -> Open Directory to choose a different folder.");
+            if files.is_empty() && !discovering {
+                p {
+                    style: "color: #8087a2; font-size: 12px; padding: 8px 0;",
+                    "No .http files found in this directory."
+                }
             }
-        });
-
-        selected_file
+        }
     }
 }

@@ -1,46 +1,29 @@
+use dioxus::prelude::*;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-/// Environment editor component for viewing and editing http-client.env.json files
-pub struct EnvironmentEditor {
-    /// The full environment config: env_name -> { var_name -> var_value }
-    config: HashMap<String, HashMap<String, String>>,
-    /// Path to the environment file (None on WASM)
-    env_file_path: Option<PathBuf>,
-    /// Whether config has unsaved changes
-    has_changes: bool,
-    /// Currently selected environment name for editing
-    editing_environment: Option<String>,
-    /// New environment name input
-    new_env_name: String,
-    /// New variable name input
-    new_var_name: String,
-    /// New variable value input
-    new_var_value: String,
-    /// Status message to display
-    status_message: Option<String>,
-    /// Pending delete environment name (for confirmation)
-    pending_delete_env: Option<String>,
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct EnvEditorState {
+    pub config: HashMap<String, HashMap<String, String>>,
+    pub env_file_path: Option<PathBuf>,
+    pub has_changes: bool,
+    pub editing_env: Option<String>,
+    pub new_env_name: String,
+    pub new_var_name: String,
+    pub new_var_value: String,
+    pub status_message: Option<String>,
+    pub pending_delete_env: Option<String>,
 }
 
-impl EnvironmentEditor {
-    pub fn new() -> Self {
-        Self {
-            config: HashMap::new(),
-            env_file_path: None,
-            has_changes: false,
-            editing_environment: None,
-            new_env_name: String::new(),
-            new_var_name: String::new(),
-            new_var_value: String::new(),
-            status_message: None,
-            pending_delete_env: None,
-        }
+impl EnvEditorState {
+    pub fn environment_names(&self) -> Vec<String> {
+        let mut names: Vec<String> = self.config.keys().cloned().collect();
+        names.sort();
+        names
     }
 
-    /// Load environments from the env file associated with the given .http file path
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn load_for_file(&mut self, http_file: &Path) {
+    pub fn load_for_file(&mut self, http_file: &std::path::Path) {
         if let Some(file_str) = http_file.to_str()
             && let Ok(Some(env_file)) =
                 httprunner_core::environment::find_environment_file(file_str)
@@ -48,30 +31,24 @@ impl EnvironmentEditor {
         {
             self.config = config;
             self.env_file_path = Some(env_file);
-            self.has_changes = false;
-            self.status_message = None;
         } else {
-            // No env file found — start fresh, will create on save
             self.config = HashMap::new();
-            // Default to creating env file next to the .http file
             if let Some(parent) = http_file.parent() {
                 self.env_file_path = Some(parent.join("http-client.env.json"));
             }
-            self.has_changes = false;
-            self.status_message = None;
         }
+        self.has_changes = false;
+        self.status_message = None;
     }
 
-    /// Load environments from localStorage on WASM
     #[cfg(target_arch = "wasm32")]
-    pub fn load_for_file(&mut self, _http_file: &Path) {
+    pub fn load_for_file(&mut self, _http_file: &std::path::Path) {
         self.load_from_local_storage();
     }
 
     #[cfg(target_arch = "wasm32")]
-    fn load_from_local_storage(&mut self) {
+    pub fn load_from_local_storage(&mut self) {
         use web_sys::window;
-
         if let Some(window) = window()
             && let Ok(Some(storage)) = window.local_storage()
             && let Ok(Some(json_str)) = storage.get_item("httprunner_env_config")
@@ -87,7 +64,6 @@ impl EnvironmentEditor {
         self.status_message = None;
     }
 
-    /// Save the current config
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self) {
         if let Some(ref path) = self.env_file_path {
@@ -106,7 +82,6 @@ impl EnvironmentEditor {
     #[cfg(target_arch = "wasm32")]
     pub fn save(&mut self) {
         use web_sys::window;
-
         if let Ok(json_str) = serde_json::to_string(&self.config) {
             if let Some(window) = window()
                 && let Ok(Some(storage)) = window.local_storage()
@@ -123,202 +98,280 @@ impl EnvironmentEditor {
             }
         }
     }
+}
 
-    /// Get environment names for use by the app (e.g. populating environment selector)
-    pub fn environment_names(&self) -> Vec<String> {
-        let mut names: Vec<String> = self.config.keys().cloned().collect();
-        names.sort();
-        names
-    }
+#[component]
+pub fn EnvironmentEditor(mut state: Signal<EnvEditorState>) -> Element {
+    rsx! {
+        div {
+            style: "display: flex; flex-direction: column; gap: 8px;",
+            h2 { "🌍 Environment Editor" }
 
-    /// Get the full config (for WASM env variable resolution)
-    pub fn get_config(&self) -> &HashMap<String, HashMap<String, String>> {
-        &self.config
-    }
-
-    /// Check if there are unsaved changes
-    pub fn has_changes(&self) -> bool {
-        self.has_changes
-    }
-
-    /// Display the environment editor UI
-    pub fn show(&mut self, ui: &mut egui::Ui) {
-        ui.heading("🌍 Environment Editor");
-        ui.separator();
-
-        // Show file path info
-        #[cfg(not(target_arch = "wasm32"))]
-        if let Some(ref path) = self.env_file_path {
-            ui.label(
-                egui::RichText::new(format!("File: {}", path.display()))
-                    .small()
-                    .color(egui::Color32::GRAY),
-            );
-        }
-
-        #[cfg(target_arch = "wasm32")]
-        ui.label(
-            egui::RichText::new("Stored in browser localStorage")
-                .small()
-                .color(egui::Color32::GRAY),
-        );
-
-        ui.separator();
-
-        // Status message
-        if let Some(ref msg) = self.status_message {
-            ui.colored_label(egui::Color32::from_rgb(100, 200, 100), msg);
-            ui.separator();
-        }
-
-        // Add new environment section
-        ui.horizontal(|ui| {
-            ui.label("New environment:");
-            ui.text_edit_singleline(&mut self.new_env_name);
-            if ui.button("➕ Add").clicked() && !self.new_env_name.trim().is_empty() {
-                let name = self.new_env_name.trim().to_string();
-                if !self.config.contains_key(&name) {
-                    self.config.insert(name.clone(), HashMap::new());
-                    self.editing_environment = Some(name);
-                    self.has_changes = true;
-                    self.status_message = None;
-                }
-                self.new_env_name.clear();
-            }
-        });
-
-        ui.separator();
-
-        // Environment tabs / selector
-        let env_names = self.environment_names();
-
-        if env_names.is_empty() {
-            ui.label("No environments defined. Add one above.");
-            return;
-        }
-
-        // Environment selection buttons
-        ui.horizontal_wrapped(|ui| {
-            for env_name in &env_names {
-                let is_selected = self.editing_environment.as_ref() == Some(env_name);
-                if ui.selectable_label(is_selected, env_name).clicked() {
-                    self.editing_environment = Some(env_name.clone());
-                    self.pending_delete_env = None;
+            // File path info
+            {
+                let s = state();
+                if let Some(ref path) = s.env_file_path {
+                    rsx! {
+                        p { style: "font-size: 12px; color: #8087a2;", "File: {path.display()}" }
+                    }
+                } else {
+                    rsx! {
+                        p { style: "font-size: 12px; color: #8087a2;", "Stored in browser localStorage" }
+                    }
                 }
             }
-        });
 
-        ui.separator();
+            // Status message
+            if let Some(ref msg) = state().status_message {
+                p { style: "color: #a6da95;", "{msg}" }
+            }
 
-        // Show variables for the selected environment
-        if let Some(ref editing_env) = self.editing_environment.clone()
-            && let Some(vars) = self.config.get(editing_env).cloned()
-        {
-            ui.horizontal(|ui| {
-                ui.heading(egui::RichText::new(format!("📋 {}", editing_env)).size(16.0));
+            hr {}
 
-                // Delete environment button
-                if self.pending_delete_env.as_ref() == Some(editing_env) {
-                    ui.colored_label(egui::Color32::RED, "Delete this environment?");
-                    if ui.button("Yes").clicked() {
-                        self.config.remove(editing_env);
-                        self.editing_environment = None;
-                        self.pending_delete_env = None;
-                        self.has_changes = true;
-                        return;
-                    }
-                    if ui.button("No").clicked() {
-                        self.pending_delete_env = None;
-                    }
-                } else if ui.button("🗑 Delete").clicked() {
-                    self.pending_delete_env = Some(editing_env.clone());
-                }
-            });
-
-            ui.separator();
-
-            // Variable table
-            let mut vars_to_remove: Vec<String> = Vec::new();
-            let mut vars_to_update: Vec<(String, String)> = Vec::new();
-
-            let mut sorted_vars: Vec<(String, String)> = vars.into_iter().collect();
-            sorted_vars.sort_by(|a, b| a.0.cmp(&b.0));
-
-            egui::Grid::new("env_vars_grid")
-                .striped(true)
-                .num_columns(3)
-                .min_col_width(300.0)
-                .show(ui, |ui| {
-                    ui.strong("Variable");
-                    ui.strong("Value");
-                    ui.strong("");
-                    ui.end_row();
-
-                    for (var_name, var_value) in &sorted_vars {
-                        ui.label(var_name);
-
-                        let mut value = var_value.clone();
-                        let response =
-                            ui.add(egui::TextEdit::singleline(&mut value).desired_width(300.0));
-                        if response.changed() {
-                            vars_to_update.push((var_name.clone(), value));
+            // Add new environment
+            div {
+                class: "flex items-center gap-8",
+                label { style: "color: #8087a2;", "New environment:" }
+                input {
+                    r#type: "text",
+                    style: "flex: 1;",
+                    placeholder: "Environment name",
+                    value: "{state().new_env_name}",
+                    oninput: move |e| state.write().new_env_name = e.value(),
+                    onkeydown: move |e| {
+                        if e.key().to_string() == "Enter" {
+                            let name = state().new_env_name.trim().to_string();
+                            if !name.is_empty() && !state().config.contains_key(&name) {
+                                let mut s = state.write();
+                                s.config.insert(name.clone(), HashMap::new());
+                                s.editing_env = Some(name);
+                                s.has_changes = true;
+                                s.status_message = None;
+                                s.new_env_name.clear();
+                            }
                         }
-
-                        if ui.button("🗑").clicked() {
-                            vars_to_remove.push(var_name.clone());
+                    },
+                }
+                button {
+                    onclick: move |_| {
+                        let name = state().new_env_name.trim().to_string();
+                        if !name.is_empty() && !state().config.contains_key(&name) {
+                            let mut s = state.write();
+                            s.config.insert(name.clone(), HashMap::new());
+                            s.editing_env = Some(name);
+                            s.has_changes = true;
+                            s.status_message = None;
+                            s.new_env_name.clear();
                         }
-                        ui.end_row();
-                    }
-                });
-
-            // Apply updates
-            if let Some(env_vars) = self.config.get_mut(editing_env) {
-                for (name, value) in vars_to_update {
-                    env_vars.insert(name, value);
-                    self.has_changes = true;
-                    self.status_message = None;
-                }
-                for name in vars_to_remove {
-                    env_vars.remove(&name);
-                    self.has_changes = true;
-                    self.status_message = None;
+                    },
+                    "➕ Add"
                 }
             }
 
-            ui.separator();
-
-            // Add new variable
-            ui.horizontal(|ui| {
-                ui.label("Name:");
-                ui.text_edit_singleline(&mut self.new_var_name);
-                ui.label("Value:");
-                ui.text_edit_singleline(&mut self.new_var_value);
-                if ui.button("➕ Add Variable").clicked() && !self.new_var_name.trim().is_empty() {
-                    if let Some(env_vars) = self.config.get_mut(editing_env) {
-                        env_vars.insert(
-                            self.new_var_name.trim().to_string(),
-                            self.new_var_value.clone(),
-                        );
-                        self.has_changes = true;
-                        self.status_message = None;
+            // Environment tabs
+            {
+                let env_names = state().environment_names();
+                if env_names.is_empty() {
+                    rsx! { p { style: "color: #8087a2;", "No environments defined. Add one above." } }
+                } else {
+                    rsx! {
+                        div {
+                            class: "env-tabs",
+                            for env_name in env_names.iter() {
+                                {
+                                    let name = env_name.clone();
+                                    let nc = name.clone();
+                                    let is_active = state().editing_env.as_deref() == Some(&name);
+                                    rsx! {
+                                        span {
+                                            key: "{name}",
+                                            class: if is_active { "env-tab active" } else { "env-tab" },
+                                            onclick: move |_| {
+                                                state.write().editing_env = Some(nc.clone());
+                                                state.write().pending_delete_env = None;
+                                            },
+                                            "{name}"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    self.new_var_name.clear();
-                    self.new_var_value.clear();
                 }
-            });
+            }
+
+            // Variables for selected environment
+            {
+                let editing = state().editing_env.clone();
+                if let Some(ref env_name) = editing {
+                    let vars: Vec<(String, String)> = {
+                        let mut v: Vec<_> = state()
+                            .config
+                            .get(env_name)
+                            .cloned()
+                            .unwrap_or_default()
+                            .into_iter()
+                            .collect();
+                        v.sort_by(|a, b| a.0.cmp(&b.0));
+                        v
+                    };
+                    let env_for_delete = env_name.clone();
+                    let env_for_new = env_name.clone();
+
+                    rsx! {
+                        div {
+                            // Header with delete button
+                            div {
+                                class: "flex items-center gap-8",
+                                h3 { "📋 {env_name}" }
+                                if state().pending_delete_env.as_deref() == Some(env_name) {
+                                    span { style: "color: #ed8796;", "Delete this environment?" }
+                                    button {
+                                        style: "background: #ed8796; color: #24273a;",
+                                        onclick: move |_| {
+                                            let name = env_for_delete.clone();
+                                            let mut s = state.write();
+                                            s.config.remove(&name);
+                                            s.editing_env = None;
+                                            s.pending_delete_env = None;
+                                            s.has_changes = true;
+                                        },
+                                        "Yes"
+                                    }
+                                    button {
+                                        onclick: move |_| state.write().pending_delete_env = None,
+                                        "No"
+                                    }
+                                } else {
+                                    button {
+                                        style: "margin-left: auto;",
+                                        onclick: move |_| {
+                                            state.write().pending_delete_env =
+                                                Some(env_for_delete.clone());
+                                        },
+                                        "🗑 Delete"
+                                    }
+                                }
+                            }
+
+                            hr {}
+
+                            // Variable table
+                            table {
+                                class: "var-table",
+                                thead {
+                                    tr {
+                                        th { "Variable" }
+                                        th { "Value" }
+                                        th { "" }
+                                    }
+                                }
+                                tbody {
+                                    for (var_name, var_value) in vars.iter() {
+                                        {
+                                            let vn = var_name.clone();
+                                            let vn2 = var_name.clone();
+                                            let vn3 = var_name.clone();
+                                            let env_ref = env_name.clone();
+                                            let env_ref2 = env_name.clone();
+                                            let vv = var_value.clone();
+                                            rsx! {
+                                                tr {
+                                                    key: "{var_name}",
+                                                    td { "{vn}" }
+                                                    td {
+                                                        input {
+                                                            r#type: "text",
+                                                            style: "width: 100%;",
+                                                            value: "{vv}",
+                                                            oninput: move |e| {
+                                                                let mut s = state.write();
+                                                                if let Some(env_vars) = s.config.get_mut(&env_ref) {
+                                                                    env_vars.insert(vn2.clone(), e.value());
+                                                                    s.has_changes = true;
+                                                                    s.status_message = None;
+                                                                }
+                                                            },
+                                                        }
+                                                    }
+                                                    td {
+                                                        button {
+                                                            onclick: move |_| {
+                                                                let mut s = state.write();
+                                                                if let Some(env_vars) = s.config.get_mut(&env_ref2) {
+                                                                    env_vars.remove(&vn3);
+                                                                    s.has_changes = true;
+                                                                    s.status_message = None;
+                                                                }
+                                                            },
+                                                            "🗑"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Add new variable row
+                            div {
+                                class: "flex items-center gap-8",
+                                style: "margin-top: 8px;",
+                                label { style: "color: #8087a2;", "Name:" }
+                                input {
+                                    r#type: "text",
+                                    style: "flex: 1;",
+                                    placeholder: "variable_name",
+                                    value: "{state().new_var_name}",
+                                    oninput: move |e| state.write().new_var_name = e.value(),
+                                }
+                                label { style: "color: #8087a2;", "Value:" }
+                                input {
+                                    r#type: "text",
+                                    style: "flex: 1;",
+                                    placeholder: "value",
+                                    value: "{state().new_var_value}",
+                                    oninput: move |e| state.write().new_var_value = e.value(),
+                                }
+                                button {
+                                    onclick: move |_| {
+                                        let vname = state().new_var_name.trim().to_string();
+                                        if !vname.is_empty() {
+                                            let vval = state().new_var_value.clone();
+                                            let mut s = state.write();
+                                            if let Some(env_vars) = s.config.get_mut(&env_for_new) {
+                                                env_vars.insert(vname, vval);
+                                                s.has_changes = true;
+                                                s.status_message = None;
+                                            }
+                                            s.new_var_name.clear();
+                                            s.new_var_value.clear();
+                                        }
+                                    },
+                                    "➕ Add Variable"
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    rsx! { div {} }
+                }
+            }
+
+            hr {}
+
+            // Save button
+            div {
+                class: "flex items-center gap-8",
+                button {
+                    onclick: move |_| state.write().save(),
+                    "💾 Save"
+                }
+                if state().has_changes {
+                    span { class: "warning", "● Unsaved changes" }
+                }
+            }
         }
-
-        ui.separator();
-
-        // Save button and change indicator
-        ui.horizontal(|ui| {
-            if ui.button("💾 Save").clicked() {
-                self.save();
-            }
-
-            if self.has_changes {
-                ui.colored_label(egui::Color32::from_rgb(255, 165, 0), "● Unsaved changes");
-            }
-        });
     }
 }

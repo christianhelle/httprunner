@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 
-/// Represents a request being edited
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EditableRequest {
     pub name: String,
     pub method: String,
@@ -101,6 +100,7 @@ impl EditableRequest {
     }
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct RequestEditor {
     requests: Vec<httprunner_core::HttpRequest>,
     editing_index: Option<usize>,
@@ -195,6 +195,10 @@ impl RequestEditor {
 
     pub fn get_requests(&self) -> &[httprunner_core::HttpRequest] {
         &self.requests
+    }
+
+    pub fn get_editing_request(&self) -> Option<&EditableRequest> {
+        self.editing_request.as_ref()
     }
 
     pub fn get_editing_request_mut(&mut self) -> Option<&mut EditableRequest> {
