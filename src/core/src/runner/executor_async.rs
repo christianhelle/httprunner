@@ -4,6 +4,7 @@ use super::response_processor::{
 };
 use crate::assertions;
 use crate::types::{HttpRequest, HttpResult};
+use anyhow::Result;
 use reqwest::Client;
 use std::collections::HashMap;
 
@@ -68,7 +69,7 @@ pub async fn execute_http_request_async(
     ))
 }
 
-fn build_client_async(_request: &HttpRequest, insecure: bool) -> Result<Client> {
+fn build_client_async(request: &HttpRequest, insecure: bool) -> Result<Client> {
     #[allow(unused_mut)]
     let mut client_builder = Client::builder();
 
@@ -89,7 +90,7 @@ fn build_client_async(_request: &HttpRequest, insecure: bool) -> Result<Client> 
     }
 
     #[cfg(target_arch = "wasm32")]
-    let _ = insecure;
+    let _ = (request, insecure);
 
     Ok(client_builder.build()?)
 }

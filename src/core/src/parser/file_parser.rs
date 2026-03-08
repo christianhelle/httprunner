@@ -22,7 +22,13 @@ pub fn parse_http_content(
     content: &str,
     _environment_name: Option<&str>,
 ) -> Result<Vec<HttpRequest>> {
-    let env_variables = Vec::new();
+    parse_http_content_with_variables(content, Vec::new())
+}
+
+pub fn parse_http_content_with_variables(
+    content: &str,
+    env_variables: Vec<crate::types::Variable>,
+) -> Result<Vec<HttpRequest>> {
     parse_http_content_with_vars(content, env_variables)
 }
 

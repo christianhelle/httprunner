@@ -16,7 +16,6 @@ pub mod variables;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod export;
 
-#[cfg(not(target_arch = "wasm32"))]
 pub mod processor;
 
 pub use types::{HttpRequest, HttpResult};
