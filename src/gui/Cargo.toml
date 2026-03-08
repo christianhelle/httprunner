@@ -26,35 +26,23 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 httprunner-core = { path = "../core" }
-eframe = { workspace = true, default-features = false, features = [
-    "accesskit",
-    "default_fonts",
-    "glow",
-    "wayland",
-    "x11",
-] }
-egui = { workspace = true }
 env_logger = { workspace = true }
 anyhow = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }
 dirs = "6.0"
-egui_code_editor = "0.2.20"
 
-# Platform-specific dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dioxus = { version = "0.7", features = ["desktop"] }
 rfd = { workspace = true }
 walkdir = { workspace = true }
+tokio = { workspace = true }
 
-# Web-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3", features = ["console", "HtmlCanvasElement", "Storage", "Window"] }
-web-time = "1.1"
-console_error_panic_hook = "0.1"
-tracing-wasm = "0.2"
-getrandom = { version = "0.2", features = ["js"] }
+dioxus = { version = "0.7", features = ["web"] }
 wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["console", "Storage", "Window"] }
+console_error_panic_hook = "0.1"
 
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"

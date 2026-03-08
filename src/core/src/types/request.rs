@@ -21,7 +21,7 @@ pub struct HttpRequest {
     pub post_delay_ms: Option<u64>,      // Delay after executing request (for @post-delay)
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Header {
     pub name: String,
     pub value: String,

@@ -1,834 +1,561 @@
-use super::{
-    environment_editor::EnvironmentEditor,
-    file_tree::FileTree,
-    request_view::{RequestView, RequestViewAction},
-    results_view::ResultsView,
+use crate::{
+    environment_editor::{EnvironmentEditor, EnvEditorState},
+    request_view::{RequestView, RequestViewAction, RequestViewState},
+    results_view::{ExecutionResult, ResultsView},
     state::AppState,
     text_editor::TextEditor,
 };
 #[cfg(not(target_arch = "wasm32"))]
-use httprunner_core::telemetry;
-use std::path::{Path, PathBuf};
+use crate::file_tree::FileTree;
+use dioxus::prelude::*;
+use std::path::PathBuf;
 
-enum KeyboardAction {
-    None,
-    RunAllRequests,
-    OpenFolder,
-    Quit,
-    SwitchEnvironment,
-    ToggleView,
-    ToggleFileTree,
-    ToggleResultsView,
-    SaveFile,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ViewMode {
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum ViewMode {
     TextEditor,
     RequestDetails,
     EnvironmentEditor,
 }
 
-pub struct HttpRunnerApp {
-    file_tree: FileTree,
-    request_view: RequestView,
-    text_editor: TextEditor,
-    results_view: ResultsView,
-    environment_editor: EnvironmentEditor,
-    selected_file: Option<PathBuf>,
-    selected_request_index: Option<usize>,
-    environments: Vec<String>,
-    selected_environment: Option<String>,
-    root_directory: PathBuf,
-    font_size: f32,
-    environment_selector_open: bool,
-    last_saved_window_size: Option<(f32, f32)>,
-    view_mode: ViewMode,
-    file_tree_visible: bool,
-    telemetry_enabled: bool,
-    delay_ms: u64,
-    /// Ratio of editor panel height to adjusted total height
-    /// (`total_height = ui.available_height() - 40.0`), after reserving space
-    /// for fixed UI chrome (0.0-1.0)
-    editor_panel_ratio: f32,
-}
+const APP_CSS: &str = r#"
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 14px; background: #24273a; color: #cad3f5; }
+.app { display: flex; flex-direction: column; height: 100vh; user-select: none; outline: none; }
+.top-bar { display: flex; align-items: center; padding: 4px 8px; gap: 6px; background: #1e2030; border-bottom: 1px solid #363a4f; flex-shrink: 0; min-height: 36px; }
+.content-area { display: flex; flex: 1; overflow: hidden; }
+.file-tree { width: 240px; border-right: 1px solid #363a4f; overflow-y: auto; padding: 6px; background: #1e2030; flex-shrink: 0; }
+.main-panel { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.view-tabs { display: flex; align-items: center; padding: 4px 8px; gap: 4px; background: #1e2030; border-bottom: 1px solid #363a4f; flex-shrink: 0; }
+.editor-section { overflow: auto; flex-shrink: 0; padding: 8px; }
+.splitter { height: 5px; background: #363a4f; cursor: row-resize; flex-shrink: 0; }
+.splitter:hover { background: #8aadf4; }
+.results-section { flex: 1; overflow-y: auto; padding: 8px; }
+.bottom-bar { display: flex; align-items: center; padding: 2px 8px; gap: 8px; background: #1e2030; border-top: 1px solid #363a4f; font-size: 12px; color: #8087a2; flex-shrink: 0; }
+button { padding: 4px 10px; background: #363a4f; color: #cad3f5; border: 1px solid #494d64; border-radius: 4px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+button:hover { background: #494d64; }
+button.active { background: #8aadf4; color: #24273a; border-color: #8aadf4; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+input[type="text"], input[type="number"], textarea, select { background: #1e2030; color: #cad3f5; border: 1px solid #494d64; border-radius: 4px; padding: 4px 8px; font-family: inherit; font-size: 13px; outline: none; }
+input[type="text"]:focus, textarea:focus, select:focus { border-color: #8aadf4; }
+textarea { resize: none; font-family: 'Consolas', 'JetBrains Mono', monospace; width: 100%; }
+select { cursor: pointer; }
+.menu { position: relative; }
+.menu-popup { position: absolute; top: calc(100% + 2px); left: 0; background: #1e2030; border: 1px solid #494d64; border-radius: 6px; z-index: 1000; min-width: 220px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+.menu-item { display: block; width: 100%; padding: 6px 12px; cursor: pointer; text-align: left; background: none; border: none; color: #cad3f5; border-radius: 4px; font-size: 13px; }
+.menu-item:hover { background: #363a4f; }
+.menu-separator { height: 1px; background: #363a4f; margin: 4px 0; }
+.dir-header { cursor: pointer; padding: 3px 4px; display: flex; align-items: center; gap: 4px; border-radius: 4px; font-size: 13px; }
+.dir-header:hover { background: #363a4f; }
+.file-item { cursor: pointer; padding: 2px 4px 2px 20px; border-radius: 4px; font-size: 13px; }
+.file-item:hover { background: #363a4f; }
+.file-item.selected { background: #8aadf4; color: #24273a; }
+.result-card { padding: 8px 10px; margin: 4px 0; border-radius: 6px; border-left: 3px solid; }
+.result-success { border-left-color: #a6da95; background: rgba(166,218,149,0.08); }
+.result-failure { border-left-color: #ed8796; background: rgba(237,135,150,0.08); }
+.result-running { border-left-color: #8aadf4; background: rgba(138,173,244,0.08); }
+.success { color: #a6da95; }
+.failure { color: #ed8796; }
+.running { color: #8aadf4; }
+.warning { color: #eed49f; }
+pre, code, .mono { font-family: 'Consolas', 'JetBrains Mono', monospace; font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+.code-block { background: #1e2030; border: 1px solid #363a4f; border-radius: 4px; padding: 8px; max-height: 200px; overflow-y: auto; }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #363a4f; border-top-color: #8aadf4; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.form-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.form-row label { min-width: 80px; color: #8087a2; font-size: 13px; }
+.collapsible > .collapse-header { cursor: pointer; padding: 6px 8px; background: #2a2e44; border-radius: 4px; display: flex; align-items: center; gap: 4px; user-select: none; }
+.collapsible > .collapse-header:hover { background: #363a4f; }
+.collapse-content { padding: 4px 0 4px 12px; }
+.env-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.env-tab { padding: 3px 10px; border-radius: 4px; background: #363a4f; cursor: pointer; font-size: 13px; }
+.env-tab:hover { background: #494d64; }
+.env-tab.active { background: #8aadf4; color: #24273a; }
+.var-table { width: 100%; border-collapse: collapse; }
+.var-table th { text-align: left; padding: 4px 8px; border-bottom: 1px solid #363a4f; color: #8087a2; font-weight: 600; font-size: 12px; }
+.var-table td { padding: 4px 8px; border-bottom: 1px solid rgba(54,58,79,0.3); }
+h2 { font-size: 16px; font-weight: 600; color: #b7bdf8; margin: 4px 0; }
+h3 { font-size: 14px; font-weight: 600; color: #b7bdf8; margin: 4px 0; }
+.section-title { font-weight: 600; color: #b7bdf8; font-size: 14px; }
+hr { border: none; border-top: 1px solid #363a4f; margin: 6px 0; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.flex-wrap { flex-wrap: wrap; }
+.gap-8 { gap: 8px; }
+input[type="range"] { accent-color: #8aadf4; }
+"#;
 
-impl HttpRunnerApp {
-    const DEFAULT_FONT_SIZE: f32 = 14.0;
-    const MIN_FONT_SIZE: f32 = 8.0;
-    const MAX_FONT_SIZE: f32 = 32.0;
-    const FONT_SIZE_STEP: f32 = 1.0;
+// ─── Native-only helpers (compiled out entirely on WASM) ───────────────────
 
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let state = AppState::load();
-
-        let root_directory = state
-            .root_directory
-            .and_then(|p| if p.exists() { Some(p) } else { None })
-            .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
-
-        let font_size = state.font_size.unwrap_or(Self::DEFAULT_FONT_SIZE);
-
-        let file_tree_visible = state.file_tree_visible.unwrap_or(true);
-        let telemetry_enabled = state.telemetry_enabled.unwrap_or(true);
-        let delay_ms = state.delay_ms.unwrap_or(0);
-        let editor_panel_ratio = state.editor_panel_ratio.unwrap_or(0.5);
-
-        let mut app = Self {
-            file_tree: FileTree::new(root_directory.clone()),
-            request_view: RequestView::new(),
-            text_editor: TextEditor::new(),
-            results_view: ResultsView::new(),
-            environment_editor: EnvironmentEditor::new(),
-            selected_file: None,
-            selected_request_index: None,
-            environments: Vec::new(),
-            selected_environment: None,
-            root_directory,
-            font_size,
-            environment_selector_open: false,
-            last_saved_window_size: state.window_size,
-            view_mode: ViewMode::TextEditor, // Default to text editor for new files
-            file_tree_visible,
-            telemetry_enabled,
-            delay_ms,
-            editor_panel_ratio,
-        };
-
-        app.update_font_size(&cc.egui_ctx);
-
-        if let Some(last_results) = state.last_results {
-            app.results_view.restore_results(last_results);
-        }
-
-        app.results_view
-            .set_compact_mode(state.results_compact_mode.unwrap_or(true));
-
-        if let Some(saved_file) = state.selected_file
-            && saved_file.exists()
-        {
-            app.selected_file = Some(saved_file.clone());
-            app.load_environments(&saved_file);
-            app.request_view.load_file(&saved_file);
-            app.text_editor.load_file(&saved_file);
-
-            if let Some(saved_env) = state.selected_environment
-                && app.environments.contains(&saved_env)
-            {
-                app.selected_environment = Some(saved_env);
+#[cfg(not(target_arch = "wasm32"))]
+fn native_file_menu(
+    mut file_menu_open: Signal<bool>,
+    mut settings_menu_open: Signal<bool>,
+    mut root_directory: Signal<PathBuf>,
+    mut selected_file: Signal<Option<PathBuf>>,
+    do_save: impl Fn() + Clone + 'static,
+) -> Element {
+    let do_save2 = do_save.clone();
+    rsx! {
+        div {
+            class: "menu",
+            button {
+                onclick: move |_| { file_menu_open.set(!file_menu_open()); settings_menu_open.set(false); },
+                "File ▾"
             }
-        }
-
-        app
-    }
-
-    fn update_font_size(&mut self, ctx: &egui::Context) {
-        let mut style = (*ctx.style()).clone();
-
-        let base_size = self.font_size;
-        style.text_styles = [
-            (
-                egui::TextStyle::Small,
-                egui::FontId::proportional(base_size * 0.857),
-            ),
-            (egui::TextStyle::Body, egui::FontId::proportional(base_size)),
-            (
-                egui::TextStyle::Button,
-                egui::FontId::proportional(base_size),
-            ),
-            (
-                egui::TextStyle::Heading,
-                egui::FontId::proportional(base_size * 1.286),
-            ),
-            (
-                egui::TextStyle::Monospace,
-                egui::FontId::monospace(base_size),
-            ),
-        ]
-        .into();
-
-        ctx.set_style(style);
-    }
-
-    fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) -> KeyboardAction {
-        if ctx.input(|i| {
-            i.modifiers.ctrl && (i.key_pressed(egui::Key::Plus) || i.key_pressed(egui::Key::Equals))
-        }) {
-            self.font_size = (self.font_size + Self::FONT_SIZE_STEP).min(Self::MAX_FONT_SIZE);
-            self.update_font_size(ctx);
-            self.save_state();
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Minus)) {
-            self.font_size = (self.font_size - Self::FONT_SIZE_STEP).max(Self::MIN_FONT_SIZE);
-            self.update_font_size(ctx);
-            self.save_state();
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Num0)) {
-            self.font_size = Self::DEFAULT_FONT_SIZE;
-            self.update_font_size(ctx);
-            self.save_state();
-        }
-
-        if ctx.input(|i| i.key_pressed(egui::Key::F5)) {
-            return KeyboardAction::RunAllRequests;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::R)) {
-            return KeyboardAction::RunAllRequests;
-        }
-
-        #[cfg(not(target_arch = "wasm32"))]
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::O)) {
-            return KeyboardAction::OpenFolder;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Q)) {
-            return KeyboardAction::Quit;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::E)) {
-            return KeyboardAction::SwitchEnvironment;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::T)) {
-            return KeyboardAction::ToggleView;
-        }
-
-        #[cfg(not(target_arch = "wasm32"))]
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::B)) {
-            return KeyboardAction::ToggleFileTree;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::D)) {
-            return KeyboardAction::ToggleResultsView;
-        }
-
-        if ctx.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::S)) {
-            return KeyboardAction::SaveFile;
-        }
-
-        KeyboardAction::None
-    }
-
-    #[allow(unused_variables)]
-    fn show_top_panel(&mut self, ctx: &egui::Context) {
-        #[cfg(not(target_arch = "wasm32"))]
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            egui::MenuBar::new().ui(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Open Directory...").clicked() {
-                        if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                            self.root_directory = path.clone();
-                            self.file_tree = FileTree::new(path);
-                            self.selected_file = None;
-                            self.selected_request_index = None;
-                            self.save_state();
-                        }
-                        ui.close();
-                    }
-
-                    if ui.button("New .http File...").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
-                            .set_directory(&self.root_directory)
-                            .add_filter("HTTP Files", &["http"])
-                            .set_file_name("new.http")
-                            .save_file()
-                        {
-                            if let Err(e) = std::fs::write(
-                                &path,
-                                "### New Request\nGET https://httpbin.org/get\n",
-                            ) {
-                                eprintln!("Failed to create file: {}", e);
-                            } else {
-                                // Refresh file tree and select the new file
-                                self.file_tree = FileTree::new(self.root_directory.clone());
-                                self.selected_file = Some(path.clone());
-                                self.request_view.load_file(&path);
-                                self.text_editor.load_file(&path);
-                                // Switch to text editor view for new files
-                                self.view_mode = ViewMode::TextEditor;
-                                self.save_state();
+            if file_menu_open() {
+                div {
+                    class: "menu-popup",
+                    button {
+                        class: "menu-item",
+                        onclick: move |_| {
+                            file_menu_open.set(false);
+                            if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                root_directory.set(path);
+                                selected_file.set(None);
+                                do_save();
                             }
-                        }
-                        ui.close();
+                        },
+                        "📁 Open Directory..."
                     }
-
-                    ui.separator();
-
-                    if ui.button("Quit").clicked() {
-                        self.save_state();
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    div { class: "menu-separator" }
+                    button {
+                        class: "menu-item",
+                        onclick: move |_| { do_save2(); std::process::exit(0); },
+                        "⏻ Quit"
                     }
-                });
-
-                ui.menu_button("Settings", |ui| {
-                    let telemetry_text = if self.telemetry_enabled {
-                        "✓ Telemetry Enabled"
-                    } else {
-                        "  Telemetry Disabled"
-                    };
-
-                    if ui.button(telemetry_text).clicked() {
-                        self.telemetry_enabled = !self.telemetry_enabled;
-
-                        // Update the global telemetry state and persist
-                        #[cfg(not(target_arch = "wasm32"))]
-                        if let Err(e) = telemetry::set_enabled(self.telemetry_enabled) {
-                            eprintln!("Failed to save telemetry setting: {}", e);
-                        }
-
-                        self.save_state();
-                        ui.close();
-                    }
-
-                    ui.separator();
-
-                    ui.label("Request Delay (ms):");
-                    let mut delay_value = self.delay_ms as i32;
-                    if ui
-                        .add(egui::Slider::new(&mut delay_value, 0..=10000).suffix(" ms"))
-                        .changed()
-                    {
-                        self.delay_ms = delay_value.max(0) as u64;
-                        self.save_state();
-                    }
-
-                    ui.separator();
-
-                    ui.label(
-                        egui::RichText::new(
-                            "Telemetry helps improve the app.\nNo personal data is collected.",
-                        )
-                        .small()
-                        .color(egui::Color32::GRAY),
-                    );
-                });
-
-                ui.separator();
-
-                ui.label("Environment:");
-                let combo = egui::ComboBox::from_id_salt("env_selector")
-                    .selected_text(self.selected_environment.as_deref().unwrap_or("None"));
-
-                let previous_env = self.selected_environment.clone();
-                let response = combo.show_ui(ui, |ui| {
-                    ui.selectable_value(&mut self.selected_environment, None, "None");
-                    for env in &self.environments {
-                        let env_clone = Some(env.clone());
-                        ui.selectable_value(&mut self.selected_environment, env_clone, env);
-                    }
-                });
-
-                // Save state if environment changed
-                if previous_env != self.selected_environment {
-                    self.save_state();
                 }
-
-                // Track whether the combo box is open by checking if the popup is actually open
-                self.environment_selector_open = response.response.has_focus()
-                    || egui::containers::Popup::is_id_open(ui.ctx(), response.response.id);
-            });
-        });
-    }
-
-    fn show_bottom_panel(&self, ctx: &egui::Context) {
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    ui.label(format!(
-                        "Working Directory: {}",
-                        self.root_directory.display()
-                    ));
-                    ui.separator();
-                }
-                if let Some(file) = &self.selected_file {
-                    ui.label(format!("Selected: {}", file.display()));
-                }
-                ui.separator();
-                if let Ok(support_key) = httprunner_core::logging::get_support_key() {
-                    ui.label(format!("Support: {}", support_key.short_key));
-                }
-            });
-        });
-    }
-
-    fn load_environments(&mut self, file: &Path) {
-        // Load environment editor
-        self.environment_editor.load_for_file(file);
-
-        // Try to find and parse http-client.env.json
-        if let Some(file_str) = file.to_str()
-            && let Ok(Some(env_file)) =
-                httprunner_core::environment::find_environment_file(file_str)
-            && let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file)
-        {
-            // Extract environment names from the config
-            self.environments = env_config.keys().cloned().collect();
-            self.environments.sort(); // Sort alphabetically for consistent UI
-            return;
-        }
-        // No environments found or error occurred
-        self.environments = Vec::new();
-    }
-
-    fn save_state(&self) {
-        self.save_state_internal(None);
-    }
-
-    fn save_state_with_window(&self, ctx: &egui::Context) {
-        // Get viewport size from context
-        let window_size = ctx.input(|i| {
-            i.viewport()
-                .inner_rect
-                .map(|r| r.size())
-                .unwrap_or(egui::vec2(1200.0, 800.0))
-        });
-        self.save_state_internal(Some((window_size.x, window_size.y)));
-    }
-
-    fn save_state_internal(&self, window_size: Option<(f32, f32)>) {
-        let state = AppState {
-            root_directory: Some(self.root_directory.clone()),
-            selected_file: self.selected_file.clone(),
-            selected_environment: self.selected_environment.clone(),
-            font_size: Some(self.font_size),
-            window_size,
-            last_results: Some(self.results_view.get_results()),
-            file_tree_visible: Some(self.file_tree_visible),
-            results_compact_mode: Some(self.results_view.is_compact_mode()),
-            telemetry_enabled: Some(self.telemetry_enabled),
-            delay_ms: Some(self.delay_ms),
-            editor_panel_ratio: Some(self.editor_panel_ratio),
-        };
-
-        if let Err(e) = state.save() {
-            eprintln!("Failed to save application state: {}", e);
+            }
         }
     }
 }
 
-impl eframe::App for HttpRunnerApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let keyboard_action = self.handle_keyboard_shortcuts(ctx);
+#[cfg(not(target_arch = "wasm32"))]
+fn native_file_tree_panel(
+    file_tree_visible: Signal<bool>,
+    root_path: Signal<PathBuf>,
+    selected_file: Signal<Option<PathBuf>>,
+    on_file_selected: impl Fn(PathBuf) + Clone + 'static,
+) -> Element {
+    if file_tree_visible() {
+        rsx! {
+            div {
+                class: "file-tree",
+                FileTree { root_path, selected_file, on_file_selected }
+            }
+        }
+    } else {
+        rsx! {}
+    }
+}
 
-        // Process keyboard actions
-        match keyboard_action {
-            KeyboardAction::RunAllRequests => {
-                #[cfg(not(target_arch = "wasm32"))]
-                if !self.request_view.has_changes()
-                    && let Some(file) = &self.selected_file
-                {
-                    self.results_view.run_file(
-                        file,
-                        self.selected_environment.as_deref(),
-                        self.delay_ms,
-                    );
-                }
+pub fn App() -> Element {
+    let saved = AppState::load();
 
-                #[cfg(target_arch = "wasm32")]
-                if !self.request_view.has_changes() && self.selected_file.is_some() {
-                    self.results_view.run_content_async(
-                        self.text_editor.get_content().to_string(),
-                        self.selected_environment.as_deref(),
-                        ctx,
-                    );
+    let mut root_directory: Signal<PathBuf> = use_signal(move || {
+        saved.root_directory.clone()
+            .and_then(|p| if p.exists() { Some(p) } else { None })
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
+    });
+    let mut selected_file: Signal<Option<PathBuf>> = use_signal(move || {
+        saved.selected_file.clone().and_then(|p| if p.exists() { Some(p) } else { None })
+    });
+    let mut selected_environment: Signal<Option<String>> = use_signal(move || saved.selected_environment.clone());
+    let mut font_size: Signal<f32> = use_signal(move || saved.font_size.unwrap_or(14.0));
+    let mut file_tree_visible: Signal<bool> = use_signal(move || saved.file_tree_visible.unwrap_or(true));
+    let mut telemetry_enabled: Signal<bool> = use_signal(move || saved.telemetry_enabled.unwrap_or(true));
+    let mut delay_ms: Signal<u64> = use_signal(move || saved.delay_ms.unwrap_or(0));
+    let mut editor_panel_ratio: Signal<f32> = use_signal(move || saved.editor_panel_ratio.unwrap_or(0.5));
+    let mut results_compact_mode: Signal<bool> = use_signal(move || saved.results_compact_mode.unwrap_or(true));
+    let mut view_mode: Signal<ViewMode> = use_signal(|| ViewMode::TextEditor);
+    let mut environments: Signal<Vec<String>> = use_signal(Vec::new);
+    let mut text_content: Signal<String> = use_signal(String::new);
+    let mut text_has_changes: Signal<bool> = use_signal(|| false);
+    let mut req_view_state: Signal<RequestViewState> = use_signal(RequestViewState::default);
+    let mut env_editor_state: Signal<EnvEditorState> = use_signal(EnvEditorState::default);
+    let mut results: Signal<Vec<ExecutionResult>> = use_signal(move || {
+        saved.last_results.clone().unwrap_or_default()
+    });
+    let mut is_running: Signal<bool> = use_signal(|| false);
+    let mut is_dragging: Signal<bool> = use_signal(|| false);
+    let mut drag_last_y: Signal<f64> = use_signal(|| 0.0);
+    let mut file_menu_open: Signal<bool> = use_signal(|| false);
+    let mut settings_menu_open: Signal<bool> = use_signal(|| false);
+
+    // Load initial file state
+    use_effect(move || {
+        if let Some(path) = selected_file() {
+            load_file_state(&path, &mut req_view_state, &mut env_editor_state, &mut environments);
+        }
+    });
+
+    let do_save_state = move || {
+        let state = AppState {
+            root_directory: Some(root_directory()),
+            selected_file: selected_file(),
+            selected_environment: selected_environment(),
+            font_size: Some(font_size()),
+            window_size: None,
+            last_results: Some(results().into_iter().filter(|r| !matches!(r, ExecutionResult::Running { .. })).collect()),
+            file_tree_visible: Some(file_tree_visible()),
+            results_compact_mode: Some(results_compact_mode()),
+            telemetry_enabled: Some(telemetry_enabled()),
+            delay_ms: Some(delay_ms()),
+            editor_panel_ratio: Some(editor_panel_ratio()),
+        };
+        if let Err(e) = state.save() {
+            eprintln!("Failed to save state: {}", e);
+        }
+    };
+
+    let do_run_all = move || {
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(file) = selected_file() {
+            crate::results_view::run_file(file, selected_environment(), delay_ms(), results, is_running);
+        }
+        #[cfg(target_arch = "wasm32")]
+        crate::results_view::run_content_async(text_content(), selected_environment(), results, is_running);
+    };
+
+    let do_run_single = move |idx: usize| {
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(file) = selected_file() {
+            crate::results_view::run_single_request(file, idx, selected_environment(), delay_ms(), results, is_running);
+        }
+        #[cfg(target_arch = "wasm32")]
+        crate::results_view::run_single_request_async(text_content(), idx, selected_environment(), results, is_running);
+    };
+
+    let do_save_text = move || {
+        #[cfg(not(target_arch = "wasm32"))]
+        if let Some(path) = selected_file() {
+            if std::fs::write(&path, text_content()).is_ok() {
+                text_has_changes.set(false);
+            }
+        }
+        #[cfg(target_arch = "wasm32")]
+        if let Some(w) = web_sys::window() {
+            if let Ok(Some(s)) = w.local_storage() {
+                let _ = s.set_item("httprunner_editor_content", &text_content());
+                text_has_changes.set(false);
+            }
+        }
+    };
+
+    let handle_req_action = move |action: RequestViewAction| {
+        match action {
+            RequestViewAction::RunRequest(idx) => do_run_single(idx),
+            RequestViewAction::SaveFile => {
+                if let Err(e) = req_view_state.write().save_to_file() {
+                    eprintln!("Failed to save requests: {}", e);
+                } else {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    if let Some(path) = selected_file() {
+                        if let Ok(txt) = std::fs::read_to_string(&path) {
+                            text_content.set(txt);
+                            text_has_changes.set(false);
+                        }
+                    }
                 }
             }
-            KeyboardAction::OpenFolder =>
-            {
+            RequestViewAction::None => {}
+        }
+    };
+
+    let handle_file_selected = move |path: PathBuf| {
+        selected_file.set(Some(path.clone()));
+        load_file_state(&path, &mut req_view_state, &mut env_editor_state, &mut environments);
+        do_save_state();
+    };
+
+    let handle_keydown = move |e: Event<KeyboardData>| {
+        let ctrl = e.modifiers().ctrl();
+        let code = e.code().to_string();
+        match code.as_str() {
+            "F5" => do_run_all(),
+            "KeyR" if ctrl => do_run_all(),
+            "KeyQ" if ctrl => { do_save_state(); #[cfg(not(target_arch = "wasm32"))] std::process::exit(0); }
+            "KeyO" if ctrl => {
                 #[cfg(not(target_arch = "wasm32"))]
                 if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                    self.root_directory = path.clone();
-                    self.file_tree = FileTree::new(path);
-                    self.selected_file = None;
-                    self.selected_request_index = None;
-                    self.save_state();
+                    root_directory.set(path);
+                    selected_file.set(None);
+                    do_save_state();
                 }
             }
-            KeyboardAction::Quit => {
-                self.save_state_with_window(ctx);
-                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-            }
-            KeyboardAction::SwitchEnvironment => {
-                #[cfg(not(target_arch = "wasm32"))]
-                if !self.environment_selector_open {
-                    // Cycle through environments
-                    if self.environments.is_empty() {
-                        // No environments available
-                    } else if let Some(ref current_env) = self.selected_environment {
-                        // Find current index and move to next
-                        if let Some(idx) = self.environments.iter().position(|e| e == current_env) {
-                            let next_idx = (idx + 1) % (self.environments.len() + 1);
-                            self.selected_environment = if next_idx == self.environments.len() {
-                                None
-                            } else {
-                                Some(self.environments[next_idx].clone())
-                            };
-                        } else {
-                            // Current environment not found; reset to first environment
-                            self.selected_environment = self.environments.first().cloned();
+            "KeyE" if ctrl => {
+                let envs = environments();
+                if !envs.is_empty() {
+                    let next = if let Some(ref cur) = selected_environment() {
+                        let idx = envs.iter().position(|e| e == cur).map(|i| (i + 1) % (envs.len() + 1));
+                        match idx {
+                            Some(i) if i < envs.len() => Some(envs[i].clone()),
+                            _ => None,
                         }
-                    } else {
-                        // Currently "None", switch to first environment
-                        self.selected_environment = self.environments.first().cloned();
-                    }
-                    self.save_state();
+                    } else { envs.first().cloned() };
+                    selected_environment.set(next);
+                    do_save_state();
                 }
             }
-            KeyboardAction::ToggleView => {
-                // Toggle between text editor, request details, and environment editor views
-                self.view_mode = match self.view_mode {
-                    ViewMode::TextEditor => ViewMode::RequestDetails,
-                    ViewMode::RequestDetails => ViewMode::EnvironmentEditor,
-                    ViewMode::EnvironmentEditor => ViewMode::TextEditor,
-                };
-            }
-            KeyboardAction::ToggleFileTree => {
-                // Toggle file tree visibility
-                self.file_tree_visible = !self.file_tree_visible;
-                self.save_state();
-            }
-            KeyboardAction::ToggleResultsView => {
-                // Toggle results view mode between compact and verbose
-                self.results_view
-                    .set_compact_mode(!self.results_view.is_compact_mode());
-                self.save_state();
-            }
-            KeyboardAction::SaveFile => {
-                // Save file based on current view mode
-                match self.view_mode {
-                    ViewMode::TextEditor => {
-                        // Only attempt to save when a file is currently selected
-                        if self.selected_file.is_some()
-                            && let Err(e) = self.text_editor.save_to_file()
-                        {
-                            eprintln!("Failed to save file: {}", e);
-                        }
-                    }
-                    ViewMode::RequestDetails => {
-                        if let Err(e) = self.request_view.save_to_file() {
-                            eprintln!("Failed to save file: {}", e);
-                        } else {
-                            // Refresh the file tree to show any new files
-                            self.file_tree = FileTree::new(self.root_directory.clone());
-                            // Reload text editor with updated content
-                            if let Some(file) = &self.selected_file {
-                                self.text_editor.load_file(file);
-                            }
-                        }
-                    }
-                    ViewMode::EnvironmentEditor => {
-                        self.environment_editor.save();
-                        // Refresh environments after saving
-                        self.environments = self.environment_editor.environment_names();
-                    }
+            "KeyT" if ctrl => view_mode.set(match view_mode() {
+                ViewMode::TextEditor => ViewMode::RequestDetails,
+                ViewMode::RequestDetails => ViewMode::EnvironmentEditor,
+                ViewMode::EnvironmentEditor => ViewMode::TextEditor,
+            }),
+            "KeyB" if ctrl => { file_tree_visible.set(!file_tree_visible()); do_save_state(); }
+            "KeyD" if ctrl => { results_compact_mode.set(!results_compact_mode()); do_save_state(); }
+            "KeyS" if ctrl => match view_mode() {
+                ViewMode::TextEditor => do_save_text(),
+                ViewMode::RequestDetails => { let _ = req_view_state.write().save_to_file(); }
+                ViewMode::EnvironmentEditor => {
+                    env_editor_state.write().save();
+                    environments.set(env_editor_state().environment_names());
                 }
-            }
-            KeyboardAction::None => {}
+            },
+            "Equal" if ctrl => { font_size.set((font_size() + 1.0).min(32.0)); }
+            "Minus" if ctrl => { font_size.set((font_size() - 1.0).max(8.0)); }
+            "Digit0" if ctrl => { font_size.set(14.0); }
+            _ => {}
         }
+    };
 
-        self.show_top_panel(ctx);
-        self.show_bottom_panel(ctx);
+    let env_val = selected_environment().unwrap_or_else(|| "__none__".to_string());
+    let ratio_pct = format!("{}%", (editor_panel_ratio() * 100.0) as u32);
+    let run_enabled = match view_mode() {
+        ViewMode::TextEditor => selected_file().is_some() && !text_has_changes(),
+        ViewMode::RequestDetails => selected_file().is_some() && !req_view_state().has_changes(),
+        ViewMode::EnvironmentEditor => false,
+    };
+    #[cfg(target_arch = "wasm32")]
+    let run_enabled = view_mode() != ViewMode::EnvironmentEditor;
 
-        // Left panel - File tree (only show if visible and not WASM)
-        #[cfg(not(target_arch = "wasm32"))]
-        if self.file_tree_visible {
-            egui::SidePanel::left("file_tree_panel")
-                .resizable(true)
-                .default_width(300.0)
-                .show(ctx, |ui| {
-                    ui.heading("HTTP Files");
-                    ui.separator();
+    rsx! {
+        document::Style { {APP_CSS} }
 
-                    if let Some(selected) = self.file_tree.show(ui) {
-                        self.selected_file = Some(selected.clone());
-                        self.selected_request_index = None;
+        div {
+            class: "app",
+            tabindex: "0",
+            autofocus: true,
+            onkeydown: handle_keydown,
+            onmousemove: move |e| {
+                if is_dragging() {
+                    let y = e.client_coordinates().y;
+                    let delta = y - drag_last_y();
+                    drag_last_y.set(y);
+                    let new_r = (editor_panel_ratio() + delta as f32 / 600.0).clamp(0.1, 0.9);
+                    editor_panel_ratio.set(new_r);
+                }
+            },
+            onmouseup: move |_| {
+                if is_dragging() { is_dragging.set(false); do_save_state(); }
+            },
 
-                        // Load environments for this file
-                        self.load_environments(&selected);
+            // TOP BAR
+            div {
+                class: "top-bar",
+                onclick: move |_| { file_menu_open.set(false); settings_menu_open.set(false); },
 
-                        // Update both request view and text editor
-                        self.request_view.load_file(&selected);
-                        self.text_editor.load_file(&selected);
-
-                        // Save state after file selection
-                        self.save_state();
-                    }
-                });
-        }
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.vertical(|ui| {
-                ui.horizontal(|ui| {
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::TextEditor,
-                        "📝 Text Editor",
-                    );
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::RequestDetails,
-                        "📋 Request Details",
-                    );
-                    ui.selectable_value(
-                        &mut self.view_mode,
-                        ViewMode::EnvironmentEditor,
-                        "🌍 Environment",
-                    );
-
+                {
                     #[cfg(not(target_arch = "wasm32"))]
-                    ui.label("(Ctrl+T to toggle | Ctrl+S to save | Ctrl+B to toggle file tree)");
-
+                    { native_file_menu(file_menu_open, settings_menu_open, root_directory, selected_file, do_save_state) }
                     #[cfg(target_arch = "wasm32")]
-                    ui.label("(Ctrl+T to toggle | Ctrl+S to save)");
-                });
-                ui.separator();
+                    { rsx! {} }
+                }
 
-                let total_height = (ui.available_height() - 40.0).max(100.0);
-                let available_height = (total_height * self.editor_panel_ratio).max(50.0);
-
-                match self.view_mode {
-                    ViewMode::TextEditor => {
-                        egui::ScrollArea::vertical()
-                            .id_salt("text_editor_scroll")
-                            .max_height(available_height)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| self.text_editor.show(ui, &self.selected_file));
-
-                        ui.separator();
-
-                        ui.horizontal(|ui| {
-                            #[cfg(not(target_arch = "wasm32"))]
-                            let run_all_enabled =
-                                self.selected_file.is_some() && !self.text_editor.has_changes();
-
-                            #[cfg(target_arch = "wasm32")]
-                            let run_all_enabled = !self.text_editor.get_content().trim().is_empty();
-
-                            if ui
-                                .add_enabled(
-                                    run_all_enabled,
-                                    egui::Button::new("▶ Run All Requests"),
-                                )
-                                .clicked()
-                            {
-                                #[cfg(not(target_arch = "wasm32"))]
-                                if let Some(file) = &self.selected_file {
-                                    self.results_view.run_file(
-                                        file,
-                                        self.selected_environment.as_deref(),
-                                        self.delay_ms,
-                                    );
-                                }
-
-                                #[cfg(target_arch = "wasm32")]
-                                {
-                                    // On WASM, run from in-memory content
-                                    let content = self.text_editor.get_content().to_string();
-                                    self.results_view.run_content_async(
-                                        content,
-                                        self.selected_environment.as_deref(),
-                                        ctx,
-                                    );
-                                }
-                            }
-
-                            // Show save indicator if there are unsaved changes
-                            if self.text_editor.has_changes() {
-                                ui.colored_label(
-                                    egui::Color32::from_rgb(255, 165, 0),
-                                    "● Unsaved changes",
-                                );
-                            }
-                        });
+                div {
+                    class: "menu",
+                    button {
+                        onclick: move |_| { settings_menu_open.set(!settings_menu_open()); file_menu_open.set(false); },
+                        "Settings ▾"
                     }
-                    ViewMode::RequestDetails => {
-                        // Wrap the request view in a scroll area with fixed height
-                        egui::ScrollArea::vertical()
-                            .id_salt("request_details_scroll")
-                            .max_height(available_height)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                match self.request_view.show(ui, &self.selected_file) {
-                                    RequestViewAction::RunRequest(idx) => {
-                                        self.selected_request_index = Some(idx);
-                                        // When a request button is clicked, run it immediately
-                                        #[cfg(not(target_arch = "wasm32"))]
-                                        if let Some(file) = &self.selected_file {
-                                            self.results_view.run_single_request(
-                                                file,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                                self.delay_ms,
-                                            );
-                                        }
-
-                                        #[cfg(target_arch = "wasm32")]
-                                        if self.selected_file.is_some() {
-                                            // On WASM we cannot read from the filesystem,
-                                            // so execute the single request from the
-                                            // current text editor content instead of a file path.
-                                            let editor_content = self.text_editor.get_content();
-                                            self.results_view.run_single_request_async(
-                                                editor_content,
-                                                idx,
-                                                self.selected_environment.as_deref(),
-                                                ctx,
-                                            );
-                                        }
-                                    }
-                                    RequestViewAction::SaveFile => {
-                                        // Save the file and reload both views
-                                        if let Err(e) = self.request_view.save_to_file() {
-                                            eprintln!("Failed to save file: {}", e);
-                                        } else {
-                                            // Refresh the file tree to show any new files
-                                            self.file_tree =
-                                                FileTree::new(self.root_directory.clone());
-                                            // Reload text editor with updated content
-                                            if let Some(file) = &self.selected_file {
-                                                self.text_editor.load_file(file);
-                                            }
-                                        }
-                                    }
-                                    RequestViewAction::None => {}
-                                }
-                            });
-
-                        ui.separator();
-
-                        // Run buttons - always visible at bottom
-                        ui.horizontal(|ui| {
-                            let run_all_enabled =
-                                self.selected_file.is_some() && !self.request_view.has_changes();
-
-                            if ui
-                                .add_enabled(
-                                    run_all_enabled,
-                                    egui::Button::new("▶ Run All Requests"),
-                                )
-                                .clicked()
-                            {
-                                #[cfg(not(target_arch = "wasm32"))]
-                                if let Some(file) = &self.selected_file {
-                                    self.results_view.run_file(
-                                        file,
-                                        self.selected_environment.as_deref(),
-                                        self.delay_ms,
-                                    );
-                                }
-
-                                #[cfg(target_arch = "wasm32")]
-                                if self.selected_file.is_some() {
-                                    self.results_view.run_content_async(
-                                        self.text_editor.get_content().to_string(),
-                                        self.selected_environment.as_deref(),
-                                        ctx,
-                                    );
-                                }
+                    if settings_menu_open() {
+                        div {
+                            class: "menu-popup",
+                            button {
+                                class: "menu-item",
+                                onclick: move |_| {
+                                    let v = !telemetry_enabled();
+                                    telemetry_enabled.set(v);
+                                    #[cfg(not(target_arch = "wasm32"))]
+                                    { let _ = httprunner_core::telemetry::set_enabled(v); }
+                                    do_save_state();
+                                },
+                                if telemetry_enabled() { "✓ Telemetry Enabled" } else { "  Telemetry Disabled" }
                             }
-
-                            // Show save indicator if there are unsaved changes
-                            if self.request_view.has_changes() {
-                                ui.colored_label(
-                                    egui::Color32::from_rgb(255, 165, 0),
-                                    "● Unsaved changes",
-                                );
-                            }
-                        });
-                    }
-                    ViewMode::EnvironmentEditor => {
-                        let had_changes_before = self.environment_editor.has_changes();
-                        let env_count_before = self.environments.len();
-
-                        egui::ScrollArea::vertical()
-                            .id_salt("environment_editor_scroll")
-                            .max_height(available_height)
-                            .auto_shrink([false, false])
-                            .show(ui, |ui| {
-                                self.environment_editor.show(ui);
-                            });
-
-                        // Only refresh environment list when the change state transitions
-                        let has_changes_now = self.environment_editor.has_changes();
-                        if has_changes_now != had_changes_before
-                            || (has_changes_now
-                                && self.environment_editor.environment_names().len()
-                                    != env_count_before)
-                        {
-                            self.environments = self.environment_editor.environment_names();
-                            // If the selected environment was deleted, clear selection
-                            if let Some(ref env) = self.selected_environment
-                                && !self.environments.contains(env)
-                            {
-                                self.selected_environment = None;
-                                self.save_state();
+                            div { class: "menu-separator" }
+                            div {
+                                style: "padding: 6px 12px;",
+                                p { style: "font-size: 12px; color: #8087a2; margin-bottom: 4px;", "Request Delay: {delay_ms()} ms" }
+                                input {
+                                    r#type: "range", min: "0", max: "10000", step: "100",
+                                    value: "{delay_ms()}",
+                                    oninput: move |e| { if let Ok(v) = e.value().parse::<u64>() { delay_ms.set(v); do_save_state(); } },
+                                }
                             }
                         }
                     }
                 }
 
-                // Draggable splitter between editor and results
-                let splitter_id = ui.id().with("vertical_splitter");
-                let splitter_rect = ui.available_rect_before_wrap();
-                let splitter_rect = egui::Rect::from_min_size(
-                    splitter_rect.min,
-                    egui::vec2(splitter_rect.width(), 6.0),
-                );
-                let splitter_response =
-                    ui.interact(splitter_rect, splitter_id, egui::Sense::drag());
-                if splitter_response.dragged() {
-                    let delta = splitter_response.drag_delta().y;
-                    self.editor_panel_ratio = ((self.editor_panel_ratio * total_height + delta)
-                        / total_height)
-                        .clamp(0.1, 0.9);
-                }
-                if splitter_response.drag_stopped() {
-                    self.save_state();
+                div { style: "flex: 1;" }
+
+                span { style: "color: #8087a2; font-size: 12px;", "Env:" }
+                select {
+                    value: "{env_val}",
+                    onchange: move |e| {
+                        let v = e.value();
+                        selected_environment.set(if v == "__none__" { None } else { Some(v) });
+                        do_save_state();
+                    },
+                    option { value: "__none__", "None" }
+                    for env in environments().iter() {
+                        option { key: "{env}", value: "{env}", "{env}" }
+                    }
                 }
 
-                let visuals = if splitter_response.hovered() || splitter_response.dragged() {
-                    ui.output_mut(|o| o.cursor_icon = egui::CursorIcon::ResizeVertical);
-                    ui.visuals().widgets.active
-                } else {
-                    ui.visuals().widgets.noninteractive
-                };
-                ui.painter()
-                    .rect_filled(splitter_rect, visuals.corner_radius, visuals.bg_fill);
-                ui.advance_cursor_after_rect(splitter_rect);
+                button { style: "padding: 2px 6px;", onclick: move |_| font_size.set((font_size() - 1.0).max(8.0)), "A-" }
+                span { style: "font-size: 11px; color: #8087a2;", "{font_size() as u32}px" }
+                button { style: "padding: 2px 6px;", onclick: move |_| font_size.set((font_size() + 1.0).min(32.0)), "A+" }
+            }
 
-                ui.heading("Results");
-                ui.separator();
+            // CONTENT AREA
+            div {
+                class: "content-area",
 
-                egui::ScrollArea::vertical()
-                    .id_salt("results_scroll")
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        self.results_view.show(ui);
-                    });
-            });
-        });
+                {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    { native_file_tree_panel(file_tree_visible, root_directory, selected_file, handle_file_selected) }
+                    #[cfg(target_arch = "wasm32")]
+                    { rsx! {} }
+                }
 
-        // Save window size if it changed (to avoid unnecessary file writes)
-        let current_window_size = ctx.input(|i| {
-            i.viewport()
-                .inner_rect
-                .map(|r| r.size())
-                .unwrap_or(egui::vec2(1200.0, 800.0))
-        });
-        let current_size = (current_window_size.x, current_window_size.y);
+                div {
+                    class: "main-panel",
 
-        let should_save_window_size = match self.last_saved_window_size {
-            None => true,
-            Some(last_size) => last_size != current_size,
-        };
+                    div {
+                        class: "view-tabs",
+                        button {
+                            class: if view_mode() == ViewMode::TextEditor { "active" } else { "" },
+                            onclick: move |_| view_mode.set(ViewMode::TextEditor),
+                            "📝 Text Editor"
+                        }
+                        button {
+                            class: if view_mode() == ViewMode::RequestDetails { "active" } else { "" },
+                            onclick: move |_| view_mode.set(ViewMode::RequestDetails),
+                            "📋 Request Details"
+                        }
+                        button {
+                            class: if view_mode() == ViewMode::EnvironmentEditor { "active" } else { "" },
+                            onclick: move |_| view_mode.set(ViewMode::EnvironmentEditor),
+                            "🌍 Environment"
+                        }
+                        span { style: "margin-left: auto; font-size: 11px; color: #8087a2;",
+                            { shortcuts_hint }
+                        }
+                    }
 
-        if should_save_window_size {
-            self.last_saved_window_size = Some(current_size);
-            self.save_state_with_window(ctx);
+                    // Editor section
+                    div {
+                        class: "editor-section",
+                        style: "height: {ratio_pct}; font-size: {font_size()}px;",
+
+                        match view_mode() {
+                            ViewMode::TextEditor => rsx! {
+                                TextEditor {
+                                    file: selected_file,
+                                    content: text_content,
+                                    has_changes: text_has_changes,
+                                    on_save: move |_| do_save_text(),
+                                }
+                            },
+                            ViewMode::RequestDetails => rsx! {
+                                RequestView {
+                                    state: req_view_state,
+                                    file: selected_file,
+                                    on_action: handle_req_action,
+                                }
+                            },
+                            ViewMode::EnvironmentEditor => rsx! {
+                                EnvironmentEditor { state: env_editor_state }
+                            },
+                        }
+                    }
+
+                    // Run all bar
+                    if view_mode() != ViewMode::EnvironmentEditor {
+                        div {
+                            style: "padding: 4px 8px; display: flex; align-items: center; gap: 8px; background: #1e2030; border-top: 1px solid #363a4f; flex-shrink: 0;",
+                            button {
+                                disabled: !run_enabled,
+                                onclick: move |_| { if run_enabled { do_run_all(); } },
+                                "▶ Run All (F5 / Ctrl+R)"
+                            }
+                            if (view_mode() == ViewMode::TextEditor && text_has_changes()) ||
+                               (view_mode() == ViewMode::RequestDetails && req_view_state().has_changes()) {
+                                span { class: "warning", "● Unsaved changes" }
+                            }
+                        }
+                    }
+
+                    // Splitter
+                    div {
+                        class: "splitter",
+                        onmousedown: move |e| {
+                            is_dragging.set(true);
+                            drag_last_y.set(e.client_coordinates().y);
+                            e.stop_propagation();
+                        },
+                    }
+
+                    // Results
+                    div {
+                        class: "results-section",
+                        style: "font-size: {font_size()}px;",
+                        ResultsView { results, is_running, compact_mode: results_compact_mode }
+                    }
+                }
+            }
+
+            // BOTTOM BAR
+            div {
+                class: "bottom-bar",
+                if cfg!(not(target_arch = "wasm32")) {
+                    span { "📁 {root_directory().display()}" }
+                }
+                if let Some(ref f) = selected_file() {
+                    span { "| 📄 {f.file_name().and_then(|n| n.to_str()).unwrap_or(\"\")}" }
+                }
+                if let Ok(sk) = httprunner_core::logging::get_support_key() {
+                    span { "| 🔑 {sk.short_key}" }
+                }
+            }
         }
     }
+}
+
+
+fn load_file_state(
+    path: &PathBuf,
+    req_view_state: &mut Signal<RequestViewState>,
+    env_editor_state: &mut Signal<EnvEditorState>,
+    environments: &mut Signal<Vec<String>>,
+) {
+    req_view_state.write().load_file(path);
+    env_editor_state.write().load_for_file(path);
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        if let Some(file_str) = path.to_str()
+            && let Ok(Some(env_file)) = httprunner_core::environment::find_environment_file(file_str)
+            && let Ok(env_config) = httprunner_core::environment::parse_environment_file(&env_file)
+        {
+            let mut names: Vec<String> = env_config.keys().cloned().collect();
+            names.sort();
+            environments.set(names);
+        } else {
+            environments.set(Vec::new());
+        }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    environments.set(env_editor_state.read().environment_names());
 }
