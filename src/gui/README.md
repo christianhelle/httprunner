@@ -2,7 +2,7 @@
 
 > **⚠️ Experimental**: This GUI application is currently in an experimental phase. Features and interface may change as development continues.
 
-A native cross-platform graphical user interface for HTTP Runner built with Rust and egui.
+A native cross-platform graphical user interface for HTTP Runner built with Rust and Dioxus.
 
 ## 🌐 Try it Online
 
@@ -12,10 +12,10 @@ The GUI is also available as a web application that runs in your browser - no in
 
 ## Features
 
-- 🎨 **Native UI** - Pure Rust, no web technologies
+- 🎨 **Native UI** - Dioxus Desktop shell with the same workflow as the web app
 - 🌐 **Cross-platform** - Works on Windows, macOS, Linux, and **Web (WASM)**
 - 📁 **File Tree View** - Browse and select .http files with folder navigation (native only)
-- ✏️ **Text Editor** - Paste and edit HTTP requests directly (web version)
+- ✏️ **Text Editor** - Syntax-highlighted `.http` editing with line numbers on desktop and web
 - 📋 **Request Inspector** - View request details including method, URL, headers, and body
 - ▶️ **Run Requests** - Execute individual requests or entire files
 - 🌍 **Environment Support** - Select environments for variable substitution
@@ -163,10 +163,10 @@ Accept: application/json
 - **`main.rs`** - Native application entry point
 - **`lib.rs`** - WASM entry point (web version)
 - **`app.rs`** - Main application state and UI layout
+- **`assets/app.css`** - Shared Dioxus styling
 - **`environment_editor.rs`** - Environment variable selection and editing
 - **`file_tree.rs`** - File browser with tree view (native only)
-- **`request_editor.rs`** - HTTP request editor
-- **`request_view.rs`** - Request details display
+- **`request_editor.rs`** - Request details editing and serialization support
 - **`results_view.rs`** - Execution results (sync for native)
 - **`results_view_async.rs`** - Execution results (async for WASM)
 - **`state.rs`** - Persistent state management (filesystem / LocalStorage)
@@ -296,6 +296,8 @@ trunk build --release
 
 ```text
 src/gui/
+├── assets/
+│   └── app.css               # Shared Dioxus styling
 ├── src/
 │   ├── main.rs               # Native entry point
 │   ├── lib.rs                # WASM entry point
@@ -303,11 +305,10 @@ src/gui/
 │   ├── environment_editor.rs # Environment variable selection and editing
 │   ├── file_tree.rs          # File browser (native only)
 │   ├── request_editor.rs     # HTTP request editor
-│   ├── request_view.rs       # Request display
-│   ├── results_view.rs       # Results display (sync)
-│   ├── results_view_async.rs # Results display (async)
+│   ├── results_view.rs       # Native execution results bridge
+│   ├── results_view_async.rs # WASM execution results bridge
 │   ├── state.rs              # Persistent state (FS/LocalStorage)
-│   └── text_editor.rs        # Text editor (WASM-friendly)
+│   └── text_editor.rs        # Text editor state and syntax highlighting helpers
 ├── index.html               # Web app HTML template
 ├── Trunk.toml               # WASM build configuration
 └── Cargo.toml               # Dependencies
@@ -317,8 +318,9 @@ src/gui/
 
 ## Technical Stack
 
-- **UI Framework**: [egui](https://github.com/emilk/egui) - Immediate mode GUI
-- **Window System**: [eframe](https://github.com/emilk/egui/tree/master/crates/eframe) - egui app framework
+- **UI Framework**: [Dioxus](https://dioxuslabs.com/) - Cross-platform Rust UI framework
+- **Desktop Runtime**: [dioxus-desktop](https://docs.rs/dioxus-desktop/latest/dioxus_desktop/) - Desktop shell for the native app
+- **Web Runtime**: [dioxus-web](https://docs.rs/dioxus-web/latest/dioxus_web/) - WebAssembly runtime for the browser app
 - **HTTP Client**: [reqwest](https://github.com/seanmonstar/reqwest) - Sync for native, async for WASM
 - **WASM Build**: [Trunk](https://trunkrs.dev/) - WASM web application bundler
 - **File Dialogs**: [rfd](https://github.com/PolyMeilex/rfd) - Native file picker (native only)
