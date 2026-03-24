@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased Changes]
+## [0.9.49](https://github.com/christianhelle/httprunner/releases/tag/0.9.49) (2026-03-24)
 
 ### Merged Pull Requests
 - Update actions/checkout action to v6 ([#236](https://github.com/christianhelle/httprunner/pull/236)) (@renovate[bot])
