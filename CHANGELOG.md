@@ -3,15 +3,16 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- Update actions/checkout action to v6 ([#236](https://github.com/christianhelle/httprunner/pull/236)) (@renovate[bot])
 - Update docker/build-push-action action to v7 ([#210](https://github.com/christianhelle/httprunner/pull/210)) (@renovate[bot])
 - Update docker/metadata-action action to v6 ([#209](https://github.com/christianhelle/httprunner/pull/209)) (@renovate[bot])
 - Update GitHub Artifact Actions (major) ([#204](https://github.com/christianhelle/httprunner/pull/204)) (@renovate[bot])
 - Fix build failure: add missing `quotes` field to `Syntax` initializer ([#206](https://github.com/christianhelle/httprunner/pull/206)) (@Copilot)
-- Add JSON export support for execution results (`--export-json`) ([#205](https://github.com/christianhelle/httprunner/pull/205)) (@Copilot)
 - Update Rust crate windows-sys to 0.61 ([#191](https://github.com/christianhelle/httprunner/pull/191)) (@renovate[bot])
 - Sync static website docs with README - add TUI, timeouts, and missing CLI options ([#183](https://github.com/christianhelle/httprunner/pull/183)) (@Copilot)
 
 ### Features
+- Add JSON export support for execution results (`--export-json`) ([#205](https://github.com/christianhelle/httprunner/pull/205)) (@Copilot)
 - Hide support key when telemetry collection is disabled ([#203](https://github.com/christianhelle/httprunner/pull/203)) ([@christianhelle](https://github.com/christianhelle/))
 - Fix missing windows icon on TUI and GUI apps ([#202](https://github.com/christianhelle/httprunner/pull/202)) ([@christianhelle](https://github.com/christianhelle/))
 - Add scroll bounds validation to PageDown in environment editor ([#201](https://github.com/christianhelle/httprunner/pull/201)) (@Copilot)
