@@ -207,8 +207,10 @@ function Install-HttpRunner
   )
     
   $downloadUrl = "https://github.com/$GitHubRepo/releases/download/$Version/$ArchiveName"
+  $checksumUrl = "$downloadUrl.sha256"
   $tempDir = Join-Path $env:TEMP "httprunner-install-$(Get-Random)"
   $archivePath = Join-Path $tempDir $ArchiveName
+  $checksumPath = Join-Path $tempDir "$ArchiveName.sha256"
     
   try
   {
@@ -217,7 +219,13 @@ function Install-HttpRunner
         
     Write-Info "Downloading httprunner $Version..."
     Invoke-WebRequest -Uri $downloadUrl -OutFile $archivePath -ErrorAction Stop
-        
+
+    Write-Info "Downloading checksum..."
+    Invoke-WebRequest -Uri $checksumUrl -OutFile $checksumPath -ErrorAction Stop
+
+    Write-Info "Verifying download integrity..."
+    Test-ArchiveChecksum -ArchivePath $archivePath -ChecksumPath $checksumPath
+         
     Write-Info "Extracting archive..."
     Expand-Archive -Path $archivePath -DestinationPath $tempDir -Force
         
@@ -254,6 +262,25 @@ function Install-HttpRunner
       Remove-Item -Path $tempDir -Recurse -Force
     }
   }
+}
+
+function Test-ArchiveChecksum
+{
+  param(
+    [string]$ArchivePath,
+    [string]$ChecksumPath
+  )
+
+  $checksumContent = (Get-Content -Path $ChecksumPath -Raw).Trim()
+  $expectedHash = ($checksumContent -split '\s+')[0].ToLowerInvariant()
+  $actualHash = (Get-FileHash -Path $ArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+
+  if ($expectedHash -ne $actualHash)
+  {
+    throw "Checksum verification failed for $ArchivePath"
+  }
+
+  Write-Success "Checksum verified successfully"
 }
 
 function Test-Installation

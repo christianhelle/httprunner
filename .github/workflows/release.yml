@@ -124,11 +124,19 @@ jobs:
           copy LICENSE release\
           Compress-Archive -Path release\* -DestinationPath ${{ matrix.archive_name }}
 
+      - name: Generate SHA256 checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -Path "${{ matrix.archive_name }}" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  ${{ matrix.archive_name }}" | Set-Content -Path "${{ matrix.archive_name }}.sha256" -NoNewline
+
       - name: Upload release artifact
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.archive_name }}
-          path: ${{ matrix.archive_name }}
+          path: |
+            ${{ matrix.archive_name }}
+            ${{ matrix.archive_name }}.sha256
 
   release:
     name: Create Release
