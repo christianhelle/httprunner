@@ -46,7 +46,7 @@ fn create_log_file(base_filename: &str) -> Result<File> {
     Ok(file)
 }
 
-fn strip_ansi_codes(s: &str) -> String {
+pub fn strip_ansi_codes(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     let mut chars = s.chars();
 

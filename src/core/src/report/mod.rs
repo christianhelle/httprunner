@@ -4,8 +4,8 @@ mod markdown;
 mod time_utils;
 mod writer;
 
-pub use html::generate_html;
-pub use markdown::generate_markdown;
+pub use html::{generate_html, generate_html_with_options};
+pub use markdown::{generate_markdown, generate_markdown_with_options};
 
 #[cfg(test)]
 mod tests;

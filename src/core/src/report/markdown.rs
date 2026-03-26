@@ -1,13 +1,22 @@
 use super::formatter::{escape_markdown, format_local_datetime};
 use super::writer::write_report;
+use crate::redaction::sanitize_processor_results;
 use crate::types::{AssertionType, ProcessorResults};
 
 pub fn generate_markdown(results: &ProcessorResults) -> Result<String, std::io::Error> {
+    generate_markdown_with_options(results, false)
+}
+
+pub fn generate_markdown_with_options(
+    results: &ProcessorResults,
+    include_secrets: bool,
+) -> Result<String, std::io::Error> {
+    let sanitized_results = sanitize_processor_results(results, include_secrets);
     let mut report = String::new();
 
     append_header(&mut report);
-    append_overall_summary(&mut report, results);
-    append_file_results(&mut report, results);
+    append_overall_summary(&mut report, &sanitized_results);
+    append_file_results(&mut report, &sanitized_results);
 
     write_report(report)
 }

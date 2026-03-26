@@ -197,6 +197,38 @@ fn generate_markdown_includes_request_headers() {
     assert!(content.contains("**Headers:**"));
     assert!(content.contains("| Header | Value |"));
     assert!(content.contains("| Content-Type | application/json |"));
+    assert!(content.contains("| Authorization | ***REDACTED*** |"));
+    assert!(!content.contains("Bearer token\\|123"));
+
+    fs::remove_file(filename).ok();
+}
+
+#[test]
+fn generate_markdown_can_include_sensitive_headers_when_opted_in() {
+    let mut request = sample_request("test", "POST", "https://api.example.com");
+    request.headers = vec![Header {
+        name: "Authorization".to_string(),
+        value: "Bearer token|123".to_string(),
+    }];
+
+    let results = ProcessorResults {
+        success: true,
+        files: vec![HttpFileResults {
+            filename: "test.http".to_string(),
+            success_count: 1,
+            failed_count: 0,
+            skipped_count: 0,
+            result_contexts: vec![RequestContext {
+                name: "test".to_string(),
+                request,
+                result: Some(sample_result(200, true, 100)),
+            }],
+        }],
+    };
+
+    let filename = generate_markdown_with_options(&results, true).unwrap();
+    let content = fs::read_to_string(&filename).unwrap();
+
     assert!(content.contains("| Authorization | Bearer token\\|123 |"));
 
     fs::remove_file(filename).ok();
