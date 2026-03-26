@@ -3,8 +3,9 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
-- Fix UI run lifecycle and request round-tripping ([#246](https://github.com/christianhelle/httprunner/pull/246)) ([@christianhelle](https://github.com/christianhelle/))
+- Match WASM execution and trim GUI persistence overhead ([#248](https://github.com/christianhelle/httprunner/pull/248)) ([@christianhelle](https://github.com/christianhelle/))
 - Harden runtime caching and output redaction ([#245](https://github.com/christianhelle/httprunner/pull/245)) ([@christianhelle](https://github.com/christianhelle/))
+- Fix UI run lifecycle and request round-tripping ([#246](https://github.com/christianhelle/httprunner/pull/246)) ([@christianhelle](https://github.com/christianhelle/))
 - Fix core parser and request failures ([#244](https://github.com/christianhelle/httprunner/pull/244)) ([@christianhelle](https://github.com/christianhelle/))
 - Setup agent squad ([#241](https://github.com/christianhelle/httprunner/pull/241)) ([@christianhelle](https://github.com/christianhelle/))
 
