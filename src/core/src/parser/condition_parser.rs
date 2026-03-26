@@ -7,7 +7,17 @@ pub fn parse_condition(value: &str, negate: bool) -> Option<Condition> {
     }
 
     let reference = parts[0];
-    let expected_value = parts[1..].join(" ");
+    let expected_parts = if parts.get(1) == Some(&"==") {
+        &parts[2..]
+    } else {
+        &parts[1..]
+    };
+
+    if expected_parts.is_empty() {
+        return None;
+    }
+
+    let expected_value = strip_optional_quotes(&expected_parts.join(" ")).to_string();
 
     let ref_parts: Vec<&str> = reference.split('.').collect();
 
@@ -37,4 +47,13 @@ pub fn parse_condition(value: &str, negate: bool) -> Option<Condition> {
     }
 
     None
+}
+
+fn strip_optional_quotes(value: &str) -> &str {
+    let trimmed = value.trim();
+    if trimmed.starts_with('"') && trimmed.ends_with('"') && trimmed.len() >= 2 {
+        &trimmed[1..trimmed.len() - 1]
+    } else {
+        trimmed
+    }
 }

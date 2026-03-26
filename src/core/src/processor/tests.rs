@@ -229,8 +229,7 @@ fn test_substitute_request_variables_with_no_context() {
 
     let result = substitute_request_variables_in_request(&mut request, &context);
 
-    assert!(result.is_ok());
-    // Should remain unchanged when context not found
+    assert!(result.is_err());
     assert!(request.url.contains("{{login.response.body.$.id}}"));
 }
 
@@ -521,8 +520,7 @@ fn test_substitute_request_variables_with_missing_result() {
 
     let result = substitute_request_variables_in_request(&mut request, &context);
 
-    assert!(result.is_ok());
-    // URL should remain unchanged when result is None
+    assert!(result.is_err());
     assert!(request.url.contains("{{login.response.body.$.id}}"));
 }
 
@@ -826,7 +824,8 @@ fn test_substitute_request_variables_empty_body() {
     }];
 
     let result = substitute_request_variables_in_request(&mut request, &context);
-    assert!(result.is_ok());
+    assert!(result.is_err());
+    assert!(request.url.contains("{{login.response.body.$.id}}"));
 }
 
 #[test]

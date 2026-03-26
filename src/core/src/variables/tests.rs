@@ -241,10 +241,12 @@ fn test_substitute_request_variables_not_found() {
     let input = "Bearer {{login.response.body.$.token}}";
     let context = vec![];
 
-    let result = substitute_request_variables(input, &context).unwrap();
-
-    // Should remain unchanged when variable not found
-    assert_eq!(result, input);
+    let error = substitute_request_variables(input, &context).unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("Unable to resolve request variable")
+    );
 }
 
 #[test]
@@ -358,13 +360,13 @@ fn test_substitute_request_variables_nested_json() {
 }
 
 #[test]
-fn test_substitute_preserves_non_variable_text() {
-    let input = "Prefix {{var.response.body.$.id}} Suffix";
+fn test_substitute_preserves_non_request_variables() {
+    let input = "Prefix {{token}} Suffix";
     let context = vec![];
 
     let result = substitute_request_variables(input, &context).unwrap();
 
-    assert_eq!(result, "Prefix {{var.response.body.$.id}} Suffix");
+    assert_eq!(result, "Prefix {{token}} Suffix");
 }
 
 #[test]
@@ -430,7 +432,7 @@ fn test_extract_json_property_nested_object() {
 fn test_extract_json_property_array_of_strings() {
     let json = r#"{"tags": ["rust", "testing", "code"]}"#;
     let result = extract_json_property(json, "tags[1]").unwrap();
-    assert_eq!(result, Some("\"testing\"".to_string()));
+    assert_eq!(result, Some("testing".to_string()));
 }
 
 #[test]
@@ -444,7 +446,7 @@ fn test_extract_json_property_complex_nested() {
 fn test_extract_json_property_with_escape_sequences() {
     let json = r#"{"message": "Hello \"World\""}"#;
     let result = extract_json_property(json, "message").unwrap();
-    assert_eq!(result, Some(r#"Hello \"World\""#.to_string()));
+    assert_eq!(result, Some(r#"Hello "World""#.to_string()));
 }
 
 #[test]
@@ -472,7 +474,7 @@ fn test_extract_json_property_deeply_nested_path() {
 fn test_extract_json_property_array_with_comma_in_string() {
     let json = r#"{"items": ["first,value", "second,value"]}"#;
     let result = extract_json_property(json, "items[0]").unwrap();
-    assert_eq!(result, Some("\"first,value\"".to_string()));
+    assert_eq!(result, Some("first,value".to_string()));
 }
 
 #[test]
@@ -507,7 +509,32 @@ fn test_substitute_request_variables_invalid_format() {
 #[test]
 fn test_substitute_request_variables_extraction_error() {
     let context = vec![];
-    // Valid format but request not found - should preserve the placeholder
-    let result = substitute_request_variables("{{req.response.body.$.data}}", &context).unwrap();
-    assert_eq!(result, "{{req.response.body.$.data}}");
+    let error = substitute_request_variables("{{req.response.body.$.data}}", &context).unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("Unable to resolve request variable")
+    );
+}
+
+#[test]
+fn test_substitute_request_variables_malformed_request_variable_fails() {
+    let context = vec![];
+    let error = substitute_request_variables("{{login.response.body}}", &context).unwrap_err();
+    assert!(error.to_string().contains("Invalid request variable"));
+}
+
+#[test]
+fn test_extract_json_property_prefers_current_level_key() {
+    let json = r#"{"meta":{"id":1},"id":2}"#;
+    let result = extract_json_property(json, "id").unwrap();
+    assert_eq!(result, Some("2".to_string()));
+}
+
+#[test]
+fn test_extract_json_property_preserves_objects_with_braces_in_strings() {
+    let json = r#"{"user":{"note":"}","id":1},"tail":0}"#;
+    let value = extract_json_property(json, "user").unwrap().unwrap();
+    assert!(value.contains(r#""note":"}""#));
+    assert!(value.contains(r#""id":1"#));
 }
