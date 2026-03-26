@@ -1,4 +1,4 @@
-use super::substitution::FunctionSubstitutor;
+use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
 
 pub struct UpperSubstitutor {}
 impl FunctionSubstitutor for UpperSubstitutor {
@@ -11,11 +11,7 @@ impl FunctionSubstitutor for UpperSubstitutor {
     }
 
     fn replace(&self, input: &str) -> Result<String, regex::Error> {
-        use regex::RegexBuilder;
-
-        let re = RegexBuilder::new(r"\bupper\(\s*'((?:[^'\\]|\\.)*)'\s*\)")
-            .case_insensitive(true)
-            .build()?;
+        let re = get_case_insensitive_regex(r"\bupper\(\s*'((?:[^'\\]|\\.)*)'\s*\)")?;
         Ok(re
             .replace_all(input, |caps: &regex::Captures| caps[1].to_uppercase())
             .to_string())

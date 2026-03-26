@@ -6,6 +6,7 @@ use crate::assertions;
 use crate::types::{HttpRequest, HttpResult};
 use reqwest::Client;
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
@@ -69,6 +70,12 @@ pub async fn execute_http_request_async(
 }
 
 fn build_client_async(_request: &HttpRequest, insecure: bool) -> Result<Client> {
+    static CLIENT_CACHE: OnceLock<Client> = OnceLock::new();
+
+    if let Some(client) = CLIENT_CACHE.get() {
+        return Ok(client.clone());
+    }
+
     #[allow(unused_mut)]
     let mut client_builder = Client::builder();
 
@@ -91,7 +98,10 @@ fn build_client_async(_request: &HttpRequest, insecure: bool) -> Result<Client> 
     #[cfg(target_arch = "wasm32")]
     let _ = insecure;
 
-    Ok(client_builder.build()?)
+    let client = client_builder.build()?;
+    let client = CLIENT_CACHE.get_or_init(|| client);
+
+    Ok(client.clone())
 }
 
 fn build_request_async(client: &Client, request: &HttpRequest) -> Result<reqwest::RequestBuilder> {
