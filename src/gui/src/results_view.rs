@@ -5,6 +5,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
 #[cfg(not(target_arch = "wasm32"))]
+use std::any::Any;
+#[cfg(not(target_arch = "wasm32"))]
+use std::panic::{AssertUnwindSafe, catch_unwind};
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -85,146 +89,179 @@ impl ResultsView {
         self.compact_mode
     }
 
+    pub fn is_running(&self) -> bool {
+        self.is_running.lock().map(|guard| *guard).unwrap_or(false)
+    }
+
+    pub(crate) fn try_start_run(&mut self, message: String) -> bool {
+        if let Ok(mut running) = self.is_running.lock() {
+            if *running {
+                return false;
+            }
+            *running = true;
+        } else {
+            return false;
+        }
+
+        if let Ok(mut results) = self.results.lock() {
+            results.clear();
+            results.push(ExecutionResult::Running { message });
+        }
+
+        true
+    }
+
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn run_file(&mut self, path: &Path, environment: Option<&str>, delay_ms: u64) {
+    pub fn run_file(&mut self, path: &Path, environment: Option<&str>, delay_ms: u64) -> bool {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
+        if !self.try_start_run(format!("Parsing {}...", path.display())) {
+            return false;
+        }
+
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
 
         // Track feature usage
         telemetry::track_feature_usage("run_file");
 
-        // Clear previous results
-        if let Ok(mut r) = results.lock() {
-            r.clear();
-            r.push(ExecutionResult::Running {
-                message: format!("Parsing {}...", path.display()),
-            });
-        }
-
-        if let Ok(mut running) = is_running.lock() {
-            *running = true;
-        }
-
         thread::spawn(move || {
-            let execution_start = std::time::Instant::now();
+            let run_result = catch_unwind(AssertUnwindSafe(|| {
+                let execution_start = std::time::Instant::now();
 
-            if let Some(path_str) = path.to_str() {
-                // Clear the parsing message
-                if let Ok(mut r) = results.lock() {
-                    r.clear();
-                }
+                if let Some(path_str) = path.to_str() {
+                    // Clear the parsing message
+                    if let Ok(mut r) = results.lock() {
+                        r.clear();
+                    }
 
-                let mut success_count = 0usize;
-                let mut failed_count = 0usize;
-                let mut skipped_count = 0usize;
-                let mut total_count = 0usize;
+                    let mut success_count = 0usize;
+                    let mut failed_count = 0usize;
+                    let mut skipped_count = 0usize;
+                    let mut total_count = 0usize;
 
-                // Use the incremental processor which handles all features
-                let result = httprunner_core::processor::process_http_file_incremental(
-                    path_str,
-                    env.as_deref(),
-                    false, // insecure
-                    delay_ms,
-                    |_idx, total, process_result| {
-                        total_count = total;
+                    // Use the incremental processor which handles all features
+                    let result = httprunner_core::processor::process_http_file_incremental(
+                        path_str,
+                        env.as_deref(),
+                        false, // insecure
+                        delay_ms,
+                        |_idx, total, process_result| {
+                            total_count = total;
 
-                        use httprunner_core::processor::RequestProcessingResult;
-                        match process_result {
-                            RequestProcessingResult::Skipped { request, reason } => {
-                                skipped_count += 1;
-                                if let Ok(mut r) = results.lock() {
-                                    r.push(ExecutionResult::Failure {
-                                        method: format!("⏭️ {}", request.method),
-                                        url: request.url,
-                                        error: format!("Skipped: {}", reason),
-                                    });
-                                }
-                            }
-                            RequestProcessingResult::Executed { request, result } => {
-                                let request_body = request.body.clone();
-                                if result.success {
-                                    success_count += 1;
+                            use httprunner_core::processor::RequestProcessingResult;
+                            match process_result {
+                                RequestProcessingResult::Skipped { request, reason } => {
+                                    skipped_count += 1;
                                     if let Ok(mut r) = results.lock() {
-                                        r.push(ExecutionResult::Success {
-                                            method: request.method,
+                                        r.push(ExecutionResult::Failure {
+                                            method: format!("⏭️ {}", request.method),
                                             url: request.url,
-                                            status: result.status_code,
-                                            duration_ms: result.duration_ms,
-                                            request_body,
-                                            response_body: result.response_body.unwrap_or_default(),
-                                            assertion_results: result.assertion_results,
+                                            error: format!("Skipped: {}", reason),
                                         });
                                     }
-                                } else {
+                                }
+                                RequestProcessingResult::Executed { request, result } => {
+                                    let request_body = request.body.clone();
+                                    if result.success {
+                                        success_count += 1;
+                                        if let Ok(mut r) = results.lock() {
+                                            r.push(ExecutionResult::Success {
+                                                method: request.method,
+                                                url: request.url,
+                                                status: result.status_code,
+                                                duration_ms: result.duration_ms,
+                                                request_body,
+                                                response_body: result
+                                                    .response_body
+                                                    .unwrap_or_default(),
+                                                assertion_results: result.assertion_results,
+                                            });
+                                        }
+                                    } else {
+                                        failed_count += 1;
+                                        if let Ok(mut r) = results.lock() {
+                                            r.push(ExecutionResult::Failure {
+                                                method: request.method,
+                                                url: request.url,
+                                                error: result
+                                                    .error_message
+                                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                                            });
+                                        }
+                                    }
+                                }
+                                RequestProcessingResult::Failed { request, error } => {
                                     failed_count += 1;
                                     if let Ok(mut r) = results.lock() {
                                         r.push(ExecutionResult::Failure {
                                             method: request.method,
                                             url: request.url,
-                                            error: result
-                                                .error_message
-                                                .unwrap_or_else(|| "Unknown error".to_string()),
+                                            error,
                                         });
                                     }
                                 }
                             }
-                            RequestProcessingResult::Failed { request, error } => {
-                                failed_count += 1;
-                                if let Ok(mut r) = results.lock() {
-                                    r.push(ExecutionResult::Failure {
-                                        method: request.method,
-                                        url: request.url,
-                                        error,
-                                    });
-                                }
-                            }
-                        }
-                        // Continue processing all requests for "Run All"
-                        true
-                    },
-                );
-
-                if let Err(e) = result {
-                    // Track parse error
-                    telemetry::track_error_message(&format!("Parse error: {}", e));
-
-                    if let Ok(mut r) = results.lock() {
-                        r.clear();
-                        r.push(ExecutionResult::Failure {
-                            method: "PARSE".to_string(),
-                            url: path.display().to_string(),
-                            error: format!("Failed to parse file: {}", e),
-                        });
-                    }
-                } else {
-                    // Track execution completion
-                    let total_duration = execution_start.elapsed().as_millis() as u64;
-
-                    // Track parse metrics (approximate, since parsing is now integrated)
-                    telemetry::track_parse_complete(total_count, 0);
-
-                    telemetry::track_execution_complete(
-                        success_count,
-                        failed_count,
-                        skipped_count,
-                        total_duration,
+                            // Continue processing all requests for "Run All"
+                            true
+                        },
                     );
+
+                    if let Err(e) = result {
+                        // Track parse error
+                        telemetry::track_error_message(&format!("Parse error: {}", e));
+
+                        if let Ok(mut r) = results.lock() {
+                            r.clear();
+                            r.push(ExecutionResult::Failure {
+                                method: "PARSE".to_string(),
+                                url: path.display().to_string(),
+                                error: format!("Failed to parse file: {}", e),
+                            });
+                        }
+                    } else {
+                        // Track execution completion
+                        let total_duration = execution_start.elapsed().as_millis() as u64;
+
+                        // Track parse metrics (approximate, since parsing is now integrated)
+                        telemetry::track_parse_complete(total_count, 0);
+
+                        telemetry::track_execution_complete(
+                            success_count,
+                            failed_count,
+                            skipped_count,
+                            total_duration,
+                        );
+                    }
+                } else if let Ok(mut r) = results.lock() {
+                    r.clear();
+                    r.push(ExecutionResult::Failure {
+                        method: "READ".to_string(),
+                        url: path.display().to_string(),
+                        error: "Failed to convert path to string".to_string(),
+                    });
                 }
-            } else if let Ok(mut r) = results.lock() {
-                r.clear();
-                r.push(ExecutionResult::Failure {
-                    method: "READ".to_string(),
-                    url: path.display().to_string(),
-                    error: "Failed to convert path to string".to_string(),
-                });
+            }));
+
+            if let Err(panic) = run_result {
+                let panic_message = panic_to_string(&panic);
+                telemetry::track_error_message(&format!("Execution panic: {}", panic_message));
+                if let Ok(mut r) = results.lock() {
+                    r.clear();
+                    r.push(ExecutionResult::Failure {
+                        method: "PANIC".to_string(),
+                        url: path.display().to_string(),
+                        error: format!("Background execution panicked: {}", panic_message),
+                    });
+                }
             }
 
             if let Ok(mut running) = is_running.lock() {
                 *running = false;
             }
         });
+
+        true
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -234,122 +271,137 @@ impl ResultsView {
         index: usize,
         environment: Option<&str>,
         delay_ms: u64,
-    ) {
+    ) -> bool {
         let path = path.to_path_buf();
         let env = environment.map(|s| s.to_string());
+        if !self.try_start_run(format!(
+            "Running request {} from {}...",
+            index + 1,
+            path.display()
+        )) {
+            return false;
+        }
+
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
 
-        // Clear previous results
-        if let Ok(mut r) = results.lock() {
-            r.clear();
-            r.push(ExecutionResult::Running {
-                message: format!("Running request {} from {}...", index + 1, path.display()),
-            });
-        }
-
-        if let Ok(mut running) = is_running.lock() {
-            *running = true;
-        }
-
         thread::spawn(move || {
-            if let Some(path_str) = path.to_str() {
-                // Use the incremental processor to properly handle all features
-                // We process all requests up to the selected index to maintain context
-                // but only show the result of the selected request
-                let mut target_result: Option<ExecutionResult> = None;
+            let run_result = catch_unwind(AssertUnwindSafe(|| {
+                if let Some(path_str) = path.to_str() {
+                    // Use the incremental processor to properly handle all features
+                    // We process all requests up to the selected index to maintain context
+                    // but only show the result of the selected request
+                    let mut target_result: Option<ExecutionResult> = None;
 
-                let result = httprunner_core::processor::process_http_file_incremental(
-                    path_str,
-                    env.as_deref(),
-                    false, // insecure
-                    delay_ms,
-                    |idx, _total, process_result| {
-                        // Only capture the result for the target index
-                        if idx == index {
-                            use httprunner_core::processor::RequestProcessingResult;
-                            target_result = Some(match process_result {
-                                RequestProcessingResult::Skipped { request, reason } => {
-                                    ExecutionResult::Failure {
-                                        method: format!("⏭️ {}", request.method),
-                                        url: request.url,
-                                        error: format!("Skipped: {}", reason),
-                                    }
-                                }
-                                RequestProcessingResult::Executed { request, result } => {
-                                    let request_body = request.body.clone();
-                                    if result.success {
-                                        ExecutionResult::Success {
-                                            method: request.method,
+                    let result = httprunner_core::processor::process_http_file_incremental(
+                        path_str,
+                        env.as_deref(),
+                        false, // insecure
+                        delay_ms,
+                        |idx, _total, process_result| {
+                            // Only capture the result for the target index
+                            if idx == index {
+                                use httprunner_core::processor::RequestProcessingResult;
+                                target_result = Some(match process_result {
+                                    RequestProcessingResult::Skipped { request, reason } => {
+                                        ExecutionResult::Failure {
+                                            method: format!("⏭️ {}", request.method),
                                             url: request.url,
-                                            status: result.status_code,
-                                            duration_ms: result.duration_ms,
-                                            request_body,
-                                            response_body: result.response_body.unwrap_or_default(),
-                                            assertion_results: result.assertion_results,
+                                            error: format!("Skipped: {}", reason),
                                         }
-                                    } else {
+                                    }
+                                    RequestProcessingResult::Executed { request, result } => {
+                                        let request_body = request.body.clone();
+                                        if result.success {
+                                            ExecutionResult::Success {
+                                                method: request.method,
+                                                url: request.url,
+                                                status: result.status_code,
+                                                duration_ms: result.duration_ms,
+                                                request_body,
+                                                response_body: result
+                                                    .response_body
+                                                    .unwrap_or_default(),
+                                                assertion_results: result.assertion_results,
+                                            }
+                                        } else {
+                                            ExecutionResult::Failure {
+                                                method: request.method,
+                                                url: request.url,
+                                                error: result
+                                                    .error_message
+                                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                                            }
+                                        }
+                                    }
+                                    RequestProcessingResult::Failed { request, error } => {
                                         ExecutionResult::Failure {
                                             method: request.method,
                                             url: request.url,
-                                            error: result
-                                                .error_message
-                                                .unwrap_or_else(|| "Unknown error".to_string()),
+                                            error,
                                         }
                                     }
-                                }
-                                RequestProcessingResult::Failed { request, error } => {
-                                    ExecutionResult::Failure {
-                                        method: request.method,
-                                        url: request.url,
-                                        error,
-                                    }
-                                }
-                            });
-                            // Stop processing after capturing the target result
-                            false
-                        } else {
-                            // Continue processing to maintain context
-                            true
-                        }
-                    },
-                );
+                                });
+                                // Stop processing after capturing the target result
+                                false
+                            } else {
+                                // Continue processing to maintain context
+                                true
+                            }
+                        },
+                    );
 
-                if let Err(e) = result {
-                    if let Ok(mut r) = results.lock() {
+                    if let Err(e) = result {
+                        if let Ok(mut r) = results.lock() {
+                            r.clear();
+                            r.push(ExecutionResult::Failure {
+                                method: "PARSE".to_string(),
+                                url: path.display().to_string(),
+                                error: format!("Failed to parse file: {}", e),
+                            });
+                        }
+                    } else if let Some(result) = target_result {
+                        if let Ok(mut r) = results.lock() {
+                            r.clear();
+                            r.push(result);
+                        }
+                    } else if let Ok(mut r) = results.lock() {
                         r.clear();
                         r.push(ExecutionResult::Failure {
-                            method: "PARSE".to_string(),
+                            method: "INDEX".to_string(),
                             url: path.display().to_string(),
-                            error: format!("Failed to parse file: {}", e),
+                            error: format!("Request index {} not found", index),
                         });
-                    }
-                } else if let Some(result) = target_result {
-                    if let Ok(mut r) = results.lock() {
-                        r.clear();
-                        r.push(result);
                     }
                 } else if let Ok(mut r) = results.lock() {
                     r.clear();
                     r.push(ExecutionResult::Failure {
-                        method: "INDEX".to_string(),
+                        method: "PATH".to_string(),
                         url: path.display().to_string(),
-                        error: format!("Request index {} not found", index),
+                        error: "Failed to convert path to string".to_string(),
                     });
                 }
-            } else if let Ok(mut r) = results.lock() {
-                r.clear();
-                r.push(ExecutionResult::Failure {
-                    method: "PATH".to_string(),
-                    url: path.display().to_string(),
-                    error: "Failed to convert path to string".to_string(),
-                });
+            }));
+
+            if let Err(panic) = run_result {
+                let panic_message = panic_to_string(&panic);
+                telemetry::track_error_message(&format!("Execution panic: {}", panic_message));
+                if let Ok(mut r) = results.lock() {
+                    r.clear();
+                    r.push(ExecutionResult::Failure {
+                        method: "PANIC".to_string(),
+                        url: path.display().to_string(),
+                        error: format!("Background execution panicked: {}", panic_message),
+                    });
+                }
             }
 
             if let Ok(mut running) = is_running.lock() {
                 *running = false;
             }
         });
+
+        true
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
@@ -380,9 +432,7 @@ impl ResultsView {
 
         ui.separator();
 
-        if let Ok(is_running) = self.is_running.lock()
-            && *is_running
-        {
+        if self.is_running() {
             ui.spinner();
         }
 
@@ -619,5 +669,32 @@ impl ResultsView {
         ui.monospace(format!("{} {}", method, url));
         ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
         ui.separator();
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn panic_to_string(panic: &Box<dyn Any + Send>) -> String {
+    if let Some(message) = panic.downcast_ref::<String>() {
+        return message.clone();
+    }
+
+    if let Some(message) = panic.downcast_ref::<&str>() {
+        return (*message).to_string();
+    }
+
+    "unknown panic".to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn try_start_run_prevents_overlapping_execution() {
+        let mut results_view = ResultsView::new();
+
+        assert!(results_view.try_start_run("First".to_string()));
+        assert!(!results_view.try_start_run("Second".to_string()));
+        assert!(results_view.is_running());
     }
 }

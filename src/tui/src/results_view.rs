@@ -78,15 +78,23 @@ impl ResultsView {
         self.is_running.lock().map(|g| *g).unwrap_or(false)
     }
 
-    pub fn clear_for_async_run(&mut self) {
+    pub fn try_clear_for_async_run(&mut self) -> bool {
+        if let Ok(mut running) = self.is_running.lock() {
+            if *running {
+                return false;
+            }
+            *running = true;
+        } else {
+            return false;
+        }
+
         self.results = None;
         if let Ok(mut inc) = self.incremental_results.lock() {
             inc.clear();
         }
-        if let Ok(mut running) = self.is_running.lock() {
-            *running = true;
-        }
         self.scroll_offset = 0;
+
+        true
     }
 
     pub fn get_incremental_results(&self) -> Vec<ExecutionResult> {
@@ -171,5 +179,19 @@ impl ResultsView {
             .as_ref()
             .map(|r| r.files.iter().map(|f| f.failed_count as usize).sum())
             .unwrap_or(0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn try_clear_for_async_run_prevents_overlapping_execution() {
+        let mut results_view = ResultsView::new();
+
+        assert!(results_view.try_clear_for_async_run());
+        assert!(!results_view.try_clear_for_async_run());
+        assert!(results_view.is_running());
     }
 }
