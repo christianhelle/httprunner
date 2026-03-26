@@ -40,18 +40,16 @@ impl FileTree {
                         && let Some(ext) = entry.path().extension()
                         && ext == "http"
                     {
-                        let file_path = entry.path().to_path_buf();
-                        temp_files.push(file_path.clone());
-
-                        // Update shared state incrementally
-                        if let Ok(mut files) = files_clone.lock() {
-                            files.push(file_path);
-                            files.sort();
-                        }
+                        temp_files.push(entry.path().to_path_buf());
                         if let Ok(mut count) = count_clone.lock() {
                             *count = temp_files.len();
                         }
                     }
+                }
+
+                temp_files.sort();
+                if let Ok(mut files) = files_clone.lock() {
+                    *files = temp_files;
                 }
 
                 // Mark discovery as complete
@@ -109,22 +107,19 @@ impl FileTree {
             ui.ctx().request_repaint();
         }
 
-        // Get a snapshot of current files
-        let http_files = self
-            .http_files
-            .lock()
-            .map(|guard| guard.clone())
-            .unwrap_or_default();
-
         egui::ScrollArea::vertical().show(ui, |ui| {
             // Group files by directory
             let mut dir_files: std::collections::BTreeMap<Option<PathBuf>, Vec<PathBuf>> =
                 std::collections::BTreeMap::new();
 
-            for file in &http_files {
-                let parent = file.parent().map(|p| p.to_path_buf());
-                dir_files.entry(parent).or_default().push(file.clone());
+            if let Ok(http_files) = self.http_files.lock() {
+                for file in http_files.iter() {
+                    let parent = file.parent().map(|p| p.to_path_buf());
+                    dir_files.entry(parent).or_default().push(file.clone());
+                }
             }
+
+            let has_files = !dir_files.is_empty();
 
             // Show files organized by directory
             for (dir, files) in dir_files {
@@ -185,7 +180,7 @@ impl FileTree {
                 }
             }
 
-            if http_files.is_empty() && !self.is_discovering() {
+            if !has_files && !self.is_discovering() {
                 ui.label("No .http files found in this directory.");
                 ui.label("Use File -> Open Directory to choose a different folder.");
             }
