@@ -1,0 +1,49 @@
+{
+  "universe_usage_history": [
+    {
+      "assignment_id": "20260320-httprunner-alien",
+      "universe": "Alien",
+      "created_at": "2026-03-20T17:28:26.715Z",
+      "team_root": "C:\\projects\\christianhelle\\httprunner"
+    }
+  ],
+  "assignment_cast_snapshots": {
+    "20260320-httprunner-alien": {
+      "created_at": "2026-03-20T17:28:26.715Z",
+      "project": "httprunner",
+      "owner": "Christian Helle",
+      "universe": "Alien",
+      "members": [
+        {
+          "name": "Ripley",
+          "role": "Lead / Architect"
+        },
+        {
+          "name": "Bishop",
+          "role": "Core & CLI Engineer"
+        },
+        {
+          "name": "Vasquez",
+          "role": "GUI / TUI / WASM Engineer"
+        },
+        {
+          "name": "Ash",
+          "role": "Security Engineer"
+        },
+        {
+          "name": "Lambert",
+          "role": "Tester & Performance Reviewer"
+        },
+        {
+          "name": "Hicks",
+          "role": "Platform & Release Engineer"
+        }
+      ],
+      "exempt_members": [
+        "Scribe",
+        "Ralph",
+        "@copilot"
+      ]
+    }
+  }
+}
