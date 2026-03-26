@@ -121,28 +121,32 @@ fn render_file_tree(f: &mut Frame, area: Rect, app: &App) {
 
     let title = "Files [↑/↓/j/k to navigate]".to_string();
 
-    let files = app.file_tree.files();
-    let mut items: Vec<ListItem> = files
-        .iter()
-        .enumerate()
-        .map(|(i, path)| {
-            let display_name = path
-                .strip_prefix(app.file_tree.root())
-                .unwrap_or(path)
-                .display()
-                .to_string();
+    let mut items: Vec<ListItem> = app
+        .file_tree
+        .with_files(|files| {
+            files
+                .iter()
+                .enumerate()
+                .map(|(i, path)| {
+                    let display_name = path
+                        .strip_prefix(app.file_tree.root())
+                        .unwrap_or(path)
+                        .display()
+                        .to_string();
 
-            let style = if i == app.file_tree.selected_index() {
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default()
-            };
+                    let style = if i == app.file_tree.selected_index() {
+                        Style::default()
+                            .fg(Color::Yellow)
+                            .add_modifier(Modifier::BOLD)
+                    } else {
+                        Style::default()
+                    };
 
-            ListItem::new(display_name).style(style)
+                    ListItem::new(display_name).style(style)
+                })
+                .collect()
         })
-        .collect();
+        .unwrap_or_default();
 
     // Add discovering indicator at the top if still scanning
     if is_discovering {
