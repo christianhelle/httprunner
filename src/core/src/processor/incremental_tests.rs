@@ -9,7 +9,7 @@ fn create_response(status: u16) -> HttpResult {
     HttpResult {
         request_name: None,
         status_code: status,
-        success: status >= 200 && status < 400,
+        success: (200..400).contains(&status),
         error_message: None,
         duration_ms: 1,
         response_headers: None,

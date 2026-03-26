@@ -4,7 +4,7 @@ use super::timeout_parser::parse_timeout_value;
 use super::utils::is_http_request_line;
 use crate::environment;
 use crate::types::{Assertion, AssertionType, Condition, Header, HttpRequest, Variable};
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use std::fs;
 
 pub fn parse_http_file(
@@ -214,7 +214,9 @@ fn try_parse_condition_directive(trimmed: &str, state: &mut ParserState) -> Line
     if let Some(value) = if_value {
         match parse_condition(value, false) {
             Some(condition) => state.pending_conditions.push(condition),
-            None => eprintln!("Warning: Invalid @if directive format: '{}'", value),
+            None => {
+                return LineParseResult::Error(format!("Invalid @if directive format: '{value}'"));
+            }
         }
         return LineParseResult::Continue;
     }
@@ -228,7 +230,11 @@ fn try_parse_condition_directive(trimmed: &str, state: &mut ParserState) -> Line
     if let Some(value) = if_not_value {
         match parse_condition(value, true) {
             Some(condition) => state.pending_conditions.push(condition),
-            None => eprintln!("Warning: Invalid @if-not directive format: '{}'", value),
+            None => {
+                return LineParseResult::Error(format!(
+                    "Invalid @if-not directive format: '{value}'"
+                ));
+            }
         }
         return LineParseResult::Continue;
     }
@@ -337,20 +343,28 @@ fn try_parse_assertion_line(trimmed: &str, state: &mut ParserState) -> LineParse
     LineParseResult::NotHandled
 }
 
-fn parse_line(line: &str, state: &mut ParserState) {
+fn handle_line_parse_result(result: LineParseResult) -> Result<bool> {
+    match result {
+        LineParseResult::Continue => Ok(true),
+        LineParseResult::NotHandled => Ok(false),
+        LineParseResult::Error(message) => Err(anyhow!(message)),
+    }
+}
+
+fn parse_line(line: &str, state: &mut ParserState) -> Result<()> {
     let trimmed = line.trim();
 
     // Handle IntelliJ script blocks
     if line.trim_start().starts_with("> {%") {
         state.in_intellij_script = true;
-        return;
+        return Ok(());
     }
 
     if state.in_intellij_script {
         if trimmed == "%}" || trimmed.ends_with("%}") {
             state.in_intellij_script = false;
         }
-        return;
+        return Ok(());
     }
 
     // Handle empty lines
@@ -360,94 +374,49 @@ fn parse_line(line: &str, state: &mut ParserState) {
         } else if state.current_request.is_some() {
             state.in_body = true;
         }
-        return;
+        return Ok(());
     }
 
     // Try parsing directives in order
-    match try_parse_name_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_name_directive(trimmed, state))? {
+        return Ok(());
     }
 
-    match try_parse_timeout_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_timeout_directive(trimmed, state))? {
+        return Ok(());
     }
 
-    match try_parse_connection_timeout_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_connection_timeout_directive(trimmed, state))? {
+        return Ok(());
     }
 
-    match try_parse_depends_on_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_depends_on_directive(trimmed, state))? {
+        return Ok(());
     }
 
-    match try_parse_condition_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_condition_directive(trimmed, state))? {
+        return Ok(());
     }
 
-    match try_parse_pre_delay_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_pre_delay_directive(trimmed, state))? {
+        return Ok(());
     }
 
-    match try_parse_post_delay_directive(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_post_delay_directive(trimmed, state))? {
+        return Ok(());
     }
 
     // Skip comment lines (after directive processing)
     if trimmed.starts_with('#') || trimmed.starts_with("//") {
-        return;
+        return Ok(());
     }
 
-    match try_parse_variable_line(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_variable_line(trimmed, state))? {
+        return Ok(());
     }
 
-    match try_parse_assertion_line(trimmed, state) {
-        LineParseResult::Continue => return,
-        LineParseResult::Error(msg) => {
-            eprintln!("Warning: {}", msg);
-            return;
-        }
-        LineParseResult::NotHandled => {}
+    if handle_line_parse_result(try_parse_assertion_line(trimmed, state))? {
+        return Ok(());
     }
 
     // Parse HTTP request line
@@ -460,7 +429,7 @@ fn parse_line(line: &str, state: &mut ParserState) {
             let url = substitute_variables(parts[1], &state.variables);
             state.start_new_request(method, url);
         }
-        return;
+        return Ok(());
     }
 
     // Parse header line
@@ -472,11 +441,12 @@ fn parse_line(line: &str, state: &mut ParserState) {
             let value = trimmed[colon_pos + 1..].trim();
             state.add_header(name, value);
         }
-        return;
+        return Ok(());
     }
 
     // Must be body content - preserve original line with whitespace
     state.append_body_content(line);
+    Ok(())
 }
 
 fn parse_http_content_with_vars(
@@ -485,8 +455,10 @@ fn parse_http_content_with_vars(
 ) -> Result<Vec<HttpRequest>> {
     let mut state = ParserState::new(env_variables);
 
-    for line in content.lines() {
-        parse_line(line, &mut state);
+    for (line_number, line) in content.lines().enumerate() {
+        parse_line(line, &mut state).with_context(|| {
+            format!("Failed to parse line {}: {}", line_number + 1, line.trim())
+        })?;
     }
 
     // Finalize any remaining request

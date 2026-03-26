@@ -1,7 +1,7 @@
 use super::extractor::extract_request_variable_value;
 use super::parser::parse_request_variable;
 use crate::types::RequestContext;
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 
 pub fn substitute_request_variables(input: &str, context: &[RequestContext]) -> Result<String> {
     let mut result = String::new();
@@ -18,15 +18,17 @@ pub fn substitute_request_variables(input: &str, context: &[RequestContext]) -> 
             if j + 1 < chars.len() {
                 let var_ref: String = chars[i..=j + 1].iter().collect();
 
-                if var_ref.matches('.').count() >= 3 {
-                    match parse_request_variable(&var_ref) {
-                        Ok(request_var) => {
-                            match extract_request_variable_value(&request_var, context) {
-                                Ok(Some(value)) => result.push_str(&value),
-                                _ => result.push_str(&var_ref),
-                            }
+                if looks_like_request_variable(&var_ref) {
+                    let request_var = parse_request_variable(&var_ref)
+                        .map_err(|e| anyhow!("Invalid request variable '{var_ref}': {e}"))?;
+                    match extract_request_variable_value(&request_var, context)? {
+                        Some(value) => result.push_str(&value),
+                        None => {
+                            return Err(anyhow!(
+                                "Unable to resolve request variable: {}",
+                                request_var.reference
+                            ));
                         }
-                        Err(_) => result.push_str(&var_ref),
                     }
                 } else {
                     result.push_str(&var_ref);
@@ -44,4 +46,15 @@ pub fn substitute_request_variables(input: &str, context: &[RequestContext]) -> 
     }
 
     Ok(result)
+}
+
+fn looks_like_request_variable(reference: &str) -> bool {
+    let cleaned = reference
+        .strip_prefix("{{")
+        .and_then(|value| value.strip_suffix("}}"))
+        .unwrap_or(reference);
+
+    let mut parts = cleaned.split('.');
+    parts.next();
+    matches!(parts.next(), Some("request" | "response"))
 }

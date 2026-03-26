@@ -3,7 +3,7 @@ mod shutdown;
 mod upgrade;
 
 use crate::cli::ReportFormat;
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use clap::{CommandFactory, Parser};
 use httprunner_core::report::{generate_html, generate_markdown};
 use httprunner_core::telemetry::{self, AppType, CliArgPatterns};
@@ -84,7 +84,7 @@ fn run(cli_args: &cli::Cli) -> Result<()> {
     if !cli_args.no_banner {
         cli::show_donation_banner();
     }
-    Ok(())
+    ensure_processor_success(&results)
 }
 
 fn load_files(cli_args: &cli::Cli) -> Result<Vec<String>> {
@@ -213,5 +213,43 @@ fn show_support_key(cli_args: &cli::Cli) {
                 e
             );
         }
+    }
+}
+
+fn ensure_processor_success(results: &ProcessorResults) -> Result<()> {
+    if results.success {
+        Ok(())
+    } else {
+        Err(anyhow!("One or more HTTP requests failed"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ensure_processor_success_returns_ok_for_successful_results() {
+        let results = ProcessorResults {
+            success: true,
+            files: Vec::new(),
+        };
+
+        assert!(ensure_processor_success(&results).is_ok());
+    }
+
+    #[test]
+    fn ensure_processor_success_returns_error_for_failed_results() {
+        let results = ProcessorResults {
+            success: false,
+            files: Vec::new(),
+        };
+
+        let error = ensure_processor_success(&results).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("One or more HTTP requests failed")
+        );
     }
 }
