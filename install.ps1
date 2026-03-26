@@ -211,6 +211,7 @@ function Install-HttpRunner
   $tempDir = Join-Path $env:TEMP "httprunner-install-$(Get-Random)"
   $archivePath = Join-Path $tempDir $ArchiveName
   $checksumPath = Join-Path $tempDir "$ArchiveName.sha256"
+  $checksumDownloaded = $false
     
   try
   {
@@ -221,10 +222,27 @@ function Install-HttpRunner
     Invoke-WebRequest -Uri $downloadUrl -OutFile $archivePath -ErrorAction Stop
 
     Write-Info "Downloading checksum..."
-    Invoke-WebRequest -Uri $checksumUrl -OutFile $checksumPath -ErrorAction Stop
+    try
+    {
+      Invoke-WebRequest -Uri $checksumUrl -OutFile $checksumPath -ErrorAction Stop
+      $checksumDownloaded = $true
+    } catch
+    {
+      $statusCode = Get-HttpStatusCode $_.Exception
+      if ($statusCode -eq 404)
+      {
+        Write-Warning "Checksum file not published for $Version; skipping integrity verification"
+      } else
+      {
+        throw
+      }
+    }
 
-    Write-Info "Verifying download integrity..."
-    Test-ArchiveChecksum -ArchivePath $archivePath -ChecksumPath $checksumPath
+    if ($checksumDownloaded)
+    {
+      Write-Info "Verifying download integrity..."
+      Test-ArchiveChecksum -ArchivePath $archivePath -ChecksumPath $checksumPath
+    }
          
     Write-Info "Extracting archive..."
     Expand-Archive -Path $archivePath -DestinationPath $tempDir -Force
@@ -261,6 +279,31 @@ function Install-HttpRunner
     {
       Remove-Item -Path $tempDir -Recurse -Force
     }
+  }
+}
+
+function Get-HttpStatusCode
+{
+  param([System.Exception]$Exception)
+
+  $responseProperty = $Exception.PSObject.Properties['Response']
+  if ($null -eq $responseProperty)
+  {
+    return $null
+  }
+
+  $response = $responseProperty.Value
+  if ($null -eq $response)
+  {
+    return $null
+  }
+
+  try
+  {
+    return [int]$response.StatusCode
+  } catch
+  {
+    return $null
   }
 }
 
