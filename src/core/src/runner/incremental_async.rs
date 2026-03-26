@@ -5,6 +5,13 @@ use crate::variables;
 use anyhow::Result;
 use std::future::Future;
 use std::pin::Pin;
+#[cfg(not(target_arch = "wasm32"))]
+use std::sync::{
+    Arc, Mutex,
+    atomic::{AtomicBool, Ordering},
+};
+#[cfg(not(target_arch = "wasm32"))]
+use std::task::Waker;
 use std::time::Duration;
 
 pub type AsyncRequestFuture<'a> = Pin<Box<dyn Future<Output = Result<HttpResult>> + 'a>>;
@@ -246,19 +253,89 @@ fn add_request_context(
     });
 }
 
+#[cfg(target_arch = "wasm32")]
 async fn sleep_ms(delay_ms: u64) {
     if delay_ms == 0 {
         return;
     }
 
-    #[cfg(target_arch = "wasm32")]
-    {
-        gloo_timers::future::sleep(Duration::from_millis(delay_ms)).await;
+    gloo_timers::future::sleep(Duration::from_millis(delay_ms)).await;
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+async fn sleep_ms(delay_ms: u64) {
+    if delay_ms == 0 {
+        return;
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        std::thread::sleep(Duration::from_millis(delay_ms));
+    NativeSleep::new(Duration::from_millis(delay_ms)).await;
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct NativeSleep {
+    duration: Option<Duration>,
+    state: Arc<NativeSleepState>,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct NativeSleepState {
+    completed: AtomicBool,
+    waker: Mutex<Option<Waker>>,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl NativeSleep {
+    fn new(duration: Duration) -> Self {
+        Self {
+            duration: Some(duration),
+            state: Arc::new(NativeSleepState {
+                completed: AtomicBool::new(false),
+                waker: Mutex::new(None),
+            }),
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Future for NativeSleep {
+    type Output = ();
+
+    fn poll(
+        self: Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        let this = self.get_mut();
+
+        if this.state.completed.load(Ordering::Acquire) {
+            return std::task::Poll::Ready(());
+        }
+
+        {
+            let mut waker = this
+                .state
+                .waker
+                .lock()
+                .expect("native sleep waker mutex poisoned");
+            *waker = Some(cx.waker().clone());
+        }
+
+        if let Some(duration) = this.duration.take() {
+            let state = Arc::clone(&this.state);
+            std::thread::spawn(move || {
+                std::thread::sleep(duration);
+                state.completed.store(true, Ordering::Release);
+                if let Some(waker) = state
+                    .waker
+                    .lock()
+                    .expect("native sleep waker mutex poisoned")
+                    .take()
+                {
+                    waker.wake();
+                }
+            });
+        }
+
+        std::task::Poll::Pending
     }
 }
 
