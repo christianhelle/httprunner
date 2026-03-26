@@ -1,6 +1,12 @@
 # Changelog
 
-## [0.9.49](https://github.com/christianhelle/httprunner/releases/tag/0.9.49) (2026-03-24)
+## [Unreleased Changes]
+
+### Merged Pull Requests
+- Setup agent squad ([#241](https://github.com/christianhelle/httprunner/pull/241)) ([@christianhelle](https://github.com/christianhelle/))
+
+
+## [0.9.51](https://github.com/christianhelle/httprunner/releases/tag/0.9.51) (2026-03-24)
 
 ### Merged Pull Requests
 - Update actions/checkout action to v6 ([#236](https://github.com/christianhelle/httprunner/pull/236)) (@renovate[bot])
