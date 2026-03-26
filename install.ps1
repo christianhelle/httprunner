@@ -207,8 +207,11 @@ function Install-HttpRunner
   )
     
   $downloadUrl = "https://github.com/$GitHubRepo/releases/download/$Version/$ArchiveName"
+  $checksumUrl = "$downloadUrl.sha256"
   $tempDir = Join-Path $env:TEMP "httprunner-install-$(Get-Random)"
   $archivePath = Join-Path $tempDir $ArchiveName
+  $checksumPath = Join-Path $tempDir "$ArchiveName.sha256"
+  $checksumDownloaded = $false
     
   try
   {
@@ -217,7 +220,30 @@ function Install-HttpRunner
         
     Write-Info "Downloading httprunner $Version..."
     Invoke-WebRequest -Uri $downloadUrl -OutFile $archivePath -ErrorAction Stop
-        
+
+    Write-Info "Downloading checksum..."
+    try
+    {
+      Invoke-WebRequest -Uri $checksumUrl -OutFile $checksumPath -ErrorAction Stop
+      $checksumDownloaded = $true
+    } catch
+    {
+      $statusCode = Get-HttpStatusCode $_.Exception
+      if ($statusCode -eq 404)
+      {
+        Write-Warning "Checksum file not published for $Version; skipping integrity verification"
+      } else
+      {
+        throw
+      }
+    }
+
+    if ($checksumDownloaded)
+    {
+      Write-Info "Verifying download integrity..."
+      Test-ArchiveChecksum -ArchivePath $archivePath -ChecksumPath $checksumPath
+    }
+         
     Write-Info "Extracting archive..."
     Expand-Archive -Path $archivePath -DestinationPath $tempDir -Force
         
@@ -254,6 +280,50 @@ function Install-HttpRunner
       Remove-Item -Path $tempDir -Recurse -Force
     }
   }
+}
+
+function Get-HttpStatusCode
+{
+  param([System.Exception]$Exception)
+
+  $responseProperty = $Exception.PSObject.Properties['Response']
+  if ($null -eq $responseProperty)
+  {
+    return $null
+  }
+
+  $response = $responseProperty.Value
+  if ($null -eq $response)
+  {
+    return $null
+  }
+
+  try
+  {
+    return [int]$response.StatusCode
+  } catch
+  {
+    return $null
+  }
+}
+
+function Test-ArchiveChecksum
+{
+  param(
+    [string]$ArchivePath,
+    [string]$ChecksumPath
+  )
+
+  $checksumContent = (Get-Content -Path $ChecksumPath -Raw).Trim()
+  $expectedHash = ($checksumContent -split '\s+')[0].ToLowerInvariant()
+  $actualHash = (Get-FileHash -Path $ArchivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+
+  if ($expectedHash -ne $actualHash)
+  {
+    throw "Checksum verification failed for $ArchivePath"
+  }
+
+  Write-Success "Checksum verified successfully"
 }
 
 function Test-Installation

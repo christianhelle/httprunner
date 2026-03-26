@@ -72,6 +72,11 @@ check_dependencies() {
             exit 1
         fi
     done
+
+    if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
+        log_error "Required dependency 'sha256sum' or 'shasum' not found. Please install one of them first."
+        exit 1
+    fi
 }
 
 get_latest_release() {
@@ -88,13 +93,39 @@ download_and_install() {
     local platform="$1"
     local version="$2"
     local archive_name="httprunner-${platform}.tar.gz"
+    local checksum_name="${archive_name}.sha256"
     local download_url="https://github.com/$GITHUB_REPO/releases/download/$version/$archive_name"
+    local checksum_url="https://github.com/$GITHUB_REPO/releases/download/$version/$checksum_name"
     local temp_dir=$(mktemp -d)
     
     log_info "Downloading httprunner $version for $platform..."
     
-    if ! curl -L -o "$temp_dir/$archive_name" "$download_url"; then
+    if ! curl -fsSL -o "$temp_dir/$archive_name" "$download_url"; then
         log_error "Failed to download httprunner"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    log_info "Downloading checksum..."
+    local checksum_status
+    if ! checksum_status=$(curl -sSL -o "$temp_dir/$checksum_name" -w "%{http_code}" "$checksum_url"); then
+        log_error "Failed to download checksum"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+
+    if [ "$checksum_status" = "200" ]; then
+        log_info "Verifying download integrity..."
+        if ! verify_checksum "$temp_dir/$archive_name" "$temp_dir/$checksum_name"; then
+            log_error "Checksum verification failed"
+            rm -rf "$temp_dir"
+            exit 1
+        fi
+    elif [ "$checksum_status" = "404" ]; then
+        rm -f "$temp_dir/$checksum_name"
+        log_warning "Checksum file not published for $version; skipping integrity verification"
+    else
+        log_error "Failed to download checksum (HTTP $checksum_status)"
         rm -rf "$temp_dir"
         exit 1
     fi
@@ -130,6 +161,40 @@ download_and_install() {
     rm -rf "$temp_dir"
     
     log_success "httprunner $version installed successfully!"
+}
+
+verify_checksum() {
+    local archive_path="$1"
+    local checksum_path="$2"
+
+    if command -v sha256sum >/dev/null 2>&1; then
+        if (
+            cd "$(dirname "$archive_path")"
+            sha256sum -c "$(basename "$checksum_path")" >/dev/null
+        ); then
+            log_success "Checksum verified successfully"
+            return 0
+        fi
+
+        return 1
+    fi
+
+    if ! command -v shasum >/dev/null 2>&1; then
+        log_error "Neither sha256sum nor shasum is available for checksum verification"
+        return 1
+    fi
+
+    local expected_hash
+    local actual_hash
+    expected_hash=$(awk '{print $1}' "$checksum_path")
+    actual_hash=$(shasum -a 256 "$archive_path" | awk '{print $1}')
+
+    if [[ "$expected_hash" == "$actual_hash" ]]; then
+        log_success "Checksum verified successfully"
+        return 0
+    fi
+
+    return 1
 }
 
 verify_installation() {
