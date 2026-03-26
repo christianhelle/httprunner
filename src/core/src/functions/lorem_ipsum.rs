@@ -1,4 +1,4 @@
-use super::substitution::FunctionSubstitutor;
+use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
 
 pub(crate) static LOREM_IPSUM_WORDS: &[&str] = &[
     "lorem",
@@ -303,10 +303,8 @@ impl FunctionSubstitutor for LoremIpsumSubstitutor {
     }
 
     fn replace(&self, input: &str) -> Result<String, regex::Error> {
-        use regex::RegexBuilder;
-
         let pattern = r"\blorem_ipsum\(\s*(\d*)\s*\)";
-        let regex = RegexBuilder::new(pattern).case_insensitive(true).build()?;
+        let regex = get_case_insensitive_regex(pattern)?;
         Ok(regex
             .replace_all(input, |caps: &regex::Captures| {
                 let val = caps[1].parse::<usize>().unwrap_or(100);
