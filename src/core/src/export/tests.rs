@@ -173,9 +173,44 @@ fn export_request_includes_headers() {
     let content = fs::read_to_string(request_file).unwrap();
 
     assert!(content.contains("Content-Type: application/json"));
-    assert!(content.contains("Authorization: Bearer token123"));
+    assert!(content.contains("Authorization: ***REDACTED***"));
+    assert!(!content.contains("Bearer token123"));
 
     // Cleanup
+    for file_name in &export_result.file_names {
+        fs::remove_file(file_name).ok();
+    }
+}
+
+#[test]
+fn export_request_can_include_sensitive_headers_when_opted_in() {
+    let mut request = sample_request("headers_opt_in_1", "POST", "https://api.example.com");
+    request.headers = vec![Header {
+        name: "Authorization".to_string(),
+        value: "Bearer token123".to_string(),
+    }];
+
+    let results = ProcessorResults {
+        success: true,
+        files: vec![HttpFileResults {
+            filename: "test.http".to_string(),
+            success_count: 1,
+            failed_count: 0,
+            skipped_count: 0,
+            result_contexts: vec![RequestContext {
+                name: "headers_opt_in_1".to_string(),
+                request,
+                result: Some(sample_result(200, true, 100)),
+            }],
+        }],
+    };
+
+    let export_result = export_results_with_options(&results, false, true).unwrap();
+    let request_file = &export_result.file_names[0];
+    let content = fs::read_to_string(request_file).unwrap();
+
+    assert!(content.contains("Authorization: Bearer token123"));
+
     for file_name in &export_result.file_names {
         fs::remove_file(file_name).ok();
     }
@@ -676,10 +711,41 @@ fn export_handles_non_json_request_body() {
     let request_file = &export_result.file_names[0];
     let content = fs::read_to_string(request_file).unwrap();
 
-    // Non-JSON should remain unchanged even with pretty_json=true
-    assert!(content.contains("username=test&password=secret"));
+    assert!(content.contains("username=test&password=***REDACTED***"));
+    assert!(!content.contains("password=secret"));
 
     // Cleanup
+    for file_name in &export_result.file_names {
+        fs::remove_file(file_name).ok();
+    }
+}
+
+#[test]
+fn export_request_body_can_include_sensitive_values_when_opted_in() {
+    let mut request = sample_request("plain_request_opt_in_1", "POST", "https://example.com");
+    request.body = Some("username=test&password=secret".to_string());
+
+    let results = ProcessorResults {
+        success: true,
+        files: vec![HttpFileResults {
+            filename: "test.http".to_string(),
+            success_count: 1,
+            failed_count: 0,
+            skipped_count: 0,
+            result_contexts: vec![RequestContext {
+                name: "plain_request_opt_in_1".to_string(),
+                request,
+                result: Some(sample_result(200, true, 100)),
+            }],
+        }],
+    };
+
+    let export_result = export_results_with_options(&results, true, true).unwrap();
+    let request_file = &export_result.file_names[0];
+    let content = fs::read_to_string(request_file).unwrap();
+
+    assert!(content.contains("username=test&password=secret"));
+
     for file_name in &export_result.file_names {
         fs::remove_file(file_name).ok();
     }

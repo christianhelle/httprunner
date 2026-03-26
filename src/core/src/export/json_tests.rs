@@ -1,4 +1,4 @@
-use super::json_exporter::export_json_to_dir;
+use super::json_exporter::{export_json_to_dir, export_json_to_dir_with_options};
 use crate::types::{
     Assertion, AssertionResult, AssertionType, Header, HttpFileResults, HttpRequest, HttpResult,
     ProcessorResults, RequestContext,
@@ -148,6 +148,94 @@ fn export_json_includes_response_details() {
     assert_eq!(res["duration_ms"], 250);
     assert_eq!(res["response_body"], r#"{"id":1}"#);
     assert_eq!(res["response_headers"]["Content-Type"], "application/json");
+}
+
+#[test]
+fn export_json_redacts_sensitive_values_by_default() {
+    let tmp = TempDir::new().unwrap();
+
+    let mut request = sample_request(
+        "json_secret_default",
+        "POST",
+        "https://api.example.com?token=secret",
+    );
+    request.headers = vec![Header {
+        name: "Authorization".to_string(),
+        value: "Bearer token123".to_string(),
+    }];
+    request.body = Some(r#"{"password":"secret"}"#.to_string());
+
+    let mut result = sample_result(200, true, 250);
+    let mut headers = HashMap::new();
+    headers.insert("Set-Cookie".to_string(), "session=secret".to_string());
+    result.response_headers = Some(headers);
+    result.response_body = Some(r#"{"token":"secret"}"#.to_string());
+
+    let results = ProcessorResults {
+        success: true,
+        files: vec![HttpFileResults {
+            filename: "test.http".to_string(),
+            success_count: 1,
+            failed_count: 0,
+            skipped_count: 0,
+            result_contexts: vec![RequestContext {
+                name: "json_secret_default".to_string(),
+                request,
+                result: Some(result),
+            }],
+        }],
+    };
+
+    let filename = export_json_to_dir(&results, Some(tmp.path())).unwrap();
+    let content = fs::read_to_string(tmp.path().join(&filename)).unwrap();
+    let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+    let req = &parsed["files"][0]["result_contexts"][0]["request"];
+    assert_eq!(req["url"], "https://api.example.com?token=***REDACTED***");
+    assert_eq!(req["headers"][0]["value"], "***REDACTED***");
+    assert_eq!(req["body"], r#"{"password":"***REDACTED***"}"#);
+
+    let res = &parsed["files"][0]["result_contexts"][0]["result"];
+    assert_eq!(res["response_headers"]["Set-Cookie"], "***REDACTED***");
+    assert_eq!(res["response_body"], r#"{"token":"***REDACTED***"}"#);
+}
+
+#[test]
+fn export_json_can_include_sensitive_values_when_opted_in() {
+    let tmp = TempDir::new().unwrap();
+
+    let mut request = sample_request(
+        "json_secret_opt_in",
+        "POST",
+        "https://api.example.com?token=secret",
+    );
+    request.headers = vec![Header {
+        name: "Authorization".to_string(),
+        value: "Bearer token123".to_string(),
+    }];
+
+    let results = ProcessorResults {
+        success: true,
+        files: vec![HttpFileResults {
+            filename: "test.http".to_string(),
+            success_count: 1,
+            failed_count: 0,
+            skipped_count: 0,
+            result_contexts: vec![RequestContext {
+                name: "json_secret_opt_in".to_string(),
+                request,
+                result: Some(sample_result(200, true, 100)),
+            }],
+        }],
+    };
+
+    let filename = export_json_to_dir_with_options(&results, Some(tmp.path()), true).unwrap();
+    let content = fs::read_to_string(tmp.path().join(&filename)).unwrap();
+    let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+    let req = &parsed["files"][0]["result_contexts"][0]["request"];
+    assert_eq!(req["url"], "https://api.example.com?token=secret");
+    assert_eq!(req["headers"][0]["value"], "Bearer token123");
 }
 
 #[test]

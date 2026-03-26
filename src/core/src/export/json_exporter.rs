@@ -3,17 +3,34 @@ use std::io::Write;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use crate::redaction::sanitize_processor_results;
 use crate::types::ProcessorResults;
 
 pub fn export_json(results: &ProcessorResults) -> Result<String, std::io::Error> {
-    export_json_to_dir(results, None)
+    export_json_with_options(results, false)
+}
+
+pub fn export_json_with_options(
+    results: &ProcessorResults,
+    include_secrets: bool,
+) -> Result<String, std::io::Error> {
+    export_json_to_dir_with_options(results, None, include_secrets)
 }
 
 pub fn export_json_to_dir(
     results: &ProcessorResults,
     output_dir: Option<&Path>,
 ) -> Result<String, std::io::Error> {
-    let json = serde_json::to_string_pretty(results)
+    export_json_to_dir_with_options(results, output_dir, false)
+}
+
+pub fn export_json_to_dir_with_options(
+    results: &ProcessorResults,
+    output_dir: Option<&Path>,
+    include_secrets: bool,
+) -> Result<String, std::io::Error> {
+    let sanitized_results = sanitize_processor_results(results, include_secrets);
+    let json = serde_json::to_string_pretty(&sanitized_results)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
     let timestamp = SystemTime::now()

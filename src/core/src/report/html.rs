@@ -1,13 +1,22 @@
 use super::formatter::format_local_datetime;
 use super::writer::write_report_with_extension;
+use crate::redaction::sanitize_processor_results;
 use crate::types::{AssertionType, ProcessorResults};
 
 pub fn generate_html(results: &ProcessorResults) -> Result<String, std::io::Error> {
+    generate_html_with_options(results, false)
+}
+
+pub fn generate_html_with_options(
+    results: &ProcessorResults,
+    include_secrets: bool,
+) -> Result<String, std::io::Error> {
+    let sanitized_results = sanitize_processor_results(results, include_secrets);
     let mut html = String::new();
 
     append_html_header(&mut html);
-    append_overall_summary(&mut html, results);
-    append_file_results(&mut html, results);
+    append_overall_summary(&mut html, &sanitized_results);
+    append_file_results(&mut html, &sanitized_results);
     append_html_footer(&mut html);
 
     write_report_with_extension(html, "html")

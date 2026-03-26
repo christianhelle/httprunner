@@ -1,4 +1,5 @@
 use crate::app::{App, FocusedPane};
+use httprunner_core::logging::strip_ansi_codes;
 use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -23,6 +24,10 @@ pub fn render(f: &mut Frame, app: &App) {
     render_title(f, chunks[0], app);
     render_main_content(f, chunks[1], app);
     render_status_bar(f, chunks[2], app);
+}
+
+fn sanitize_display_text(value: &str) -> String {
+    strip_ansi_codes(value)
 }
 
 fn render_title(f: &mut Frame, area: Rect, app: &App) {
@@ -297,6 +302,10 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     response_body,
                     assertion_results,
                 } => {
+                    let method = sanitize_display_text(method);
+                    let url = sanitize_display_text(url);
+                    let response_body = sanitize_display_text(response_body);
+
                     // Main result line (same for compact and verbose)
                     lines.push(Line::from(vec![
                         Span::styled("✓ ", Style::default().fg(Color::Green)),
@@ -319,38 +328,39 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                             };
 
                             if assertion.passed {
+                                let expected =
+                                    sanitize_display_text(&assertion.assertion.expected_value);
                                 lines.push(Line::from(vec![
                                     Span::raw("  "),
                                     Span::styled("✓ ", Style::default().fg(Color::Green)),
                                     Span::raw(format!(
                                         "{}: Expected '{}'",
-                                        assertion_type_str, assertion.assertion.expected_value
+                                        assertion_type_str, expected
                                     )),
                                 ]));
                             } else {
+                                let error_message = sanitize_display_text(
+                                    assertion.error_message.as_deref().unwrap_or("Failed"),
+                                );
                                 lines.push(Line::from(vec![
                                     Span::raw("  "),
                                     Span::styled("✗ ", Style::default().fg(Color::Red)),
                                     Span::styled(
-                                        format!(
-                                            "{}: {}",
-                                            assertion_type_str,
-                                            assertion
-                                                .error_message
-                                                .as_ref()
-                                                .unwrap_or(&"Failed".to_string())
-                                        ),
+                                        format!("{}: {}", assertion_type_str, error_message),
                                         Style::default().fg(Color::Red),
                                     ),
                                 ]));
 
                                 if let Some(ref actual) = assertion.actual_value {
+                                    let expected =
+                                        sanitize_display_text(&assertion.assertion.expected_value);
+                                    let actual = sanitize_display_text(actual);
                                     lines.push(Line::from(vec![
                                         Span::raw("    "),
                                         Span::styled(
                                             format!(
                                                 "Expected: '{}', Actual: '{}'",
-                                                assertion.assertion.expected_value, actual
+                                                expected, actual
                                             ),
                                             Style::default().fg(Color::Yellow),
                                         ),
@@ -361,30 +371,33 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     }
 
                     // 2. Show request body in verbose mode (skip if empty or whitespace only)
-                    if !compact_mode
-                        && let Some(req_body) = request_body
-                        && !req_body.trim().is_empty()
-                    {
-                        lines.push(Line::from(""));
-                        lines.push(Line::from(vec![Span::styled(
-                            "  Request Body:",
-                            Style::default().add_modifier(Modifier::BOLD),
-                        )]));
-                        // Show first few lines of request body (truncate for TUI)
-                        let line_count = req_body.lines().count();
-                        for (i, line) in req_body.lines().take(5).enumerate() {
-                            lines.push(Line::from(vec![
-                                Span::raw("    "),
-                                Span::styled(line.to_string(), Style::default().fg(Color::Cyan)),
-                            ]));
-                            if i == 4 && line_count > 5 {
+                    if !compact_mode && let Some(req_body) = request_body {
+                        let sanitized_request_body = sanitize_display_text(req_body);
+                        if !sanitized_request_body.trim().is_empty() {
+                            lines.push(Line::from(""));
+                            lines.push(Line::from(vec![Span::styled(
+                                "  Request Body:",
+                                Style::default().add_modifier(Modifier::BOLD),
+                            )]));
+                            // Show first few lines of request body (truncate for TUI)
+                            let line_count = sanitized_request_body.lines().count();
+                            for (i, line) in sanitized_request_body.lines().take(5).enumerate() {
                                 lines.push(Line::from(vec![
                                     Span::raw("    "),
                                     Span::styled(
-                                        "... (truncated)",
-                                        Style::default().fg(Color::DarkGray),
+                                        line.to_string(),
+                                        Style::default().fg(Color::Cyan),
                                     ),
                                 ]));
+                                if i == 4 && line_count > 5 {
+                                    lines.push(Line::from(vec![
+                                        Span::raw("    "),
+                                        Span::styled(
+                                            "... (truncated)",
+                                            Style::default().fg(Color::DarkGray),
+                                        ),
+                                    ]));
+                                }
                             }
                         }
                     }
@@ -417,6 +430,9 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     lines.push(Line::from(""));
                 }
                 ExecutionResult::Failure { method, url, error } => {
+                    let method = sanitize_display_text(method);
+                    let url = sanitize_display_text(url);
+                    let error = sanitize_display_text(error);
                     lines.push(Line::from(vec![
                         Span::styled("✗ ", Style::default().fg(Color::Red)),
                         Span::raw(format!("{} {}", method, url)),
@@ -800,4 +816,17 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
     let status = Paragraph::new(status_text).block(Block::default().borders(Borders::ALL));
 
     f.render_widget(status, area);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_display_text;
+
+    #[test]
+    fn sanitize_display_text_removes_ansi_escape_sequences() {
+        assert_eq!(
+            sanitize_display_text("hello \x1b[31mred\x1b[0m world"),
+            "hello red world"
+        );
+    }
 }

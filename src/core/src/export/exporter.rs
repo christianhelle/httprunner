@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::processor::format_json_if_valid;
+use crate::redaction::sanitize_processor_results;
 use crate::types::{Header, ProcessorResults};
 
 enum ExportType {
@@ -21,10 +22,19 @@ pub fn export_results(
     results: &ProcessorResults,
     pretty_json: bool,
 ) -> Result<ExportResults, std::io::Error> {
+    export_results_with_options(results, pretty_json, false)
+}
+
+pub fn export_results_with_options(
+    results: &ProcessorResults,
+    pretty_json: bool,
+    include_secrets: bool,
+) -> Result<ExportResults, std::io::Error> {
+    let sanitized_results = sanitize_processor_results(results, include_secrets);
     let mut file_names = Vec::new();
     let mut failed_file_names = Vec::new();
     let timestamp = get_timestamp();
-    for file_results in &results.files {
+    for file_results in &sanitized_results.files {
         for test_results in &file_results.result_contexts {
             match export_request(timestamp, test_results, pretty_json) {
                 Ok(file_name) => {
