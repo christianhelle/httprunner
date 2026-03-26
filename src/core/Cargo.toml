@@ -46,6 +46,7 @@ uuid = { workspace = true, features = ["js"] }
 wasm-bindgen-futures = "0.4.58"
 web-time = "1.1.0"
 web-sys = { version = "0.3.85", features = ["Storage", "Window"] }
+gloo-timers = { version = "0.3.0", features = ["futures"] }
 
 [dev-dependencies]
 tempfile = { workspace = true }
