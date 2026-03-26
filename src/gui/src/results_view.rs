@@ -62,25 +62,6 @@ impl ResultsView {
         }
     }
 
-    pub fn get_results(&self) -> Vec<ExecutionResult> {
-        if let Ok(results) = self.results.lock() {
-            // Filter out Running results as they are transient
-            results
-                .iter()
-                .filter(|r| !matches!(r, ExecutionResult::Running { .. }))
-                .cloned()
-                .collect()
-        } else {
-            Vec::new()
-        }
-    }
-
-    pub fn restore_results(&mut self, saved_results: Vec<ExecutionResult>) {
-        if let Ok(mut results) = self.results.lock() {
-            *results = saved_results;
-        }
-    }
-
     pub fn set_compact_mode(&mut self, compact: bool) {
         self.compact_mode = compact;
     }
