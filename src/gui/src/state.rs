@@ -11,6 +11,7 @@ pub struct AppState {
     pub selected_environment: Option<String>,
     pub font_size: Option<f32>,
     pub window_size: Option<(f32, f32)>,
+    #[serde(skip_serializing)]
     pub last_results: Option<Vec<ExecutionResult>>,
     pub file_tree_visible: Option<bool>,
     pub results_compact_mode: Option<bool>,
@@ -88,5 +89,35 @@ impl AppState {
                 .map_err(|e| anyhow::anyhow!("Failed to save to local storage: {:?}", e))?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::results_view::ExecutionResult;
+    use serde_json::Value;
+
+    #[test]
+    fn test_serialized_state_omits_persisted_results() {
+        let state = AppState {
+            last_results: Some(vec![ExecutionResult::Success {
+                method: "GET".to_string(),
+                url: "https://example.com".to_string(),
+                status: 200,
+                duration_ms: 42,
+                request_body: Some("sensitive-request".to_string()),
+                response_body: "sensitive-response".to_string(),
+                assertion_results: vec![],
+            }]),
+            ..Default::default()
+        };
+
+        let json = serde_json::to_string(&state).unwrap();
+        let value: Value = serde_json::from_str(&json).unwrap();
+
+        assert!(value.get("last_results").is_none());
+        assert!(!json.contains("sensitive-request"));
+        assert!(!json.contains("sensitive-response"));
     }
 }
