@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- Harden runtime caching and output redaction ([#245](https://github.com/christianhelle/httprunner/pull/245)) ([@christianhelle](https://github.com/christianhelle/))
 - Fix core parser and request failures ([#244](https://github.com/christianhelle/httprunner/pull/244)) ([@christianhelle](https://github.com/christianhelle/))
 - Setup agent squad ([#241](https://github.com/christianhelle/httprunner/pull/241)) ([@christianhelle](https://github.com/christianhelle/))
 
