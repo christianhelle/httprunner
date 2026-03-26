@@ -421,7 +421,7 @@ impl eframe::App for HttpRunnerApp {
                 if !self.request_view.has_changes()
                     && let Some(file) = &self.selected_file
                 {
-                    self.results_view.run_file(
+                    let _ = self.results_view.run_file(
                         file,
                         self.selected_environment.as_deref(),
                         self.delay_ms,
@@ -429,8 +429,10 @@ impl eframe::App for HttpRunnerApp {
                 }
 
                 #[cfg(target_arch = "wasm32")]
-                if !self.request_view.has_changes() && self.selected_file.is_some() {
-                    self.results_view.run_content_async(
+                if !self.request_view.has_changes()
+                    && !self.text_editor.get_content().trim().is_empty()
+                {
+                    let _ = self.results_view.run_content_async(
                         self.text_editor.get_content().to_string(),
                         self.selected_environment.as_deref(),
                         ctx,
@@ -610,14 +612,14 @@ impl eframe::App for HttpRunnerApp {
 
                             if ui
                                 .add_enabled(
-                                    run_all_enabled,
+                                    run_all_enabled && !self.results_view.is_running(),
                                     egui::Button::new("▶ Run All Requests"),
                                 )
                                 .clicked()
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 if let Some(file) = &self.selected_file {
-                                    self.results_view.run_file(
+                                    let _ = self.results_view.run_file(
                                         file,
                                         self.selected_environment.as_deref(),
                                         self.delay_ms,
@@ -628,7 +630,7 @@ impl eframe::App for HttpRunnerApp {
                                 {
                                     // On WASM, run from in-memory content
                                     let content = self.text_editor.get_content().to_string();
-                                    self.results_view.run_content_async(
+                                    let _ = self.results_view.run_content_async(
                                         content,
                                         self.selected_environment.as_deref(),
                                         ctx,
@@ -658,7 +660,7 @@ impl eframe::App for HttpRunnerApp {
                                         // When a request button is clicked, run it immediately
                                         #[cfg(not(target_arch = "wasm32"))]
                                         if let Some(file) = &self.selected_file {
-                                            self.results_view.run_single_request(
+                                            let _ = self.results_view.run_single_request(
                                                 file,
                                                 idx,
                                                 self.selected_environment.as_deref(),
@@ -667,12 +669,12 @@ impl eframe::App for HttpRunnerApp {
                                         }
 
                                         #[cfg(target_arch = "wasm32")]
-                                        if self.selected_file.is_some() {
+                                        {
                                             // On WASM we cannot read from the filesystem,
                                             // so execute the single request from the
                                             // current text editor content instead of a file path.
                                             let editor_content = self.text_editor.get_content();
-                                            self.results_view.run_single_request_async(
+                                            let _ = self.results_view.run_single_request_async(
                                                 editor_content,
                                                 idx,
                                                 self.selected_environment.as_deref(),
@@ -702,19 +704,24 @@ impl eframe::App for HttpRunnerApp {
 
                         // Run buttons - always visible at bottom
                         ui.horizontal(|ui| {
+                            #[cfg(not(target_arch = "wasm32"))]
                             let run_all_enabled =
                                 self.selected_file.is_some() && !self.request_view.has_changes();
 
+                            #[cfg(target_arch = "wasm32")]
+                            let run_all_enabled = !self.text_editor.get_content().trim().is_empty()
+                                && !self.request_view.has_changes();
+
                             if ui
                                 .add_enabled(
-                                    run_all_enabled,
+                                    run_all_enabled && !self.results_view.is_running(),
                                     egui::Button::new("▶ Run All Requests"),
                                 )
                                 .clicked()
                             {
                                 #[cfg(not(target_arch = "wasm32"))]
                                 if let Some(file) = &self.selected_file {
-                                    self.results_view.run_file(
+                                    let _ = self.results_view.run_file(
                                         file,
                                         self.selected_environment.as_deref(),
                                         self.delay_ms,
@@ -722,8 +729,8 @@ impl eframe::App for HttpRunnerApp {
                                 }
 
                                 #[cfg(target_arch = "wasm32")]
-                                if self.selected_file.is_some() {
-                                    self.results_view.run_content_async(
+                                {
+                                    let _ = self.results_view.run_content_async(
                                         self.text_editor.get_content().to_string(),
                                         self.selected_environment.as_deref(),
                                         ctx,

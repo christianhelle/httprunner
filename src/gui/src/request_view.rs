@@ -26,7 +26,10 @@ impl RequestView {
         let mut action = RequestViewAction::None;
 
         if file.is_none() {
+            #[cfg(not(target_arch = "wasm32"))]
             ui.label("No file selected. Select a .http file from the left panel.");
+            #[cfg(target_arch = "wasm32")]
+            ui.label("No request selected. Load or paste HTTP content in the editor.");
             return action;
         }
 
