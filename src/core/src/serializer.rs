@@ -25,17 +25,30 @@ pub fn serialize_http_request(request: &HttpRequest) -> String {
     }
 
     for condition in &request.conditions {
-        output.push_str(&format!("# @if {}\n", format_condition(condition)));
+        let directive = if condition.negate {
+            "# @if-not"
+        } else {
+            "# @if"
+        };
+        output.push_str(&format!("{} {}\n", directive, format_condition(condition)));
     }
 
-    for assertion in &request.assertions {
-        output.push_str(&format!("# @assert {}\n", format_assertion(assertion)));
+    if let Some(pre_delay_ms) = request.pre_delay_ms {
+        output.push_str(&format!("# @pre-delay {}\n", pre_delay_ms));
+    }
+
+    if let Some(post_delay_ms) = request.post_delay_ms {
+        output.push_str(&format!("# @post-delay {}\n", post_delay_ms));
     }
 
     output.push_str(&format!("{} {}\n", request.method, request.url));
 
     for header in &request.headers {
         output.push_str(&format!("{}: {}\n", header.name, header.value));
+    }
+
+    for assertion in &request.assertions {
+        output.push_str(&format!("{}\n", format_assertion(assertion)));
     }
 
     if let Some(body) = &request.body {
@@ -69,7 +82,7 @@ fn format_condition(condition: &Condition) -> String {
     match &condition.condition_type {
         ConditionType::BodyJsonPath(jsonpath) => {
             format!(
-                "{}.response.body.${} {}",
+                "{}.response.body.{} {}",
                 condition.request_name, jsonpath, condition.expected_value
             )
         }
@@ -84,16 +97,18 @@ fn format_condition(condition: &Condition) -> String {
 
 fn format_assertion(assertion: &Assertion) -> String {
     match assertion.assertion_type {
-        AssertionType::Status => format!("status {}", assertion.expected_value),
-        AssertionType::Body => format!("body {}", assertion.expected_value),
-        AssertionType::Headers => format!("headers {}", assertion.expected_value),
+        AssertionType::Status => format!("> EXPECTED_RESPONSE_STATUS {}", assertion.expected_value),
+        AssertionType::Body => format!("> EXPECTED_RESPONSE_BODY {}", assertion.expected_value),
+        AssertionType::Headers => {
+            format!("> EXPECTED_RESPONSE_HEADERS {}", assertion.expected_value)
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Header;
+    use crate::types::{ConditionType, Header};
 
     #[test]
     fn test_serialize_simple_request() {
@@ -171,6 +186,100 @@ mod tests {
         assert!(serialized.contains("Content-Type: application/json"));
         assert!(serialized.contains("Authorization: Bearer token123"));
         assert!(serialized.contains(r#"{"key": "value"}"#));
+    }
+
+    #[test]
+    fn test_serialize_request_preserves_parser_semantics() {
+        let request = HttpRequest {
+            name: Some("create-user".to_string()),
+            method: "POST".to_string(),
+            url: "https://httpbin.org/post".to_string(),
+            headers: vec![Header {
+                name: "Content-Type".to_string(),
+                value: "application/json".to_string(),
+            }],
+            body: Some(r#"{"name":"Jane"}"#.to_string()),
+            assertions: vec![
+                Assertion {
+                    assertion_type: AssertionType::Status,
+                    expected_value: "201".to_string(),
+                },
+                Assertion {
+                    assertion_type: AssertionType::Body,
+                    expected_value: "created user".to_string(),
+                },
+                Assertion {
+                    assertion_type: AssertionType::Headers,
+                    expected_value: "Content-Type: application/json".to_string(),
+                },
+            ],
+            variables: vec![],
+            timeout: Some(5000),
+            connection_timeout: Some(1000),
+            depends_on: Some("login".to_string()),
+            conditions: vec![
+                Condition {
+                    request_name: "login".to_string(),
+                    condition_type: ConditionType::Status,
+                    expected_value: "200".to_string(),
+                    negate: false,
+                },
+                Condition {
+                    request_name: "login".to_string(),
+                    condition_type: ConditionType::BodyJsonPath("$.error".to_string()),
+                    expected_value: "blocked".to_string(),
+                    negate: true,
+                },
+            ],
+            pre_delay_ms: Some(250),
+            post_delay_ms: Some(750),
+        };
+
+        let serialized = serialize_http_request(&request);
+        let reparsed = crate::parser::parse_http_content(&serialized, None).unwrap();
+
+        assert_eq!(reparsed.len(), 1);
+        let reparsed = &reparsed[0];
+        assert_eq!(reparsed.name, request.name);
+        assert_eq!(reparsed.method, request.method);
+        assert_eq!(reparsed.url, request.url);
+        assert_eq!(reparsed.timeout, request.timeout);
+        assert_eq!(reparsed.connection_timeout, request.connection_timeout);
+        assert_eq!(reparsed.depends_on, request.depends_on);
+        assert_eq!(reparsed.pre_delay_ms, request.pre_delay_ms);
+        assert_eq!(reparsed.post_delay_ms, request.post_delay_ms);
+        assert_eq!(reparsed.headers.len(), 1);
+        assert_eq!(reparsed.body, request.body);
+        assert_eq!(reparsed.assertions.len(), 3);
+        assert!(matches!(
+            reparsed.assertions[0].assertion_type,
+            AssertionType::Status
+        ));
+        assert_eq!(reparsed.assertions[0].expected_value, "201");
+        assert!(matches!(
+            reparsed.assertions[1].assertion_type,
+            AssertionType::Body
+        ));
+        assert_eq!(reparsed.assertions[1].expected_value, "created user");
+        assert!(matches!(
+            reparsed.assertions[2].assertion_type,
+            AssertionType::Headers
+        ));
+        assert_eq!(
+            reparsed.assertions[2].expected_value,
+            "Content-Type: application/json"
+        );
+        assert_eq!(reparsed.conditions.len(), 2);
+        assert!(matches!(
+            reparsed.conditions[0].condition_type,
+            ConditionType::Status
+        ));
+        assert!(!reparsed.conditions[0].negate);
+        assert!(matches!(
+            reparsed.conditions[1].condition_type,
+            ConditionType::BodyJsonPath(_)
+        ));
+        assert!(reparsed.conditions[1].negate);
     }
 }
 

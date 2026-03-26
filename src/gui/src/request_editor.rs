@@ -11,6 +11,11 @@ pub struct EditableRequest {
     pub timeout: String,
     pub connection_timeout: String,
     pub depends_on: String,
+    pub assertions: Vec<httprunner_core::types::Assertion>,
+    pub variables: Vec<httprunner_core::types::Variable>,
+    pub conditions: Vec<httprunner_core::types::Condition>,
+    pub pre_delay_ms: Option<u64>,
+    pub post_delay_ms: Option<u64>,
 }
 
 impl Default for EditableRequest {
@@ -24,6 +29,11 @@ impl Default for EditableRequest {
             timeout: String::new(),
             connection_timeout: String::new(),
             depends_on: String::new(),
+            assertions: vec![],
+            variables: vec![],
+            conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
         }
     }
 }
@@ -46,6 +56,11 @@ impl From<&httprunner_core::HttpRequest> for EditableRequest {
                 .map(|t| t.to_string())
                 .unwrap_or_default(),
             depends_on: request.depends_on.clone().unwrap_or_default(),
+            assertions: request.assertions.clone(),
+            variables: request.variables.clone(),
+            conditions: request.conditions.clone(),
+            pre_delay_ms: request.pre_delay_ms,
+            post_delay_ms: request.post_delay_ms,
         }
     }
 }
@@ -75,8 +90,8 @@ impl EditableRequest {
             } else {
                 Some(self.body.clone())
             },
-            assertions: vec![],
-            variables: vec![],
+            assertions: self.assertions.clone(),
+            variables: self.variables.clone(),
             timeout: Self::parse_timeout(&self.timeout),
             connection_timeout: Self::parse_timeout(&self.connection_timeout),
             depends_on: if self.depends_on.is_empty() {
@@ -84,9 +99,9 @@ impl EditableRequest {
             } else {
                 Some(self.depends_on.clone())
             },
-            conditions: vec![],
-            pre_delay_ms: None,
-            post_delay_ms: None,
+            conditions: self.conditions.clone(),
+            pre_delay_ms: self.pre_delay_ms,
+            post_delay_ms: self.post_delay_ms,
         }
     }
 
@@ -207,5 +222,79 @@ impl RequestEditor {
 
     pub fn has_changes(&self) -> bool {
         self.has_changes
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::EditableRequest;
+    use httprunner_core::types::{
+        Assertion, AssertionType, Condition, ConditionType, Header, HttpRequest, Variable,
+    };
+
+    #[test]
+    fn test_editable_request_preserves_hidden_request_semantics() {
+        let request = HttpRequest {
+            name: Some("login".to_string()),
+            method: "POST".to_string(),
+            url: "https://example.com/login".to_string(),
+            headers: vec![Header {
+                name: "Content-Type".to_string(),
+                value: "application/json".to_string(),
+            }],
+            body: Some(r#"{"username":"demo"}"#.to_string()),
+            assertions: vec![Assertion {
+                assertion_type: AssertionType::Status,
+                expected_value: "200".to_string(),
+            }],
+            variables: vec![Variable {
+                name: "token".to_string(),
+                value: "{{login.response.body.$.token}}".to_string(),
+            }],
+            timeout: Some(5000),
+            connection_timeout: Some(1000),
+            depends_on: Some("setup".to_string()),
+            conditions: vec![Condition {
+                request_name: "setup".to_string(),
+                condition_type: ConditionType::BodyJsonPath("$.ready".to_string()),
+                expected_value: "true".to_string(),
+                negate: false,
+            }],
+            pre_delay_ms: Some(100),
+            post_delay_ms: Some(200),
+        };
+
+        let editable = EditableRequest::from(&request);
+        let round_tripped = editable.to_http_request();
+
+        assert_eq!(round_tripped.name, request.name);
+        assert_eq!(round_tripped.method, request.method);
+        assert_eq!(round_tripped.url, request.url);
+        assert_eq!(round_tripped.headers.len(), request.headers.len());
+        assert_eq!(round_tripped.body, request.body);
+        assert_eq!(round_tripped.timeout, request.timeout);
+        assert_eq!(round_tripped.connection_timeout, request.connection_timeout);
+        assert_eq!(round_tripped.depends_on, request.depends_on);
+        assert_eq!(round_tripped.pre_delay_ms, request.pre_delay_ms);
+        assert_eq!(round_tripped.post_delay_ms, request.post_delay_ms);
+        assert_eq!(round_tripped.assertions.len(), 1);
+        assert!(matches!(
+            round_tripped.assertions[0].assertion_type,
+            AssertionType::Status
+        ));
+        assert_eq!(round_tripped.assertions[0].expected_value, "200");
+        assert_eq!(round_tripped.variables.len(), 1);
+        assert_eq!(round_tripped.variables[0].name, "token");
+        assert_eq!(
+            round_tripped.variables[0].value,
+            "{{login.response.body.$.token}}"
+        );
+        assert_eq!(round_tripped.conditions.len(), 1);
+        assert_eq!(round_tripped.conditions[0].request_name, "setup");
+        assert!(matches!(
+            round_tripped.conditions[0].condition_type,
+            ConditionType::BodyJsonPath(_)
+        ));
+        assert_eq!(round_tripped.conditions[0].expected_value, "true");
     }
 }
