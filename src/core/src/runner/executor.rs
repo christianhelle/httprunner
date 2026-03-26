@@ -203,6 +203,7 @@ fn capture_response_details(
 mod tests {
     use super::*;
     use crate::types::Header;
+    use serial_test::serial;
 
     fn clear_client_cache() {
         if let Some(cache) = CLIENT_CACHE.get() {
@@ -244,6 +245,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_default_timeouts() {
         clear_client_cache();
         let request = create_test_request();
@@ -252,6 +254,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_custom_timeouts() {
         clear_client_cache();
         let mut request = create_test_request();
@@ -262,6 +265,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_insecure_flag() {
         clear_client_cache();
         let request = create_test_request();
@@ -270,6 +274,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_zero_timeouts() {
         clear_client_cache();
         let mut request = create_test_request();
@@ -280,6 +285,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_reuses_cached_client_for_matching_config() {
         clear_client_cache();
         let request = create_test_request();
@@ -293,6 +299,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_creates_new_cache_entry_for_different_timeouts() {
         clear_client_cache();
         let request = create_test_request();
