@@ -136,6 +136,26 @@ fn test_parse_condition_special_chars_in_value() {
 }
 
 #[test]
+fn test_parse_condition_status_with_equality_operator() {
+    let result = parse_condition("login.response.status == 200", false).unwrap();
+
+    assert!(matches!(result.condition_type, ConditionType::Status));
+    assert_eq!(result.expected_value, "200");
+}
+
+#[test]
+fn test_parse_condition_body_jsonpath_with_equality_operator_and_quotes() {
+    let result = parse_condition(r#"auth.response.body.$.error == "blocked""#, true).unwrap();
+
+    match &result.condition_type {
+        ConditionType::BodyJsonPath(path) => assert_eq!(path, "$.error"),
+        _ => panic!("Expected BodyJsonPath"),
+    }
+    assert_eq!(result.expected_value, "blocked");
+    assert!(result.negate);
+}
+
+#[test]
 fn test_parse_condition_invalid_source() {
     // Using "request" instead of "response" should fail
     let result = parse_condition("login.request.status 200", false);

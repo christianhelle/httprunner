@@ -326,24 +326,72 @@ fn test_parse_variable_update() {
 
 #[test]
 fn test_parse_invalid_if_directive() {
-    // This test ensures invalid @if directive doesn't crash the parser
     let temp_dir = TempDir::new().unwrap();
     let content = "# @if invalid_format\nGET http://example.com";
     let file_path = create_test_file(&temp_dir, "test.http", content);
-    let requests = parse_http_file(&file_path, None).unwrap();
-    assert_eq!(requests.len(), 1);
-    assert_eq!(requests[0].conditions.len(), 0);
+    let error = parse_http_file(&file_path, None).unwrap_err();
+    let message = format!("{error:#}");
+    assert!(message.contains("Invalid @if directive format"));
 }
 
 #[test]
 fn test_parse_invalid_if_not_directive() {
-    // This test ensures invalid @if-not directive doesn't crash the parser
     let temp_dir = TempDir::new().unwrap();
     let content = "# @if-not invalid_format\nGET http://example.com";
     let file_path = create_test_file(&temp_dir, "test.http", content);
-    let requests = parse_http_file(&file_path, None).unwrap();
-    assert_eq!(requests.len(), 1);
-    assert_eq!(requests[0].conditions.len(), 0);
+    let error = parse_http_file(&file_path, None).unwrap_err();
+    let message = format!("{error:#}");
+    assert!(message.contains("Invalid @if-not directive format"));
+}
+
+#[test]
+fn test_parse_invalid_timeout_directive_fails() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @timeout nope\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let error = parse_http_file(&file_path, None).unwrap_err();
+    let message = format!("{error:#}");
+    assert!(message.contains("Invalid timeout value"));
+}
+
+#[test]
+fn test_parse_invalid_connection_timeout_directive_fails() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @connection-timeout nope\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let error = parse_http_file(&file_path, None).unwrap_err();
+    let message = format!("{error:#}");
+    assert!(message.contains("Invalid connection-timeout value"));
+}
+
+#[test]
+fn test_parse_invalid_pre_delay_directive_fails() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @pre-delay nope\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let error = parse_http_file(&file_path, None).unwrap_err();
+    let message = format!("{error:#}");
+    assert!(message.contains("Invalid @pre-delay value"));
+}
+
+#[test]
+fn test_parse_invalid_post_delay_directive_fails() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "# @post-delay nope\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let error = parse_http_file(&file_path, None).unwrap_err();
+    let message = format!("{error:#}");
+    assert!(message.contains("Invalid @post-delay value"));
+}
+
+#[test]
+fn test_parse_invalid_variable_declaration_fails() {
+    let temp_dir = TempDir::new().unwrap();
+    let content = "@token\nGET http://example.com";
+    let file_path = create_test_file(&temp_dir, "test.http", content);
+    let error = parse_http_file(&file_path, None).unwrap_err();
+    let message = format!("{error:#}");
+    assert!(message.contains("Invalid variable declaration"));
 }
 
 #[test]
@@ -394,6 +442,7 @@ fn test_parse_if_condition_with_double_slash_comment() {
     let requests = parse_http_file(&file_path, None).unwrap();
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].conditions.len(), 1);
+    assert_eq!(requests[0].conditions[0].expected_value, "200");
 }
 
 #[test]
@@ -405,6 +454,7 @@ fn test_parse_if_not_condition_with_double_slash_comment() {
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0].conditions.len(), 1);
     assert!(requests[0].conditions[0].negate);
+    assert_eq!(requests[0].conditions[0].expected_value, "404");
 }
 
 #[test]
@@ -511,6 +561,8 @@ GET https://api.example.com/protected"#;
     assert_eq!(requests[0].conditions.len(), 2);
     assert!(!requests[0].conditions[0].negate);
     assert!(requests[0].conditions[1].negate);
+    assert_eq!(requests[0].conditions[0].expected_value, "200");
+    assert_eq!(requests[0].conditions[1].expected_value, "blocked");
 }
 
 #[test]

@@ -96,3 +96,18 @@ fn test_extract_json_value_deep_nesting() {
     let result = extract_json_value(json, "$.a.b.c.d.e").unwrap();
     assert_eq!(result, Some("deep".to_string()));
 }
+
+#[test]
+fn test_extract_json_value_prefers_top_level_key() {
+    let json = r#"{"meta":{"id":1},"id":2}"#;
+    let result = extract_json_value(json, "$.id").unwrap();
+    assert_eq!(result, Some("2".to_string()));
+}
+
+#[test]
+fn test_extract_json_value_object_with_brace_in_string_is_not_truncated() {
+    let json = r#"{"user":{"note":"}","id":1},"tail":0}"#;
+    let value = extract_json_value(json, "$.user").unwrap().unwrap();
+    assert!(value.contains(r#""note":"}""#));
+    assert!(value.contains(r#""id":1"#));
+}
