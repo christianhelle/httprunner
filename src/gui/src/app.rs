@@ -97,10 +97,6 @@ impl HttpRunnerApp {
 
         app.update_font_size(&cc.egui_ctx);
 
-        if let Some(last_results) = state.last_results {
-            app.results_view.restore_results(last_results);
-        }
-
         app.results_view
             .set_compact_mode(state.results_compact_mode.unwrap_or(true));
 
@@ -396,7 +392,7 @@ impl HttpRunnerApp {
             selected_environment: self.selected_environment.clone(),
             font_size: Some(self.font_size),
             window_size,
-            last_results: Some(self.results_view.get_results()),
+            last_results: None,
             file_tree_visible: Some(self.file_tree_visible),
             results_compact_mode: Some(self.results_view.is_compact_mode()),
             telemetry_enabled: Some(self.telemetry_enabled),

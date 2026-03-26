@@ -35,18 +35,16 @@ impl FileTree {
             {
                 let path = entry.path();
                 if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("http") {
-                    let file_path = path.to_path_buf();
-                    temp_files.push(file_path.clone());
-
-                    // Update shared state incrementally
-                    if let Ok(mut files) = files_clone.lock() {
-                        files.push(file_path);
-                        files.sort();
-                    }
+                    temp_files.push(path.to_path_buf());
                     if let Ok(mut count) = count_clone.lock() {
                         *count = temp_files.len();
                     }
                 }
+            }
+
+            temp_files.sort();
+            if let Ok(mut files) = files_clone.lock() {
+                *files = temp_files;
             }
 
             // Mark discovery as complete
@@ -109,11 +107,8 @@ impl FileTree {
             .and_then(|files| files.get(self.selected_index).cloned())
     }
 
-    pub fn files(&self) -> Vec<PathBuf> {
-        self.files
-            .lock()
-            .map(|guard| guard.clone())
-            .unwrap_or_default()
+    pub fn with_files<T>(&self, f: impl FnOnce(&[PathBuf]) -> T) -> Option<T> {
+        self.files.lock().ok().map(|files| f(&files))
     }
 
     pub fn selected_index(&self) -> usize {
