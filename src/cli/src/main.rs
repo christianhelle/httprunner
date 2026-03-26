@@ -5,7 +5,7 @@ mod upgrade;
 use crate::cli::ReportFormat;
 use anyhow::{Result, anyhow};
 use clap::{CommandFactory, Parser};
-use httprunner_core::report::{generate_html, generate_markdown};
+use httprunner_core::report::{generate_html_with_options, generate_markdown_with_options};
 use httprunner_core::telemetry::{self, AppType, CliArgPatterns};
 use httprunner_core::types::ProcessorResults;
 use httprunner_core::{colors, discovery, export, logging, processor};
@@ -58,6 +58,7 @@ fn track_cli_usage(cli_args: &cli::Cli) {
         log: cli_args.log.is_some(),
         env: cli_args.env.is_some(),
         insecure: cli_args.insecure,
+        include_secrets: cli_args.include_secrets,
         discover: cli_args.discover,
         no_banner: cli_args.no_banner,
         pretty_json: cli_args.pretty_json,
@@ -105,7 +106,7 @@ fn load_files(cli_args: &cli::Cli) -> Result<Vec<String>> {
 }
 
 fn process_http_files(cli_args: &cli::Cli, files: Vec<String>) -> Result<ProcessorResults> {
-    let results = processor::process_http_files(
+    let results = processor::process_http_files_with_options(
         &files,
         cli_args.verbose,
         cli_args.get_log_filename().as_deref(),
@@ -113,6 +114,7 @@ fn process_http_files(cli_args: &cli::Cli, files: Vec<String>) -> Result<Process
         cli_args.insecure,
         cli_args.pretty_json,
         cli_args.delay,
+        cli_args.include_secrets,
     )?;
 
     if results.success {
@@ -132,8 +134,10 @@ fn process_http_files(cli_args: &cli::Cli, files: Vec<String>) -> Result<Process
 fn generate_report(cli_args: &cli::Cli, results: &ProcessorResults) -> Result<()> {
     if let Some(format) = cli_args.report {
         let result = match format {
-            ReportFormat::Markdown => generate_markdown(results),
-            ReportFormat::Html => generate_html(results),
+            ReportFormat::Markdown => {
+                generate_markdown_with_options(results, cli_args.include_secrets)
+            }
+            ReportFormat::Html => generate_html_with_options(results, cli_args.include_secrets),
         };
 
         match result {
@@ -152,7 +156,11 @@ fn export_results(cli_args: &cli::Cli, results: &ProcessorResults) -> Result<()>
         return Ok(());
     }
 
-    match export::export_results(results, cli_args.pretty_json) {
+    match export::export_results_with_options(
+        results,
+        cli_args.pretty_json,
+        cli_args.include_secrets,
+    ) {
         Ok(export_results) => {
             println!(
                 "{} Exported requests and responses to files",
@@ -178,7 +186,7 @@ fn export_json_results(cli_args: &cli::Cli, results: &ProcessorResults) -> Resul
         return Ok(());
     }
 
-    match export::export_json(results) {
+    match export::export_json_with_options(results, cli_args.include_secrets) {
         Ok(filename) => {
             println!(
                 "{} Exported JSON results to {}",

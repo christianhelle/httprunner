@@ -369,6 +369,7 @@ pub struct CliArgPatterns {
     pub log: bool,
     pub env: bool,
     pub insecure: bool,
+    pub include_secrets: bool,
     pub discover: bool,
     pub no_banner: bool,
     pub pretty_json: bool,
@@ -387,6 +388,10 @@ pub fn track_cli_args(args: &CliArgPatterns) {
     properties.insert("log".to_string(), args.log.to_string());
     properties.insert("env".to_string(), args.env.to_string());
     properties.insert("insecure".to_string(), args.insecure.to_string());
+    properties.insert(
+        "include_secrets".to_string(),
+        args.include_secrets.to_string(),
+    );
     properties.insert("discover".to_string(), args.discover.to_string());
     properties.insert("no_banner".to_string(), args.no_banner.to_string());
     properties.insert("pretty_json".to_string(), args.pretty_json.to_string());
@@ -559,6 +564,7 @@ mod tests {
         assert!(!args.log);
         assert!(!args.env);
         assert!(!args.insecure);
+        assert!(!args.include_secrets);
         assert!(!args.discover);
         assert!(!args.no_banner);
         assert!(!args.pretty_json);
@@ -575,6 +581,7 @@ mod tests {
             log: true,
             env: false,
             insecure: true,
+            include_secrets: false,
             discover: false,
             no_banner: true,
             pretty_json: false,
@@ -726,6 +733,7 @@ mod tests {
             log: true,
             env: true,
             insecure: true,
+            include_secrets: true,
             discover: true,
             no_banner: true,
             pretty_json: true,
@@ -748,6 +756,7 @@ mod tests {
             log: false,
             env: false,
             insecure: false,
+            include_secrets: false,
             discover: false,
             no_banner: false,
             pretty_json: false,
@@ -873,6 +882,7 @@ mod tests {
             log: false,
             env: true,
             insecure: false,
+            include_secrets: false,
             discover: true,
             no_banner: false,
             pretty_json: true,

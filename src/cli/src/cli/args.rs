@@ -73,6 +73,10 @@ pub struct Cli {
     #[arg(long)]
     pub export_json: bool,
 
+    /// Include sensitive headers and secret-like values in logs, reports, and exports
+    #[arg(long)]
+    pub include_secrets: bool,
+
     /// Disable anonymous telemetry data collection
     #[arg(long)]
     pub no_telemetry: bool,

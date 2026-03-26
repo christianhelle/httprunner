@@ -6,6 +6,7 @@ use crate::colors;
 use crate::conditions;
 use crate::logging::Log;
 use crate::parser;
+use crate::redaction::{sanitize_request_for_output, sanitize_result_for_output};
 use crate::runner;
 use crate::types::{
     AssertionType, HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
@@ -21,6 +22,7 @@ pub struct ProcessorConfig<'a> {
     pub pretty_json: bool,
     pub silent: bool,
     pub delay_ms: u64,
+    pub include_secrets: bool,
 }
 
 impl<'a> ProcessorConfig<'a> {
@@ -34,6 +36,7 @@ impl<'a> ProcessorConfig<'a> {
             pretty_json: false,
             silent: false,
             delay_ms: 0,
+            include_secrets: false,
         }
     }
 
@@ -69,6 +72,11 @@ impl<'a> ProcessorConfig<'a> {
 
     pub fn with_delay(mut self, delay_ms: u64) -> Self {
         self.delay_ms = delay_ms;
+        self
+    }
+
+    pub fn with_include_secrets(mut self, include_secrets: bool) -> Self {
+        self.include_secrets = include_secrets;
         self
     }
 }
@@ -497,12 +505,18 @@ fn log_overall_summary(totals: &TotalCounters, log: &mut Log) {
     }
 }
 
-fn log_execution_error(processed_request: &HttpRequest, error: &anyhow::Error, log: &mut Log) {
+fn log_execution_error(
+    processed_request: &HttpRequest,
+    error: &anyhow::Error,
+    log: &mut Log,
+    include_secrets: bool,
+) {
+    let sanitized_request = sanitize_request_for_output(processed_request, include_secrets);
     log.writeln(&format!(
         "{} {} {} - Error: {}",
         colors::red("❌"),
-        processed_request.method,
-        processed_request.url,
+        sanitized_request.method,
+        sanitized_request.url,
         error
     ));
 }
@@ -546,14 +560,16 @@ where
 
     // Log request details if verbose
     if config.verbose {
-        log_request_details(&processed_request, log, config.pretty_json);
+        let sanitized_request =
+            sanitize_request_for_output(&processed_request, config.include_secrets);
+        log_request_details(&sanitized_request, log, config.pretty_json);
     }
 
     // Execute the request
     let result = match executor(&processed_request, config.verbose, config.insecure) {
         Ok(result) => Ok((RequestProcessResult::Completed(result), processed_request)),
         Err(e) => {
-            log_execution_error(&processed_request, &e, log);
+            log_execution_error(&processed_request, &e, log, config.include_secrets);
             Ok((RequestProcessResult::ExecutionError, processed_request))
         }
     };
@@ -641,16 +657,22 @@ where
                     counters.record_failure();
                 }
 
-                log_execution_result(&http_result, &processed_request, log);
+                let sanitized_request =
+                    sanitize_request_for_output(&processed_request, config.include_secrets);
+                log_execution_result(&http_result, &sanitized_request, log);
 
                 // Log verbose details
                 if config.verbose {
-                    log_response_details(&http_result, log, config.pretty_json);
+                    let sanitized_result =
+                        sanitize_result_for_output(&http_result, config.include_secrets);
+                    log_response_details(&sanitized_result, log, config.pretty_json);
                 }
 
                 // Log assertion results
                 if !processed_request.assertions.is_empty() {
-                    log_assertion_results(&http_result, log);
+                    let sanitized_result =
+                        sanitize_result_for_output(&http_result, config.include_secrets);
+                    log_assertion_results(&sanitized_result, log);
                 }
 
                 add_request_context_with_result(
@@ -696,6 +718,31 @@ pub fn process_http_files(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn process_http_files_with_options(
+    files: &[String],
+    verbose: bool,
+    log_filename: Option<&str>,
+    environment: Option<&str>,
+    insecure: bool,
+    pretty_json: bool,
+    delay_ms: u64,
+    include_secrets: bool,
+) -> Result<ProcessorResults> {
+    let config = ProcessorConfig::new(files)
+        .with_verbose(verbose)
+        .with_log_filename(log_filename)
+        .with_environment(environment)
+        .with_insecure(insecure)
+        .with_pretty_json(pretty_json)
+        .with_delay(delay_ms)
+        .with_include_secrets(include_secrets);
+
+    process_http_files_with_config(&config, &|request, verbose, insecure| {
+        runner::execute_http_request(request, verbose, insecure)
+    })
+}
+
 pub fn process_http_files_with_silent(config: &ProcessorConfig) -> Result<ProcessorResults> {
     process_http_files_with_config(config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
@@ -734,6 +781,13 @@ where
     let mut log = Log::new_with_silent(config.log_filename, config.silent)?;
     let mut http_file_results = Vec::<HttpFileResults>::new();
     let mut totals = TotalCounters::new();
+
+    if config.insecure {
+        log.writeln(&format!(
+            "{} TLS certificate validation is disabled (--insecure). Do not use against production endpoints.",
+            colors::yellow("⚠️")
+        ));
+    }
 
     for http_file in config.files {
         match process_single_file(http_file, config, executor, &mut log) {

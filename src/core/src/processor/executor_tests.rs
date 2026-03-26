@@ -3,7 +3,9 @@ use tempfile::NamedTempFile;
 
 #[cfg(test)]
 mod tests {
-    use super::super::executor::process_http_files_with_executor;
+    use super::super::executor::{
+        ProcessorConfig, process_http_files_with_config, process_http_files_with_executor,
+    };
     use super::super::mock_executor::MockHttpExecutor;
     use super::*;
     use crate::types::{HttpRequest, HttpResult};
@@ -648,6 +650,95 @@ Content-Type: application/json
         assert!(log_content.contains("https://api.example.com/test"));
 
         // Clean up
+        let _ = fs::remove_file(&log_path);
+    }
+
+    #[test]
+    fn test_verbose_log_redacts_sensitive_headers_by_default() {
+        use std::fs;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let file_content = "GET https://api.example.com/test\nAuthorization: Bearer token123\n";
+        let temp_file = create_temp_http_file(file_content);
+        let files = vec![temp_file.path().to_str().unwrap().to_string()];
+        let log_base = format!(
+            "test_log_redaction_{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+
+        let config = ProcessorConfig::new(&files)
+            .with_verbose(true)
+            .with_log_filename(Some(&log_base))
+            .with_silent(true);
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+
+        assert!(result.is_ok());
+
+        let entries = fs::read_dir(".").unwrap();
+        let log_files: Vec<_> = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.file_name().to_string_lossy().starts_with(&log_base)
+                    && e.file_name().to_string_lossy().ends_with(".log")
+            })
+            .collect();
+
+        assert_eq!(log_files.len(), 1, "Expected exactly one log file");
+
+        let log_path = log_files[0].path();
+        let log_content = fs::read_to_string(&log_path).unwrap();
+        assert!(log_content.contains("Authorization: ***REDACTED***"));
+        assert!(!log_content.contains("Bearer token123"));
+
+        let _ = fs::remove_file(&log_path);
+    }
+
+    #[test]
+    fn test_insecure_flag_writes_warning_to_log() {
+        use std::fs;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let file_content = "GET https://api.example.com/test\n";
+        let temp_file = create_temp_http_file(file_content);
+        let files = vec![temp_file.path().to_str().unwrap().to_string()];
+        let log_base = format!(
+            "test_insecure_warning_{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+
+        let config = ProcessorConfig::new(&files)
+            .with_insecure(true)
+            .with_log_filename(Some(&log_base))
+            .with_silent(true);
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+
+        assert!(result.is_ok());
+
+        let entries = fs::read_dir(".").unwrap();
+        let log_files: Vec<_> = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.file_name().to_string_lossy().starts_with(&log_base)
+                    && e.file_name().to_string_lossy().ends_with(".log")
+            })
+            .collect();
+
+        assert_eq!(log_files.len(), 1, "Expected exactly one log file");
+
+        let log_path = log_files[0].path();
+        let log_content = fs::read_to_string(&log_path).unwrap();
+        assert!(log_content.contains("TLS certificate validation is disabled (--insecure)."));
+
         let _ = fs::remove_file(&log_path);
     }
 

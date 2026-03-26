@@ -280,6 +280,38 @@ fn generate_html_includes_request_headers() {
     assert!(content.contains("Content-Type"));
     assert!(content.contains("application/json"));
     assert!(content.contains("Authorization"));
+    assert!(content.contains("***REDACTED***"));
+    assert!(!content.contains("Bearer token&lt;secret&gt;"));
+
+    fs::remove_file(filename).ok();
+}
+
+#[test]
+fn generate_html_can_include_sensitive_headers_when_opted_in() {
+    let mut request = sample_request("test", "POST", "https://api.example.com");
+    request.headers = vec![Header {
+        name: "Authorization".to_string(),
+        value: "Bearer token<secret>".to_string(),
+    }];
+
+    let results = ProcessorResults {
+        success: true,
+        files: vec![HttpFileResults {
+            filename: "test.http".to_string(),
+            success_count: 1,
+            failed_count: 0,
+            skipped_count: 0,
+            result_contexts: vec![RequestContext {
+                name: "test".to_string(),
+                request,
+                result: Some(sample_result(200, true, 100)),
+            }],
+        }],
+    };
+
+    let filename = generate_html_with_options(&results, true).unwrap();
+    let content = fs::read_to_string(&filename).unwrap();
+
     assert!(content.contains("Bearer token&lt;secret&gt;"));
 
     fs::remove_file(filename).ok();

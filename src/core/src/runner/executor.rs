@@ -16,10 +16,34 @@ use reqwest::blocking::Client;
 #[cfg(not(target_arch = "wasm32"))]
 use std::collections::HashMap;
 #[cfg(not(target_arch = "wasm32"))]
+use std::sync::{Mutex, OnceLock};
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
 type ResponseDetails = (Option<HashMap<String, String>>, Option<String>);
+
+#[cfg(not(target_arch = "wasm32"))]
+static CLIENT_CACHE: OnceLock<Mutex<HashMap<ClientConfig, Client>>> = OnceLock::new();
+
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct ClientConfig {
+    connect_timeout_ms: u64,
+    timeout_ms: u64,
+    insecure: bool,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl ClientConfig {
+    fn from_request(request: &HttpRequest, insecure: bool) -> Self {
+        Self {
+            connect_timeout_ms: request.connection_timeout.unwrap_or(30_000),
+            timeout_ms: request.timeout.unwrap_or(60_000),
+            insecure,
+        }
+    }
+}
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn execute_http_request(
@@ -83,14 +107,35 @@ pub fn execute_http_request(
 
 #[cfg(not(target_arch = "wasm32"))]
 fn build_client(request: &HttpRequest, insecure: bool) -> Result<Client> {
-    let connection_timeout = request.connection_timeout.unwrap_or(30_000);
-    let read_timeout = request.timeout.unwrap_or(60_000);
+    let config = ClientConfig::from_request(request, insecure);
+    let cache = CLIENT_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    {
+        let cache = cache.lock().expect("http client cache mutex poisoned");
 
+        if let Some(client) = cache.get(&config) {
+            return Ok(client.clone());
+        }
+    }
+
+    let client = build_client_for_config(config)?;
+    let mut cache = cache.lock().expect("http client cache mutex poisoned");
+
+    if let Some(client) = cache.get(&config) {
+        return Ok(client.clone());
+    }
+
+    cache.insert(config, client.clone());
+
+    Ok(client)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn build_client_for_config(config: ClientConfig) -> Result<Client> {
     let mut client_builder = Client::builder()
-        .connect_timeout(std::time::Duration::from_millis(connection_timeout))
-        .timeout(std::time::Duration::from_millis(read_timeout));
+        .connect_timeout(std::time::Duration::from_millis(config.connect_timeout_ms))
+        .timeout(std::time::Duration::from_millis(config.timeout_ms));
 
-    if insecure {
+    if config.insecure {
         client_builder = client_builder
             .danger_accept_invalid_hostnames(true)
             .danger_accept_invalid_certs(true);
@@ -171,6 +216,28 @@ fn capture_response_details(
 mod tests {
     use super::*;
     use crate::types::Header;
+    use serial_test::serial;
+
+    fn clear_client_cache() {
+        if let Some(cache) = CLIENT_CACHE.get() {
+            cache
+                .lock()
+                .expect("http client cache mutex poisoned")
+                .clear();
+        }
+    }
+
+    fn client_cache_size() -> usize {
+        CLIENT_CACHE
+            .get()
+            .map(|cache| {
+                cache
+                    .lock()
+                    .expect("http client cache mutex poisoned")
+                    .len()
+            })
+            .unwrap_or(0)
+    }
 
     fn create_test_request() -> HttpRequest {
         HttpRequest {
@@ -191,14 +258,18 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_default_timeouts() {
+        clear_client_cache();
         let request = create_test_request();
         let client = build_client(&request, false);
         assert!(client.is_ok());
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_custom_timeouts() {
+        clear_client_cache();
         let mut request = create_test_request();
         request.timeout = Some(5000);
         request.connection_timeout = Some(2000);
@@ -207,19 +278,53 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_insecure_flag() {
+        clear_client_cache();
         let request = create_test_request();
         let client = build_client(&request, true);
         assert!(client.is_ok());
     }
 
     #[test]
+    #[serial]
     fn test_build_client_with_zero_timeouts() {
+        clear_client_cache();
         let mut request = create_test_request();
         request.timeout = Some(0);
         request.connection_timeout = Some(0);
         let client = build_client(&request, false);
         assert!(client.is_ok());
+    }
+
+    #[test]
+    #[serial]
+    fn test_build_client_reuses_cached_client_for_matching_config() {
+        clear_client_cache();
+        let request = create_test_request();
+
+        let first = build_client(&request, false);
+        let second = build_client(&request, false);
+
+        assert!(first.is_ok());
+        assert!(second.is_ok());
+        assert_eq!(client_cache_size(), 1);
+    }
+
+    #[test]
+    #[serial]
+    fn test_build_client_creates_new_cache_entry_for_different_timeouts() {
+        clear_client_cache();
+        let request = create_test_request();
+        let mut custom_timeout_request = create_test_request();
+        custom_timeout_request.timeout = Some(5000);
+
+        let first = build_client(&request, false);
+        let second = build_client(&custom_timeout_request, false);
+
+        assert!(first.is_ok());
+        assert!(second.is_ok());
+        assert_eq!(client_cache_size(), 2);
     }
 
     #[test]

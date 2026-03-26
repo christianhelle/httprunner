@@ -16,15 +16,33 @@ use crate::functions::time::GetTimeSubstitutor;
 use crate::functions::upper::UpperSubstitutor;
 use crate::functions::utc_datetime::GetUtcDateTimeSubstitutor;
 use anyhow::Result;
-use regex::RegexBuilder;
+use regex::{Regex, RegexBuilder};
+use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
+
+static REGEX_CACHE: OnceLock<Mutex<HashMap<String, Regex>>> = OnceLock::new();
+
+pub(crate) fn get_case_insensitive_regex(
+    pattern: &str,
+) -> std::result::Result<Regex, regex::Error> {
+    let cache = REGEX_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut cache = cache.lock().expect("regex cache mutex poisoned");
+
+    if let Some(regex) = cache.get(pattern) {
+        return Ok(regex.clone());
+    }
+
+    let regex = RegexBuilder::new(pattern).case_insensitive(true).build()?;
+    cache.insert(pattern.to_string(), regex.clone());
+
+    Ok(regex)
+}
 
 pub trait FunctionSubstitutor: Sync {
     fn get_regex(&self) -> &str;
     fn generate(&self) -> String;
     fn replace(&self, input: &str) -> std::result::Result<String, regex::Error> {
-        let re = RegexBuilder::new(self.get_regex())
-            .case_insensitive(true)
-            .build()?;
+        let re = get_case_insensitive_regex(self.get_regex())?;
         Ok(re
             .replace_all(input, |_: &regex::Captures| self.generate())
             .to_string())
@@ -58,4 +76,53 @@ pub fn substitute_functions(input: &str) -> Result<String> {
     }
 
     Ok(result)
+}
+
+#[cfg(test)]
+fn regex_cache_size() -> usize {
+    REGEX_CACHE
+        .get()
+        .map(|cache| cache.lock().expect("regex cache mutex poisoned").len())
+        .unwrap_or(0)
+}
+
+#[cfg(test)]
+fn regex_cache_contains(pattern: &str) -> bool {
+    REGEX_CACHE
+        .get()
+        .map(|cache| {
+            cache
+                .lock()
+                .expect("regex cache mutex poisoned")
+                .contains_key(pattern)
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestSubstitutor;
+
+    impl FunctionSubstitutor for TestSubstitutor {
+        fn get_regex(&self) -> &str {
+            r"\btest_function\(\)"
+        }
+
+        fn generate(&self) -> String {
+            "generated".to_string()
+        }
+    }
+
+    #[test]
+    fn replace_reuses_cached_regex_for_same_pattern() {
+        let substitutor = TestSubstitutor;
+        let initial_size = regex_cache_size();
+        assert_eq!(substitutor.replace("test_function()").unwrap(), "generated");
+        assert_eq!(substitutor.replace("test_function()").unwrap(), "generated");
+
+        assert!(regex_cache_contains(substitutor.get_regex()));
+        assert!(regex_cache_size() >= initial_size);
+    }
 }

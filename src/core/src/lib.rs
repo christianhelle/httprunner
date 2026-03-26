@@ -6,6 +6,7 @@ pub mod environment;
 pub mod functions;
 pub mod logging;
 pub mod parser;
+mod redaction;
 pub mod report;
 pub mod runner;
 pub mod serializer;

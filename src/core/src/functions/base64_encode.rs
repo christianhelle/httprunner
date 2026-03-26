@@ -1,4 +1,4 @@
-use super::substitution::FunctionSubstitutor;
+use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
 
 pub struct Base64EncodeSubstitutor {}
 impl FunctionSubstitutor for Base64EncodeSubstitutor {
@@ -13,11 +13,8 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
     fn replace(&self, input: &str) -> Result<String, regex::Error> {
         use base64::Engine;
         use base64::engine::general_purpose;
-        use regex::RegexBuilder;
 
-        let re = RegexBuilder::new(r"\bbase64_encode\(\s*'((?:[^'\\]|\\.)*)'\s*\)")
-            .case_insensitive(true)
-            .build()?;
+        let re = get_case_insensitive_regex(r"\bbase64_encode\(\s*'((?:[^'\\]|\\.)*)'\s*\)")?;
         Ok(re
             .replace_all(input, |caps: &regex::Captures| {
                 let to_encode = &caps[1];
