@@ -109,12 +109,28 @@ pub fn execute_http_request(
 fn build_client(request: &HttpRequest, insecure: bool) -> Result<Client> {
     let config = ClientConfig::from_request(request, insecure);
     let cache = CLIENT_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    {
+        let cache = cache.lock().expect("http client cache mutex poisoned");
+
+        if let Some(client) = cache.get(&config) {
+            return Ok(client.clone());
+        }
+    }
+
+    let client = build_client_for_config(config)?;
     let mut cache = cache.lock().expect("http client cache mutex poisoned");
 
     if let Some(client) = cache.get(&config) {
         return Ok(client.clone());
     }
 
+    cache.insert(config, client.clone());
+
+    Ok(client)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn build_client_for_config(config: ClientConfig) -> Result<Client> {
     let mut client_builder = Client::builder()
         .connect_timeout(std::time::Duration::from_millis(config.connect_timeout_ms))
         .timeout(std::time::Duration::from_millis(config.timeout_ms));
@@ -125,10 +141,7 @@ fn build_client(request: &HttpRequest, insecure: bool) -> Result<Client> {
             .danger_accept_invalid_certs(true);
     }
 
-    let client = client_builder.build()?;
-    cache.insert(config, client.clone());
-
-    Ok(client)
+    Ok(client_builder.build()?)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

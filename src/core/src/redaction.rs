@@ -287,6 +287,7 @@ fn normalize_name(name: &str) -> String {
 mod tests {
     use super::*;
     use crate::types::{HttpFileResults, ProcessorResults, RequestContext};
+    use serde_json::Value;
 
     fn sample_request() -> HttpRequest {
         HttpRequest {
@@ -332,6 +333,14 @@ mod tests {
         }
     }
 
+    fn assert_json_body_eq(actual: Option<&str>, expected: &str) {
+        let actual = serde_json::from_str::<Value>(actual.expect("expected JSON body"))
+            .expect("expected valid JSON body");
+        let expected = serde_json::from_str::<Value>(expected).expect("expected valid JSON body");
+
+        assert_eq!(actual, expected);
+    }
+
     #[test]
     fn sanitize_request_for_output_redacts_sensitive_values() {
         let sanitized = sanitize_request_for_output(&sample_request(), false);
@@ -339,9 +348,9 @@ mod tests {
         assert!(sanitized.url.contains("token=***REDACTED***"));
         assert_eq!(sanitized.headers[0].value, "***REDACTED***");
         assert_eq!(sanitized.headers[1].value, "application/json");
-        assert_eq!(
+        assert_json_body_eq(
             sanitized.body.as_deref(),
-            Some(r#"{"name":"john","token":"***REDACTED***"}"#)
+            r#"{"name":"john","token":"***REDACTED***"}"#,
         );
     }
 
@@ -354,9 +363,9 @@ mod tests {
             headers.get("Set-Cookie").map(String::as_str),
             Some("***REDACTED***")
         );
-        assert_eq!(
+        assert_json_body_eq(
             sanitized.response_body.as_deref(),
-            Some(r#"{"password":"***REDACTED***","status":"ok"}"#)
+            r#"{"password":"***REDACTED***","status":"ok"}"#,
         );
     }
 
