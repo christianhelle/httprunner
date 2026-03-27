@@ -33,7 +33,7 @@ clap = { version = "4.5.57", features = ["derive", "std", "help", "usage", "erro
 
 # GUI dependencies
 eframe = { version = "0.33.3", default-features = false }
-egui = "0.33.3"
+egui = "0.34.0"
 rfd = "0.17.2"
 env_logger = "0.11.8"
 
