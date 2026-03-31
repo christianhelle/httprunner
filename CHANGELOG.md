@@ -3,12 +3,15 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
-- Harden installs and release publishing ([#249](https://github.com/christianhelle/httprunner/pull/249)) ([@christianhelle](https://github.com/christianhelle/))
-- Match WASM execution and trim GUI persistence overhead ([#248](https://github.com/christianhelle/httprunner/pull/248)) ([@christianhelle](https://github.com/christianhelle/))
-- Harden runtime caching and output redaction ([#245](https://github.com/christianhelle/httprunner/pull/245)) ([@christianhelle](https://github.com/christianhelle/))
-- Fix UI run lifecycle and request round-tripping ([#246](https://github.com/christianhelle/httprunner/pull/246)) ([@christianhelle](https://github.com/christianhelle/))
-- Fix core parser and request failures ([#244](https://github.com/christianhelle/httprunner/pull/244)) ([@christianhelle](https://github.com/christianhelle/))
+- Expand docs home meta description ([#250](https://github.com/christianhelle/httprunner/pull/250)) ([@christianhelle](https://github.com/christianhelle/))
 - Setup agent squad ([#241](https://github.com/christianhelle/httprunner/pull/241)) ([@christianhelle](https://github.com/christianhelle/))
+
+### Features
+- Harden installs and release publishing ([#249](https://github.com/christianhelle/httprunner/pull/249)) ([@christianhelle](https://github.com/christianhelle/))
+- Fix UI run lifecycle and request round-tripping ([#246](https://github.com/christianhelle/httprunner/pull/246)) ([@christianhelle](https://github.com/christianhelle/))
+- Harden runtime caching and output redaction ([#245](https://github.com/christianhelle/httprunner/pull/245)) ([@christianhelle](https://github.com/christianhelle/))
+- Fix core parser and request failures ([#244](https://github.com/christianhelle/httprunner/pull/244)) ([@christianhelle](https://github.com/christianhelle/))
+- Match WASM execution and trim GUI persistence overhead ([#248](https://github.com/christianhelle/httprunner/pull/248)) ([@christianhelle](https://github.com/christianhelle/))
 
 
 ## [0.9.51](https://github.com/christianhelle/httprunner/releases/tag/0.9.51) (2026-03-24)
