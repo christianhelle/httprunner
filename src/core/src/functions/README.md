@@ -20,9 +20,11 @@ This module handles the substitution of dynamic function calls in HTTP request f
 ```rust
 use crate::functions::substitute_functions;
 
-let url = substitute_functions("https://api.example.com/users/{{guid()}}")?;
-let body = substitute_functions(r#"{"id": "{{guid()}}", "name": "{{string()}}"}"#)?;
+let url = substitute_functions("https://api.example.com/users/guid()")?;
+let body = substitute_functions(r#"{"id": "guid()", "name": "string()"}"#)?;
 ```
+
+Functions are matched case-insensitively and should be written as bare calls such as `guid()` or `upper('text')`, not wrapped in `{{...}}`.
 
 ## Supported Functions
 
@@ -31,7 +33,7 @@ let body = substitute_functions(r#"{"id": "{{guid()}}", "name": "{{string()}}"}"
 Generates a random UUID v4 in simple format (no hyphens):
 
 ```
-{{guid()}}
+guid()
 ```
 
 Example output: `a1b2c3d4e5f67890a1b2c3d4e5f67890`
@@ -41,7 +43,7 @@ Example output: `a1b2c3d4e5f67890a1b2c3d4e5f67890`
 Generates a random 20-character alphanumeric string:
 
 ```
-{{string()}}
+string()
 ```
 
 Example output: `aB3dE5fG7hI9jK1lM3nO`
@@ -51,7 +53,7 @@ Example output: `aB3dE5fG7hI9jK1lM3nO`
 Generates a random integer between 0 and 100:
 
 ```
-{{number()}}
+number()
 ```
 
 Example output: `42`
@@ -61,37 +63,37 @@ Example output: `42`
 Encodes a string value to Base64:
 
 ```
-{{base64_encode('value to encode')}}
+base64_encode('value to encode')
 ```
 
-Example: `{{base64_encode('username:password')}}` → `dXNlcm5hbWU6cGFzc3dvcmQ=`
+Example: `base64_encode('username:password')` → `dXNlcm5hbWU6cGFzc3dvcmQ=`
 
 ### Uppercase Transformation
 
 Converts a string to uppercase:
 
 ```text
-{{upper('text to convert')}}
+upper('text to convert')
 ```
 
-Example: `{{upper('hello, world')}}` → `HELLO, WORLD`
+Example: `upper('hello, world')` → `HELLO, WORLD`
 
 ### Lowercase Transformation
 
 Converts a string to lowercase:
 
 ```text
-{{lower('TEXT TO CONVERT')}}
+lower('TEXT TO CONVERT')
 ```
 
-Example: `{{lower('HELLO, WORLD')}}` → `hello, world`
+Example: `lower('HELLO, WORLD')` → `hello, world`
 
 ### Name Generation
 
 Generates a random full name (first name + last name):
 
 ```
-{{name()}}
+name()
 ```
 
 Example output: `John Smith`
@@ -101,7 +103,7 @@ Example output: `John Smith`
 Generates a random first name:
 
 ```
-{{first_name()}}
+first_name()
 ```
 
 Example output: `Sarah`
@@ -111,7 +113,7 @@ Example output: `Sarah`
 Generates a random last name:
 
 ```
-{{last_name()}}
+last_name()
 ```
 
 Example output: `Johnson`
@@ -121,7 +123,7 @@ Example output: `Johnson`
 Generates a random full mailing address (street, city, postal code, country):
 
 ```
-{{address()}}
+address()
 ```
 
 Example output: `123 Main Street, Springfield, 12345, USA`
@@ -131,7 +133,7 @@ Example output: `123 Main Street, Springfield, 12345, USA`
 Generates a random email address:
 
 ```
-{{email()}}
+email()
 ```
 
 Example output: `john.smith@example.com`
@@ -141,22 +143,22 @@ Example output: `john.smith@example.com`
 Generates a random job title:
 
 ```
-{{job_title()}}
+job_title()
 ```
 
 Example output: `Senior Software Engineer`
 
 ### Lorem Ipsum Text Generation
 
-Generates Lorem Ipsum placeholder text with a specified number of words:
+Generates Lorem Ipsum placeholder text with an optional word count:
 
 ```text
-{{lorem_ipsum(50)}}
+lorem_ipsum(50)
 ```
 
 Example output: `lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum fugiat nulla pariatur`
 
-The function accepts a parameter specifying the number of words to generate. If the requested number exceeds the available word list, words will be repeated cyclically.
+If no argument is supplied, `lorem_ipsum()` defaults to 100 words. If the requested number exceeds the available word list, words will be repeated cyclically.
 
 ## Implementation Details
 

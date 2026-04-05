@@ -11,7 +11,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📊 `--report` flag to generate summary reports in markdown or html format for test results
 - ✅ Color-coded output (green for success, red for failure, yellow for skipped)
 - 📊 Summary statistics showing passed/failed/skipped counts (per file and overall)
-- 🌐 Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- 🌐 Support for GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, and CONNECT requests
 - 📝 **Custom headers support** with full request header implementation
 - 🎯 Detailed error reporting with status codes
 - 🛡️ Robust error handling for network issues
@@ -20,7 +20,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 🔧 **Variables support** with substitution in URLs, headers, and request bodies
 - 🔧 **Request Variables** for chaining requests and passing data between HTTP calls
 - 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
-- 🔀 **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
+- 🔀 **Conditional Execution** with `@dependsOn`, `@if`, and `@if-not` directives for request dependencies
 - ⏱️ **Customizable timeouts** for connection and read operations with flexible time units
 - 📋 **Semantic versioning** with git tag and commit information
 - 🔍 **Build-time version generation** with automatic git integration
@@ -295,8 +295,10 @@ Request Variables allow you to chain HTTP requests by passing data from one requ
 ### Syntax
 
 ```text
-{{<request_name>.(request|response).(body|headers).(*|JSONPath|XPath|<header_name>)}}
+{{<request_name>.(request|response).(body|headers).<path>}}
 ```
+
+Use header names, `*`, or `$.json.path`-style body paths here. XPath is not supported, and `request.body...` currently returns the full captured request body regardless of the trailing path.
 
 ### Authentication Flow Example
 

@@ -6,7 +6,8 @@ This module handles parsing of HTTP request files (.http) with support for envir
 
 - `mod.rs` - Module entry point and public API
 - `file_parser.rs` - Main HTTP file parsing logic
-- `variable_substitution.rs` - Template variable substitution (`{{variable}}` syntax)
+- `http-file.peg` - PEG-style documentation grammar for the current supported `.http` syntax
+- `substitution.rs` - Template variable substitution (`{{variable}}` syntax)
 - `condition_parser.rs` - Parsing of `@if` and `@if-not` directives
 - `timeout_parser.rs` - Parsing of timeout values with unit conversion
 - `utils.rs` - HTTP method detection and utility functions
@@ -20,7 +21,11 @@ use crate::parser::parse_http_file;
 let requests = parse_http_file("requests.http", Some("dev"))?;
 ```
 
+See `http-file.peg` for the parser-adjacent grammar/spec that documents the current handwritten parser behavior.
+
 ## Supported Directives
+
+Directive examples below can use either `# @...` or `// @...` prefixes.
 
 ### Request Naming
 ```
@@ -51,7 +56,7 @@ GET https://api.example.com/data
 
 ### Variables
 ```
-# @TOKEN=abc123
+@TOKEN=abc123
 GET https://api.example.com/data
 Authorization: Bearer {{TOKEN}}
 ```
@@ -59,9 +64,9 @@ Authorization: Bearer {{TOKEN}}
 ### Assertions
 ```
 GET https://api.example.com/users/1
-EXPECTED_RESPONSE_STATUS: 200
-EXPECTED_RESPONSE_BODY: John
-EXPECTED_RESPONSE_HEADERS: Content-Type: application/json
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY John
+> EXPECTED_RESPONSE_HEADERS Content-Type: application/json
 ```
 
 ## Variable Substitution

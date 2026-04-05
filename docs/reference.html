@@ -43,6 +43,7 @@
                     <ul>
                         <li><a href="#command-line">Command Line</a></li>
                         <li><a href="#http-syntax">HTTP File Syntax</a></li>
+                        <li><a href="#peg-grammar">PEG Grammar</a></li>
                         <li><a href="#variables-syntax">Variables</a></li>
                         <li><a href="#built-in-functions-syntax">Built-in Functions</a></li>
                         <li><a href="#request-variables-syntax">Request Variables</a></li>
@@ -210,7 +211,7 @@ httprunner api-tests.http --export --report html --pretty-json</code>
 
                     <h3>Request Block Format</h3>
                     <div class="syntax-block">
-                        <code>METHOD URL [HTTP-VERSION]
+                        <code>METHOD URL [HTTP-VERSION] [IGNORED-TRAILING-TOKENS]
 [Header-Name: Header-Value]
 ...
 
@@ -239,14 +240,29 @@ httprunner api-tests.http --export --report html --pretty-json</code>
                             <div class="method-name">PATCH</div>
                             <div class="method-desc">Partially update resource</div>
                         </div>
+                        <div class="method">
+                            <div class="method-name">HEAD</div>
+                            <div class="method-desc">Retrieve headers without a response body</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">OPTIONS</div>
+                            <div class="method-desc">Inspect available server options</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">TRACE</div>
+                            <div class="method-desc">Echo the received request for diagnostics</div>
+                        </div>
+                        <div class="method">
+                            <div class="method-name">CONNECT</div>
+                            <div class="method-desc">Open a tunnel to the target resource</div>
+                        </div>
                     </div>
 
                     <h3>Comments</h3>
                     <div class="code-block">
                         <code># This is a comment
-# Comments start with # and continue to end of line
-
-GET https://api.example.com/users  # Inline comments are also supported</code>
+// This is also a comment
+### Request separators are treated as comments</code>
                     </div>
 
                     <h3>Headers</h3>
@@ -273,13 +289,192 @@ Content-Type: application/json
 POST https://api.example.com/upload
 Content-Type: application/x-www-form-urlencoded
 
-name=John&email=john@example.com
+name=John&amp;email=john@example.com
 
 # Text body
 POST https://api.example.com/notes
 Content-Type: text/plain
 
 This is a plain text note.</code>
+                    </div>
+
+                    <h3>Implementation Notes</h3>
+                    <ul>
+                        <li>Both <code># @directive ...</code> and <code>// @directive ...</code> forms are supported</li>
+                        <li><code>###</code> separators are regular comment lines; they are not a separate parser token</li>
+                        <li>Only the first two request-line tokens are consumed, so an HTTP version or other trailing tokens are accepted and ignored</li>
+                        <li>IntelliJ <code>&gt; {% ... %}</code> script blocks are ignored</li>
+                    </ul>
+                </section>
+
+                <section id="peg-grammar" class="guide-section">
+                    <h2>PEG Grammar</h2>
+                    <p>The current implementation is formally documented by <code>src/core/src/parser/http-file.peg</code>. The grammar below mirrors the behavior of the handwritten parser, including current limitations and parser-specific quirks.</p>
+
+                    <div class="code-block">
+                        <code># PEG-style documentation grammar for the current httprunner `.http` syntax.
+# This grammar documents the handwritten parser in src/core/src/parser/file_parser.rs.
+# It is a specification artifact, not executable parser input.
+#
+# Stateful parser notes:
+# - Ordered choice matches parser line precedence.
+# - Directive lines are recognized before plain comments.
+# - Directives apply to the next request line, not the current one.
+# - A blank line after a request line switches the parser into body mode.
+# - In body mode, `@...` lines are treated as body text, but comment lines,
+#   IntelliJ script blocks, assertion lines, and request lines still take precedence.
+# - Only the first two whitespace-separated request-line tokens are consumed;
+#   optional HTTP versions or other trailing tokens are accepted and ignored.
+# - `###` separators are just comment lines.
+# - `@name` accepts free text, but names reused in `@dependsOn`, `@if`,
+#   `@if-not`, and request-variable references should stick to `[A-Za-z0-9_-]+`.
+# - Request-variable notes:
+#   - `response.body.*` returns the entire response body.
+#   - `response.body.$...` performs JSON extraction.
+#   - `request.body...` currently returns the entire captured request body,
+#     regardless of the trailing path.
+#   - XPath is not supported.
+# - Function names are matched case-insensitively. `lorem_ipsum()` defaults to
+#   100 words when no numeric argument is supplied.
+# - Built-in functions are bare calls such as `guid()` or `upper('text')`;
+#   they are not wrapped in `{{...}}`.
+#
+HttpFile                  &lt;- Line* EOF
+#
+Line                      &lt;- IgnoredScriptBlock
+                          / BlankLine
+                          / NameDirective
+                          / TimeoutDirective
+                          / ConnectionTimeoutDirective
+                          / DependsOnDirective
+                          / IfNotDirective
+                          / IfDirective
+                          / PreDelayDirective
+                          / PostDelayDirective
+                          / CommentLine
+                          / VariableLine
+                          / AssertionLine
+                          / RequestLine
+                          / HeaderLine
+                          / BodyLine
+#
+NameDirective             &lt;- DirectivePrefix '@name' RequiredWs NameText LineEnd?
+TimeoutDirective          &lt;- DirectivePrefix '@timeout' RequiredWs TimeoutValue LineEnd?
+ConnectionTimeoutDirective &lt;- DirectivePrefix '@connection-timeout' RequiredWs TimeoutValue LineEnd?
+DependsOnDirective        &lt;- DirectivePrefix '@dependsOn' RequiredWs ReferenceName LineEnd?
+IfDirective               &lt;- DirectivePrefix '@if' RequiredWs ConditionExpression LineEnd?
+IfNotDirective            &lt;- DirectivePrefix '@if-not' RequiredWs ConditionExpression LineEnd?
+PreDelayDirective         &lt;- DirectivePrefix '@pre-delay' RequiredWs Digits LineEnd?
+PostDelayDirective        &lt;- DirectivePrefix '@post-delay' RequiredWs Digits LineEnd?
+#
+DirectivePrefix           &lt;- HashDirectivePrefix / SlashDirectivePrefix
+HashDirectivePrefix       &lt;- '#' RequiredWs
+SlashDirectivePrefix      &lt;- '//' RequiredWs
+#
+ConditionExpression       &lt;- StatusCondition / BodyCondition
+StatusCondition           &lt;- ReferenceName '.response.status' RequiredWs EqualityOp? ExpectedText
+BodyCondition             &lt;- ReferenceName '.response.body.' ConditionPath RequiredWs EqualityOp? ExpectedText
+ConditionPath             &lt;- JsonPath / BarePath
+EqualityOp                &lt;- '==' RequiredWs
+#
+TimeoutValue              &lt;- Digits OptionalWs TimeoutUnit?
+TimeoutUnit               &lt;- 'ms' / 'm' / 's'
+#
+VariableLine              &lt;- '@' VariableName OptionalWs '=' OptionalWs VariableValue LineEnd?
+VariableName              &lt;- (!'=' !EOL .)+
+VariableValue             &lt;- (!EOL .)*
+#
+AssertionLine             &lt;- AssertionPrefix? AssertionKeyword RequiredWs AssertionValue LineEnd?
+AssertionPrefix           &lt;- '&gt;' RequiredWs
+AssertionKeyword          &lt;- 'EXPECTED_RESPONSE_STATUS'
+                          / 'EXPECTED_RESPONSE_BODY'
+                          / 'EXPECTED_RESPONSE_HEADERS'
+AssertionValue            &lt;- QuotedText / ExpectedText
+#
+RequestLine               &lt;- RequestMethod RequiredWs RequestTarget (RequiredWs RequestLineTail)? LineEnd?
+RequestLineTail           &lt;- HttpVersion (RequiredWs IgnoredRequestToken)*
+                          / IgnoredRequestToken (RequiredWs IgnoredRequestToken)*
+RequestMethod             &lt;- 'GET'
+                          / 'POST'
+                          / 'PUT'
+                          / 'DELETE'
+                          / 'PATCH'
+                          / 'HEAD'
+                          / 'OPTIONS'
+                          / 'TRACE'
+                          / 'CONNECT'
+RequestTarget             &lt;- Token
+HttpVersion               &lt;- 'HTTP/' Digits ('.' Digits)?
+IgnoredRequestToken       &lt;- Token
+#
+HeaderLine                &lt;- HeaderName ':' OptionalWs HeaderValue LineEnd?
+HeaderName                &lt;- (!':' !EOL .)+
+HeaderValue               &lt;- (!EOL .)*
+#
+CommentLine               &lt;- HashComment / SlashComment
+HashComment               &lt;- '#' (!EOL .)* LineEnd?
+SlashComment              &lt;- '//' (!EOL .)* LineEnd?
+#
+IgnoredScriptBlock        &lt;- ScriptBlockStart ScriptBlockLine* ScriptBlockEnd?
+ScriptBlockStart          &lt;- '&gt; {%' (!EOL .)* LineEnd?
+ScriptBlockLine           &lt;- !ScriptBlockEnd RawLine
+ScriptBlockEnd            &lt;- OptionalWs '%}' (!EOL .)* LineEnd?
+#
+BodyLine                  &lt;- RawLine
+RawLine                   &lt;- (!EOL .)+ LineEnd?
+#
+InlineVariableReference   &lt;- '{{' PlainVariableName '}}'
+PlainVariableName         &lt;- (!'}' .)+
+#
+RequestVariableReference  &lt;- '{{' ReferenceName '.' RequestVariableSource '.'
+                               RequestVariableTarget '.' RequestVariablePath '}}'
+RequestVariableSource     &lt;- 'request' / 'response'
+RequestVariableTarget     &lt;- 'body' / 'headers'
+RequestVariablePath       &lt;- '*' / JsonPath / HeaderPath / BarePath
+HeaderPath                &lt;- (!'}' !EOL .)+
+#
+FunctionCall              &lt;- NoArgFunction / StringArgFunction / IntegerArgFunction
+NoArgFunction             &lt;- 'guid()'
+                          / 'string()'
+                          / 'number()'
+                          / 'name()'
+                          / 'first_name()'
+                          / 'last_name()'
+                          / 'address()'
+                          / 'email()'
+                          / 'job_title()'
+                          / 'getdate()'
+                          / 'gettime()'
+                          / 'getdatetime()'
+                          / 'getutcdatetime()'
+StringArgFunction         &lt;- StringFunctionName '(' OptionalWs SingleQuotedText OptionalWs ')'
+StringFunctionName        &lt;- 'base64_encode' / 'upper' / 'lower'
+IntegerArgFunction        &lt;- 'lorem_ipsum' '(' OptionalWs Digits? OptionalWs ')'
+#
+JsonPath                  &lt;- '$.' JsonPathSegment ('.' JsonPathSegment)*
+JsonPathSegment           &lt;- Identifier ArrayIndex*
+ArrayIndex                &lt;- '[' Digits ']'
+#
+ReferenceName             &lt;- Identifier
+Identifier                &lt;- IdentifierStart IdentifierChar*
+IdentifierStart           &lt;- [A-Za-z0-9_]
+IdentifierChar            &lt;- [A-Za-z0-9_-]
+#
+SingleQuotedText          &lt;- "'" (EscapedChar / !("'" / EOL) .)* "'"
+QuotedText                &lt;- '"' (EscapedChar / !('"' / EOL) .)* '"'
+EscapedChar               &lt;- '\' .
+ExpectedText              &lt;- (!EOL .)+
+NameText                  &lt;- (!EOL .)+
+BarePath                  &lt;- (!Ws !EOL !'}' .)+
+Token                     &lt;- (!Ws !EOL .)+
+Digits                    &lt;- [0-9]+
+RequiredWs                &lt;- [ \t]+
+OptionalWs                &lt;- [ \t]*
+BlankLine                 &lt;- OptionalWs LineEnd
+LineEnd                   &lt;- '\r\n' / '\n' / '\r'
+Ws                        &lt;- [ \t]
+EOL                       &lt;- '\r' / '\n'
+EOF                       &lt;- !.</code>
                     </div>
                 </section>
 
@@ -315,12 +510,12 @@ This is a plain text note.</code>
 GET {{baseUrl}}/users</code>
                     </div>
 
-                    <h3>Valid Variable Names</h3>
+                    <h3>Current Parser Behavior</h3>
                     <ul>
-                        <li>Must start with a letter or underscore</li>
-                        <li>Can contain letters, numbers, underscores, and hyphens</li>
-                        <li>Case-sensitive</li>
-                        <li>No spaces allowed</li>
+                        <li>The parser trims surrounding whitespace around both the variable name and value</li>
+                        <li>Any text before <code>=</code> becomes the variable name</li>
+                        <li>Variable lookups are case-sensitive</li>
+                        <li>If a variable will be reused elsewhere, letters, numbers, underscores, and hyphens are the safest characters to use</li>
                     </ul>
 
                     <h3>Variable Usage Locations</h3>
@@ -406,8 +601,8 @@ GET {{baseUrl}}/users</code>
                                 <td>Senior Software Engineer</td>
                             </tr>
                             <tr>
-                                <td><code>lorem_ipsum(N)</code></td>
-                                <td>Generate Lorem Ipsum placeholder text with N words</td>
+                                <td><code>lorem_ipsum([N])</code></td>
+                                <td>Generate Lorem Ipsum placeholder text with N words (defaults to 100 when omitted)</td>
                                 <td>lorem ipsum dolor sit amet...</td>
                             </tr>
                             <tr>
@@ -440,7 +635,8 @@ GET {{baseUrl}}/users</code>
                         <li>Values are generated dynamically for each request</li>
                         <li>Can be combined with variables</li>
                         <li><code>base64_encode()</code>, <code>upper()</code>, and <code>lower()</code> require single-quoted string arguments</li>
-                        <li><code>lorem_ipsum(N)</code> requires a numeric parameter specifying the number of words to generate</li>
+                        <li><code>lorem_ipsum([N])</code> accepts an optional numeric parameter and defaults to 100 words when omitted</li>
+                        <li>Functions are bare calls such as <code>guid()</code>; wrapping them in <code>{{...}}</code> leaves the braces intact</li>
                     </ul>
 
                     <h3>Example</h3>
@@ -469,7 +665,7 @@ Content-Type: application/json
                     
                     <h3>Syntax Pattern</h3>
                     <div class="syntax-block">
-                        <code>{{&lt;request_name&gt;.(request|response).(body|headers).(*|JSONPath|XPath|&lt;header_name&gt;)}}</code>
+                        <code>{{&lt;request_name&gt;.(request|response).(body|headers).&lt;path&gt;}}</code>
                     </div>
 
                     <h3>Component Breakdown</h3>
@@ -484,7 +680,7 @@ Content-Type: application/json
                         <tbody>
                             <tr>
                                 <td><code>request_name</code></td>
-                                <td>Name of a previous request (defined with <code># @name</code>)</td>
+                                <td>Name of a previous request (defined with <code># @name</code> or <code>// @name</code>)</td>
                                 <td><code>authenticate</code></td>
                             </tr>
                             <tr>
@@ -499,7 +695,7 @@ Content-Type: application/json
                             </tr>
                             <tr>
                                 <td><code>extraction_path</code></td>
-                                <td>JSONPath, XPath, header name, or <code>*</code></td>
+                                <td>A header name, <code>*</code>, or a <code>$.json.path</code>-style body path</td>
                                 <td><code>$.json.access_token</code></td>
                             </tr>
                         </tbody>
@@ -510,6 +706,7 @@ Content-Type: application/json
                         <li><code>$.property</code> - Top-level property</li>
                         <li><code>$.nested.property</code> - Nested property</li>
                         <li><code>$.json.property</code> - Property within "json" field</li>
+                        <li><code>$.users[0].id</code> - Array indexing</li>
                         <li><code>*</code> - Entire body content</li>
                     </ul>
 
@@ -541,17 +738,27 @@ Content-Type: application/json
 {{auth.response.headers.Content-Type}}
 
 # Extract from request body
-{{auth.request.body.$.username}}
+{{auth.request.body.*}}
 
 # Extract entire response
 {{auth.response.body.*}}</code>
                     </div>
 
+                    <h3>Current Implementation Notes</h3>
+                    <ul>
+                        <li>Header lookup is case-insensitive</li>
+                        <li><code>response.body.*</code> returns the full response body</li>
+                        <li><code>response.body.$...</code> performs JSON extraction</li>
+                        <li><code>request.body...</code> currently returns the full captured request body regardless of the trailing path, so <code>*</code> is the clearest form</li>
+                        <li>XPath expressions are not supported</li>
+                    </ul>
+
                     <h3>Execution Order</h3>
                     <ul>
                         <li>Request variables can only reference requests that appear earlier in the file</li>
                         <li>Referenced requests must have been executed successfully</li>
-                        <li>Named requests must use the <code># @name</code> syntax</li>
+                        <li>Named requests must use <code># @name</code> or <code>// @name</code></li>
+                        <li>Because the reference syntax is dot-delimited, names that will be reused here should avoid spaces and dots</li>
                         <li>Variables are resolved at execution time</li>
                     </ul>
                 </section>
@@ -608,7 +815,7 @@ Content-Type: application/json
                             </tr>
                             <tr>
                                 <td><code>@if</code></td>
-                                <td>Conditional execution based on status code or response body/header content</td>
+                                <td>Conditional execution based on response status code or response body JSON-path comparisons</td>
                                 <td><code># @if authenticate.response.status 200</code><br><code># @if user.response.body.$.role admin</code></td>
                             </tr>
                             <tr>
@@ -662,6 +869,7 @@ Content-Type: application/json
                         <li>Multiple directives can be applied to a single request</li>
                         <li>Timeout values default to seconds if no unit is specified</li>
                         <li>Delay values are always in milliseconds</li>
+                        <li><code>@if</code> and <code>@if-not</code> currently support response status checks and response body comparisons, not response-header conditions</li>
                     </ul>
                 </section>
 
@@ -753,10 +961,12 @@ Content-Type: application/json
 
 [body]
 
-EXPECTED_RESPONSE_STATUS status-code
-EXPECTED_RESPONSE_BODY "expected-text"
-EXPECTED_RESPONSE_HEADERS "Header-Name: expected-value"</code>
+[&gt; ]EXPECTED_RESPONSE_STATUS status-code
+[&gt; ]EXPECTED_RESPONSE_BODY "expected-text"
+[&gt; ]EXPECTED_RESPONSE_HEADERS "Header-Name: expected-value"</code>
                     </div>
+
+                    <p>Prefixing an assertion line with <code>&gt;</code> is optional.</p>
 
                     <h3>Multiple Assertions</h3>
                     <div class="code-block">

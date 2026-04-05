@@ -21,7 +21,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - `--export` flag to save individual HTTP requests and responses to timestamped log files
 - Color-coded output (green for success, red for failure, yellow for skipped)
 - Summary statistics showing passed/failed/skipped counts (per file and overall)
-- Support for various HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- Support for GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, and CONNECT requests
 - **Request delay** for rate limiting compliance:
   Global `--delay` flag (CLI) and UI controls (TUI/GUI) for delays between consecutive requests
   Per-request `@pre-delay` and `@post-delay` keywords in .http files
@@ -33,7 +33,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - **Variables support** with substitution in URLs, headers, and request bodies
 - **Request Variables** for chaining requests and passing data between HTTP calls
 - **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
-- **Conditional Execution** with `@dependsOn` and `@if` directives for request dependencies
+- **Conditional Execution** with `@dependsOn`, `@if`, and `@if-not` directives for request dependencies
 - **Customizable timeouts** for connection and read operations with flexible time units
 - **Semantic versioning** with git tag and commit information
 - **Build-time version generation** with automatic git integration
@@ -893,6 +893,184 @@ Content-Type: application/json
 }
 ```
 
+### PEG Grammar
+
+The current parser behavior is formally documented in `src/core/src/parser/http-file.peg`:
+
+```peg
+# PEG-style documentation grammar for the current httprunner `.http` syntax.
+# This grammar documents the handwritten parser in src/core/src/parser/file_parser.rs.
+# It is a specification artifact, not executable parser input.
+#
+# Stateful parser notes:
+# - Ordered choice matches parser line precedence.
+# - Directive lines are recognized before plain comments.
+# - Directives apply to the next request line, not the current one.
+# - A blank line after a request line switches the parser into body mode.
+# - In body mode, `@...` lines are treated as body text, but comment lines,
+#   IntelliJ script blocks, assertion lines, and request lines still take precedence.
+# - Only the first two whitespace-separated request-line tokens are consumed;
+#   optional HTTP versions or other trailing tokens are accepted and ignored.
+# - `###` separators are just comment lines.
+# - `@name` accepts free text, but names reused in `@dependsOn`, `@if`,
+#   `@if-not`, and request-variable references should stick to `[A-Za-z0-9_-]+`.
+# - Request-variable notes:
+#   - `response.body.*` returns the entire response body.
+#   - `response.body.$...` performs JSON extraction.
+#   - `request.body...` currently returns the entire captured request body,
+#     regardless of the trailing path.
+#   - XPath is not supported.
+# - Function names are matched case-insensitively. `lorem_ipsum()` defaults to
+#   100 words when no numeric argument is supplied.
+# - Built-in functions are bare calls such as `guid()` or `upper('text')`;
+#   they are not wrapped in `{{...}}`.
+#
+HttpFile                  <- Line* EOF
+#
+Line                      <- IgnoredScriptBlock
+                          / BlankLine
+                          / NameDirective
+                          / TimeoutDirective
+                          / ConnectionTimeoutDirective
+                          / DependsOnDirective
+                          / IfNotDirective
+                          / IfDirective
+                          / PreDelayDirective
+                          / PostDelayDirective
+                          / CommentLine
+                          / VariableLine
+                          / AssertionLine
+                          / RequestLine
+                          / HeaderLine
+                          / BodyLine
+#
+NameDirective             <- DirectivePrefix '@name' RequiredWs NameText LineEnd?
+TimeoutDirective          <- DirectivePrefix '@timeout' RequiredWs TimeoutValue LineEnd?
+ConnectionTimeoutDirective <- DirectivePrefix '@connection-timeout' RequiredWs TimeoutValue LineEnd?
+DependsOnDirective        <- DirectivePrefix '@dependsOn' RequiredWs ReferenceName LineEnd?
+IfDirective               <- DirectivePrefix '@if' RequiredWs ConditionExpression LineEnd?
+IfNotDirective            <- DirectivePrefix '@if-not' RequiredWs ConditionExpression LineEnd?
+PreDelayDirective         <- DirectivePrefix '@pre-delay' RequiredWs Digits LineEnd?
+PostDelayDirective        <- DirectivePrefix '@post-delay' RequiredWs Digits LineEnd?
+#
+DirectivePrefix           <- HashDirectivePrefix / SlashDirectivePrefix
+HashDirectivePrefix       <- '#' RequiredWs
+SlashDirectivePrefix      <- '//' RequiredWs
+#
+ConditionExpression       <- StatusCondition / BodyCondition
+StatusCondition           <- ReferenceName '.response.status' RequiredWs EqualityOp? ExpectedText
+BodyCondition             <- ReferenceName '.response.body.' ConditionPath RequiredWs EqualityOp? ExpectedText
+ConditionPath             <- JsonPath / BarePath
+EqualityOp                <- '==' RequiredWs
+#
+TimeoutValue              <- Digits OptionalWs TimeoutUnit?
+TimeoutUnit               <- 'ms' / 'm' / 's'
+#
+VariableLine              <- '@' VariableName OptionalWs '=' OptionalWs VariableValue LineEnd?
+VariableName              <- (!'=' !EOL .)+
+VariableValue             <- (!EOL .)*
+#
+AssertionLine             <- AssertionPrefix? AssertionKeyword RequiredWs AssertionValue LineEnd?
+AssertionPrefix           <- '>' RequiredWs
+AssertionKeyword          <- 'EXPECTED_RESPONSE_STATUS'
+                          / 'EXPECTED_RESPONSE_BODY'
+                          / 'EXPECTED_RESPONSE_HEADERS'
+AssertionValue            <- QuotedText / ExpectedText
+#
+RequestLine               <- RequestMethod RequiredWs RequestTarget (RequiredWs RequestLineTail)? LineEnd?
+RequestLineTail           <- HttpVersion (RequiredWs IgnoredRequestToken)*
+                          / IgnoredRequestToken (RequiredWs IgnoredRequestToken)*
+RequestMethod             <- 'GET'
+                          / 'POST'
+                          / 'PUT'
+                          / 'DELETE'
+                          / 'PATCH'
+                          / 'HEAD'
+                          / 'OPTIONS'
+                          / 'TRACE'
+                          / 'CONNECT'
+RequestTarget             <- Token
+HttpVersion               <- 'HTTP/' Digits ('.' Digits)?
+IgnoredRequestToken       <- Token
+#
+HeaderLine                <- HeaderName ':' OptionalWs HeaderValue LineEnd?
+HeaderName                <- (!':' !EOL .)+
+HeaderValue               <- (!EOL .)*
+#
+CommentLine               <- HashComment / SlashComment
+HashComment               <- '#' (!EOL .)* LineEnd?
+SlashComment              <- '//' (!EOL .)* LineEnd?
+#
+IgnoredScriptBlock        <- ScriptBlockStart ScriptBlockLine* ScriptBlockEnd?
+ScriptBlockStart          <- '> {%' (!EOL .)* LineEnd?
+ScriptBlockLine           <- !ScriptBlockEnd RawLine
+ScriptBlockEnd            <- OptionalWs '%}' (!EOL .)* LineEnd?
+#
+BodyLine                  <- RawLine
+RawLine                   <- (!EOL .)+ LineEnd?
+#
+InlineVariableReference   <- '{{' PlainVariableName '}}'
+PlainVariableName         <- (!'}' .)+
+#
+RequestVariableReference  <- '{{' ReferenceName '.' RequestVariableSource '.'
+                               RequestVariableTarget '.' RequestVariablePath '}}'
+RequestVariableSource     <- 'request' / 'response'
+RequestVariableTarget     <- 'body' / 'headers'
+RequestVariablePath       <- '*' / JsonPath / HeaderPath / BarePath
+HeaderPath                <- (!'}' !EOL .)+
+#
+FunctionCall              <- NoArgFunction / StringArgFunction / IntegerArgFunction
+NoArgFunction             <- 'guid()'
+                          / 'string()'
+                          / 'number()'
+                          / 'name()'
+                          / 'first_name()'
+                          / 'last_name()'
+                          / 'address()'
+                          / 'email()'
+                          / 'job_title()'
+                          / 'getdate()'
+                          / 'gettime()'
+                          / 'getdatetime()'
+                          / 'getutcdatetime()'
+StringArgFunction         <- StringFunctionName '(' OptionalWs SingleQuotedText OptionalWs ')'
+StringFunctionName        <- 'base64_encode' / 'upper' / 'lower'
+IntegerArgFunction        <- 'lorem_ipsum' '(' OptionalWs Digits? OptionalWs ')'
+#
+JsonPath                  <- '$.' JsonPathSegment ('.' JsonPathSegment)*
+JsonPathSegment           <- Identifier ArrayIndex*
+ArrayIndex                <- '[' Digits ']'
+#
+ReferenceName             <- Identifier
+Identifier                <- IdentifierStart IdentifierChar*
+IdentifierStart           <- [A-Za-z0-9_]
+IdentifierChar            <- [A-Za-z0-9_-]
+#
+SingleQuotedText          <- "'" (EscapedChar / !("'" / EOL) .)* "'"
+QuotedText                <- '"' (EscapedChar / !('"' / EOL) .)* '"'
+EscapedChar               <- '\\' .
+ExpectedText              <- (!EOL .)+
+NameText                  <- (!EOL .)+
+BarePath                  <- (!Ws !EOL !'}' .)+
+Token                     <- (!Ws !EOL .)+
+Digits                    <- [0-9]+
+RequiredWs                <- [ \t]+
+OptionalWs                <- [ \t]*
+BlankLine                 <- OptionalWs LineEnd
+LineEnd                   <- '\r\n' / '\n' / '\r'
+Ws                        <- [ \t]
+EOL                       <- '\r' / '\n'
+EOF                       <- !.
+```
+
+### Parser Notes
+
+- Request-line method support currently includes `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`, `OPTIONS`, `TRACE`, and `CONNECT`.
+- `# @directive ...` and `// @directive ...` are both supported.
+- `###` separators are regular comment lines; they are not a separate parser token.
+- IntelliJ `> {% ... %}` script blocks are ignored.
+- Only the first two request-line tokens are consumed, so an HTTP version or other trailing tokens are accepted and ignored.
+
 ## Built-in Functions
 
 The HTTP File Runner provides built-in functions for dynamic value generation in your `.http` files. Functions are case-insensitive and automatically generate values when the request is executed.
@@ -1067,9 +1245,9 @@ Content-Type: application/json
 }
 ```
 
-#### `lorem_ipsum(n)` - Generate Lorem Ipsum Text
+#### `lorem_ipsum([n])` - Generate Lorem Ipsum Text
 
-Generates Lorem Ipsum placeholder text with the specified number of words. The parameter `n` determines how many words to generate. If the requested count exceeds the available word list (approximately 285 words), words will be repeated cyclically.
+Generates Lorem Ipsum placeholder text with the specified number of words. The parameter `n` is optional; when omitted, `lorem_ipsum()` defaults to 100 words. If the requested count exceeds the available word list (approximately 285 words), words will be repeated cyclically.
 
 ```http
 POST https://api.example.com/content
@@ -1144,6 +1322,7 @@ Content-Type: application/json
 - ✅ **Dynamic generation**: Values are generated fresh for each request execution
 - ✅ **Works everywhere**: Use in URLs, headers, and request bodies
 - ✅ **Combine with variables**: Functions can be used alongside variables
+- ✅ **Bare call syntax**: Use `guid()` or `upper('text')`, not `{{guid()}}`
 
 ### Example Usage
 
@@ -1224,6 +1403,8 @@ GET {{baseUrl}}/api/search/tool
 
 **Note:** Variables must be defined before they can be used. The order of definition matters.
 
+The parser trims surrounding whitespace around both the variable name and value. Any text before `=` becomes the variable name, but if you plan to reference the variable elsewhere, sticking to letters, numbers, underscores, and hyphens is the safest choice.
+
 ## Environment Files
 
 To give variables different values in different environments, create a file named `http-client.env.json`. This file should be located in the same directory as the `.http` file or in one of its parent directories.
@@ -1292,15 +1473,15 @@ Request Variables allow you to chain HTTP requests by passing data from one requ
 The syntax for request variables follows this pattern:
 
 ```text
-{{<request_name>.(request|response).(body|headers).(*|JSONPath|XPath|<header_name>)}}
+{{<request_name>.(request|response).(body|headers).<path>}}
 ```
 
 Where:
 
-- `request_name`: The name of a previous request (defined with `# @name`)
+- `request_name`: The name of a previous request (defined with `# @name` or `// @name`)
 - `request|response`: Whether to extract from the request or response
 - `body|headers`: Whether to extract from body or headers  
-- `*|JSONPath|XPath|header_name`: The extraction path
+- `path`: A header name, `*`, or a `$.json.path`-style body path
 
 ### Authentication Flow Example
 
@@ -1335,30 +1516,34 @@ Content-Type: application/json
 {
   "action": "admin_data_access",
   "user_id": "{{authenticate.response.body.$.json.user_id}}",
-  "original_request": {
-    "username": "{{authenticate.request.body.$.username}}",
-    "timestamp": "2025-07-01T21:16:46Z"
-  },
+  "original_request": {{authenticate.request.body.*}},
+  "timestamp": "2025-07-01T21:16:46Z",
   "response_content_type": "{{get_admin_data.response.headers.Content-Type}}"
 }
 ```
 
 ### Supported Extraction Patterns
 
-**For JSON bodies:**
+**For response bodies:**
 
 - `$.property_name` - Extract top-level properties
 - `$.nested.property` - Extract nested properties
 - `$.json.property` - Extract from "json" field (like httpbin.org responses)
+- `$.users[0].id` - Extract array values
 - `*` - Extract entire body
 
 **For headers:**
 
 - `header_name` - Extract specific header value (case-insensitive)
 
-**For request data:**
+**For request bodies:**
 
-- Same patterns as response, but extracts from the original request data
+- The current implementation returns the full captured request body regardless of the trailing path
+- Use `{{request_name.request.body.*}}` for the clearest, implementation-aligned form
+
+**Not supported:**
+
+- XPath expressions
 
 ### Request Variable Benefits
 
@@ -1368,11 +1553,11 @@ Content-Type: application/json
 - **Request Auditing**: Reference original request data in follow-up calls
 - **API Testing**: Create comprehensive test flows with dependent requests
 
-**Note:** Request variables can only reference requests that appear earlier in the same `.http` file and have been named with `# @name`.
+**Note:** Request variables can only reference requests that appear earlier in the same `.http` file and have been named with `# @name` or `// @name`. Because the reference syntax is dot-delimited, names that will be reused here should avoid spaces and dots.
 
 ## Conditional Request Execution
 
-Execute HTTP requests conditionally based on previous request results using `@dependsOn` and `@if` directives. This powerful feature enables complex integration testing scenarios and workflow automation.
+Execute HTTP requests conditionally based on previous request results using `@dependsOn`, `@if`, and `@if-not` directives. This powerful feature enables complex integration testing scenarios and workflow automation.
 
 ### `@dependsOn` Directive
 
@@ -1607,7 +1792,7 @@ This makes it easy to understand why requests were not executed in your test wor
 - Requests can have both `@dependsOn` and multiple `@if` or `@if-not` directives
 - `@if-not` works as the opposite of `@if` - condition must NOT match to execute
 - Conditions can only reference requests that appear earlier in the `.http` file
-- All request names used in conditions must be defined with `# @name`
+- All request names used in conditions must be defined with `# @name` or `// @name`
 
 ## Timeout Configuration
 
@@ -1738,6 +1923,7 @@ The HTTP File Runner supports assertions to validate HTTP responses. You can ass
 - **`EXPECTED_RESPONSE_STATUS`** - Assert on HTTP status code
 - **`EXPECTED_RESPONSE_BODY`** - Assert that response body contains specific text
 - **`EXPECTED_RESPONSE_HEADERS`** - Assert that response headers contain specific header-value pairs
+- Prefixing an assertion with `>` is also supported (for example, `> EXPECTED_RESPONSE_STATUS 200`)
 
 ### Assertion Examples
 
@@ -1823,10 +2009,10 @@ When assertions are present, the HTTP runner will:
 
 ### Supported Features
 
-- **Methods**: GET, POST, PUT, DELETE, PATCH
+- **Methods**: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, CONNECT
 - **Headers**: Key-value pairs separated by `:` (fully supported and sent with requests)
 - **Body**: Content after headers (separated by empty line)
-- **Comments**: Lines starting with `#`
+- **Comments**: Lines starting with `#` or `//` (`###` separators are comments)
 
 ## Example Files
 

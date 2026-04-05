@@ -26,23 +26,25 @@ for result in assertion_results {
 ### Status Code Assertion
 Validates the HTTP response status code:
 ```
-EXPECTED_RESPONSE_STATUS: 200
-EXPECTED_RESPONSE_STATUS: 404
+EXPECTED_RESPONSE_STATUS 200
+> EXPECTED_RESPONSE_STATUS 404
 ```
 
 ### Header Assertion
 Validates response header values:
 ```
-EXPECTED_RESPONSE_HEADERS: Content-Type: application/json
-EXPECTED_RESPONSE_HEADERS: Authorization: Bearer token
+EXPECTED_RESPONSE_HEADERS Content-Type: application/json
+EXPECTED_RESPONSE_HEADERS Authorization: Bearer token
 ```
 
 ### Body Content Assertion
 Validates response body contains expected text:
 ```
-EXPECTED_RESPONSE_BODY: success
-EXPECTED_RESPONSE_BODY: {"status":"ok"}
+EXPECTED_RESPONSE_BODY success
+EXPECTED_RESPONSE_BODY {"status":"ok"}
 ```
+
+An optional leading `>` is accepted before the assertion keyword.
 
 ## Assertion Results
 
