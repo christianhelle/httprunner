@@ -183,6 +183,15 @@
 
 **Why:** This keeps the readable spec stable while giving the crate an executable grammar that can compile and be tested incrementally. It also isolates the highest-risk state machine behavior from the dependency-and-grammar slice so later phases can change one moving part at a time.
 
+### 2026-04-06: Bishop parse-tree layer (Phase 2 completion)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Phase 2 of the pest migration now builds a line-oriented intermediate representation from the executable grammar. Each parsed node keeps its starting line number, raw matched source, and the grammar-selected syntactic classification (`directive`, `comment`, `request`, `header`, `variable`, `assertion`, `body`, or IntelliJ script block).
+
+**Why:** This gives later migration phases a stable handoff point between the grammar pass and the handwritten parser's remaining state machine behavior. Body-mode downgrades, directive buffering, and request finalization can move onto the IR without reparsing the source text or rewalking raw pest pairs.
+
+**Implications:** Future converter work should consume `PestHttpFile` rather than binding directly to pest `Pair` trees. Tests can now validate parse-tree shape separately from the production semantic contract.
+
 ## Governance
 
 - All meaningful changes require team consensus
