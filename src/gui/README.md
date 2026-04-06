@@ -51,7 +51,7 @@ cargo run --bin httprunner-gui
 
 ### Prerequisites
 
-- Rust 1.92 or later
+- Rust 1.94 or later
 - Development libraries for your platform (Linux only):
   - **Ubuntu/Debian**: `libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libwayland-dev`
   - **macOS**: Xcode command-line tools

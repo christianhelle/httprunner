@@ -2,7 +2,7 @@
 
 A powerful Rust library for parsing and executing HTTP requests from `.http` files. This is the core library that powers the `httprunner` CLI tool.
 
-[![Rust Version](https://img.shields.io/badge/rust-1.92-orange.svg)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/rust-1.94-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview

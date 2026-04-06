@@ -4,7 +4,7 @@
 [![Build macOS](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-macos.yml)
 [![Build Windows](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml/badge.svg)](https://github.com/christianhelle/httprunner/actions/workflows/build-windows.yml)
 [![codecov](https://codecov.io/gh/christianhelle/httprunner/branch/main/graph/badge.svg)](https://codecov.io/gh/christianhelle/httprunner)
-[![Rust Version](https://img.shields.io/badge/rust-1.92-orange.svg)](https://www.rust-lang.org/)
+[![Rust Version](https://img.shields.io/badge/rust-1.94-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as WASM) written in Rust that parses `.http` files and executes HTTP requests, providing colored output with emojis to indicate success or failure.
@@ -119,7 +119,7 @@ sudo snap install httprunner
 
 ### Option 5: Build from Source
 
-Make sure you have Rust installed (version 1.92 or later).
+Make sure you have Rust installed (version 1.94 or later).
 
 #### CLI Version
 
@@ -2613,7 +2613,7 @@ The project includes installer scripts for easy deployment:
 
 ### Prerequisites
 
-- Rust 1.92 or later (<https://rustup.rs/>)
+- Rust 1.94 or later (<https://rustup.rs/>)
 - Git (for version generation)
 
 ### Building

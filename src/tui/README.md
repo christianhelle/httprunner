@@ -56,7 +56,7 @@ The TUI is divided into three main panes:
 
 ### Prerequisites
 
-- Rust 1.92 or later
+- Rust 1.94 or later
 
 ### Build Commands
 
