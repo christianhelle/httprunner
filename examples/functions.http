@@ -1,6 +1,4 @@
-#
-# Request-derived variables resolve at execution time, so declare them
-# before the request chain instead of after a JSON body.
+# Request-derived variables resolve at execution time
 @first_request_guid={{request1.response.body.$.json.guid}}
 @first_request_guid_base64=base64_encode('{{first_request_guid}}')
 
