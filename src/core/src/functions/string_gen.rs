@@ -10,7 +10,7 @@ impl FunctionSubstitutor for StringSubstitutor {
         use rand::RngExt;
         use rand::distr::Alphanumeric;
 
-        (&mut rand::rng())
+        rand::rng()
             .sample_iter(Alphanumeric)
             .take(20)
             .map(char::from)
