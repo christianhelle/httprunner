@@ -30,7 +30,7 @@ impl FunctionSubstitutor for JobTitleSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use rand::Rng;
+        use rand::RngExt;
         let mut rng = rand::rng();
         let index = rng.random_range(0..JOB_TITLES.len());
         JOB_TITLES[index].to_string()

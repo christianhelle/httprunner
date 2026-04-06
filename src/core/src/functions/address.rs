@@ -351,7 +351,7 @@ impl FunctionSubstitutor for AddressSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use rand::Rng;
+        use rand::RngExt;
         let mut rng = rand::rng();
         let index = rng.random_range(0..ADDRESSES.len());
         ADDRESSES[index].to_string()

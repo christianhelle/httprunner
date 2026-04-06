@@ -7,7 +7,7 @@ impl FunctionSubstitutor for StringSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use rand::Rng;
+        use rand::RngExt;
         use rand::distr::Alphanumeric;
 
         (&mut rand::rng())
