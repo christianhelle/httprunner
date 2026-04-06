@@ -304,6 +304,92 @@ fn test_parse_request_with_empty_body_lines() {
 }
 
 #[test]
+fn test_parse_blank_line_switches_from_headers_to_body_mode() {
+    let content = r#"POST https://api.example.com/users
+Content-Type: application/json
+
+X-Trace-Id: this-stays-in-the-body
+{"name":"Jane"}"#;
+
+    let requests = parse_http_content(content, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].headers.len(), 1);
+    assert_eq!(requests[0].headers[0].name, "Content-Type");
+    assert_eq!(
+        requests[0].body.as_deref(),
+        Some("X-Trace-Id: this-stays-in-the-body\n{\"name\":\"Jane\"}")
+    );
+}
+
+#[test]
+fn test_parse_at_lines_inside_body_stay_body_text() {
+    let content = r#"POST https://api.example.com/users
+Content-Type: text/plain
+
+@literal-body-line
+@still_body = not_a_variable"#;
+
+    let requests = parse_http_content(content, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(
+        requests[0].body.as_deref(),
+        Some("@literal-body-line\n@still_body = not_a_variable")
+    );
+}
+
+#[test]
+fn test_parse_directives_after_body_buffer_to_next_request() {
+    let content = r#"# @name first
+POST https://api.example.com/first
+Content-Type: text/plain
+
+first-body
+# @name second
+# @dependsOn first
+# @timeout 5s
+GET https://api.example.com/second"#;
+
+    let requests = parse_http_content(content, None).unwrap();
+
+    assert_eq!(requests.len(), 2);
+    assert_eq!(requests[0].name, Some("first".to_string()));
+    assert_eq!(requests[0].timeout, None);
+    assert_eq!(requests[0].depends_on, None);
+    assert_eq!(requests[0].body.as_deref(), Some("first-body"));
+    assert_eq!(requests[1].name, Some("second".to_string()));
+    assert_eq!(requests[1].depends_on, Some("first".to_string()));
+    assert_eq!(requests[1].timeout, Some(5000));
+    assert!(requests[1].body.is_none());
+}
+
+#[test]
+fn test_parse_body_mode_precedence_for_comments_scripts_assertions_and_requests() {
+    let content = r#"POST https://api.example.com/first
+
+body line
+# ignored comment
+> {%
+client.test("ignored", function() {});
+%}
+> EXPECTED_RESPONSE_STATUS 204
+GET https://api.example.com/second"#;
+
+    let requests = parse_http_content(content, None).unwrap();
+
+    assert_eq!(requests.len(), 2);
+    assert_eq!(requests[0].body.as_deref(), Some("body line"));
+    assert_eq!(requests[0].assertions.len(), 1);
+    assert_eq!(
+        requests[0].assertions[0].assertion_type,
+        AssertionType::Status
+    );
+    assert_eq!(requests[0].assertions[0].expected_value, "204");
+    assert_eq!(requests[1].method, "GET");
+}
+
+#[test]
 fn test_parse_quoted_assertion_body() {
     let temp_dir = TempDir::new().unwrap();
     let content = r#"GET http://example.com
@@ -707,4 +793,180 @@ GET https://api.example.com/users"#;
     assert_eq!(requests[0].pre_delay_ms, Some(100));
     assert_eq!(requests[0].post_delay_ms, Some(200));
     assert_eq!(requests[0].depends_on, Some("previousRequest".to_string()));
+}
+
+#[test]
+fn test_parse_readme_authentication_flow_example() {
+    let content = r#"# @name authenticate
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "username": "admin@example.com",
+  "password": "secure123",
+  "access_token": "jwt_token_here",
+  "refresh_token": "refresh_jwt_here",
+  "user_id": "admin_001",
+  "role": "administrator"
+}
+
+###
+
+# @name get_admin_data
+GET https://httpbin.org/get
+Authorization: Bearer {{authenticate.response.body.$.json.access_token}}
+X-User-Role: {{authenticate.response.body.$.json.role}}
+X-User-ID: {{authenticate.response.body.$.json.user_id}}
+
+###
+
+# @name create_audit_log
+POST https://httpbin.org/post
+Content-Type: application/json
+
+{
+  "action": "admin_data_access",
+  "user_id": "{{authenticate.response.body.$.json.user_id}}",
+  "original_request": {{authenticate.request.body.*}},
+  "timestamp": "2025-07-01T21:16:46Z",
+  "response_content_type": "{{get_admin_data.response.headers.Content-Type}}"
+}"#;
+
+    let requests = parse_http_content(content, None).unwrap();
+
+    assert_eq!(requests.len(), 3);
+    assert_eq!(requests[0].name, Some("authenticate".to_string()));
+    assert_eq!(requests[0].method, "POST");
+    assert!(
+        requests[0]
+            .body
+            .as_ref()
+            .unwrap()
+            .contains("\"access_token\": \"jwt_token_here\"")
+    );
+    assert_eq!(requests[1].name, Some("get_admin_data".to_string()));
+    assert_eq!(requests[1].headers.len(), 3);
+    assert_eq!(
+        requests[1].headers[0].value,
+        "Bearer {{authenticate.response.body.$.json.access_token}}"
+    );
+    assert_eq!(requests[2].name, Some("create_audit_log".to_string()));
+    assert!(
+        requests[2]
+            .body
+            .as_ref()
+            .unwrap()
+            .contains("{{authenticate.request.body.*}}")
+    );
+    assert!(
+        requests[2]
+            .body
+            .as_ref()
+            .unwrap()
+            .contains("{{get_admin_data.response.headers.Content-Type}}")
+    );
+}
+
+#[test]
+fn test_parse_reference_directive_examples() {
+    let content = r#"# @name login
+# @timeout 30
+POST https://api.example.com/auth/login
+Content-Type: application/json
+
+{"username": "user", "password": "pass"}
+
+###
+
+# @pre-delay 2000
+// @connection-timeout 5
+GET https://api.example.com/status
+
+###
+
+# @name getUser
+# @dependsOn login
+# @if login.response.status 200
+GET https://api.example.com/user/profile
+Authorization: Bearer {{login.response.body.$.token}}
+
+###
+
+# @if-not getUser.response.status 200
+POST https://api.example.com/user/create
+Content-Type: application/json
+
+{"username": "newuser"}"#;
+
+    let requests = parse_http_content(content, None).unwrap();
+
+    assert_eq!(requests.len(), 4);
+    assert_eq!(requests[0].name, Some("login".to_string()));
+    assert_eq!(requests[0].timeout, Some(30_000));
+    assert_eq!(
+        requests[0].body.as_deref(),
+        Some("{\"username\": \"user\", \"password\": \"pass\"}\n\n")
+    );
+    assert_eq!(requests[1].pre_delay_ms, Some(2000));
+    assert_eq!(requests[1].connection_timeout, Some(5000));
+    assert_eq!(requests[2].name, Some("getUser".to_string()));
+    assert_eq!(requests[2].depends_on, Some("login".to_string()));
+    assert_eq!(requests[2].conditions.len(), 1);
+    assert!(matches!(
+        requests[2].conditions[0].condition_type,
+        ConditionType::Status
+    ));
+    assert_eq!(requests[3].conditions.len(), 1);
+    assert!(requests[3].conditions[0].negate);
+    assert_eq!(
+        requests[3].body.as_deref(),
+        Some("{\"username\": \"newuser\"}")
+    );
+}
+
+#[test]
+fn test_parse_reference_multiple_assertions_example() {
+    let content = r#"GET https://api.example.com/users/1
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "John Doe"
+EXPECTED_RESPONSE_BODY "john@example.com"
+EXPECTED_RESPONSE_HEADERS "Content-Type: application/json"
+EXPECTED_RESPONSE_HEADERS "Cache-Control: no-cache""#;
+
+    let requests = parse_http_content(content, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].assertions.len(), 5);
+    assert_eq!(
+        requests[0].assertions[0].assertion_type,
+        AssertionType::Status
+    );
+    assert_eq!(requests[0].assertions[0].expected_value, "200");
+    assert_eq!(
+        requests[0].assertions[1].assertion_type,
+        AssertionType::Body
+    );
+    assert_eq!(requests[0].assertions[1].expected_value, "John Doe");
+    assert_eq!(
+        requests[0].assertions[2].assertion_type,
+        AssertionType::Body
+    );
+    assert_eq!(requests[0].assertions[2].expected_value, "john@example.com");
+    assert_eq!(
+        requests[0].assertions[3].assertion_type,
+        AssertionType::Headers
+    );
+    assert_eq!(
+        requests[0].assertions[3].expected_value,
+        "Content-Type: application/json"
+    );
+    assert_eq!(
+        requests[0].assertions[4].assertion_type,
+        AssertionType::Headers
+    );
+    assert_eq!(
+        requests[0].assertions[4].expected_value,
+        "Cache-Control: no-cache"
+    );
 }
