@@ -834,4 +834,8 @@ impl eframe::App for HttpRunnerApp {
             self.save_state_with_window(ctx);
         }
     }
+
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        todo!()
+    }
 }
