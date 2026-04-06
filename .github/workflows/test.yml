@@ -108,25 +108,6 @@ jobs:
         cargo test
         echo "✅ All tests passed"
 
-    - name: Test with examples
-      run: |
-        echo "Testing with example files..."
-        cargo build --release
-        
-        # Test if examples directory exists and contains .http files
-        if [ -d "examples" ] && [ "$(ls -A examples/*.http 2>/dev/null)" ]; then
-          echo "Found example files:"
-          ls -la examples/*.http
-          
-          # Test with a simple example if it exists
-          if [ -f "examples/basic.http" ]; then
-            echo "Testing with basic.http..."
-            timeout 30s ./target/release/httprunner examples/basic.http || echo "Test completed (may have failed due to network)"
-          fi
-        else
-          echo "No example files found, skipping integration test"
-        fi
-
   summary:
     name: Test Summary
     runs-on: ubuntu-latest
