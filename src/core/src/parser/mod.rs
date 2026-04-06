@@ -2,6 +2,7 @@ mod condition_parser;
 mod file_parser;
 mod pest_parse_tree;
 mod pest_parser;
+mod pest_semantic_assembler;
 mod substitution;
 mod timeout_parser;
 mod utils;

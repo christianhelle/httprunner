@@ -58,6 +58,13 @@ fn build_line(pair: Pair<'_, Rule>) -> Result<PestLine> {
         Rule::PreDelayDirective => PestLineKind::Directive(build_pre_delay_directive(pair)?),
         Rule::PostDelayDirective => PestLineKind::Directive(build_post_delay_directive(pair)?),
         Rule::HashComment | Rule::SlashComment => PestLineKind::Comment(build_comment(pair)?),
+        Rule::CommentLine => {
+            let comment = pair
+                .into_inner()
+                .next()
+                .context("comment line did not contain a concrete comment")?;
+            PestLineKind::Comment(build_comment(comment)?)
+        }
         Rule::VariableLine => PestLineKind::Variable(build_variable_line(pair)?),
         Rule::AssertionLine => PestLineKind::Assertion(build_assertion_line(pair)?),
         Rule::RequestLine => PestLineKind::Request(build_request_line(pair)?),
