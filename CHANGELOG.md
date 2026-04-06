@@ -3,6 +3,8 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- Update actions/github-script action to v8 ([#253](https://github.com/christianhelle/httprunner/pull/253)) (@renovate[bot])
+- Update codecov/codecov-action action to v6 ([#254](https://github.com/christianhelle/httprunner/pull/254)) (@renovate[bot])
 - Add PEG Grammer File ([#251](https://github.com/christianhelle/httprunner/pull/251)) ([@christianhelle](https://github.com/christianhelle/))
 - Expand docs home meta description ([#250](https://github.com/christianhelle/httprunner/pull/250)) ([@christianhelle](https://github.com/christianhelle/))
 - Setup agent squad ([#241](https://github.com/christianhelle/httprunner/pull/241)) ([@christianhelle](https://github.com/christianhelle/))
