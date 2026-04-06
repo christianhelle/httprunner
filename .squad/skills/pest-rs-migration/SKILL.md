@@ -44,6 +44,7 @@ How to migrate a handwritten parser to **pest.rs** (PEG parser generator) in a m
 - The `.pest` file is now the spec—keep it well-documented
 - Existing test suite validates semantics (no test rewrites if behavior matches)
 - Easier for contributors to understand and modify syntax
+- If you already have a documentation grammar, keep that human-readable file canonical during a staged migration and make the executable `.pest` file explicitly document which stateful behaviors still live in Rust post-processing
 
 ---
 
