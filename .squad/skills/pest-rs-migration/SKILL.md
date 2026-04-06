@@ -51,6 +51,11 @@ How to migrate a handwritten parser to **pest.rs** (PEG parser generator) in a m
 - Convert `Pair`s into an internal file/line IR that preserves source line numbers, raw matched text, and grammar-selected node types
 - Let later phases consume that IR to reapply stateful behaviors (body mode, directive buffering, request finalization) without reparsing source text or matching over raw `Pair`s everywhere
 
+### 6. Reapply Legacy Semantics From IR Raw Text
+- If the handwritten parser classifies lines after trimming whitespace, keep that trim-based contract in the semantic assembler even when the grammar classifies fewer shapes
+- Use IR node kinds for structure the grammar owns (for example grouped script blocks or exact line numbers), but fall back to each node's `raw` text for leading-space directives, headers, assertions, malformed variable lines, and invalid directive errors
+- Keep existing timeout parsing, condition parsing, and substitution helpers in the semantic layer so delayed substitutions and malformed directives fail exactly where the old parser failed
+
 ---
 
 ## Migration Checklist
@@ -149,6 +154,10 @@ Gate on: compile-time increase <20%, all tests pass, end-to-end flows work.
 **Problem:** Pest uses `//` comments; old grammar used `#` for documentation.  
 **Solution:** Convert comments; link to pest.rs book in your grammar.
 
+### Pitfall 6: Treating Grammar Classification as the Whole Legacy Contract
+**Problem:** A staged migration starts silently accepting or ignoring lines differently because the grammar does not encode leading-whitespace handling or malformed-directive errors from the handwritten parser.  
+**Solution:** Build the semantic assembler on the IR, but re-run the old trim-based classification and helper parsers against each node's `raw` text anywhere parity depends on legacy behavior.
+
 ---
 
 ## Example: Minimal Pest Grammar & Parser
@@ -209,6 +218,7 @@ pub fn parse_example(input: &str) -> Result<Vec<Request>> {
 - **Pest Docs:** https://docs.rs/pest/latest/pest/
 - **MSRV Note:** Pest requires Rust 1.83.0+; if your MSRV is newer, you're fine
 - **Workspace Patterns:** Use `workspace.dependencies` to share pest + pest_derive across crates
+- **httprunner reference:** `src/core/src/parser/pest_semantic_assembler.rs` replays `file_parser.rs` semantics over `PestHttpFile`, while `src/core/src/parser/pest_parser.rs` keeps top-level comment separators like `###` in the IR
 
 ---
 
