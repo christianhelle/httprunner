@@ -4,10 +4,29 @@ use super::pest_parser::parse_http_content_to_pest_tree;
 use super::substitution::substitute_variables;
 use super::timeout_parser::parse_timeout_value;
 use super::utils::is_http_request_line;
+use crate::environment;
 use crate::types::{Assertion, AssertionType, Condition, Header, HttpRequest, Variable};
 use anyhow::{Context, Result, anyhow};
+use std::fs;
 
-#[cfg_attr(not(test), allow(dead_code))]
+pub fn parse_http_file(
+    file_path: &str,
+    environment_name: Option<&str>,
+) -> Result<Vec<HttpRequest>> {
+    let content = fs::read_to_string(file_path)
+        .with_context(|| format!("Failed to read file: {}", file_path))?;
+
+    let env_variables = environment::load_environment_file(file_path, environment_name)?;
+    parse_http_content_with_pest_semantics(&content, env_variables)
+}
+
+pub fn parse_http_content(
+    content: &str,
+    _environment_name: Option<&str>,
+) -> Result<Vec<HttpRequest>> {
+    parse_http_content_with_pest_semantics(content, Vec::new())
+}
+
 pub(crate) fn parse_http_content_with_pest_semantics(
     content: &str,
     env_variables: Vec<Variable>,
@@ -494,8 +513,13 @@ fn assemble_line(line: &PestLine, state: &mut SemanticAssemblerState) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::parse_http_content;
+    use crate::parser::{
+        parse_http_content, parse_http_content_with_legacy_backend, parse_http_file,
+        parse_http_file_with_legacy_backend,
+    };
     use crate::types::ConditionType;
+    use std::fs;
+    use tempfile::TempDir;
 
     fn assert_requests_match(actual: &[HttpRequest], expected: &[HttpRequest]) {
         assert_eq!(actual.len(), expected.len());
@@ -533,12 +557,23 @@ mod tests {
         }
     }
 
-    fn assert_pest_semantics_match(content: &str) {
-        let expected =
-            parse_http_content(content, None).expect("handwritten parser should succeed");
-        let tree = parse_http_content_to_pest_tree(content).expect("pest tree should build");
-        let actual = assemble_http_requests_from_pest_tree(&tree, Vec::new())
-            .expect("pest semantic assembler should succeed");
+    fn assert_public_parser_matches_legacy_backend(content: &str) {
+        let expected = parse_http_content_with_legacy_backend(content, None)
+            .expect("legacy parser should succeed");
+        let actual = parse_http_content(content, None).expect("public parser should succeed");
+        assert_requests_match(&actual, &expected);
+    }
+
+    fn assert_public_file_parser_matches_legacy_backend(content: &str) {
+        let temp_dir = TempDir::new().expect("temp dir should create");
+        let file_path = temp_dir.path().join("parser-backend-swap.http");
+        fs::write(&file_path, content).expect("test file should write");
+
+        let file_path = file_path.to_str().expect("temp file path should be utf-8");
+        let expected = parse_http_file_with_legacy_backend(file_path, None)
+            .expect("legacy file parser should succeed");
+        let actual = parse_http_file(file_path, None).expect("public file parser should succeed");
+
         assert_requests_match(&actual, &expected);
     }
 
@@ -554,7 +589,7 @@ first-body
 # @timeout 5s
 GET https://api.example.com/second"#;
 
-        assert_pest_semantics_match(content);
+        assert_public_parser_matches_legacy_backend(content);
     }
 
     #[test]
@@ -569,7 +604,7 @@ client.test("ignored", function() {});
 > EXPECTED_RESPONSE_STATUS 204
 GET https://api.example.com/second"#;
 
-        assert_pest_semantics_match(content);
+        assert_public_parser_matches_legacy_backend(content);
     }
 
     #[test]
@@ -582,16 +617,15 @@ X-Host: {{host}}
 {{host}}
 GET https://api.example.com/final"#;
 
-        let actual = parse_http_content_with_pest_semantics(content, Vec::new())
-            .expect("pest semantic assembler should succeed");
+        let actual = parse_http_content(content, None).expect("public parser should succeed");
 
         assert_eq!(actual.len(), 2);
         assert_eq!(actual[0].url, "https://first.example.com/users");
         assert_eq!(actual[0].headers[0].value, "second.example.com");
         assert_eq!(actual[0].body.as_deref(), Some("second.example.com"));
 
-        let expected =
-            parse_http_content(content, None).expect("handwritten parser should succeed");
+        let expected = parse_http_content_with_legacy_backend(content, None)
+            .expect("legacy parser should succeed");
         assert_requests_match(&actual, &expected);
     }
 
@@ -599,7 +633,7 @@ GET https://api.example.com/final"#;
     fn pest_semantic_assembler_matches_indented_lines_and_body_whitespace() {
         let content = "   # @name spaced\n   POST https://api.example.com/users\n   Content-Type: application/json\n   \n     {\n       \"name\": \"Jane\"\n     }\n";
 
-        assert_pest_semantics_match(content);
+        assert_public_parser_matches_legacy_backend(content);
     }
 
     #[test]
@@ -633,8 +667,7 @@ Content-Type: application/json
 
 {"username": "newuser"}"#;
 
-        let actual = parse_http_content_with_pest_semantics(content, Vec::new())
-            .expect("pest semantic assembler should succeed");
+        let actual = parse_http_content(content, None).expect("public parser should succeed");
 
         assert_eq!(actual.len(), 4);
         assert_eq!(actual[0].timeout, Some(30_000));
@@ -647,8 +680,8 @@ Content-Type: application/json
         ));
         assert!(actual[3].conditions[0].negate);
 
-        let expected =
-            parse_http_content(content, None).expect("handwritten parser should succeed");
+        let expected = parse_http_content_with_legacy_backend(content, None)
+            .expect("legacy parser should succeed");
         assert_requests_match(&actual, &expected);
     }
 
@@ -661,5 +694,23 @@ Content-Type: application/json
 
         assert!(message.contains("Failed to parse line 2: # @timeout nope"));
         assert!(message.contains("Invalid timeout value: 'nope'"));
+    }
+
+    #[test]
+    fn public_parse_http_file_matches_legacy_backend() {
+        let content = r#"# @name login
+POST https://api.example.com/login
+Content-Type: application/json
+
+{"username":"demo","password":"secret"}
+
+###
+
+# @dependsOn login
+# @if login.response.status == 200
+GET https://api.example.com/profile
+Authorization: Bearer {{login.response.body.$.token}}"#;
+
+        assert_public_file_parser_matches_legacy_backend(content);
     }
 }
