@@ -204,6 +204,20 @@
 - Pest IR builders still need to preserve comment/separator nodes (`###`) and accurate line numbers, because the semantic layer depends on them for buffering and error context.
 - Future grammar tightening must keep the parity tests green before the production backend swap.
 
+### 2026-04-06: Parser documentation describes pest backend split (Bishop)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Parser-facing documentation (README.md, docs/reference.html, src/core/src/parser/README.md) now consistently describes the two-stage production flow: `http-file.peg` as the canonical human-readable contract, `http-file.pest` as the executable grammar, and `pest_semantic_assembler.rs` as the stateful semantic post-pass.
+
+**Why:** Production parsing now routes through the pest semantic assembler, not the handwritten parser. Documenting this explicitly helps contributors understand the hot path and makes future cleanup straightforward. The stateful behavior remains in Rust semantics, not grammar, and documentation reflects that boundary clearly.
+
+**Files Updated:**
+- `src/core/src/parser/README.md` — Module-level parser documentation
+- `README.md` — Root README
+- `docs/reference.html` — HTML reference
+
+**Validation:** All documentation now internally consistent.
+
 ## Governance
 
 - All meaningful changes require team consensus
