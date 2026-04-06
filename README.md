@@ -895,16 +895,16 @@ Content-Type: application/json
 
 ### PEG Grammar
 
-`src/core/src/parser/http-file.peg` remains the canonical human-readable parser spec. Production parsing uses `src/core/src/parser/http-file.pest` to classify grammar-owned syntax, then runs a Rust semantic post-pass in `src/core/src/parser/pest_semantic_assembler.rs` for directive buffering, blank-line body-mode transitions, body-mode downgrades, and the remaining timeout, condition, and variable parsing rules.
+`src/core/src/parser/http-file.peg` remains the canonical human-readable parser spec. Production parsing uses the handwritten state-machine parser in `src/core/src/parser/file_parser.rs`. A pest-based backend (`http-file.pest` + `pest_semantic_assembler.rs`) is present and passes all parity tests but is not yet the production default due to performance work in progress.
 
-The excerpt below documents that split explicitly:
+The grammar excerpt below documents the syntax contract:
 
 ```peg
 # PEG-style documentation grammar for the current httprunner `.http` syntax.
 # `http-file.peg` is the canonical human-readable parser spec.
-# `http-file.pest` is the executable grammar used by the production parser backend.
-# Production parsing runs the pest grammar first, then reapplies the remaining
-# stateful semantics in Rust.
+# `http-file.pest` is the executable grammar for the pest backend (not yet the production default).
+# When the pest backend is active, it runs the pest grammar first, then reapplies
+# the remaining stateful semantics in Rust.
 #
 # Grammar-owned notes:
 # - Ordered choice matches parser line precedence.
