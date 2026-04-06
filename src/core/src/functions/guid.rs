@@ -7,8 +7,8 @@ impl FunctionSubstitutor for GuidSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+        use rand::RngExt;
+        let mut rng = rand::rng();
         let mut bytes = [0u8; 16];
         rng.fill(&mut bytes);
         format!(

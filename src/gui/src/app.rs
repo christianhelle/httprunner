@@ -119,7 +119,7 @@ impl HttpRunnerApp {
     }
 
     fn update_font_size(&mut self, ctx: &egui::Context) {
-        let mut style = (*ctx.style()).clone();
+        let mut style = (*ctx.global_style()).clone();
 
         let base_size = self.font_size;
         style.text_styles = [
@@ -143,7 +143,7 @@ impl HttpRunnerApp {
         ]
         .into();
 
-        ctx.set_style(style);
+        ctx.set_global_style(style);
     }
 
     fn handle_keyboard_shortcuts(&mut self, ctx: &egui::Context) -> KeyboardAction {
@@ -209,9 +209,10 @@ impl HttpRunnerApp {
     }
 
     #[allow(unused_variables)]
-    fn show_top_panel(&mut self, ctx: &egui::Context) {
+    fn show_top_panel(&mut self, root_ui: &mut egui::Ui) {
+        let ctx = root_ui.ctx().clone();
         #[cfg(not(target_arch = "wasm32"))]
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+        egui::Panel::top("top_panel").show_inside(root_ui, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Open Directory...").clicked() {
@@ -329,8 +330,8 @@ impl HttpRunnerApp {
         });
     }
 
-    fn show_bottom_panel(&self, ctx: &egui::Context) {
-        egui::TopBottomPanel::bottom("bottom_panel").show(ctx, |ui| {
+    fn show_bottom_panel(&self, root_ui: &mut egui::Ui) {
+        egui::Panel::bottom("bottom_panel").show_inside(root_ui, |ui| {
             ui.horizontal(|ui| {
                 #[cfg(not(target_arch = "wasm32"))]
                 {
@@ -407,8 +408,9 @@ impl HttpRunnerApp {
 }
 
 impl eframe::App for HttpRunnerApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let keyboard_action = self.handle_keyboard_shortcuts(ctx);
+    fn ui(&mut self, root_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let ctx = root_ui.ctx().clone();
+        let keyboard_action = self.handle_keyboard_shortcuts(&ctx);
 
         // Process keyboard actions
         match keyboard_action {
@@ -447,7 +449,7 @@ impl eframe::App for HttpRunnerApp {
                 }
             }
             KeyboardAction::Quit => {
-                self.save_state_with_window(ctx);
+                self.save_state_with_window(&ctx);
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
             KeyboardAction::SwitchEnvironment => {
@@ -528,16 +530,16 @@ impl eframe::App for HttpRunnerApp {
             KeyboardAction::None => {}
         }
 
-        self.show_top_panel(ctx);
-        self.show_bottom_panel(ctx);
+        self.show_top_panel(root_ui);
+        self.show_bottom_panel(root_ui);
 
         // Left panel - File tree (only show if visible and not WASM)
         #[cfg(not(target_arch = "wasm32"))]
         if self.file_tree_visible {
-            egui::SidePanel::left("file_tree_panel")
+            egui::Panel::left("file_tree_panel")
                 .resizable(true)
-                .default_width(300.0)
-                .show(ctx, |ui| {
+                .default_size(300.0)
+                .show_inside(root_ui, |ui| {
                     ui.heading("HTTP Files");
                     ui.separator();
 
@@ -558,7 +560,7 @@ impl eframe::App for HttpRunnerApp {
                 });
         }
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show_inside(root_ui, |ui| {
             ui.vertical(|ui| {
                 ui.horizontal(|ui| {
                     ui.selectable_value(
@@ -831,7 +833,7 @@ impl eframe::App for HttpRunnerApp {
 
         if should_save_window_size {
             self.last_saved_window_size = Some(current_size);
-            self.save_state_with_window(ctx);
+            self.save_state_with_window(&ctx);
         }
     }
 }

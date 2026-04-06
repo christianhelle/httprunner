@@ -296,9 +296,9 @@ impl FunctionSubstitutor for LastNameSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let index = rng.gen_range(0..LAST_NAMES.len());
+        use rand::RngExt;
+        let mut rng = rand::rng();
+        let index = rng.random_range(0..LAST_NAMES.len());
         LAST_NAMES[index].to_string()
     }
 }

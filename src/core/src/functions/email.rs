@@ -22,9 +22,9 @@ impl FunctionSubstitutor for EmailSubstitutor {
     }
 
     fn generate(&self) -> String {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let index = rng.gen_range(0..EMAIL_DOMAINS.len());
+        use rand::RngExt;
+        let mut rng = rand::rng();
+        let index = rng.random_range(0..EMAIL_DOMAINS.len());
         let domain = EMAIL_DOMAINS[index].to_string();
         let first_name = FirstNameSubstitutor {}.generate();
         let last_name = LastNameSubstitutor {}.generate();
