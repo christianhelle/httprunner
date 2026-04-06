@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- chore(deps): update actions/deploy-pages action to v5 ([#237](https://github.com/christianhelle/httprunner/pull/237)) (@renovate[bot])
 - chore(deps): update actions/checkout action to v6 ([#247](https://github.com/christianhelle/httprunner/pull/247)) (@renovate[bot])
 - Update actions/github-script action to v8 ([#253](https://github.com/christianhelle/httprunner/pull/253)) (@renovate[bot])
 - Update codecov/codecov-action action to v6 ([#254](https://github.com/christianhelle/httprunner/pull/254)) (@renovate[bot])
