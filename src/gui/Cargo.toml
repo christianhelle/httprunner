@@ -39,7 +39,7 @@ anyhow = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }
 dirs = "6.0"
-egui_code_editor = "0.2.20"
+egui_code_editor = "0.2.23"
 
 # Platform-specific dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -54,7 +54,7 @@ web-sys = { version = "0.3", features = ["console", "HtmlCanvasElement", "Storag
 web-time = "1.1"
 console_error_panic_hook = "0.1"
 tracing-wasm = "0.2"
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }
 wasm-bindgen = "0.2"
 
 [target.'cfg(windows)'.build-dependencies]

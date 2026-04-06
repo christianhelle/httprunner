@@ -8,10 +8,10 @@ impl FunctionSubstitutor for StringSubstitutor {
 
     fn generate(&self) -> String {
         use rand::Rng;
-        use rand::distributions::Alphanumeric;
+        use rand::distr::Alphanumeric;
 
-        rand::thread_rng()
-            .sample_iter(&Alphanumeric)
+        (&mut rand::rng())
+            .sample_iter(Alphanumeric)
             .take(20)
             .map(char::from)
             .collect()

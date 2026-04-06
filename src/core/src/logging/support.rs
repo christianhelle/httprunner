@@ -69,7 +69,7 @@ pub fn generate_support_key() -> SupportKey {
 
 fn generate_uuid() -> String {
     use rand::Rng;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut bytes = [0u8; 16];
     rng.fill(&mut bytes);
     format!(

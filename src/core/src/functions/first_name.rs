@@ -297,8 +297,8 @@ impl FunctionSubstitutor for FirstNameSubstitutor {
 
     fn generate(&self) -> String {
         use rand::Rng;
-        let mut rng = rand::thread_rng();
-        let index = rng.gen_range(0..FIRST_NAMES.len());
+        let mut rng = rand::rng();
+        let index = rng.random_range(0..FIRST_NAMES.len());
         FIRST_NAMES[index].to_string()
     }
 }

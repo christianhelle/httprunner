@@ -9,7 +9,7 @@ impl FunctionSubstitutor for NumberSubstitutor {
     fn generate(&self) -> String {
         use rand::Rng;
 
-        rand::thread_rng().gen_range(0..=100).to_string()
+        rand::rng().random_range(0..=100).to_string()
     }
 }
 
