@@ -46,6 +46,11 @@ How to migrate a handwritten parser to **pest.rs** (PEG parser generator) in a m
 - Easier for contributors to understand and modify syntax
 - If you already have a documentation grammar, keep that human-readable file canonical during a staged migration and make the executable `.pest` file explicitly document which stateful behaviors still live in Rust post-processing
 
+### 5. Add a Line-Oriented IR Before Rewriting Semantics
+- Keep the production parse entry points unchanged while you validate the executable grammar
+- Convert `Pair`s into an internal file/line IR that preserves source line numbers, raw matched text, and grammar-selected node types
+- Let later phases consume that IR to reapply stateful behaviors (body mode, directive buffering, request finalization) without reparsing source text or matching over raw `Pair`s everywhere
+
 ---
 
 ## Migration Checklist
@@ -226,5 +231,5 @@ pub fn parse_example(input: &str) -> Result<Vec<Request>> {
 ---
 
 **Skill Owner:** Hicks  
-**Last Updated:** 2026-03-21  
+**Last Updated:** 2026-04-06  
 **Status:** Proven in httprunner migration investigation  
