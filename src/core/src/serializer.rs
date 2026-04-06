@@ -163,6 +163,11 @@ mod tests {
         }
         assert_eq!(actual.pre_delay_ms, expected.pre_delay_ms);
         assert_eq!(actual.post_delay_ms, expected.post_delay_ms);
+        assert_eq!(actual.variables.len(), expected.variables.len());
+        for (actual_var, expected_var) in actual.variables.iter().zip(expected.variables.iter()) {
+            assert_eq!(actual_var.name, expected_var.name);
+            assert_eq!(actual_var.value, expected_var.value);
+        }
     }
 
     #[test]
