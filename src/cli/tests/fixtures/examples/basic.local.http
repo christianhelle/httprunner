@@ -1,0 +1,34 @@
+# Curated local mirror of assertion-focused examples.
+
+GET __BASE_URL__/status/200
+
+> EXPECTED_RESPONSE_STATUS 200
+
+###
+
+GET __BASE_URL__/status/404
+
+EXPECTED_RESPONSE_STATUS 404
+
+###
+
+GET __BASE_URL__/headers
+Accept: application/json
+X-Test-Header: test-value
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_HEADERS content-type: application/json
+
+###
+
+GET __BASE_URL__/json
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "slideshow"
+
+###
+
+GET __BASE_URL__/uuid
+
+EXPECTED_RESPONSE_STATUS 200
+EXPECTED_RESPONSE_BODY "uuid"
