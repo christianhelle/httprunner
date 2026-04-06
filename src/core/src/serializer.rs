@@ -110,6 +110,66 @@ mod tests {
     use super::*;
     use crate::types::{ConditionType, Header};
 
+    fn assert_request_matches(actual: &HttpRequest, expected: &HttpRequest) {
+        assert_eq!(actual.name, expected.name);
+        assert_eq!(actual.method, expected.method);
+        assert_eq!(actual.url, expected.url);
+        assert_eq!(
+            actual
+                .headers
+                .iter()
+                .map(|header| (header.name.as_str(), header.value.as_str()))
+                .collect::<Vec<_>>(),
+            expected
+                .headers
+                .iter()
+                .map(|header| (header.name.as_str(), header.value.as_str()))
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(actual.body, expected.body);
+        assert_eq!(actual.assertions.len(), expected.assertions.len());
+        for (actual_assertion, expected_assertion) in
+            actual.assertions.iter().zip(expected.assertions.iter())
+        {
+            assert_eq!(
+                actual_assertion.assertion_type,
+                expected_assertion.assertion_type
+            );
+            assert_eq!(
+                actual_assertion.expected_value,
+                expected_assertion.expected_value
+            );
+        }
+        assert_eq!(actual.timeout, expected.timeout);
+        assert_eq!(actual.connection_timeout, expected.connection_timeout);
+        assert_eq!(actual.depends_on, expected.depends_on);
+        assert_eq!(actual.conditions.len(), expected.conditions.len());
+        for (actual_condition, expected_condition) in
+            actual.conditions.iter().zip(expected.conditions.iter())
+        {
+            assert_eq!(
+                actual_condition.request_name,
+                expected_condition.request_name
+            );
+            assert_eq!(
+                actual_condition.condition_type,
+                expected_condition.condition_type
+            );
+            assert_eq!(
+                actual_condition.expected_value,
+                expected_condition.expected_value
+            );
+            assert_eq!(actual_condition.negate, expected_condition.negate);
+        }
+        assert_eq!(actual.pre_delay_ms, expected.pre_delay_ms);
+        assert_eq!(actual.post_delay_ms, expected.post_delay_ms);
+        assert_eq!(actual.variables.len(), expected.variables.len());
+        for (actual_var, expected_var) in actual.variables.iter().zip(expected.variables.iter()) {
+            assert_eq!(actual_var.name, expected_var.name);
+            assert_eq!(actual_var.value, expected_var.value);
+        }
+    }
+
     #[test]
     fn test_serialize_simple_request() {
         let request = HttpRequest {
@@ -280,6 +340,75 @@ mod tests {
             ConditionType::BodyJsonPath(_)
         ));
         assert!(reparsed.conditions[1].negate);
+    }
+
+    #[test]
+    fn test_serialize_multiple_requests_preserves_directive_boundaries() {
+        let requests = vec![
+            HttpRequest {
+                name: Some("login".to_string()),
+                method: "POST".to_string(),
+                url: "https://api.example.com/login".to_string(),
+                headers: vec![Header {
+                    name: "Content-Type".to_string(),
+                    value: "application/json".to_string(),
+                }],
+                body: Some("{\"username\":\"admin\",\"password\":\"secret\"}\n".to_string()),
+                assertions: vec![Assertion {
+                    assertion_type: AssertionType::Status,
+                    expected_value: "200".to_string(),
+                }],
+                variables: vec![],
+                timeout: Some(30_000),
+                connection_timeout: None,
+                depends_on: None,
+                conditions: vec![],
+                pre_delay_ms: None,
+                post_delay_ms: None,
+            },
+            HttpRequest {
+                name: Some("admin-dashboard".to_string()),
+                method: "GET".to_string(),
+                url: "https://api.example.com/admin/dashboard".to_string(),
+                headers: vec![Header {
+                    name: "Authorization".to_string(),
+                    value: "Bearer {{login.response.body.$.token}}".to_string(),
+                }],
+                body: None,
+                assertions: vec![Assertion {
+                    assertion_type: AssertionType::Headers,
+                    expected_value: "Content-Type: application/json".to_string(),
+                }],
+                variables: vec![],
+                timeout: None,
+                connection_timeout: Some(5_000),
+                depends_on: Some("login".to_string()),
+                conditions: vec![
+                    Condition {
+                        request_name: "login".to_string(),
+                        condition_type: ConditionType::Status,
+                        expected_value: "200".to_string(),
+                        negate: false,
+                    },
+                    Condition {
+                        request_name: "login".to_string(),
+                        condition_type: ConditionType::BodyJsonPath("$.role".to_string()),
+                        expected_value: "guest".to_string(),
+                        negate: true,
+                    },
+                ],
+                pre_delay_ms: Some(250),
+                post_delay_ms: Some(500),
+            },
+        ];
+
+        let serialized = serialize_http_requests(&requests);
+        let reparsed = crate::parser::parse_http_content(&serialized, None).unwrap();
+
+        assert_eq!(reparsed.len(), requests.len());
+        for (actual, expected) in reparsed.iter().zip(requests.iter()) {
+            assert_request_matches(actual, expected);
+        }
     }
 }
 

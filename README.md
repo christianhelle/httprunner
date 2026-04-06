@@ -895,20 +895,20 @@ Content-Type: application/json
 
 ### PEG Grammar
 
-The current parser behavior is formally documented in `src/core/src/parser/http-file.peg`:
+`src/core/src/parser/http-file.peg` remains the canonical human-readable parser spec. Production parsing now uses the pest-backed semantic assembler in `src/core/src/parser/pest_semantic_assembler.rs`. The handwritten state-machine parser in `src/core/src/parser/file_parser.rs` remains available under `#[cfg(test)]` for parity tests and benchmark comparisons.
+
+The grammar excerpt below documents the syntax contract:
 
 ```peg
 # PEG-style documentation grammar for the current httprunner `.http` syntax.
-# This grammar documents the handwritten parser in src/core/src/parser/file_parser.rs.
-# It is a specification artifact, not executable parser input.
+# `http-file.peg` is the canonical human-readable parser spec.
+# `http-file.pest` is the executable grammar for the structured pest parse-tree path.
+# Production parsing uses the pest semantic assembler and reapplies the remaining
+# stateful semantics in Rust after zero-copy line splitting.
 #
-# Stateful parser notes:
+# Grammar-owned notes:
 # - Ordered choice matches parser line precedence.
 # - Directive lines are recognized before plain comments.
-# - Directives apply to the next request line, not the current one.
-# - A blank line after a request line switches the parser into body mode.
-# - In body mode, `@...` lines are treated as body text, but comment lines,
-#   IntelliJ script blocks, assertion lines, and request lines still take precedence.
 # - Only the first two whitespace-separated request-line tokens are consumed;
 #   optional HTTP versions or other trailing tokens are accepted and ignored.
 # - `###` separators are just comment lines.
@@ -924,6 +924,14 @@ The current parser behavior is formally documented in `src/core/src/parser/http-
 #   100 words when no numeric argument is supplied.
 # - Built-in functions are bare calls such as `guid()` or `upper('text')`;
 #   they are not wrapped in `{{...}}`.
+#
+# Rust semantic post-pass notes:
+# - Directives apply to the next request line, not the current one.
+# - A blank line after a request line switches the parser into body mode.
+# - In body mode, `@...` and `Header: value` lines can become body text, while
+#   comment lines, IntelliJ script blocks, assertion lines, and request lines
+#   still take precedence.
+# - Variable substitution, timeout parsing, and condition parsing stay in Rust.
 #
 HttpFile                  <- Line* EOF
 #

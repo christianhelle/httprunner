@@ -2,6 +2,7 @@ use super::incremental::{RequestProcessingResult, process_http_file_incremental_
 use super::mock_executor::MockHttpExecutor;
 use crate::types::HttpResult;
 use std::io::Write;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tempfile::NamedTempFile;
 
@@ -14,6 +15,19 @@ fn create_response(status: u16) -> HttpResult {
         duration_ms: 1,
         response_headers: None,
         response_body: Some(r#"{"status":"ok"}"#.to_string()),
+        assertion_results: Vec::new(),
+    }
+}
+
+fn create_response_with_body(status: u16, body: &str) -> HttpResult {
+    HttpResult {
+        request_name: None,
+        status_code: status,
+        success: (200..400).contains(&status),
+        error_message: None,
+        duration_ms: 1,
+        response_headers: None,
+        response_body: Some(body.to_string()),
         assertion_results: Vec::new(),
     }
 }
@@ -478,4 +492,67 @@ GET https://api.example.com/notfound
             _ => panic!("All requests should be executed"),
         }
     }
+}
+
+#[test]
+fn test_functions_example_resolves_request_derived_variables() {
+    let file_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("examples")
+        .join("functions.http");
+    let file_path = file_path
+        .to_str()
+        .expect("functions example path should be valid utf-8");
+
+    let results = Arc::new(Mutex::new(Vec::new()));
+    let results_clone = Arc::clone(&results);
+    let mock = MockHttpExecutor::new(vec![
+        create_response_with_body(200, r#"{"json":{"guid":"abc-123"}}"#),
+        create_response(200),
+    ]);
+
+    process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
+            results_clone.lock().unwrap().push(result);
+            true
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    )
+    .expect("functions example should process");
+
+    let results = results.lock().unwrap();
+    assert_eq!(
+        results.len(),
+        2,
+        "functions example should process both requests"
+    );
+    assert!(
+        results
+            .iter()
+            .all(|result| matches!(result, RequestProcessingResult::Executed { .. }))
+    );
+    drop(results);
+
+    let executed_requests = mock.get_executed_requests();
+    assert_eq!(executed_requests.len(), 2);
+    assert_eq!(executed_requests[0].name.as_deref(), Some("request1"));
+    assert_eq!(executed_requests[1].name.as_deref(), Some("request2"));
+    assert!(
+        !executed_requests[0]
+            .body
+            .as_deref()
+            .unwrap_or_default()
+            .contains("@first_request_guid")
+    );
+
+    let second_body = executed_requests[1].body.as_deref().unwrap_or_default();
+    assert!(second_body.contains("\"first_request_guid\": \"abc-123\""));
+    assert!(second_body.contains("\"first_request_guid_variable\": \"abc-123\""));
+    assert!(second_body.contains("\"first_request_guid_base64\": \"YWJjLTEyMw==\""));
+    assert!(second_body.contains("\"first_request_guid_variable_base64\": \"YWJjLTEyMw==\""));
 }

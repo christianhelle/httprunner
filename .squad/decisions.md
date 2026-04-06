@@ -95,6 +95,129 @@
 - Explicitly compare parser output, serializer output, and GUI editor save behavior as one round-trip contract
 - Treat native and WASM execution paths as parity-sensitive features; review together, not independently
 
+### 2026-03-20: Parser contract baseline frozen for pest migration (Bishop)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-03-20  
+**What:** Before pest.rs migration, the parser's stateful behavior is locked in tests: blank-line body-mode transitions, raw `@...` lines inside bodies, directive buffering to next request, precedence between comments/IntelliJ script blocks/assertions/request lines vs body text, README/reference examples, and multi-request serializer round-trips.  
+**Why:** These behaviors are most likely to drift during migration from line-by-line to grammar-driven parsing. Freezing them in tests provides a concrete, executable parity target. The serializer round-trip test ensures parse→serialize→parse cycles remain stable across the rewrite.
+
+### 2026-03-20: Pest.rs parser migration recommended (consolidated)
+**By:** Ripley (Lead), Bishop (Core), Hicks (Platform), confirmed by team  
+**Date:** 2026-03-20  
+**Status:** Approved for implementation  
+**What:** Migrate `.http` file parser from handwritten state machine (`src/core/src/parser/file_parser.rs`, 500+ lines) to pest.rs (PEG parser generator). Public API (`parse_http_file`, `parse_http_content`) remains unchanged. All existing test suites remain valid if semantics match.  
+**Why:** 
+- Grammar file (`http-file.peg`) already exists as documentation (164 lines, well-specified)
+- Handwritten parser is hard to understand; grammar spec divergence creates contributor friction  
+- PEG makes parser behavior explicit and testable with ordered choice (directive-vs-comment precedence unambiguous)
+- Separation of concerns: lexical parsing (pest) vs semantic post-processing (Rust)
+- No platform, build, CI, distribution, or artifact impact (pest is compile-only, no runtime deps)
+
+**Platform & Build Validation (Hicks):**
+- Build time: +2-5s per full rebuild (proc-macro), incremental unaffected
+- CI/CD: test.yml, release.yml: +2-5s per job (acceptable)
+- All native targets (Linux, macOS, Windows) and WASM verified compatible
+- Distribution (install scripts, Docker, binary size, version mgmt): unchanged
+- Release artifacts: unchanged, grammar validation is just `cargo build`
+
+**Critical Constraints (Bishop):**
+- API stability: `parse_http_file()` and `parse_http_content()` signatures cannot change
+- All 48 existing parser tests must pass unchanged (zero test modifications)
+- Serializer round-trip test must pass (parser/serializer contract)
+- Directive precedence, body mode state, whitespace handling, trailing token ignoring: all preserved
+- Consumers (CLI, GUI native/WASM, TUI, serializer) use same API — no changes required
+- WASM target must work (pest is pure Rust, no concern)
+
+**Implementation Phases:**
+1. Add pest dependencies, finalize grammar, new module structure (1-2 days)
+2. Implement pest grammar parser, test parse tree generation (2-3 days)
+3. Implement post-processing (parse tree → `Vec<HttpRequest>`), preserve state machine (3-4 days)
+4. Run all tests (parser, serializer, integration, manual), validate performance <20% regression (2-3 days)
+5. Cleanup old code, update documentation (1-2 days)
+
+**Risks & Mitigations:**
+- State machine complexity → Keep state in post-processing only, not grammar
+- Precedence mismatches → Test directive vs. comment ordering with frozen tests
+- Round-trip breakage → Run serializer tests early and often
+- Performance regression → Benchmark before/after, gate on <20% increase
+- WASM breaks silently → cargo check against wasm32-unknown-unknown
+- Error message quality → Wrap pest errors with context
+
+**Success Criteria (Lambert & Bishop):**
+1. All 48 parser tests pass
+2. Serializer round-trip test passes
+3. CLI/GUI/TUI execution produces identical output
+4. Parse time < 2x handwritten parser
+5. Error messages remain actionable
+
+**Pre-Migration Safety (Lambert):**
+- Parser contract baseline tests added (24 new tests planned across P1-P5)
+- Performance baseline established: benchmark current parser on examples/ dir (1000x iterations), 1000-request file, 10MB body file
+- WASM compatibility verified (pest supports wasm32-unknown-unknown)
+- After migration: ensure <20% throughput regression, <50% memory increase
+
+**Routing:** Bishop (grammar authoring, AST converter), Lambert (pre-migration tests, performance benchmarks), Hicks (CI/platform validation), Vasquez (WASM parity verification), Ripley (PR review).
+
+**Related Decisions:** Parser contract baseline (Bishop), parser safety requirements (Lambert).
+
+### 2026-03-21: Pest.rs migration safety requirements (Lambert)
+**By:** Lambert (Testing & Performance)  
+**Date:** 2026-03-21  
+**Severity:** P1 (parser is semantic core)  
+**What:** Before pest migration, establish the following safety measures:
+- Add 24 new tests (7 P1 blocking tests for stateful behavior/round-trip parity, 7 P2 high-value for directive buffering/request variables, 4 P3 error handling, 3 P4 edge cases, 3 P5 performance benchmarks)
+- Fix serializer/parser round-trip (assertions, `@if-not`, `@pre-delay`/`@post-delay` must round-trip correctly)
+- Establish performance baseline: benchmark current parser on examples/ dir (1000x iterations), 1000-request synthetic file, 10MB body file, ensure post-migration <20% throughput regression, <50% memory increase
+- Verify WASM compatibility: confirm pest supports wasm32-unknown-unknown, test parser behavior identical in native and WASM builds
+
+**Why:** Parser changes affect CLI, GUI, TUI, WASM execution paths. Known issues (#213 round-trip failure, #214 WASM execution divergence) mean high-risk change. PEG grammar is documentation, not executable; does not express stateful logic (body mode switching, directive buffering, IntelliJ skipping). Without pre-migration tests and baselines, no validation possible.
+
+**Routing:** Bishop (core engine, parser implementation), Ripley (architectural review), Vasquez (WASM parity), Lambert (tests and benchmarks).
+
+**Related:** Parser contract baseline (Bishop), pest migration plan (Ripley).
+
+### 2026-04-06: Bishop pest scaffolding boundary
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Keep `src/core/src/parser/http-file.peg` as the canonical human-readable parser spec, and mirror only grammar-owned syntax in `src/core/src/parser/http-file.pest` during Phase 1. Leave stateful behavior—body-mode transitions, directive buffering, body-line precedence, and semantic conversions—in Rust post-processing until later migration phases wire pest pairs into the production parser.
+
+**Why:** This keeps the readable spec stable while giving the crate an executable grammar that can compile and be tested incrementally. It also isolates the highest-risk state machine behavior from the dependency-and-grammar slice so later phases can change one moving part at a time.
+
+### 2026-04-06: Bishop parse-tree layer (Phase 2 completion)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Phase 2 of the pest migration now builds a line-oriented intermediate representation from the executable grammar. Each parsed node keeps its starting line number, raw matched source, and the grammar-selected syntactic classification (`directive`, `comment`, `request`, `header`, `variable`, `assertion`, `body`, or IntelliJ script block).
+
+**Why:** This gives later migration phases a stable handoff point between the grammar pass and the handwritten parser's remaining state machine behavior. Body-mode downgrades, directive buffering, and request finalization can move onto the IR without reparsing the source text or rewalking raw pest pairs.
+
+**Implications:** Future converter work should consume `PestHttpFile` rather than binding directly to pest `Pair` trees. Tests can now validate parse-tree shape separately from the production semantic contract.
+
+### 2026-04-06: Bishop semantic assembler contract (Phase 3 strategy)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Phase 3 semantic assembler will consume `PestHttpFile` IR and reapply the handwritten parser's trim-based line classification rules and state machine behavior from each IR node's raw source text instead of trusting grammar-selected line kinds as the final contract.
+
+**Why:** The legacy parser classifies directives, comments, headers, assertions, request lines, and IntelliJ script starts after trimming leading whitespace, and raises explicit errors for malformed `@timeout`, `@if`, and variable lines that the grammar can legally classify as plain comments or body text. Reusing raw source plus existing timeout/condition/substitution helpers keeps parity-sensitive behavior boring and reproducible.
+
+**Implications:** 
+- `src/core/src/parser/pest_semantic_assembler.rs` can be swapped under `parse_http_file()` / `parse_http_content()` later with a small call-site change instead of another semantic rewrite.
+- Pest IR builders still need to preserve comment/separator nodes (`###`) and accurate line numbers, because the semantic layer depends on them for buffering and error context.
+- Future grammar tightening must keep the parity tests green before the production backend swap.
+
+### 2026-04-06: Parser documentation describes pest backend split (Bishop)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Parser-facing documentation (README.md, docs/reference.html, src/core/src/parser/README.md) now consistently describes the two-stage production flow: `http-file.peg` as the canonical human-readable contract, `http-file.pest` as the executable grammar, and `pest_semantic_assembler.rs` as the stateful semantic post-pass.
+
+**Why:** Production parsing now routes through the pest semantic assembler, not the handwritten parser. Documenting this explicitly helps contributors understand the hot path and makes future cleanup straightforward. The stateful behavior remains in Rust semantics, not grammar, and documentation reflects that boundary clearly.
+
+**Files Updated:**
+- `src/core/src/parser/README.md` — Module-level parser documentation
+- `README.md` — Root README
+- `docs/reference.html` — HTML reference
+
+**Validation:** All documentation now internally consistent.
+
 ## Governance
 
 - All meaningful changes require team consensus
