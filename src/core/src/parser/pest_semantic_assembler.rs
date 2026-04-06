@@ -513,10 +513,6 @@ fn assemble_line(line: &PestLine, state: &mut SemanticAssemblerState) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::{
-        parse_http_content, parse_http_content_with_legacy_backend, parse_http_file,
-        parse_http_file_with_legacy_backend,
-    };
     use crate::types::ConditionType;
     use std::fs;
     use tempfile::TempDir;
@@ -557,22 +553,22 @@ mod tests {
         }
     }
 
-    fn assert_public_parser_matches_legacy_backend(content: &str) {
-        let expected = parse_http_content_with_legacy_backend(content, None)
-            .expect("legacy parser should succeed");
-        let actual = parse_http_content(content, None).expect("public parser should succeed");
+    fn assert_pest_matches_handwritten(content: &str) {
+        let expected = crate::parser::parse_http_content(content, None)
+            .expect("handwritten parser should succeed");
+        let actual = parse_http_content(content, None).expect("pest parser should succeed");
         assert_requests_match(&actual, &expected);
     }
 
-    fn assert_public_file_parser_matches_legacy_backend(content: &str) {
+    fn assert_pest_file_matches_handwritten(content: &str) {
         let temp_dir = TempDir::new().expect("temp dir should create");
         let file_path = temp_dir.path().join("parser-backend-swap.http");
         fs::write(&file_path, content).expect("test file should write");
 
         let file_path = file_path.to_str().expect("temp file path should be utf-8");
-        let expected = parse_http_file_with_legacy_backend(file_path, None)
-            .expect("legacy file parser should succeed");
-        let actual = parse_http_file(file_path, None).expect("public file parser should succeed");
+        let expected = crate::parser::parse_http_file(file_path, None)
+            .expect("handwritten file parser should succeed");
+        let actual = parse_http_file(file_path, None).expect("pest file parser should succeed");
 
         assert_requests_match(&actual, &expected);
     }
@@ -589,7 +585,7 @@ first-body
 # @timeout 5s
 GET https://api.example.com/second"#;
 
-        assert_public_parser_matches_legacy_backend(content);
+        assert_pest_matches_handwritten(content);
     }
 
     #[test]
@@ -604,7 +600,7 @@ client.test("ignored", function() {});
 > EXPECTED_RESPONSE_STATUS 204
 GET https://api.example.com/second"#;
 
-        assert_public_parser_matches_legacy_backend(content);
+        assert_pest_matches_handwritten(content);
     }
 
     #[test]
@@ -624,8 +620,8 @@ GET https://api.example.com/final"#;
         assert_eq!(actual[0].headers[0].value, "second.example.com");
         assert_eq!(actual[0].body.as_deref(), Some("second.example.com"));
 
-        let expected = parse_http_content_with_legacy_backend(content, None)
-            .expect("legacy parser should succeed");
+        let expected = crate::parser::parse_http_content(content, None)
+            .expect("handwritten parser should succeed");
         assert_requests_match(&actual, &expected);
     }
 
@@ -633,7 +629,7 @@ GET https://api.example.com/final"#;
     fn pest_semantic_assembler_matches_indented_lines_and_body_whitespace() {
         let content = "   # @name spaced\n   POST https://api.example.com/users\n   Content-Type: application/json\n   \n     {\n       \"name\": \"Jane\"\n     }\n";
 
-        assert_public_parser_matches_legacy_backend(content);
+        assert_pest_matches_handwritten(content);
     }
 
     #[test]
@@ -680,8 +676,8 @@ Content-Type: application/json
         ));
         assert!(actual[3].conditions[0].negate);
 
-        let expected = parse_http_content_with_legacy_backend(content, None)
-            .expect("legacy parser should succeed");
+        let expected = crate::parser::parse_http_content(content, None)
+            .expect("handwritten parser should succeed");
         assert_requests_match(&actual, &expected);
     }
 
@@ -697,7 +693,7 @@ Content-Type: application/json
     }
 
     #[test]
-    fn public_parse_http_file_matches_legacy_backend() {
+    fn pest_parse_http_file_matches_handwritten() {
         let content = r#"# @name login
 POST https://api.example.com/login
 Content-Type: application/json
@@ -711,6 +707,6 @@ Content-Type: application/json
 GET https://api.example.com/profile
 Authorization: Bearer {{login.response.body.$.token}}"#;
 
-        assert_public_file_parser_matches_legacy_backend(content);
+        assert_pest_file_matches_handwritten(content);
     }
 }
