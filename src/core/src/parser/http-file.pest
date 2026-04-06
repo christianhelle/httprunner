@@ -109,7 +109,9 @@ SlashComment = { "//" ~ (!EOL ~ ANY)* ~ LineEnd? }
 IgnoredScriptBlock = { ScriptBlockStart ~ ScriptBlockLine* ~ ScriptBlockEnd? }
 ScriptBlockStart = { "> {%" ~ (!EOL ~ ANY)* ~ LineEnd? }
 ScriptBlockLine = { !ScriptBlockEnd ~ RawLine }
-ScriptBlockEnd = { OptionalWs ~ "%}" ~ (!EOL ~ ANY)* ~ LineEnd? }
+// Legacy parity: any trimmed line ending with `%}` closes script mode, even if
+// there is script content earlier on the same line.
+ScriptBlockEnd = { (!EOL ~ !"%}" ~ ANY)* ~ "%}" ~ OptionalWs ~ LineEnd? }
 
 BodyLine = { RawLine }
 RawLine = @{ (!EOL ~ ANY)+ ~ LineEnd? }
