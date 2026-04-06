@@ -1031,6 +1031,42 @@ Content-Type: application/json
 }
 
 #[test]
+fn test_parse_functions_example_keeps_derived_variables_outside_request_body() {
+    let example_path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("examples")
+        .join("functions.http");
+    let content = fs::read_to_string(&example_path).expect("functions example should load");
+
+    let requests = parse_http_content(&content, None).unwrap();
+    assert_eq!(requests.len(), 2);
+    assert_eq!(requests[0].name.as_deref(), Some("request1"));
+    assert_eq!(requests[1].name.as_deref(), Some("request2"));
+    assert!(
+        !requests[0]
+            .body
+            .as_deref()
+            .unwrap_or_default()
+            .contains("@first_request_guid")
+    );
+    assert!(
+        requests[1].body.as_deref().unwrap_or_default().contains(
+            "\"first_request_guid_variable\": \"{{request1.response.body.$.json.guid}}\""
+        )
+    );
+    assert!(
+        requests[1]
+            .body
+            .as_deref()
+            .unwrap_or_default()
+            .contains(
+                "\"first_request_guid_variable_base64\": \"base64_encode('{{request1.response.body.$.json.guid}}')\""
+            )
+    );
+}
+
+#[test]
 fn test_parse_reference_directive_examples() {
     let content = r#"# @name login
 # @timeout 30

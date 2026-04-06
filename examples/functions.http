@@ -1,3 +1,9 @@
+#
+# Request-derived variables resolve at execution time, so declare them
+# before the request chain instead of after a JSON body.
+@first_request_guid={{request1.response.body.$.json.guid}}
+@first_request_guid_base64=base64_encode('{{first_request_guid}}')
+
 ###
 # POST request with body (fully supported)
 # @name request1
@@ -27,11 +33,6 @@ Content-Type: application/json
     "getutcdatetime": "getutcdatetime()",
     "lorem_ipsum": "lorem_ipsum(50)"
 }
-
-#
-@first_request_guid={{request1.response.body.$.json.guid}}
-@first_request_guid_base64=base64_encode('{{first_request_guid}}')
-
 
 ###
 # POST request with body (fully supported)
