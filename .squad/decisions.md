@@ -192,6 +192,18 @@
 
 **Implications:** Future converter work should consume `PestHttpFile` rather than binding directly to pest `Pair` trees. Tests can now validate parse-tree shape separately from the production semantic contract.
 
+### 2026-04-06: Bishop semantic assembler contract (Phase 3 strategy)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Phase 3 semantic assembler will consume `PestHttpFile` IR and reapply the handwritten parser's trim-based line classification rules and state machine behavior from each IR node's raw source text instead of trusting grammar-selected line kinds as the final contract.
+
+**Why:** The legacy parser classifies directives, comments, headers, assertions, request lines, and IntelliJ script starts after trimming leading whitespace, and raises explicit errors for malformed `@timeout`, `@if`, and variable lines that the grammar can legally classify as plain comments or body text. Reusing raw source plus existing timeout/condition/substitution helpers keeps parity-sensitive behavior boring and reproducible.
+
+**Implications:** 
+- `src/core/src/parser/pest_semantic_assembler.rs` can be swapped under `parse_http_file()` / `parse_http_content()` later with a small call-site change instead of another semantic rewrite.
+- Pest IR builders still need to preserve comment/separator nodes (`###`) and accurate line numbers, because the semantic layer depends on them for buffering and error context.
+- Future grammar tightening must keep the parity tests green before the production backend swap.
+
 ## Governance
 
 - All meaningful changes require team consensus
