@@ -133,10 +133,8 @@ fn build_comment_or_directive_line(raw: &str) -> Result<PestLineKind> {
 
     let directive_name = &directive_body[..separator];
     match directive_name {
-        "name" | "timeout" | "connection-timeout" | "dependsOn" | "if" | "if-not"
-        | "pre-delay" | "post-delay" => {
-            Ok(PestLineKind::Directive(build_directive_line(raw)?))
-        }
+        "name" | "timeout" | "connection-timeout" | "dependsOn" | "if" | "if-not" | "pre-delay"
+        | "post-delay" => Ok(PestLineKind::Directive(build_directive_line(raw)?)),
         _ => Ok(PestLineKind::Comment(build_comment_from_raw(raw)?)),
     }
 }
@@ -298,9 +296,7 @@ fn build_comment_from_raw(raw: &str) -> Result<PestCommentLine> {
 }
 
 fn build_variable_line(raw: &str) -> Result<PestVariableLine> {
-    let separator = raw
-        .find('=')
-        .context("variable line did not contain '='")?;
+    let separator = raw.find('=').context("variable line did not contain '='")?;
     let name = raw[1..separator].trim().to_string();
     let value = raw[separator + 1..].trim().to_string();
 
@@ -317,26 +313,25 @@ fn build_assertion_line(raw: &str) -> Result<PestAssertionLine> {
         (false, raw)
     };
 
-    let (kind, value_text) = if let Some(value) =
-        assertion_line.strip_prefix("EXPECTED_RESPONSE_STATUS")
-    {
-        (
-            PestAssertionKind::Status,
-            strip_required_horizontal_ws(value, "status assertion value")?,
-        )
-    } else if let Some(value) = assertion_line.strip_prefix("EXPECTED_RESPONSE_BODY") {
-        (
-            PestAssertionKind::Body,
-            strip_required_horizontal_ws(value, "body assertion value")?,
-        )
-    } else if let Some(value) = assertion_line.strip_prefix("EXPECTED_RESPONSE_HEADERS") {
-        (
-            PestAssertionKind::Headers,
-            strip_required_horizontal_ws(value, "headers assertion value")?,
-        )
-    } else {
-        bail!("unexpected assertion keyword in '{raw}'");
-    };
+    let (kind, value_text) =
+        if let Some(value) = assertion_line.strip_prefix("EXPECTED_RESPONSE_STATUS") {
+            (
+                PestAssertionKind::Status,
+                strip_required_horizontal_ws(value, "status assertion value")?,
+            )
+        } else if let Some(value) = assertion_line.strip_prefix("EXPECTED_RESPONSE_BODY") {
+            (
+                PestAssertionKind::Body,
+                strip_required_horizontal_ws(value, "body assertion value")?,
+            )
+        } else if let Some(value) = assertion_line.strip_prefix("EXPECTED_RESPONSE_HEADERS") {
+            (
+                PestAssertionKind::Headers,
+                strip_required_horizontal_ws(value, "headers assertion value")?,
+            )
+        } else {
+            bail!("unexpected assertion keyword in '{raw}'");
+        };
 
     let value = if value_text.starts_with('"') && value_text.ends_with('"') {
         PestAssertionValue::DoubleQuoted(strip_wrapping_quotes(
@@ -401,7 +396,7 @@ fn parse_directive_value<'a>(raw: &'a str, directive: &str) -> Result<(CommentPr
     Ok((prefix, value))
 }
 
-fn parse_comment_prefix<'a>(raw: &'a str) -> Result<(CommentPrefix, &'a str)> {
+fn parse_comment_prefix(raw: &str) -> Result<(CommentPrefix, &str)> {
     if let Some(body) = raw.strip_prefix('#') {
         return Ok((CommentPrefix::Hash, trim_horizontal_ws_start(body)));
     }
@@ -503,8 +498,7 @@ fn trim_line_ending_ref(text: &str) -> &str {
 }
 
 fn trim_line_ending(text: &str) -> String {
-    trim_line_ending_ref(text)
-        .to_string()
+    trim_line_ending_ref(text).to_string()
 }
 
 fn count_physical_lines(text: &str) -> usize {

@@ -738,9 +738,9 @@ Content-Type: application/json
 {"name":"Jane"}"#;
 
     let requests = parse_http_content(content, None).unwrap();
-    let pest_requests = parse_http_content_with_pest_backend(content, None).unwrap();
+    let legacy_requests = parse_http_content_with_legacy_backend(content, None).unwrap();
 
-    assert_requests_match(&requests, &pest_requests);
+    assert_requests_match(&requests, &legacy_requests);
     assert_eq!(requests.len(), 2);
     assert_eq!(requests[0].method, "GET");
     assert_eq!(requests[1].method, "POST");
@@ -1157,18 +1157,19 @@ fn benchmark_parser_backends() {
 
     for case in &cases {
         for input in &case.inputs {
-            let production = parse_http_content(input, None).unwrap();
-            let pest = parse_http_content_with_pest_backend(input, None).unwrap();
-            assert_requests_match(&pest, &production);
+            let legacy = parse_http_content_with_legacy_backend(input, None).unwrap();
+            let pest = parse_http_content(input, None).unwrap();
+            assert_requests_match(&pest, &legacy);
         }
 
-        let production = run_benchmark_case(case, "handwritten", parse_http_content);
-        let pest = run_benchmark_case(case, "pest", parse_http_content_with_pest_backend);
+        let handwritten =
+            run_benchmark_case(case, "handwritten", parse_http_content_with_legacy_backend);
+        let pest = run_benchmark_case(case, "pest", parse_http_content);
 
-        print_benchmark_result(&production);
+        print_benchmark_result(&handwritten);
         print_benchmark_result(&pest);
 
-        let regression = 100.0 * (1.0 - (pest.mib_per_second() / production.mib_per_second()));
+        let regression = 100.0 * (1.0 - (pest.mib_per_second() / handwritten.mib_per_second()));
         println!(
             "{} pest throughput regression: {regression:.1}% (positive means slower)",
             case.name

@@ -35,8 +35,13 @@ pub(crate) fn parse_http_content_with_pest_semantics(
     let mut state = SemanticAssemblerState::new(env_variables);
 
     for line in raw_file.lines {
-        assemble_raw_line(line.raw, line.kind, &mut state)
-            .with_context(|| format!("Failed to parse line {}: {}", line.line_number, line.raw.trim()))?;
+        assemble_raw_line(line.raw, line.kind, &mut state).with_context(|| {
+            format!(
+                "Failed to parse line {}: {}",
+                line.line_number,
+                line.raw.trim()
+            )
+        })?;
     }
 
     state.finalize_current_request();
@@ -205,7 +210,9 @@ fn try_parse_directive(trimmed: &str, state: &mut SemanticAssemblerState) -> Lin
                 state.pending_connection_timeout = Some(timeout);
                 LineParseResult::Continue
             }
-            None => LineParseResult::Error(format!("Invalid connection-timeout value: '{}'", value)),
+            None => {
+                LineParseResult::Error(format!("Invalid connection-timeout value: '{}'", value))
+            }
         },
         "dependsOn" => {
             state.pending_depends_on = Some(value.to_string());
@@ -462,7 +469,7 @@ mod tests {
     }
 
     fn assert_pest_matches_handwritten(content: &str) {
-        let expected = crate::parser::parse_http_content(content, None)
+        let expected = crate::parser::parse_http_content_with_legacy_backend(content, None)
             .expect("handwritten parser should succeed");
         let actual = parse_http_content(content, None).expect("pest parser should succeed");
         assert_requests_match(&actual, &expected);
@@ -474,7 +481,7 @@ mod tests {
         fs::write(&file_path, content).expect("test file should write");
 
         let file_path = file_path.to_str().expect("temp file path should be utf-8");
-        let expected = crate::parser::parse_http_file(file_path, None)
+        let expected = crate::parser::parse_http_file_with_legacy_backend(file_path, None)
             .expect("handwritten file parser should succeed");
         let actual = parse_http_file(file_path, None).expect("pest file parser should succeed");
 
@@ -528,7 +535,7 @@ GET https://api.example.com/final"#;
         assert_eq!(actual[0].headers[0].value, "second.example.com");
         assert_eq!(actual[0].body.as_deref(), Some("second.example.com"));
 
-        let expected = crate::parser::parse_http_content(content, None)
+        let expected = crate::parser::parse_http_content_with_legacy_backend(content, None)
             .expect("handwritten parser should succeed");
         assert_requests_match(&actual, &expected);
     }
@@ -584,7 +591,7 @@ Content-Type: application/json
         ));
         assert!(actual[3].conditions[0].negate);
 
-        let expected = crate::parser::parse_http_content(content, None)
+        let expected = crate::parser::parse_http_content_with_legacy_backend(content, None)
             .expect("handwritten parser should succeed");
         assert_requests_match(&actual, &expected);
     }
@@ -630,7 +637,8 @@ Content-Type: application/json
         let tree = parse_http_content_to_pest_tree(content).expect("parse tree should build");
         let from_tree = assemble_http_requests_from_pest_tree(&tree, Vec::new())
             .expect("tree assembler should succeed");
-        let from_stream = parse_http_content(content, None).expect("streaming backend should succeed");
+        let from_stream =
+            parse_http_content(content, None).expect("streaming backend should succeed");
 
         assert_requests_match(&from_tree, &from_stream);
     }
