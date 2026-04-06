@@ -56,6 +56,11 @@ How to migrate a handwritten parser to **pest.rs** (PEG parser generator) in a m
 - Use IR node kinds for structure the grammar owns (for example grouped script blocks or exact line numbers), but fall back to each node's `raw` text for leading-space directives, headers, assertions, malformed variable lines, and invalid directive errors
 - Keep existing timeout parsing, condition parsing, and substitution helpers in the semantic layer so delayed substitutions and malformed directives fail exactly where the old parser failed
 
+### 7. Flip Public Entrypoints Only After Test Parity Exists
+- Switch `parse_http_file` / `parse_http_content` to the pest-backed assembler as a small, explicit export or wrapper change once old-vs-new parity tests are already green
+- Keep the handwritten backend available only under `#[cfg(test)]` (or a test-only alias) for one transition slice so post-swap tests still compare the production path against the legacy behavior
+- Remove the legacy backend in a later cleanup pass, not in the same risky backend flip, so regressions are easier to localize
+
 ---
 
 ## Migration Checklist
