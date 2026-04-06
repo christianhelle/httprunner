@@ -218,6 +218,27 @@
 
 **Validation:** All documentation now internally consistent.
 
+### 2026-04-06: Bishop functions.http regression fix (Bishop)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Keep request-derived helper variables such as `@first_request_guid={{request1.response.body.$.json.guid}}` outside request bodies. For checked-in examples, declare those helpers before the request chain rather than immediately after a JSON body.  
+**Why:** The parser contract already treats `@...` lines as body text once body mode has started, so placing helper variables after a POST body makes the previous request absorb them. In `examples/functions.http`, that caused request-variable resolution to fail before `request1` ever executed.  
+**Impact:**
+- Example files that compose request-derived helper variables should declare them outside request bodies.
+- Parser regressions for checked-in examples should be covered with parse-shape tests in `src/core/src/parser/tests.rs`.
+- End-to-end request-chain regressions should prefer `MockHttpExecutor` coverage in `src/core/src/processor/incremental_tests.rs` so the chain can be validated without depending on live network services.
+
+### 2026-04-06: Lambert parity fix follow-up (Lambert)
+**By:** Lambert (Testing & Performance)  
+**Date:** 2026-04-06  
+**What:** Keep IntelliJ script-block termination aligned with the handwritten parser: any trimmed line ending with `%}` closes script mode, even if the line contains script content before the marker.  
+Keep the handwritten parser available under `#[cfg(test)]` and drive parser performance review with an ignored release-mode benchmark that times both backends against the same corpora.  
+**Why:** The pest grammar had drifted from the legacy behavior by only recognizing closing lines that started with `%}`. That let a real IntelliJ-style multi-line script block swallow the following request.  
+The new benchmark evidence is not merge-comfortable yet. On representative inputs, the pest backend measured about 93.7% slower on the examples corpus, 99.9% slower on a 1000-request synthetic file, and 21.2% slower on a 10MB body fixture.  
+**Follow-up:**
+- Treat parser performance work as blocking cleanup before removing the legacy backend.
+- Re-run `cargo test -p httprunner-core benchmark_parser_backends --release -- --ignored --nocapture` after any parser hot-path change.
+
 ## Governance
 
 - All meaningful changes require team consensus
