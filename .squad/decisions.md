@@ -95,6 +95,87 @@
 - Explicitly compare parser output, serializer output, and GUI editor save behavior as one round-trip contract
 - Treat native and WASM execution paths as parity-sensitive features; review together, not independently
 
+### 2026-03-20: Parser contract baseline frozen for pest migration (Bishop)
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-03-20  
+**What:** Before pest.rs migration, the parser's stateful behavior is locked in tests: blank-line body-mode transitions, raw `@...` lines inside bodies, directive buffering to next request, precedence between comments/IntelliJ script blocks/assertions/request lines vs body text, README/reference examples, and multi-request serializer round-trips.  
+**Why:** These behaviors are most likely to drift during migration from line-by-line to grammar-driven parsing. Freezing them in tests provides a concrete, executable parity target. The serializer round-trip test ensures parse→serialize→parse cycles remain stable across the rewrite.
+
+### 2026-03-20: Pest.rs parser migration recommended (consolidated)
+**By:** Ripley (Lead), Bishop (Core), Hicks (Platform), confirmed by team  
+**Date:** 2026-03-20  
+**Status:** Approved for implementation  
+**What:** Migrate `.http` file parser from handwritten state machine (`src/core/src/parser/file_parser.rs`, 500+ lines) to pest.rs (PEG parser generator). Public API (`parse_http_file`, `parse_http_content`) remains unchanged. All existing test suites remain valid if semantics match.  
+**Why:** 
+- Grammar file (`http-file.peg`) already exists as documentation (164 lines, well-specified)
+- Handwritten parser is hard to understand; grammar spec divergence creates contributor friction  
+- PEG makes parser behavior explicit and testable with ordered choice (directive-vs-comment precedence unambiguous)
+- Separation of concerns: lexical parsing (pest) vs semantic post-processing (Rust)
+- No platform, build, CI, distribution, or artifact impact (pest is compile-only, no runtime deps)
+
+**Platform & Build Validation (Hicks):**
+- Build time: +2-5s per full rebuild (proc-macro), incremental unaffected
+- CI/CD: test.yml, release.yml: +2-5s per job (acceptable)
+- All native targets (Linux, macOS, Windows) and WASM verified compatible
+- Distribution (install scripts, Docker, binary size, version mgmt): unchanged
+- Release artifacts: unchanged, grammar validation is just `cargo build`
+
+**Critical Constraints (Bishop):**
+- API stability: `parse_http_file()` and `parse_http_content()` signatures cannot change
+- All 48 existing parser tests must pass unchanged (zero test modifications)
+- Serializer round-trip test must pass (parser/serializer contract)
+- Directive precedence, body mode state, whitespace handling, trailing token ignoring: all preserved
+- Consumers (CLI, GUI native/WASM, TUI, serializer) use same API — no changes required
+- WASM target must work (pest is pure Rust, no concern)
+
+**Implementation Phases:**
+1. Add pest dependencies, finalize grammar, new module structure (1-2 days)
+2. Implement pest grammar parser, test parse tree generation (2-3 days)
+3. Implement post-processing (parse tree → `Vec<HttpRequest>`), preserve state machine (3-4 days)
+4. Run all tests (parser, serializer, integration, manual), validate performance <20% regression (2-3 days)
+5. Cleanup old code, update documentation (1-2 days)
+
+**Risks & Mitigations:**
+- State machine complexity → Keep state in post-processing only, not grammar
+- Precedence mismatches → Test directive vs. comment ordering with frozen tests
+- Round-trip breakage → Run serializer tests early and often
+- Performance regression → Benchmark before/after, gate on <20% increase
+- WASM breaks silently → cargo check against wasm32-unknown-unknown
+- Error message quality → Wrap pest errors with context
+
+**Success Criteria (Lambert & Bishop):**
+1. All 48 parser tests pass
+2. Serializer round-trip test passes
+3. CLI/GUI/TUI execution produces identical output
+4. Parse time < 2x handwritten parser
+5. Error messages remain actionable
+
+**Pre-Migration Safety (Lambert):**
+- Parser contract baseline tests added (24 new tests planned across P1-P5)
+- Performance baseline established: benchmark current parser on examples/ dir (1000x iterations), 1000-request file, 10MB body file
+- WASM compatibility verified (pest supports wasm32-unknown-unknown)
+- After migration: ensure <20% throughput regression, <50% memory increase
+
+**Routing:** Bishop (grammar authoring, AST converter), Lambert (pre-migration tests, performance benchmarks), Hicks (CI/platform validation), Vasquez (WASM parity verification), Ripley (PR review).
+
+**Related Decisions:** Parser contract baseline (Bishop), parser safety requirements (Lambert).
+
+### 2026-03-21: Pest.rs migration safety requirements (Lambert)
+**By:** Lambert (Testing & Performance)  
+**Date:** 2026-03-21  
+**Severity:** P1 (parser is semantic core)  
+**What:** Before pest migration, establish the following safety measures:
+- Add 24 new tests (7 P1 blocking tests for stateful behavior/round-trip parity, 7 P2 high-value for directive buffering/request variables, 4 P3 error handling, 3 P4 edge cases, 3 P5 performance benchmarks)
+- Fix serializer/parser round-trip (assertions, `@if-not`, `@pre-delay`/`@post-delay` must round-trip correctly)
+- Establish performance baseline: benchmark current parser on examples/ dir (1000x iterations), 1000-request synthetic file, 10MB body file, ensure post-migration <20% throughput regression, <50% memory increase
+- Verify WASM compatibility: confirm pest supports wasm32-unknown-unknown, test parser behavior identical in native and WASM builds
+
+**Why:** Parser changes affect CLI, GUI, TUI, WASM execution paths. Known issues (#213 round-trip failure, #214 WASM execution divergence) mean high-risk change. PEG grammar is documentation, not executable; does not express stateful logic (body mode switching, directive buffering, IntelliJ skipping). Without pre-migration tests and baselines, no validation possible.
+
+**Routing:** Bishop (core engine, parser implementation), Ripley (architectural review), Vasquez (WASM parity), Lambert (tests and benchmarks).
+
+**Related:** Parser contract baseline (Bishop), pest migration plan (Ripley).
+
 ## Governance
 
 - All meaningful changes require team consensus
