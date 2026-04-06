@@ -10,6 +10,7 @@
 - Setup agent squad ([#241](https://github.com/christianhelle/httprunner/pull/241)) ([@christianhelle](https://github.com/christianhelle/))
 
 ### Features
+- Add deterministic CLI smoke tests ([#257](https://github.com/christianhelle/httprunner/pull/257)) ([@christianhelle](https://github.com/christianhelle/))
 - Refactor .http file parsing to be PEG grammar based using pest ([#256](https://github.com/christianhelle/httprunner/pull/256)) ([@christianhelle](https://github.com/christianhelle/))
 - Refresh Rust crates and adapt workspace code to current APIs ([#252](https://github.com/christianhelle/httprunner/pull/252)) (@Copilot)
 - Harden installs and release publishing ([#249](https://github.com/christianhelle/httprunner/pull/249)) ([@christianhelle](https://github.com/christianhelle/))
