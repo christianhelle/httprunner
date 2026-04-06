@@ -12,13 +12,13 @@ A powerful Rust library for parsing and executing HTTP requests from `.http` fil
 ## Features
 
 - 🚀 Parse and execute HTTP requests from `.http` files
-- 🌐 Support for all standard HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
+- 🌐 Support for GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, and CONNECT requests
 - 📝 Custom headers and request bodies
 - 🔧 **Variables** with substitution in URLs, headers, and bodies
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum(N)`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - 🔗 **Request variables** for chaining requests and passing data between calls
 - 🔍 **Response assertions** for status codes, body content, and headers
-- 🔀 **Conditional execution** with `@dependsOn` and `@if` directives
+- 🔀 **Conditional execution** with `@dependsOn`, `@if`, and `@if-not` directives
 - ⏱️ **Customizable timeouts** for connection and read operations
 - 🔒 **Insecure HTTPS support** for development environments
 - 🌍 **Environment files** support for different deployment environments
@@ -190,7 +190,7 @@ Content-Type: application/json
 }
 ```
 
-**Note:** `lorem_ipsum(N)` requires a numeric parameter `N` that specifies the number of words to generate. For example, `lorem_ipsum(5)` generates 5 words of Lorem Ipsum placeholder text.
+**Note:** `lorem_ipsum([N])` accepts an optional numeric parameter `N` that specifies the number of words to generate. If you omit the parameter, `lorem_ipsum()` defaults to 100 words. For example, `lorem_ipsum(5)` generates 5 words of Lorem Ipsum placeholder text.
 
 ## Environment Files
 

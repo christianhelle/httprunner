@@ -265,7 +265,9 @@ fn test_parse_ignores_comments() {
 #[test]
 fn test_parse_all_http_methods() {
     let temp_dir = TempDir::new().unwrap();
-    let methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
+    let methods = [
+        "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "TRACE", "CONNECT",
+    ];
 
     for method in &methods {
         let content = format!("{} https://api.example.com/resource", method);
@@ -274,6 +276,20 @@ fn test_parse_all_http_methods() {
         let requests = parse_http_file(&file_path, None).unwrap();
         assert_eq!(requests[0].method, *method);
     }
+}
+
+#[test]
+fn test_parse_request_line_with_http_version_and_trailing_tokens() {
+    let temp_dir = TempDir::new().unwrap();
+    let content =
+        "GET https://api.example.com/users HTTP/1.1 # trailing request-line tokens are ignored";
+    let file_path = create_test_file(&temp_dir, "http-version.http", content);
+
+    let requests = parse_http_file(&file_path, None).unwrap();
+
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].method, "GET");
+    assert_eq!(requests[0].url, "https://api.example.com/users");
 }
 
 #[test]
