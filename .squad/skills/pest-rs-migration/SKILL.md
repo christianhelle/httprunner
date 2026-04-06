@@ -61,6 +61,11 @@ How to migrate a handwritten parser to **pest.rs** (PEG parser generator) in a m
 - Keep the handwritten backend available only under `#[cfg(test)]` (or a test-only alias) for one transition slice so post-swap tests still compare the production path against the legacy behavior
 - Remove the legacy backend in a later cleanup pass, not in the same risky backend flip, so regressions are easier to localize
 
+### 8. Keep a Release-Mode Benchmark Harness Beside the Parity Tests
+- Add an ignored test (or similarly lightweight helper) that runs in `--release` and benchmarks both the preserved handwritten backend and the pest backend over the same corpora
+- Reuse representative fixtures: real example files, a large multi-request synthetic file, and a large-body case
+- Assert semantic parity before timing, then print MiB/s or requests/s for each backend so review can gate on measured regression instead of intuition
+
 ---
 
 ## Migration Checklist
