@@ -1,5 +1,6 @@
 mod condition_parser;
 mod file_parser;
+mod pest_parser;
 mod substitution;
 mod timeout_parser;
 mod utils;

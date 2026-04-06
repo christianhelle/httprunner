@@ -7,6 +7,7 @@ This module handles parsing of HTTP request files (.http) with support for envir
 - `mod.rs` - Module entry point and public API
 - `file_parser.rs` - Main HTTP file parsing logic
 - `http-file.peg` - PEG-style documentation grammar for the current supported `.http` syntax
+- `http-file.pest` - Executable pest grammar scaffold kept in sync with the PEG spec
 - `substitution.rs` - Template variable substitution (`{{variable}}` syntax)
 - `condition_parser.rs` - Parsing of `@if` and `@if-not` directives
 - `timeout_parser.rs` - Parsing of timeout values with unit conversion
@@ -21,7 +22,7 @@ use crate::parser::parse_http_file;
 let requests = parse_http_file("requests.http", Some("dev"))?;
 ```
 
-See `http-file.peg` for the parser-adjacent grammar/spec that documents the current handwritten parser behavior.
+See `http-file.peg` for the canonical parser-adjacent grammar/spec and `http-file.pest` for the executable pest scaffold that mirrors the syntactic pieces owned by the grammar.
 
 ## Supported Directives
 
