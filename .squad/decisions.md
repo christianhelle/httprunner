@@ -176,6 +176,13 @@
 
 **Related:** Parser contract baseline (Bishop), pest migration plan (Ripley).
 
+### 2026-04-06: Bishop pest scaffolding boundary
+**By:** Bishop (Core & CLI Engineer)  
+**Date:** 2026-04-06  
+**What:** Keep `src/core/src/parser/http-file.peg` as the canonical human-readable parser spec, and mirror only grammar-owned syntax in `src/core/src/parser/http-file.pest` during Phase 1. Leave stateful behavior—body-mode transitions, directive buffering, body-line precedence, and semantic conversions—in Rust post-processing until later migration phases wire pest pairs into the production parser.
+
+**Why:** This keeps the readable spec stable while giving the crate an executable grammar that can compile and be tested incrementally. It also isolates the highest-risk state machine behavior from the dependency-and-grammar slice so later phases can change one moving part at a time.
+
 ## Governance
 
 - All meaningful changes require team consensus
