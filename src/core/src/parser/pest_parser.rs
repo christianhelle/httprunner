@@ -46,28 +46,41 @@ pub(crate) fn parse_http_content_to_pest_tree(content: &str) -> Result<PestHttpF
     Ok(PestHttpFile { lines })
 }
 
+/// Split `content` into raw lines without running the full pest grammar.
+///
+/// The semantic assembler (`assemble_raw_line`) already contains a complete
+/// state machine for every line type including `IgnoredScriptBlock` detection
+/// via `in_intellij_script`.  Running the PEG parser just to classify lines
+/// doubles the work: pest scans every byte to build a parse tree that the
+/// assembler immediately discards.
+///
+/// Zero-copy path: all `raw` fields are sub-slices of `content`; no heap
+/// allocation beyond the `Vec` itself.
 pub(crate) fn parse_http_content_to_pest_raw_file(content: &str) -> Result<PestRawHttpFile<'_>> {
-    let file = parse_root_pair(content)?;
+    Ok(split_lines_fast(content))
+}
+
+fn split_lines_fast(content: &str) -> PestRawHttpFile<'_> {
+    // `split_terminator` omits the trailing empty element produced by a
+    // terminal '\n', which matches the behaviour of `str::lines()` and avoids
+    // adding a spurious blank line at the end of the file.
     let mut lines = Vec::new();
-    let mut next_line_number = 1;
+    let mut line_number = 1usize;
 
-    for pair in file.into_inner().filter(|pair| pair.as_rule() != Rule::EOI) {
-        let raw = trim_line_ending_ref(pair.as_str());
-        let kind = if pair.as_rule() == Rule::IgnoredScriptBlock {
-            PestRawLineKind::IgnoredScriptBlock
-        } else {
-            PestRawLineKind::Regular
-        };
-
+    for raw in content.split_terminator('\n') {
+        // Strip the '\r' so CRLF files are handled transparently.
+        let raw = raw.strip_suffix('\r').unwrap_or(raw);
         lines.push(PestRawLine {
-            line_number: next_line_number,
+            line_number,
             raw,
-            kind,
+            // All lines are Regular; the semantic assembler drives
+            // IgnoredScriptBlock handling via its `in_intellij_script` flag.
+            kind: PestRawLineKind::Regular,
         });
-        next_line_number += count_physical_lines(pair.as_str());
+        line_number += 1;
     }
 
-    Ok(PestRawHttpFile { lines })
+    PestRawHttpFile { lines }
 }
 
 fn parse_root_pair(content: &str) -> Result<Pair<'_, Rule>> {
