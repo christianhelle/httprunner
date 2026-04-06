@@ -1,6 +1,6 @@
 use super::condition_parser::parse_condition;
 use super::pest_parse_tree::{PestHttpFile, PestLine, PestLineKind, PestScriptBlock};
-use super::pest_parser::parse_http_content_to_pest_tree;
+use super::pest_parser::{PestRawLineKind, parse_http_content_to_pest_raw_file};
 use super::substitution::substitute_variables;
 use super::timeout_parser::parse_timeout_value;
 use super::utils::is_http_request_line;
@@ -31,8 +31,16 @@ pub(crate) fn parse_http_content_with_pest_semantics(
     content: &str,
     env_variables: Vec<Variable>,
 ) -> Result<Vec<HttpRequest>> {
-    let tree = parse_http_content_to_pest_tree(content)?;
-    assemble_http_requests_from_pest_tree(&tree, env_variables)
+    let raw_file = parse_http_content_to_pest_raw_file(content)?;
+    let mut state = SemanticAssemblerState::new(env_variables);
+
+    for line in raw_file.lines {
+        assemble_raw_line(line.raw, line.kind, &mut state)
+            .with_context(|| format!("Failed to parse line {}: {}", line.line_number, line.raw.trim()))?;
+    }
+
+    state.finalize_current_request();
+    Ok(state.requests)
 }
 
 #[cfg_attr(not(test), allow(dead_code))]
@@ -165,131 +173,59 @@ enum LineParseResult {
     Error(String),
 }
 
-fn try_parse_name_directive(trimmed: &str, state: &mut SemanticAssemblerState) -> LineParseResult {
-    if let Some(name) = trimmed.strip_prefix("# @name ") {
-        state.pending_request_name = Some(name.trim().to_string());
-        LineParseResult::Continue
-    } else if let Some(name) = trimmed.strip_prefix("// @name ") {
-        state.pending_request_name = Some(name.trim().to_string());
-        LineParseResult::Continue
-    } else {
-        LineParseResult::NotHandled
-    }
-}
+fn try_parse_directive(trimmed: &str, state: &mut SemanticAssemblerState) -> LineParseResult {
+    let Some(after_prefix) = trimmed
+        .strip_prefix("# @")
+        .or_else(|| trimmed.strip_prefix("// @"))
+    else {
+        return LineParseResult::NotHandled;
+    };
 
-fn try_parse_timeout_directive(
-    trimmed: &str,
-    state: &mut SemanticAssemblerState,
-) -> LineParseResult {
-    let timeout_value = trimmed
-        .strip_prefix("# @timeout ")
-        .or_else(|| trimmed.strip_prefix("// @timeout "))
-        .map(|s| s.trim());
+    let Some(separator) = after_prefix.find(char::is_whitespace) else {
+        return LineParseResult::NotHandled;
+    };
 
-    if let Some(value) = timeout_value {
-        match parse_timeout_value(value) {
+    let directive_name = &after_prefix[..separator];
+    let value = after_prefix[separator..].trim();
+
+    match directive_name {
+        "name" => {
+            state.pending_request_name = Some(value.to_string());
+            LineParseResult::Continue
+        }
+        "timeout" => match parse_timeout_value(value) {
             Some(timeout) => {
                 state.pending_timeout = Some(timeout);
                 LineParseResult::Continue
             }
             None => LineParseResult::Error(format!("Invalid timeout value: '{}'", value)),
-        }
-    } else {
-        LineParseResult::NotHandled
-    }
-}
-
-fn try_parse_connection_timeout_directive(
-    trimmed: &str,
-    state: &mut SemanticAssemblerState,
-) -> LineParseResult {
-    let timeout_value = trimmed
-        .strip_prefix("# @connection-timeout ")
-        .or_else(|| trimmed.strip_prefix("// @connection-timeout "))
-        .map(|s| s.trim());
-
-    if let Some(value) = timeout_value {
-        match parse_timeout_value(value) {
+        },
+        "connection-timeout" => match parse_timeout_value(value) {
             Some(timeout) => {
                 state.pending_connection_timeout = Some(timeout);
                 LineParseResult::Continue
             }
-            None => {
-                LineParseResult::Error(format!("Invalid connection-timeout value: '{}'", value))
-            }
+            None => LineParseResult::Error(format!("Invalid connection-timeout value: '{}'", value)),
+        },
+        "dependsOn" => {
+            state.pending_depends_on = Some(value.to_string());
+            LineParseResult::Continue
         }
-    } else {
-        LineParseResult::NotHandled
-    }
-}
-
-fn try_parse_depends_on_directive(
-    trimmed: &str,
-    state: &mut SemanticAssemblerState,
-) -> LineParseResult {
-    let depends_on_value = trimmed
-        .strip_prefix("# @dependsOn ")
-        .or_else(|| trimmed.strip_prefix("// @dependsOn "))
-        .map(|s| s.trim());
-
-    if let Some(value) = depends_on_value {
-        state.pending_depends_on = Some(value.to_string());
-        LineParseResult::Continue
-    } else {
-        LineParseResult::NotHandled
-    }
-}
-
-fn try_parse_condition_directive(
-    trimmed: &str,
-    state: &mut SemanticAssemblerState,
-) -> LineParseResult {
-    let if_value = trimmed
-        .strip_prefix("# @if ")
-        .or_else(|| trimmed.strip_prefix("// @if "))
-        .map(|s| s.trim());
-
-    if let Some(value) = if_value {
-        match parse_condition(value, false) {
-            Some(condition) => state.pending_conditions.push(condition),
-            None => {
-                return LineParseResult::Error(format!("Invalid @if directive format: '{value}'"));
+        "if" => match parse_condition(value, false) {
+            Some(condition) => {
+                state.pending_conditions.push(condition);
+                LineParseResult::Continue
             }
-        }
-        return LineParseResult::Continue;
-    }
-
-    let if_not_value = trimmed
-        .strip_prefix("# @if-not ")
-        .or_else(|| trimmed.strip_prefix("// @if-not "))
-        .map(|s| s.trim());
-
-    if let Some(value) = if_not_value {
-        match parse_condition(value, true) {
-            Some(condition) => state.pending_conditions.push(condition),
-            None => {
-                return LineParseResult::Error(format!(
-                    "Invalid @if-not directive format: '{value}'"
-                ));
+            None => LineParseResult::Error(format!("Invalid @if directive format: '{value}'")),
+        },
+        "if-not" => match parse_condition(value, true) {
+            Some(condition) => {
+                state.pending_conditions.push(condition);
+                LineParseResult::Continue
             }
-        }
-        return LineParseResult::Continue;
-    }
-
-    LineParseResult::NotHandled
-}
-
-fn try_parse_pre_delay_directive(
-    trimmed: &str,
-    state: &mut SemanticAssemblerState,
-) -> LineParseResult {
-    let delay_value = trimmed
-        .strip_prefix("# @pre-delay ")
-        .or_else(|| trimmed.strip_prefix("// @pre-delay "))
-        .map(|s| s.trim());
-
-    if let Some(value) = delay_value {
-        match value.parse::<u64>() {
+            None => LineParseResult::Error(format!("Invalid @if-not directive format: '{value}'")),
+        },
+        "pre-delay" => match value.parse::<u64>() {
             Ok(delay_ms) => {
                 state.pending_pre_delay = Some(delay_ms);
                 LineParseResult::Continue
@@ -298,23 +234,8 @@ fn try_parse_pre_delay_directive(
                 "Invalid @pre-delay value '{}', expected number in milliseconds",
                 value
             )),
-        }
-    } else {
-        LineParseResult::NotHandled
-    }
-}
-
-fn try_parse_post_delay_directive(
-    trimmed: &str,
-    state: &mut SemanticAssemblerState,
-) -> LineParseResult {
-    let delay_value = trimmed
-        .strip_prefix("# @post-delay ")
-        .or_else(|| trimmed.strip_prefix("// @post-delay "))
-        .map(|s| s.trim());
-
-    if let Some(value) = delay_value {
-        match value.parse::<u64>() {
+        },
+        "post-delay" => match value.parse::<u64>() {
             Ok(delay_ms) => {
                 state.pending_post_delay = Some(delay_ms);
                 LineParseResult::Continue
@@ -323,9 +244,8 @@ fn try_parse_post_delay_directive(
                 "Invalid @post-delay value '{}', expected number in milliseconds",
                 value
             )),
-        }
-    } else {
-        LineParseResult::NotHandled
+        },
+        _ => LineParseResult::NotHandled,
     }
 }
 
@@ -414,12 +334,15 @@ fn handle_grouped_script_block(
     Ok(())
 }
 
-fn assemble_line(line: &PestLine, state: &mut SemanticAssemblerState) -> Result<()> {
-    if let PestLineKind::IgnoredScriptBlock(block) = &line.kind {
-        return handle_grouped_script_block(block, state);
+fn assemble_raw_line(
+    raw: &str,
+    kind: PestRawLineKind,
+    state: &mut SemanticAssemblerState,
+) -> Result<()> {
+    if kind == PestRawLineKind::IgnoredScriptBlock {
+        return Ok(());
     }
 
-    let raw = line.raw.as_str();
     let trimmed = raw.trim();
 
     if raw.trim_start().starts_with("> {%") {
@@ -443,31 +366,7 @@ fn assemble_line(line: &PestLine, state: &mut SemanticAssemblerState) -> Result<
         return Ok(());
     }
 
-    if handle_line_parse_result(try_parse_name_directive(trimmed, state))? {
-        return Ok(());
-    }
-
-    if handle_line_parse_result(try_parse_timeout_directive(trimmed, state))? {
-        return Ok(());
-    }
-
-    if handle_line_parse_result(try_parse_connection_timeout_directive(trimmed, state))? {
-        return Ok(());
-    }
-
-    if handle_line_parse_result(try_parse_depends_on_directive(trimmed, state))? {
-        return Ok(());
-    }
-
-    if handle_line_parse_result(try_parse_condition_directive(trimmed, state))? {
-        return Ok(());
-    }
-
-    if handle_line_parse_result(try_parse_pre_delay_directive(trimmed, state))? {
-        return Ok(());
-    }
-
-    if handle_line_parse_result(try_parse_post_delay_directive(trimmed, state))? {
+    if handle_line_parse_result(try_parse_directive(trimmed, state))? {
         return Ok(());
     }
 
@@ -510,9 +409,18 @@ fn assemble_line(line: &PestLine, state: &mut SemanticAssemblerState) -> Result<
     Ok(())
 }
 
+fn assemble_line(line: &PestLine, state: &mut SemanticAssemblerState) -> Result<()> {
+    if let PestLineKind::IgnoredScriptBlock(block) = &line.kind {
+        return handle_grouped_script_block(block, state);
+    }
+
+    assemble_raw_line(line.raw.as_str(), PestRawLineKind::Regular, state)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::parser::pest_parser::parse_http_content_to_pest_tree;
     use crate::types::ConditionType;
     use std::fs;
     use tempfile::TempDir;
@@ -708,5 +616,22 @@ GET https://api.example.com/profile
 Authorization: Bearer {{login.response.body.$.token}}"#;
 
         assert_pest_file_matches_handwritten(content);
+    }
+
+    #[test]
+    fn pest_tree_assembler_matches_streaming_backend() {
+        let content = r#"# @name login
+POST https://api.example.com/login
+Content-Type: application/json
+
+{"username":"demo","password":"secret"}
+"#;
+
+        let tree = parse_http_content_to_pest_tree(content).expect("parse tree should build");
+        let from_tree = assemble_http_requests_from_pest_tree(&tree, Vec::new())
+            .expect("tree assembler should succeed");
+        let from_stream = parse_http_content(content, None).expect("streaming backend should succeed");
+
+        assert_requests_match(&from_tree, &from_stream);
     }
 }

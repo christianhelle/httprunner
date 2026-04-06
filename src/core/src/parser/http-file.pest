@@ -17,15 +17,7 @@ HttpFile = { SOI ~ Line* ~ EOF }
 Line = _{
     IgnoredScriptBlock
     | BlankLine
-    | NameDirective
-    | TimeoutDirective
-    | ConnectionTimeoutDirective
-    | DependsOnDirective
-    | IfNotDirective
-    | IfDirective
-    | PreDelayDirective
-    | PostDelayDirective
-    | CommentLine
+    | CommentOrDirectiveLine
     | VariableLine
     | AssertionLine
     | RequestLine
@@ -33,16 +25,20 @@ Line = _{
     | BodyLine
 }
 
-NameDirective = { DirectivePrefix ~ "@name" ~ RequiredWs ~ NameText ~ LineEnd? }
-TimeoutDirective = { DirectivePrefix ~ "@timeout" ~ RequiredWs ~ TimeoutValue ~ LineEnd? }
-ConnectionTimeoutDirective = {
-    DirectivePrefix ~ "@connection-timeout" ~ RequiredWs ~ TimeoutValue ~ LineEnd?
+CommentOrDirectiveLine = @{ CommentPrefixMarker ~ (!EOL ~ ANY)* ~ LineEnd? }
+CommentPrefixMarker = { "#" | "//" }
+DirectiveLine = @{ DirectivePrefix ~ DirectiveKeyword ~ RequiredWs ~ DirectiveValue ~ LineEnd? }
+DirectiveKeyword = {
+    "@name"
+    | "@timeout"
+    | "@connection-timeout"
+    | "@dependsOn"
+    | "@if"
+    | "@if-not"
+    | "@pre-delay"
+    | "@post-delay"
 }
-DependsOnDirective = { DirectivePrefix ~ "@dependsOn" ~ RequiredWs ~ ReferenceName ~ LineEnd? }
-IfDirective = { DirectivePrefix ~ "@if" ~ RequiredWs ~ ConditionExpression ~ LineEnd? }
-IfNotDirective = { DirectivePrefix ~ "@if-not" ~ RequiredWs ~ ConditionExpression ~ LineEnd? }
-PreDelayDirective = { DirectivePrefix ~ "@pre-delay" ~ RequiredWs ~ Digits ~ LineEnd? }
-PostDelayDirective = { DirectivePrefix ~ "@post-delay" ~ RequiredWs ~ Digits ~ LineEnd? }
+DirectiveValue = @{ (!EOL ~ ANY)* }
 
 DirectivePrefix = { HashDirectivePrefix | SlashDirectivePrefix }
 HashDirectivePrefix = { "#" ~ RequiredWs }
@@ -63,11 +59,11 @@ TimeoutUnit = { "ms" | "m" | "s" }
 
 // Rust still decides whether an `@...` line is an active variable declaration
 // or raw body content once body mode has started.
-VariableLine = { "@" ~ VariableName ~ OptionalWs ~ "=" ~ OptionalWs ~ VariableValue ~ LineEnd? }
+VariableLine = @{ "@" ~ VariableName ~ OptionalWs ~ "=" ~ OptionalWs ~ VariableValue ~ LineEnd? }
 VariableName = @{ (!"=" ~ !EOL ~ ANY)+ }
 VariableValue = @{ (!EOL ~ ANY)* }
 
-AssertionLine = { AssertionPrefix? ~ AssertionKeyword ~ RequiredWs ~ AssertionValue ~ LineEnd? }
+AssertionLine = @{ AssertionPrefix? ~ AssertionKeyword ~ RequiredWs ~ AssertionValue ~ LineEnd? }
 AssertionPrefix = { ">" ~ RequiredWs }
 AssertionKeyword = {
     "EXPECTED_RESPONSE_STATUS"
@@ -78,7 +74,7 @@ AssertionValue = { QuotedText | ExpectedText }
 
 // Rust post-processing still only keeps the first two request-line tokens and
 // intentionally ignores any trailing HTTP version or other tokens.
-RequestLine = { RequestMethod ~ RequiredWs ~ RequestTarget ~ (RequiredWs ~ RequestLineTail)? ~ LineEnd? }
+RequestLine = @{ RequestMethod ~ RequiredWs ~ (!EOL ~ ANY)+ ~ LineEnd? }
 RequestLineTail = {
     HttpVersion ~ (RequiredWs ~ IgnoredRequestToken)*
     | IgnoredRequestToken ~ (RequiredWs ~ IgnoredRequestToken)*
@@ -98,7 +94,7 @@ RequestTarget = { Token }
 HttpVersion = @{ "HTTP/" ~ Digits ~ ("." ~ Digits)? }
 IgnoredRequestToken = { Token }
 
-HeaderLine = { HeaderName ~ ":" ~ OptionalWs ~ HeaderValue ~ LineEnd? }
+HeaderLine = @{ HeaderName ~ ":" ~ OptionalWs ~ HeaderValue ~ LineEnd? }
 HeaderName = @{ (!":" ~ !EOL ~ ANY)+ }
 HeaderValue = @{ (!EOL ~ ANY)* }
 

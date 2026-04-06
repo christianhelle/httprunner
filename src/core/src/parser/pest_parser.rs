@@ -13,16 +13,61 @@ use pest_derive::Parser;
 #[grammar = "parser/http-file.pest"]
 pub(crate) struct HttpFilePestParser;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum PestRawLineKind {
+    Regular,
+    IgnoredScriptBlock,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct PestRawLine<'a> {
+    pub line_number: usize,
+    pub raw: &'a str,
+    pub kind: PestRawLineKind,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct PestRawHttpFile<'a> {
+    pub lines: Vec<PestRawLine<'a>>,
+}
+
 #[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn parse_http_content_to_pest_tree(content: &str) -> Result<PestHttpFile> {
     let file = parse_root_pair(content)?;
-    let lines = file
-        .into_inner()
-        .filter(|pair| pair.as_rule() != Rule::EOI)
-        .map(build_line)
-        .collect::<Result<Vec<_>>>()?;
+    let mut lines = Vec::new();
+    let mut next_line_number = 1;
+
+    for pair in file.into_inner().filter(|pair| pair.as_rule() != Rule::EOI) {
+        let physical_line_count = count_physical_lines(pair.as_str());
+        lines.push(build_line(pair, next_line_number)?);
+        next_line_number += physical_line_count;
+    }
 
     Ok(PestHttpFile { lines })
+}
+
+pub(crate) fn parse_http_content_to_pest_raw_file(content: &str) -> Result<PestRawHttpFile<'_>> {
+    let file = parse_root_pair(content)?;
+    let mut lines = Vec::new();
+    let mut next_line_number = 1;
+
+    for pair in file.into_inner().filter(|pair| pair.as_rule() != Rule::EOI) {
+        let raw = trim_line_ending_ref(pair.as_str());
+        let kind = if pair.as_rule() == Rule::IgnoredScriptBlock {
+            PestRawLineKind::IgnoredScriptBlock
+        } else {
+            PestRawLineKind::Regular
+        };
+
+        lines.push(PestRawLine {
+            line_number: next_line_number,
+            raw,
+            kind,
+        });
+        next_line_number += count_physical_lines(pair.as_str());
+    }
+
+    Ok(PestRawHttpFile { lines })
 }
 
 fn parse_root_pair(content: &str) -> Result<Pair<'_, Rule>> {
@@ -40,35 +85,17 @@ fn parse_root_pair(content: &str) -> Result<Pair<'_, Rule>> {
     Ok(file)
 }
 
-fn build_line(pair: Pair<'_, Rule>) -> Result<PestLine> {
-    let line_number = pair.as_span().start_pos().line_col().0;
+fn build_line(pair: Pair<'_, Rule>, line_number: usize) -> Result<PestLine> {
     let raw = trim_line_ending(pair.as_str());
     let kind = match pair.as_rule() {
         Rule::BlankLine => PestLineKind::Blank(PestBlankLine {
             whitespace: raw.clone(),
         }),
-        Rule::NameDirective => PestLineKind::Directive(build_name_directive(pair)?),
-        Rule::TimeoutDirective => PestLineKind::Directive(build_timeout_directive(pair)?),
-        Rule::ConnectionTimeoutDirective => {
-            PestLineKind::Directive(build_connection_timeout_directive(pair)?)
-        }
-        Rule::DependsOnDirective => PestLineKind::Directive(build_depends_on_directive(pair)?),
-        Rule::IfDirective => PestLineKind::Directive(build_if_directive(pair)?),
-        Rule::IfNotDirective => PestLineKind::Directive(build_if_not_directive(pair)?),
-        Rule::PreDelayDirective => PestLineKind::Directive(build_pre_delay_directive(pair)?),
-        Rule::PostDelayDirective => PestLineKind::Directive(build_post_delay_directive(pair)?),
-        Rule::HashComment | Rule::SlashComment => PestLineKind::Comment(build_comment(pair)?),
-        Rule::CommentLine => {
-            let comment = pair
-                .into_inner()
-                .next()
-                .context("comment line did not contain a concrete comment")?;
-            PestLineKind::Comment(build_comment(comment)?)
-        }
-        Rule::VariableLine => PestLineKind::Variable(build_variable_line(pair)?),
-        Rule::AssertionLine => PestLineKind::Assertion(build_assertion_line(pair)?),
-        Rule::RequestLine => PestLineKind::Request(build_request_line(pair)?),
-        Rule::HeaderLine => PestLineKind::Header(build_header_line(pair)?),
+        Rule::CommentOrDirectiveLine => build_comment_or_directive_line(&raw)?,
+        Rule::VariableLine => PestLineKind::Variable(build_variable_line(&raw)?),
+        Rule::AssertionLine => PestLineKind::Assertion(build_assertion_line(&raw)?),
+        Rule::RequestLine => PestLineKind::Request(build_request_line(&raw)?),
+        Rule::HeaderLine => PestLineKind::Header(build_header_line(&raw)?),
         Rule::BodyLine => PestLineKind::Body(build_body_line(pair)?),
         Rule::IgnoredScriptBlock => PestLineKind::IgnoredScriptBlock(build_script_block(pair)?),
         other => bail!("unexpected top-level pest rule: {other:?}"),
@@ -81,25 +108,57 @@ fn build_line(pair: Pair<'_, Rule>) -> Result<PestLine> {
     })
 }
 
-fn build_name_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let name = required_next(&mut inner, Rule::NameText, "name directive value")?
-        .as_str()
-        .to_string();
+fn build_comment_or_directive_line(raw: &str) -> Result<PestLineKind> {
+    let (_, body) = parse_comment_prefix(raw)?;
+    let Some(directive_body) = body.strip_prefix('@') else {
+        return Ok(PestLineKind::Comment(build_comment_from_raw(raw)?));
+    };
 
+    let Some(separator) = directive_body.find(char::is_whitespace) else {
+        return Ok(PestLineKind::Comment(build_comment_from_raw(raw)?));
+    };
+
+    let directive_name = &directive_body[..separator];
+    match directive_name {
+        "name" | "timeout" | "connection-timeout" | "dependsOn" | "if" | "if-not"
+        | "pre-delay" | "post-delay" => {
+            Ok(PestLineKind::Directive(build_directive_line(raw)?))
+        }
+        _ => Ok(PestLineKind::Comment(build_comment_from_raw(raw)?)),
+    }
+}
+
+fn build_directive_line(raw: &str) -> Result<PestDirectiveLine> {
+    let (_, directive_body) = parse_comment_prefix(raw)?;
+    let directive_name = directive_body
+        .split_whitespace()
+        .next()
+        .context("directive line did not contain a directive keyword")?;
+
+    match directive_name {
+        "@name" => build_name_directive(raw),
+        "@timeout" => build_timeout_directive(raw),
+        "@connection-timeout" => build_connection_timeout_directive(raw),
+        "@dependsOn" => build_depends_on_directive(raw),
+        "@if" => build_if_directive(raw),
+        "@if-not" => build_if_not_directive(raw),
+        "@pre-delay" => build_pre_delay_directive(raw),
+        "@post-delay" => build_post_delay_directive(raw),
+        other => bail!("unexpected directive keyword: {other}"),
+    }
+}
+
+fn build_name_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, name) = parse_directive_value(raw, "@name")?;
     Ok(PestDirectiveLine {
         prefix,
-        kind: PestDirectiveKind::Name(name),
+        kind: PestDirectiveKind::Name(name.to_string()),
     })
 }
 
-fn build_timeout_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let timeout = build_timeout_literal(required_next(
-        &mut inner,
-        Rule::TimeoutValue,
-        "timeout directive value",
-    )?)?;
+fn build_timeout_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, value) = parse_directive_value(raw, "@timeout")?;
+    let timeout = build_timeout_literal(value)?;
 
     Ok(PestDirectiveLine {
         prefix,
@@ -107,13 +166,9 @@ fn build_timeout_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
     })
 }
 
-fn build_connection_timeout_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let timeout = build_timeout_literal(required_next(
-        &mut inner,
-        Rule::TimeoutValue,
-        "connection-timeout directive value",
-    )?)?;
+fn build_connection_timeout_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, value) = parse_directive_value(raw, "@connection-timeout")?;
+    let timeout = build_timeout_literal(value)?;
 
     Ok(PestDirectiveLine {
         prefix,
@@ -121,25 +176,17 @@ fn build_connection_timeout_directive(pair: Pair<'_, Rule>) -> Result<PestDirect
     })
 }
 
-fn build_depends_on_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let depends_on = required_next(&mut inner, Rule::ReferenceName, "dependsOn directive value")?
-        .as_str()
-        .to_string();
-
+fn build_depends_on_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, value) = parse_directive_value(raw, "@dependsOn")?;
     Ok(PestDirectiveLine {
         prefix,
-        kind: PestDirectiveKind::DependsOn(depends_on),
+        kind: PestDirectiveKind::DependsOn(value.to_string()),
     })
 }
 
-fn build_if_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let condition = build_condition_expression(required_next(
-        &mut inner,
-        Rule::ConditionExpression,
-        "@if directive condition",
-    )?)?;
+fn build_if_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, value) = parse_directive_value(raw, "@if")?;
+    let condition = build_condition_expression(value)?;
 
     Ok(PestDirectiveLine {
         prefix,
@@ -147,13 +194,9 @@ fn build_if_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
     })
 }
 
-fn build_if_not_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let condition = build_condition_expression(required_next(
-        &mut inner,
-        Rule::ConditionExpression,
-        "@if-not directive condition",
-    )?)?;
+fn build_if_not_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, value) = parse_directive_value(raw, "@if-not")?;
+    let condition = build_condition_expression(value)?;
 
     Ok(PestDirectiveLine {
         prefix,
@@ -161,183 +204,135 @@ fn build_if_not_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
     })
 }
 
-fn build_pre_delay_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let delay = required_next(&mut inner, Rule::Digits, "@pre-delay directive value")?
-        .as_str()
-        .to_string();
-
+fn build_pre_delay_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, value) = parse_directive_value(raw, "@pre-delay")?;
     Ok(PestDirectiveLine {
         prefix,
-        kind: PestDirectiveKind::PreDelay(delay),
+        kind: PestDirectiveKind::PreDelay(value.to_string()),
     })
 }
 
-fn build_post_delay_directive(pair: Pair<'_, Rule>) -> Result<PestDirectiveLine> {
-    let (prefix, mut inner) = split_directive(pair)?;
-    let delay = required_next(&mut inner, Rule::Digits, "@post-delay directive value")?
-        .as_str()
-        .to_string();
-
+fn build_post_delay_directive(raw: &str) -> Result<PestDirectiveLine> {
+    let (prefix, value) = parse_directive_value(raw, "@post-delay")?;
     Ok(PestDirectiveLine {
         prefix,
-        kind: PestDirectiveKind::PostDelay(delay),
+        kind: PestDirectiveKind::PostDelay(value.to_string()),
     })
 }
 
-fn build_timeout_literal(pair: Pair<'_, Rule>) -> Result<PestTimeoutLiteral> {
-    let mut inner = pair.into_inner();
-    let amount = required_next(&mut inner, Rule::Digits, "timeout amount")?
-        .as_str()
-        .to_string();
-    let unit = optional_next(&mut inner, Rule::TimeoutUnit, "timeout unit")?
-        .map(|pair| pair.as_str().to_string());
+fn build_timeout_literal(value: &str) -> Result<PestTimeoutLiteral> {
+    let value = value.trim();
+    let amount_end = value
+        .find(|character: char| !character.is_ascii_digit())
+        .unwrap_or(value.len());
+
+    if amount_end == 0 {
+        bail!("timeout literal did not contain a numeric amount");
+    }
+
+    let amount = value[..amount_end].to_string();
+    let unit = {
+        let unit = value[amount_end..].trim();
+        (!unit.is_empty()).then(|| unit.to_string())
+    };
 
     Ok(PestTimeoutLiteral { amount, unit })
 }
 
-fn build_condition_expression(pair: Pair<'_, Rule>) -> Result<PestConditionExpression> {
-    let condition = pair
-        .into_inner()
-        .next()
-        .context("condition expression did not contain a concrete condition")?;
+fn build_condition_expression(value: &str) -> Result<PestConditionExpression> {
+    let value = value.trim();
+    let split_at = value
+        .find(char::is_whitespace)
+        .context("condition expression did not contain an expected value")?;
+    let reference = &value[..split_at];
+    let remainder = value[split_at..].trim_start();
+    let (has_equality_operator, expected) = if let Some(expected) = remainder.strip_prefix("==") {
+        (true, expected.trim_start())
+    } else {
+        (false, remainder)
+    };
 
-    match condition.as_rule() {
-        Rule::StatusCondition => build_status_condition(condition),
-        Rule::BodyCondition => build_body_condition(condition),
-        other => bail!("unexpected condition expression rule: {other:?}"),
+    if expected.is_empty() {
+        bail!("condition expression did not contain an expected value");
     }
+
+    if let Some(request_name) = reference.strip_suffix(".response.status") {
+        return Ok(PestConditionExpression::Status {
+            request_name: request_name.to_string(),
+            has_equality_operator,
+            expected: expected.to_string(),
+        });
+    }
+
+    if let Some((request_name, path)) = reference.split_once(".response.body.") {
+        return Ok(PestConditionExpression::Body {
+            request_name: request_name.to_string(),
+            path: path.to_string(),
+            has_equality_operator,
+            expected: expected.to_string(),
+        });
+    }
+
+    bail!("unexpected condition expression: {value}")
 }
 
-fn build_status_condition(pair: Pair<'_, Rule>) -> Result<PestConditionExpression> {
-    let mut inner = pair.into_inner();
-    let request_name = required_next(&mut inner, Rule::ReferenceName, "status condition request")?
-        .as_str()
-        .to_string();
-    let operator_or_expected = inner
-        .next()
-        .context("status condition did not contain an expected value")?;
-
-    let (has_equality_operator, expected) = if operator_or_expected.as_rule() == Rule::EqualityOp {
-        let expected = required_next(&mut inner, Rule::ExpectedText, "status condition expected")?
-            .as_str()
-            .to_string();
-        (true, expected)
-    } else {
-        ensure_rule(
-            &operator_or_expected,
-            Rule::ExpectedText,
-            "status condition expected",
-        )?;
-        (false, operator_or_expected.as_str().to_string())
-    };
-
-    Ok(PestConditionExpression::Status {
-        request_name,
-        has_equality_operator,
-        expected,
+fn build_comment_from_raw(raw: &str) -> Result<PestCommentLine> {
+    let (prefix, body) = parse_comment_prefix(raw)?;
+    Ok(PestCommentLine {
+        prefix,
+        text: body.to_string(),
     })
 }
 
-fn build_body_condition(pair: Pair<'_, Rule>) -> Result<PestConditionExpression> {
-    let mut inner = pair.into_inner();
-    let request_name = required_next(&mut inner, Rule::ReferenceName, "body condition request")?
-        .as_str()
-        .to_string();
-    let path = required_next(&mut inner, Rule::ConditionPath, "body condition path")?
-        .as_str()
-        .to_string();
-    let operator_or_expected = inner
-        .next()
-        .context("body condition did not contain an expected value")?;
-
-    let (has_equality_operator, expected) = if operator_or_expected.as_rule() == Rule::EqualityOp {
-        let expected = required_next(&mut inner, Rule::ExpectedText, "body condition expected")?
-            .as_str()
-            .to_string();
-        (true, expected)
-    } else {
-        ensure_rule(
-            &operator_or_expected,
-            Rule::ExpectedText,
-            "body condition expected",
-        )?;
-        (false, operator_or_expected.as_str().to_string())
-    };
-
-    Ok(PestConditionExpression::Body {
-        request_name,
-        path,
-        has_equality_operator,
-        expected,
-    })
-}
-
-fn build_comment(pair: Pair<'_, Rule>) -> Result<PestCommentLine> {
-    let raw = trim_line_ending(pair.as_str());
-    let (prefix, text) = match pair.as_rule() {
-        Rule::HashComment => (
-            CommentPrefix::Hash,
-            raw.strip_prefix('#').unwrap_or(&raw).to_string(),
-        ),
-        Rule::SlashComment => (
-            CommentPrefix::SlashSlash,
-            raw.strip_prefix("//").unwrap_or(&raw).to_string(),
-        ),
-        other => bail!("unexpected comment rule: {other:?}"),
-    };
-
-    Ok(PestCommentLine { prefix, text })
-}
-
-fn build_variable_line(pair: Pair<'_, Rule>) -> Result<PestVariableLine> {
-    let mut inner = pair.into_inner();
-    let name = required_next(&mut inner, Rule::VariableName, "variable name")?
-        .as_str()
-        .to_string();
-    let value = optional_next(&mut inner, Rule::VariableValue, "variable value")?
-        .map(|pair| pair.as_str().to_string())
-        .unwrap_or_default();
+fn build_variable_line(raw: &str) -> Result<PestVariableLine> {
+    let separator = raw
+        .find('=')
+        .context("variable line did not contain '='")?;
+    let name = raw[1..separator].trim().to_string();
+    let value = raw[separator + 1..].trim().to_string();
 
     Ok(PestVariableLine { name, value })
 }
 
-fn build_assertion_line(pair: Pair<'_, Rule>) -> Result<PestAssertionLine> {
-    let mut inner = pair.into_inner();
-    let first = inner
-        .next()
-        .context("assertion line did not contain any assertion tokens")?;
-
-    let (uses_prompt_prefix, keyword_pair) = if first.as_rule() == Rule::AssertionPrefix {
+fn build_assertion_line(raw: &str) -> Result<PestAssertionLine> {
+    let (uses_prompt_prefix, assertion_line) = if let Some(assertion_line) = raw.strip_prefix('>') {
         (
             true,
-            required_next(&mut inner, Rule::AssertionKeyword, "assertion keyword")?,
+            strip_required_horizontal_ws(assertion_line, "assertion keyword")?,
         )
     } else {
-        ensure_rule(&first, Rule::AssertionKeyword, "assertion keyword")?;
-        (false, first)
+        (false, raw)
     };
 
-    let kind = match keyword_pair.as_str() {
-        "EXPECTED_RESPONSE_STATUS" => PestAssertionKind::Status,
-        "EXPECTED_RESPONSE_BODY" => PestAssertionKind::Body,
-        "EXPECTED_RESPONSE_HEADERS" => PestAssertionKind::Headers,
-        other => bail!("unexpected assertion keyword: {other}"),
+    let (kind, value_text) = if let Some(value) =
+        assertion_line.strip_prefix("EXPECTED_RESPONSE_STATUS")
+    {
+        (
+            PestAssertionKind::Status,
+            strip_required_horizontal_ws(value, "status assertion value")?,
+        )
+    } else if let Some(value) = assertion_line.strip_prefix("EXPECTED_RESPONSE_BODY") {
+        (
+            PestAssertionKind::Body,
+            strip_required_horizontal_ws(value, "body assertion value")?,
+        )
+    } else if let Some(value) = assertion_line.strip_prefix("EXPECTED_RESPONSE_HEADERS") {
+        (
+            PestAssertionKind::Headers,
+            strip_required_horizontal_ws(value, "headers assertion value")?,
+        )
+    } else {
+        bail!("unexpected assertion keyword in '{raw}'");
     };
 
-    let value_pair = required_next(&mut inner, Rule::AssertionValue, "assertion value")?;
-    let literal = value_pair
-        .into_inner()
-        .next()
-        .context("assertion value did not contain a literal")?;
-    let value = match literal.as_rule() {
-        Rule::QuotedText => PestAssertionValue::DoubleQuoted(strip_wrapping_quotes(
-            literal.as_str(),
+    let value = if value_text.starts_with('"') && value_text.ends_with('"') {
+        PestAssertionValue::DoubleQuoted(strip_wrapping_quotes(
+            value_text,
             '"',
             "double-quoted assertion value",
-        )?),
-        Rule::ExpectedText => PestAssertionValue::Raw(literal.as_str().to_string()),
-        other => bail!("unexpected assertion value rule: {other:?}"),
+        )?)
+    } else {
+        PestAssertionValue::Raw(value_text.to_string())
     };
 
     Ok(PestAssertionLine {
@@ -347,24 +342,24 @@ fn build_assertion_line(pair: Pair<'_, Rule>) -> Result<PestAssertionLine> {
     })
 }
 
-fn build_request_line(pair: Pair<'_, Rule>) -> Result<PestRequestLine> {
-    let mut inner = pair.into_inner();
-    let method = required_next(&mut inner, Rule::RequestMethod, "request method")?
-        .as_str()
-        .to_string();
-    let target = required_next(&mut inner, Rule::RequestTarget, "request target")?
-        .as_str()
-        .to_string();
+fn build_request_line(raw: &str) -> Result<PestRequestLine> {
+    let parts: Vec<&str> = raw.split_whitespace().collect();
+    if parts.len() < 2 {
+        bail!("request line did not contain a method and target");
+    }
+
+    let method = parts[0].to_string();
+    let target = parts[1].to_string();
     let mut http_version = None;
     let mut trailing_tokens = Vec::new();
 
-    if let Some(tail) = optional_next(&mut inner, Rule::RequestLineTail, "request line tail")? {
-        for token in tail.into_inner() {
-            match token.as_rule() {
-                Rule::HttpVersion => http_version = Some(token.as_str().to_string()),
-                Rule::IgnoredRequestToken => trailing_tokens.push(token.as_str().to_string()),
-                other => bail!("unexpected request line tail rule: {other:?}"),
-            }
+    if parts.len() >= 3 {
+        let tail = &parts[2..];
+        if tail[0].starts_with("HTTP/") {
+            http_version = Some(tail[0].to_string());
+            trailing_tokens.extend(tail[1..].iter().map(|token| (*token).to_string()));
+        } else {
+            trailing_tokens.extend(tail.iter().map(|token| (*token).to_string()));
         }
     }
 
@@ -376,16 +371,46 @@ fn build_request_line(pair: Pair<'_, Rule>) -> Result<PestRequestLine> {
     })
 }
 
-fn build_header_line(pair: Pair<'_, Rule>) -> Result<PestHeaderLine> {
-    let mut inner = pair.into_inner();
-    let name = required_next(&mut inner, Rule::HeaderName, "header name")?
-        .as_str()
-        .to_string();
-    let value = optional_next(&mut inner, Rule::HeaderValue, "header value")?
-        .map(|pair| pair.as_str().to_string())
-        .unwrap_or_default();
+fn build_header_line(raw: &str) -> Result<PestHeaderLine> {
+    let separator = raw.find(':').context("header line did not contain ':'")?;
+    let name = raw[..separator].to_string();
+    let value = trim_horizontal_ws_start(&raw[separator + 1..]).to_string();
 
     Ok(PestHeaderLine { name, value })
+}
+
+fn parse_directive_value<'a>(raw: &'a str, directive: &str) -> Result<(CommentPrefix, &'a str)> {
+    let (prefix, directive_body) = parse_comment_prefix(raw)?;
+    let directive_body = directive_body
+        .strip_prefix(directive)
+        .with_context(|| format!("directive did not start with {directive}"))?;
+    let value = strip_required_horizontal_ws(directive_body, directive)?;
+    Ok((prefix, value))
+}
+
+fn parse_comment_prefix<'a>(raw: &'a str) -> Result<(CommentPrefix, &'a str)> {
+    if let Some(body) = raw.strip_prefix('#') {
+        return Ok((CommentPrefix::Hash, trim_horizontal_ws_start(body)));
+    }
+
+    if let Some(body) = raw.strip_prefix("//") {
+        return Ok((CommentPrefix::SlashSlash, trim_horizontal_ws_start(body)));
+    }
+
+    bail!("line did not start with a supported comment prefix")
+}
+
+fn trim_horizontal_ws_start(text: &str) -> &str {
+    text.trim_start_matches([' ', '\t'])
+}
+
+fn strip_required_horizontal_ws<'a>(text: &'a str, context: &str) -> Result<&'a str> {
+    let stripped = trim_horizontal_ws_start(text);
+    if stripped.len() == text.len() {
+        bail!("expected {context} to be followed by whitespace")
+    } else {
+        Ok(stripped)
+    }
 }
 
 fn build_body_line(pair: Pair<'_, Rule>) -> Result<PestBodyLine> {
@@ -426,29 +451,6 @@ fn build_script_block(pair: Pair<'_, Rule>) -> Result<PestScriptBlock> {
     Ok(PestScriptBlock { start, lines, end })
 }
 
-fn split_directive(pair: Pair<'_, Rule>) -> Result<(CommentPrefix, Pairs<'_, Rule>)> {
-    let mut inner = pair.into_inner();
-    let prefix = parse_directive_prefix(required_next(
-        &mut inner,
-        Rule::DirectivePrefix,
-        "directive prefix",
-    )?)?;
-    Ok((prefix, inner))
-}
-
-fn parse_directive_prefix(pair: Pair<'_, Rule>) -> Result<CommentPrefix> {
-    let prefix = pair
-        .into_inner()
-        .next()
-        .context("directive prefix did not contain a concrete prefix")?;
-
-    match prefix.as_rule() {
-        Rule::HashDirectivePrefix => Ok(CommentPrefix::Hash),
-        Rule::SlashDirectivePrefix => Ok(CommentPrefix::SlashSlash),
-        other => bail!("unexpected directive prefix rule: {other:?}"),
-    }
-}
-
 fn required_next<'a>(
     pairs: &mut Pairs<'a, Rule>,
     expected: Rule,
@@ -459,20 +461,6 @@ fn required_next<'a>(
         .with_context(|| format!("missing {context} ({expected:?})"))?;
     ensure_rule(&pair, expected, context)?;
     Ok(pair)
-}
-
-fn optional_next<'a>(
-    pairs: &mut Pairs<'a, Rule>,
-    expected: Rule,
-    context: &str,
-) -> Result<Option<Pair<'a, Rule>>> {
-    match pairs.next() {
-        Some(pair) => {
-            ensure_rule(&pair, expected, context)?;
-            Ok(Some(pair))
-        }
-        None => Ok(None),
-    }
 }
 
 fn ensure_rule(pair: &Pair<'_, Rule>, expected: Rule, context: &str) -> Result<()> {
@@ -494,12 +482,52 @@ fn strip_wrapping_quotes(value: &str, quote: char, context: &str) -> Result<Stri
     }
 }
 
-fn trim_line_ending(text: &str) -> String {
+fn trim_line_ending_ref(text: &str) -> &str {
     text.strip_suffix("\r\n")
         .or_else(|| text.strip_suffix('\n'))
         .or_else(|| text.strip_suffix('\r'))
         .unwrap_or(text)
+}
+
+fn trim_line_ending(text: &str) -> String {
+    trim_line_ending_ref(text)
         .to_string()
+}
+
+fn count_physical_lines(text: &str) -> usize {
+    if text.is_empty() {
+        return 0;
+    }
+
+    let bytes = text.as_bytes();
+    let mut line_count = 0;
+    let mut index = 0;
+
+    while index < bytes.len() {
+        match bytes[index] {
+            b'\n' => {
+                line_count += 1;
+                index += 1;
+            }
+            b'\r' => {
+                line_count += 1;
+                index += if bytes.get(index + 1) == Some(&b'\n') {
+                    2
+                } else {
+                    1
+                };
+            }
+            _ => {
+                index += 1;
+            }
+        }
+    }
+
+    if text.ends_with('\n') || text.ends_with('\r') {
+        line_count
+    } else {
+        line_count + 1
+    }
 }
 
 #[cfg(test)]
@@ -622,6 +650,7 @@ GET https://api.example.com/profile"#;
                 trailing_tokens: Vec::new(),
             })
         );
+        assert_eq!(tree.lines[1].line_number, 4);
     }
 
     #[test]
