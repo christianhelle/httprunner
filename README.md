@@ -2752,19 +2752,19 @@ cargo run --bin httprunner-tui
 **Layout:**
 
 ```
-┌─────────────────────────────────────────────────────┐
-│ HTTP File Runner - TUI                              │
-│ Environment: production                             │
-├──────────┬──────────────────┬───────────────────────┤
-│ Files    │ Requests         │ Results               │
-│          │                  │                       │
-│ ▶ api/   │ GET /users       │ ✓ Passed: 5           │
-│   test.http│ POST /users   │ ✗ Failed: 1           │
-│   auth.http│ PUT /users/:id│ - Skipped: 0          │
-│          │                  │                       │
-└──────────┴──────────────────┴───────────────────────┘
-│ Status: Ready | Tab=Switch | F5=Run All | Ctrl+Q=Quit│
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ HTTP File Runner - TUI                                   │
+│ Environment: production                                  │
+├───────────────┬──────────────────┬───────────────────────┤
+│ Files         │ Requests         │ Results               │
+│               │                  │                       │
+│ ▶ api/        │ GET /users       │ ✓ Passed: 5           │
+│   test.http   │ POST /users      │ ✗ Failed: 1           │
+│   auth.http   │ PUT /users/:id   │ - Skipped: 0          │
+│               │                  │                       │
+└───────────────┴──────────────────┴───────────────────────┘
+│ Status: Ready | Tab=Switch | F5=Run All | Ctrl+Q=Quit    │
+└──────────────────────────────────────────────────────────┘
 ```
 
 See [src/tui/README.md](src/tui/README.md) for detailed documentation.
