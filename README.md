@@ -133,7 +133,7 @@ The binary will be at `target/release/httprunner` (or `httprunner.exe` on Window
 
 #### GUI Version
 
-The GUI version requires additional system dependencies on Linux. See [GUI README](src/gui/src/README.md) for details.
+The GUI version requires additional system dependencies on Linux. See [GUI README](src/gui/README.md) for details.
 
 ```bash
 git clone https://github.com/christianhelle/httprunner.git
@@ -2821,7 +2821,7 @@ State is automatically saved when you:
 - Execute requests
 - Quit the application
 
-See [GUI README](src/gui/src/README.md) for GUI-specific documentation.
+See [GUI README](src/gui/README.md) for GUI-specific documentation.
 
 ## Project Structure
 
