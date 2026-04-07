@@ -143,3 +143,35 @@ EXPECTED_RESPONSE_BODY "local-user"
 GET __BASE_URL__/delay/40
 
 EXPECTED_RESPONSE_STATUS 200
+
+###
+
+# @name functions
+POST __BASE_URL__/json
+Content-Type: application/json
+
+{
+    "guid": "guid()",
+    "GUID": "GUID()",
+    "string": "string()",
+    "STRING": "STRING()",
+    "number": "number()",
+    "NUMBER": "NUMBER()",
+    "to_base64": "base64_encode('Hello, World!')",
+    "TO_BASE64": "BASE64_ENCODE('Hello, World!')",
+    "upper": "upper('hello, world')",
+    "lower": "lower('HELLO, WORLD')",
+    "first_name": "first_name()",
+    "last_name": "last_name()",
+    "name": "name()",
+    "address": "address()",
+    "job_title": "job_title()",
+    "email": "email()",
+    "getdate": "getdate()",
+    "gettime": "gettime()",
+    "getdatetime": "getdatetime()",
+    "getutcdatetime": "getutcdatetime()",
+    "lorem_ipsum": "lorem_ipsum(50)"
+}
+
+EXPECTED_RESPONSE_STATUS 200

@@ -30,7 +30,7 @@ fn env_fixture_uses_http_client_env_file() -> Result<()> {
 }
 
 #[test]
-fn feature_fixture_covers_chaining_conditionals_and_delay() -> Result<()> {
+fn feature_fixture_covers_chaining_conditionals_and_delay_and_functions() -> Result<()> {
     let server = TestServer::start()?;
     let workspace = FixtureWorkspace::new(server.base_url())?;
     let feature_fixture = workspace.arg("examples/features.local.http");
