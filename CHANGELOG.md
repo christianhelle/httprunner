@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- chore(deps): update jetli/trunk-action action to v0.5.1 ([#242](https://github.com/christianhelle/httprunner/pull/242)) (@renovate[bot])
 - chore(deps): update actions/deploy-pages action to v5 ([#237](https://github.com/christianhelle/httprunner/pull/237)) (@renovate[bot])
 - chore(deps): update actions/checkout action to v6 ([#247](https://github.com/christianhelle/httprunner/pull/247)) (@renovate[bot])
 - Update actions/github-script action to v8 ([#253](https://github.com/christianhelle/httprunner/pull/253)) (@renovate[bot])
