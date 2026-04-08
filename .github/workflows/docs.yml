@@ -7,8 +7,8 @@ on:
       - 'docs/**'
       - 'src/gui/**'
       - 'src/core/**'
-      - 'install.sh'
-      - 'install.ps1'
+      - 'docs/install.sh'
+      - 'docs/ss1.ps1'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
 
@@ -55,8 +55,8 @@ jobs:
           # Copy docs
           cp -r docs/* _site/
           # Copy install scripts
-          cp install.sh _site/install
-          cp install.ps1 _site/install.ps1
+           cp docs/install.sh _site/install
+           cp docs/install.ps1 _site/install.ps1
           # Copy WASM app to /app subdirectory
           mkdir -p _site/app
           cp -r src/gui/dist/* _site/app/
