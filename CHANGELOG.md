@@ -3,6 +3,8 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- chore(deps): update docker/login-action action to v4 ([#207](https://github.com/christianhelle/httprunner/pull/207)) (@renovate[bot])
+- chore(deps): update docker/setup-buildx-action action to v4 ([#208](https://github.com/christianhelle/httprunner/pull/208)) (@renovate[bot])
 - chore(deps): update jetli/trunk-action action to v0.5.1 ([#242](https://github.com/christianhelle/httprunner/pull/242)) (@renovate[bot])
 - chore(deps): update actions/deploy-pages action to v5 ([#237](https://github.com/christianhelle/httprunner/pull/237)) (@renovate[bot])
 - chore(deps): update actions/checkout action to v6 ([#247](https://github.com/christianhelle/httprunner/pull/247)) (@renovate[bot])
@@ -17,8 +19,8 @@
 - Refactor .http file parsing to be PEG grammar based using pest ([#256](https://github.com/christianhelle/httprunner/pull/256)) ([@christianhelle](https://github.com/christianhelle/))
 - Refresh Rust crates and adapt workspace code to current APIs ([#252](https://github.com/christianhelle/httprunner/pull/252)) (@Copilot)
 - Harden installs and release publishing ([#249](https://github.com/christianhelle/httprunner/pull/249)) ([@christianhelle](https://github.com/christianhelle/))
-- Fix UI run lifecycle and request round-tripping ([#246](https://github.com/christianhelle/httprunner/pull/246)) ([@christianhelle](https://github.com/christianhelle/))
 - Harden runtime caching and output redaction ([#245](https://github.com/christianhelle/httprunner/pull/245)) ([@christianhelle](https://github.com/christianhelle/))
+- Fix UI run lifecycle and request round-tripping ([#246](https://github.com/christianhelle/httprunner/pull/246)) ([@christianhelle](https://github.com/christianhelle/))
 - Fix core parser and request failures ([#244](https://github.com/christianhelle/httprunner/pull/244)) ([@christianhelle](https://github.com/christianhelle/))
 - Match WASM execution and trim GUI persistence overhead ([#248](https://github.com/christianhelle/httprunner/pull/248)) ([@christianhelle](https://github.com/christianhelle/))
 
