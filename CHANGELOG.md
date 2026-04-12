@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- Update softprops/action-gh-release action to v3 ([#259](https://github.com/christianhelle/httprunner/pull/259)) (@renovate[bot])
 - chore(deps): update actions/github-script action to v9 ([#258](https://github.com/christianhelle/httprunner/pull/258)) (@renovate[bot])
 - chore(deps): update docker/login-action action to v4 ([#207](https://github.com/christianhelle/httprunner/pull/207)) (@renovate[bot])
 - chore(deps): update docker/setup-buildx-action action to v4 ([#208](https://github.com/christianhelle/httprunner/pull/208)) (@renovate[bot])
