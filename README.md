@@ -95,6 +95,7 @@ irm https://christianhelle.com/httprunner/install.ps1 | iex -InstallDir "C:\Tool
 Download the latest release for your platform from the [GitHub Releases page](https://github.com/christianhelle/httprunner/releases/latest):
 
 - **Linux x86_64:** `httprunner-linux-x86_64.tar.gz`
+- **Linux ARM64:** `httprunner-linux-aarch64.tar.gz`
 - **macOS x86_64:** `httprunner-macos-x86_64.tar.gz`
 - **macOS ARM64:** `httprunner-macos-aarch64.tar.gz`
 - **Windows x86_64:** `httprunner-windows-x86_64.zip`
