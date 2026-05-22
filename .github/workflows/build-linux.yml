@@ -39,7 +39,7 @@ jobs:
         cache: true
 
     - name: Install Linux dependencies for GUI
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04-arm'
+      if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
