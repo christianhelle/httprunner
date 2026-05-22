@@ -4,9 +4,9 @@ use super::pest_parse_tree::{
     PestHeaderLine, PestHttpFile, PestLine, PestLineKind, PestRequestLine, PestScriptBlock,
     PestTimeoutLiteral, PestVariableLine,
 };
-use anyhow::{anyhow, bail, Context, Result};
-use pest::iterators::{Pair, Pairs};
+use anyhow::{Context, Result, anyhow, bail};
 use pest::Parser;
+use pest::iterators::{Pair, Pairs};
 use pest_derive::Parser;
 
 #[derive(Parser)]

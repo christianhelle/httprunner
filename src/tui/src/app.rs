@@ -130,23 +130,26 @@ impl App {
                 return Ok(());
             }
             (KeyCode::Char(']'), KeyModifiers::NONE)
-                if self.focused_pane != FocusedPane::EnvironmentEditor => {
-                    self.increase_delay();
-                    return Ok(());
-                }
+                if self.focused_pane != FocusedPane::EnvironmentEditor =>
+            {
+                self.increase_delay();
+                return Ok(());
+            }
             (KeyCode::Char('['), KeyModifiers::NONE)
-                if self.focused_pane != FocusedPane::EnvironmentEditor => {
-                    self.decrease_delay();
-                    return Ok(());
-                }
+                if self.focused_pane != FocusedPane::EnvironmentEditor =>
+            {
+                self.decrease_delay();
+                return Ok(());
+            }
             (KeyCode::F(5), _)
             | (KeyCode::Char('r'), KeyModifiers::CONTROL)
             | (KeyCode::Char('r'), KeyModifiers::NONE)
             | (KeyCode::Char('R'), KeyModifiers::SHIFT)
-                if self.focused_pane != FocusedPane::EnvironmentEditor => {
-                    self.run_all_requests();
-                    return Ok(());
-                }
+                if self.focused_pane != FocusedPane::EnvironmentEditor =>
+            {
+                self.run_all_requests();
+                return Ok(());
+            }
             _ => {}
         }
 
