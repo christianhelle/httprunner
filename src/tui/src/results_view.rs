@@ -106,11 +106,10 @@ impl ResultsView {
 
     pub fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
-            KeyCode::Up | KeyCode::Char('k') => {
-                if self.scroll_offset > 0 {
+            KeyCode::Up | KeyCode::Char('k')
+                if self.scroll_offset > 0 => {
                     self.scroll_offset -= 1;
                 }
-            }
             KeyCode::Down | KeyCode::Char('j') => {
                 self.scroll_offset += 1;
             }
