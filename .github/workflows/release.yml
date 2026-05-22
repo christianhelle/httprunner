@@ -55,6 +55,10 @@ jobs:
             target: x86_64-unknown-linux-gnu
             binary_name: httprunner
             archive_name: httprunner-linux-x86_64.tar.gz
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            binary_name: httprunner
+            archive_name: httprunner-linux-aarch64.tar.gz
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary_name: httprunner.exe
@@ -93,7 +97,7 @@ jobs:
           cache: true
 
       - name: Install Linux dependencies for GUI
-        if: matrix.os == 'ubuntu-latest'
+        if: contains(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
