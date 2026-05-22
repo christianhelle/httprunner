@@ -9,9 +9,16 @@ on:
 
 jobs:
   build-linux:
-    name: Build Linux
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
+    name: Build Linux ${{ matrix.target }}
+    timeout-minutes: 15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
     
     steps:
     - name: Checkout code
@@ -27,30 +34,32 @@ jobs:
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: stable
+        target: ${{ matrix.target }}
         cache: true
 
     - name: Install Linux dependencies for GUI
+      if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
 
     - name: Run Clippy
-      run: cargo clippy -- -D warnings
+      run: cargo clippy --target ${{ matrix.target }} -- -D warnings
 
     - name: Build
-      run: cargo build
+      run: cargo build --target ${{ matrix.target }}
 
     - name: Run tests
-      run: cargo test
+      run: cargo test --target ${{ matrix.target }}
 
     - name: Build release
-      run: cargo build --release
+      run: cargo build --release --target ${{ matrix.target }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: httprunner-linux
+        name: httprunner-linux-${{ matrix.target }}
         path: |
-          target/release/httprunner
-          target/release/httprunner-gui
-          target/release/httprunner-tui
+          target/${{ matrix.target }}/release/httprunner
+          target/${{ matrix.target }}/release/httprunner-gui
+          target/${{ matrix.target }}/release/httprunner-tui
