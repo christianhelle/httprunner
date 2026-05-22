@@ -3,21 +3,21 @@ name: Build Linux
 on:
   push:
     paths:
-      - '**/*.rs'
-      - '**/Cargo.toml'
-      - '.github/workflows/build-linux.yml'
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - ".github/workflows/build-linux.yml"
   pull_request:
     paths:
-      - '**/*.rs'
-      - '**/Cargo.toml'
-      - '.github/workflows/build-linux.yml'
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - ".github/workflows/build-linux.yml"
 
 jobs:
   build-linux:
     name: Build (${{ matrix.os }})
     timeout-minutes: 15
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         include:
@@ -27,45 +27,45 @@ jobs:
             target: aarch64-unknown-linux-gnu
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-        fetch-tags: true
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
-    - name: Fetch tags
-      run: git fetch --tags --force
+      - name: Fetch tags
+        run: git fetch --tags --force
 
-    - name: Setup Rust
-      uses: actions-rust-lang/setup-rust-toolchain@v1
-      with:
-        toolchain: stable
-        target: ${{ matrix.target }}
-        cache: true
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          cache: true
 
-    - name: Install Linux dependencies for GUI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+      - name: Install Linux dependencies for GUI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
 
-    - name: Run Clippy
-      run: cargo clippy -- -D warnings
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
 
-    - name: Build
-      run: cargo build --target ${{ matrix.target }}
+      - name: Build
+        run: cargo build --target ${{ matrix.target }}
 
-    - name: Run tests
-      run: cargo test --target ${{ matrix.target }}
+      - name: Run tests
+        run: cargo test --target ${{ matrix.target }}
 
-    - name: Build release
-      run: cargo build --release --target ${{ matrix.target }}
+      - name: Build release
+        run: cargo build --release --target ${{ matrix.target }}
 
-    - name: Upload Artifacts
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v7
-      with:
-        name: httprunner-linux
-        path: |
-          target/x86_64-unknown-linux-gnu/release/httprunner
-          target/x86_64-unknown-linux-gnu/release/httprunner-gui
-          target/x86_64-unknown-linux-gnu/release/httprunner-tui
+      - name: Upload Artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: httprunner-linux
+          path: |
+            target/${{ matrix.target }}/release/httprunner
+            target/${{ matrix.target }}/release/httprunner-gui
+            target/${{ matrix.target }}/release/httprunner-tui
