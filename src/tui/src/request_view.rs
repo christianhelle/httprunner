@@ -42,15 +42,13 @@ impl RequestView {
         self.run_request = false;
 
         match key.code {
-            KeyCode::Up | KeyCode::Char('k') => {
-                if self.selected_index > 0 {
-                    self.selected_index -= 1;
-                }
+            KeyCode::Up | KeyCode::Char('k') if self.selected_index > 0 => {
+                self.selected_index -= 1;
             }
-            KeyCode::Down | KeyCode::Char('j') => {
-                if self.selected_index < self.requests.len().saturating_sub(1) {
-                    self.selected_index += 1;
-                }
+            KeyCode::Down | KeyCode::Char('j')
+                if self.selected_index < self.requests.len().saturating_sub(1) =>
+            {
+                self.selected_index += 1;
             }
             KeyCode::Enter => {
                 self.run_request = true;

@@ -65,19 +65,17 @@ fn split_lines_fast(content: &str) -> PestRawHttpFile<'_> {
     // terminal '\n', which matches the behaviour of `str::lines()` and avoids
     // adding a spurious blank line at the end of the file.
     let mut lines = Vec::new();
-    let mut line_number = 1usize;
 
-    for raw in content.split_terminator('\n') {
+    for (line_number, raw) in content.split_terminator('\n').enumerate() {
         // Strip the '\r' so CRLF files are handled transparently.
         let raw = raw.strip_suffix('\r').unwrap_or(raw);
         lines.push(PestRawLine {
-            line_number,
+            line_number: line_number + 1,
             raw,
             // All lines are Regular; the semantic assembler drives
             // IgnoredScriptBlock handling via its `in_intellij_script` flag.
             kind: PestRawLineKind::Regular,
         });
-        line_number += 1;
     }
 
     PestRawHttpFile { lines }

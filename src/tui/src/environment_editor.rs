@@ -377,20 +377,20 @@ impl EnvironmentEditor {
                 self.scroll_offset = 0;
             }
             // Add new environment
-            (KeyCode::Char('n'), KeyModifiers::NONE) => {
-                if self.focus == EditorFocus::EnvironmentList {
-                    self.input_mode = InputMode::NewEnvironment;
-                    self.input_buffer.clear();
-                    self.focus = EditorFocus::Input;
-                }
+            (KeyCode::Char('n'), KeyModifiers::NONE)
+                if self.focus == EditorFocus::EnvironmentList =>
+            {
+                self.input_mode = InputMode::NewEnvironment;
+                self.input_buffer.clear();
+                self.focus = EditorFocus::Input;
             }
             // Add new variable
-            (KeyCode::Char('a'), KeyModifiers::NONE) => {
-                if self.focus == EditorFocus::VariableList && !self.env_names.is_empty() {
-                    self.input_mode = InputMode::NewVariableName;
-                    self.input_buffer.clear();
-                    self.focus = EditorFocus::Input;
-                }
+            (KeyCode::Char('a'), KeyModifiers::NONE)
+                if self.focus == EditorFocus::VariableList && !self.env_names.is_empty() =>
+            {
+                self.input_mode = InputMode::NewVariableName;
+                self.input_buffer.clear();
+                self.focus = EditorFocus::Input;
             }
             // Edit variable value
             (KeyCode::Enter, _) | (KeyCode::Char('e'), KeyModifiers::NONE) => {

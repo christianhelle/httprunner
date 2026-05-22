@@ -80,15 +80,13 @@ impl FileTree {
         let files_len = self.files.lock().map(|f| f.len()).unwrap_or(0);
 
         match key.code {
-            KeyCode::Up | KeyCode::Char('k') => {
-                if self.selected_index > 0 {
-                    self.selected_index -= 1;
-                }
+            KeyCode::Up | KeyCode::Char('k') if self.selected_index > 0 => {
+                self.selected_index -= 1;
             }
-            KeyCode::Down | KeyCode::Char('j') => {
-                if self.selected_index < files_len.saturating_sub(1) {
-                    self.selected_index += 1;
-                }
+            KeyCode::Down | KeyCode::Char('j')
+                if self.selected_index < files_len.saturating_sub(1) =>
+            {
+                self.selected_index += 1;
             }
             KeyCode::Home => {
                 self.selected_index = 0;
