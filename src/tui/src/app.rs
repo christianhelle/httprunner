@@ -357,7 +357,7 @@ impl App {
                                         if let Ok(mut results) = incremental_results.lock() {
                                             results.push(
                                                 crate::results_view::ExecutionResult::Skipped {
-                                                    method: format!("⏭️ {}", request.method),
+                                                    method: request.method,
                                                     url: request.url,
                                                     reason,
                                                 },

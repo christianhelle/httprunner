@@ -449,7 +449,7 @@ impl ResultsView {
                         r.push(ExecutionResult::Failure(FailureResult::simple(
                             "INDEX".to_string(),
                             path.display().to_string(),
-                            format!("Request index {} not found", index),
+                            format!("Request index {} not found", index + 1),
                         )));
                     }
                 } else if let Ok(mut r) = results.lock() {
