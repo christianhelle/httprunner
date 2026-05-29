@@ -12,6 +12,7 @@
 - Platform review should watch for brittle workflows, missing prerequisites, and release automation gaps.
 - Rust 1.92+ edition 2024 is not widely documented—creates contributor friction.
 - **Baseline (2026-03-21):** Current branch passes all platform validation checks (format, linting, debug build, test suite, release build). 915 unit tests, 2.74 MB release binary on Windows. No platform blockers before parser changes.
+- **2026-05-29T16:27:00.865+02:00:** Commit hygiene automation now lives in `.github/copilot-instructions.md`, mirrored in `.squad/copilot-instructions.md` and `.squad/templates/copilot-instructions.md`; commit groups used here were core/CLI fail-fast, GUI/TUI fail-fast, and instruction/config updates.
 
 ## 2026-03-21: Pest.rs Migration Investigation Complete
 
