@@ -315,4 +315,68 @@ mod tests {
         results_view.apply_pending_verbose_switch();
         assert!(results_view.is_compact_mode());
     }
+
+    #[test]
+    fn skipped_results_are_not_counted_as_passed_or_failed() {
+        let mut results_view = ResultsView::new();
+        let arc = results_view.incremental_results();
+        let mut results = arc.lock().unwrap();
+        results.push(ExecutionResult::Success {
+            method: "GET".to_string(),
+            url: "https://example.com".to_string(),
+            status: 200,
+            duration_ms: 10,
+            request_body: None,
+            response_body: "ok".to_string(),
+            assertion_results: vec![],
+        });
+        results.push(ExecutionResult::Skipped {
+            method: "POST".to_string(),
+            url: "https://example.com/skip".to_string(),
+            reason: "dependency not met".to_string(),
+        });
+        results.push(ExecutionResult::Failure {
+            method: "DELETE".to_string(),
+            url: "https://example.com/fail".to_string(),
+            error: "404 Not Found".to_string(),
+        });
+        drop(results);
+
+        assert_eq!(results_view.passed_count(), 1);
+        assert_eq!(results_view.failed_count(), 1);
+    }
+
+    #[test]
+    fn get_incremental_results_returns_clone() {
+        let mut results_view = ResultsView::new();
+        assert!(results_view.get_incremental_results().is_empty());
+
+        results_view
+            .incremental_results()
+            .lock()
+            .unwrap()
+            .push(ExecutionResult::Skipped {
+                method: "GET".to_string(),
+                url: "https://example.com".to_string(),
+                reason: "condition false".to_string(),
+            });
+
+        let clone = results_view.get_incremental_results();
+        assert_eq!(clone.len(), 1);
+        assert!(matches!(clone[0], ExecutionResult::Skipped { .. }));
+    }
+
+    #[test]
+    fn skipped_variant_stores_bare_method_without_icon_prefix() {
+        // Ensure ExecutionResult::Skipped holds bare method (no embedded icon),
+        // because the renderer in ui.rs prepends its own icon.
+        let result = ExecutionResult::Skipped {
+            method: "GET".to_string(),
+            url: "https://example.com".to_string(),
+            reason: "condition".to_string(),
+        };
+        if let ExecutionResult::Skipped { method, .. } = result {
+            assert!(!method.contains('⏭'), "method should not embed the skip icon");
+        }
+    }
 }

@@ -1018,4 +1018,59 @@ mod tests {
         // fail-fast disabled never stops
         assert!(should_continue_after_async(&failed, false));
     }
+
+    #[test]
+    fn failure_result_simple_has_no_optional_fields() {
+        let f = FailureResult::simple(
+            "GET".to_string(),
+            "https://example.com".to_string(),
+            "connection refused".to_string(),
+        );
+        assert_eq!(f.method, "GET");
+        assert_eq!(f.url, "https://example.com");
+        assert_eq!(f.error, "connection refused");
+        assert!(f.status.is_none());
+        assert!(f.duration_ms.is_none());
+        assert!(f.request_body.is_none());
+        assert!(f.response_body.is_none());
+        assert!(f.assertion_results.is_empty());
+    }
+
+    #[test]
+    fn failure_result_full_construction_preserves_all_fields() {
+        let f = FailureResult {
+            method: "POST".to_string(),
+            url: "https://api.example.com/data".to_string(),
+            error: "500 Internal Server Error".to_string(),
+            status: Some(500),
+            duration_ms: Some(42),
+            request_body: Some("{\"key\":\"value\"}".to_string()),
+            response_body: Some("server error detail".to_string()),
+            assertion_results: vec![],
+        };
+        assert_eq!(f.status, Some(500));
+        assert_eq!(f.duration_ms, Some(42));
+        assert_eq!(f.request_body.as_deref(), Some("{\"key\":\"value\"}"));
+        assert_eq!(f.response_body.as_deref(), Some("server error detail"));
+    }
+
+    #[test]
+    fn results_view_fail_fast_defaults_to_false_and_can_be_toggled() {
+        let mut rv = ResultsView::new();
+        assert!(!rv.is_fail_fast());
+        rv.set_fail_fast(true);
+        assert!(rv.is_fail_fast());
+        rv.set_fail_fast(false);
+        assert!(!rv.is_fail_fast());
+    }
+
+    #[test]
+    fn results_view_compact_mode_defaults_to_true_and_can_be_toggled() {
+        let mut rv = ResultsView::new();
+        assert!(rv.is_compact_mode());
+        rv.set_compact_mode(false);
+        assert!(!rv.is_compact_mode());
+        rv.set_compact_mode(true);
+        assert!(rv.is_compact_mode());
+    }
 }
