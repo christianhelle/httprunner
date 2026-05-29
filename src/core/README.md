@@ -20,6 +20,7 @@ A powerful Rust library for parsing and executing HTTP requests from `.http` fil
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔀 **Conditional execution** with `@dependsOn`, `@if`, and `@if-not` directives
 - ⏱️ **Customizable timeouts** for connection and read operations
+- ⛔ **Fail-fast mode** to halt the entire run on the first failed request (`ProcessorConfig::with_fail_fast`)
 - 🔒 **Insecure HTTPS support** for development environments
 - 🌍 **Environment files** support for different deployment environments
 - 📁 Recursive `.http` file discovery

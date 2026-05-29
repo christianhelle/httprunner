@@ -15,6 +15,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - Support for multiple `.http` files in a single run
 - `--discover` mode to recursively find and run all `.http` files
 - `--verbose` mode for detailed request and response information
+- `--fail-fast` mode to stop on the first failed request and show its full details
 - `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - `--log` mode to save all output to a file for analysis and reporting
 - `--report` flag to generate summary reports in markdown or html format for test results
@@ -806,6 +807,26 @@ GET https://api.example.com/resource
 - Values are in milliseconds
 - Can be combined with other directives (`@name`, `@timeout`, `@dependsOn`, etc.)
 - Per-request delays are independent of the global `--delay` CLI flag
+
+## Fail-Fast Mode
+
+Use the `--fail-fast` flag to stop the entire run immediately when the first request fails, and print that request's full verbose details (request, response, and assertion results). This is useful in CI/CD pipelines and during debugging when you want to surface the first failure quickly instead of running every request.
+
+```bash
+# Stop at the first failed request and show its full details
+httprunner examples/api-test.http --fail-fast
+
+# Combine with discovery to stop at the first failure across all files
+httprunner --discover --fail-fast
+```
+
+**Behavior:**
+
+- A failure is any request that does not succeed: a network/execution error, a non-2xx HTTP status, a failed assertion, or a parse/processing error.
+- Skipped requests (unmet `@if` conditions or unmet `@dependsOn` dependencies) never trigger fail-fast.
+- When a failure occurs, httprunner abandons the remaining requests in the current file **and** skips all remaining files.
+- Only the failing request is shown in full verbose detail; earlier successful requests remain compact. Secret redaction still applies unless `--include-secrets` is set, and `--pretty-json` formatting is honored.
+- Partial results gathered before the halt are retained, so `--report`, `--export`, and `--export-json` still work. The process exits with a non-zero status.
 
 ## Suppressing the Donation Banner
 
@@ -2319,6 +2340,7 @@ Arguments:
   --export         Export individual HTTP requests and responses to timestamped log files
   --env <env>      Specify environment name to load variables from http-client.env.json
   --insecure       Allow insecure HTTPS connections (accept invalid certificates and hostnames)
+  --fail-fast      Stop immediately on the first failed request and show its full details
   --no-banner      Do not show the donation banner
   --version, -v    Show version information
   --upgrade        Update httprunner to the latest version

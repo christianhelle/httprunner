@@ -84,6 +84,10 @@ pub struct Cli {
     /// Delay between requests in milliseconds (default: 0)
     #[arg(long, value_name = "MILLISECONDS", default_value = "0")]
     pub delay: u64,
+
+    /// Stop immediately on the first failed request and show its full details
+    #[arg(long)]
+    pub fail_fast: bool,
 }
 
 impl Cli {
