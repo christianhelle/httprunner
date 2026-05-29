@@ -68,6 +68,7 @@ fn track_cli_usage(cli_args: &cli::Cli) {
         export_json: cli_args.export_json,
         file_count: cli_args.files.len(),
         delay: cli_args.delay,
+        fail_fast: cli_args.fail_fast,
     };
     telemetry::track_cli_args(&patterns);
 }
@@ -115,6 +116,7 @@ fn process_http_files(cli_args: &cli::Cli, files: Vec<String>) -> Result<Process
         cli_args.pretty_json,
         cli_args.delay,
         cli_args.include_secrets,
+        cli_args.fail_fast,
     )?;
 
     if results.success {

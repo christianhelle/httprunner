@@ -433,7 +433,7 @@ impl eframe::App for HttpRunnerApp {
                     let _ = self.results_view.run_content_async(
                         self.text_editor.get_content().to_string(),
                         self.selected_environment.as_deref(),
-                        ctx,
+                        &ctx,
                     );
                 }
             }
@@ -631,7 +631,7 @@ impl eframe::App for HttpRunnerApp {
                                     let _ = self.results_view.run_content_async(
                                         content,
                                         self.selected_environment.as_deref(),
-                                        ctx,
+                                        &ctx,
                                     );
                                 }
                             }
@@ -676,7 +676,7 @@ impl eframe::App for HttpRunnerApp {
                                                 editor_content,
                                                 idx,
                                                 self.selected_environment.as_deref(),
-                                                ctx,
+                                                &ctx,
                                             );
                                         }
                                     }
@@ -731,7 +731,7 @@ impl eframe::App for HttpRunnerApp {
                                     let _ = self.results_view.run_content_async(
                                         self.text_editor.get_content().to_string(),
                                         self.selected_environment.as_deref(),
-                                        ctx,
+                                        &ctx,
                                     );
                                 }
                             }

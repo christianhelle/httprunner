@@ -796,6 +796,17 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
                 format!("Delay: {}ms", app.delay_ms),
                 Style::default().fg(Color::Magenta),
             ),
+            Span::raw(" | "),
+            if app.fail_fast {
+                Span::styled(
+                    "Fail-fast: ON",
+                    Style::default()
+                        .fg(Color::Red)
+                        .add_modifier(Modifier::BOLD),
+                )
+            } else {
+                Span::styled("Fail-fast: OFF", Style::default().fg(Color::DarkGray))
+            },
         ]),
         Line::from(vec![
             Span::styled("R/F5", Style::default().fg(Color::Yellow)),
@@ -813,7 +824,9 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             Span::styled("Ctrl+T", Style::default().fg(Color::Yellow)),
             Span::raw(" Telemetry | "),
             Span::styled("[/]", Style::default().fg(Color::Yellow)),
-            Span::raw(" Delay"),
+            Span::raw(" Delay | "),
+            Span::styled("F", Style::default().fg(Color::Yellow)),
+            Span::raw(" Fail-fast"),
         ]),
     ];
 

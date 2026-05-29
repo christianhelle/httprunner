@@ -1874,4 +1874,260 @@ GET https://api.example.com/not-found
         assert_eq!(res.files[0].success_count, 2); // 200 and 400 both passed
         assert_eq!(res.files[0].failed_count, 1); // 404 with wrong assertion failed
     }
+
+    #[test]
+    fn test_fail_fast_halts_after_first_non_2xx_status() {
+        let file_content = r#"
+GET https://api.example.com/1
+###
+GET https://api.example.com/2
+###
+GET https://api.example.com/3
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+        let files = [file_path];
+
+        let mock = MockHttpExecutor::new(vec![
+            HttpResult {
+                request_name: None,
+                status_code: 500,
+                success: false,
+                error_message: Some("Internal Server Error".to_string()),
+                duration_ms: 1,
+                response_headers: None,
+                response_body: Some(r#"{"error":"boom"}"#.to_string()),
+                assertion_results: Vec::new(),
+            },
+            create_success_response(None),
+            create_success_response(None),
+        ]);
+
+        let config = ProcessorConfig::new(&files).with_fail_fast(true);
+        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        // Only the first request executed; remaining abandoned.
+        assert_eq!(mock.get_call_count(), 1);
+        assert_eq!(res.files[0].failed_count, 1);
+        assert_eq!(res.files[0].success_count, 0);
+    }
+
+    #[test]
+    fn test_fail_fast_forces_response_capture_on_executor() {
+        // Even when not verbose, fail_fast must pass verbose=true to the executor
+        // so the failed request always has body/headers available.
+        let file_content = "GET https://api.example.com/1\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+        let files = [file_path];
+
+        let captured_verbose = std::sync::Arc::new(std::sync::Mutex::new(None::<bool>));
+        let captured_clone = captured_verbose.clone();
+
+        let config = ProcessorConfig::new(&files).with_fail_fast(true);
+        let result = process_http_files_with_config(&config, &|_req, v, _i| {
+            *captured_clone.lock().unwrap() = Some(v);
+            Ok(HttpResult {
+                request_name: None,
+                status_code: 500,
+                success: false,
+                error_message: Some("boom".to_string()),
+                duration_ms: 1,
+                response_headers: None,
+                response_body: Some("body".to_string()),
+                assertion_results: Vec::new(),
+            })
+        });
+
+        assert!(result.is_ok());
+        assert_eq!(*captured_verbose.lock().unwrap(), Some(true));
+    }
+
+    #[test]
+    fn test_fail_fast_halts_after_first_failed_assertion() {
+        let file_content = r#"
+GET https://api.example.com/ok
+###
+GET https://api.example.com/bad
+###
+GET https://api.example.com/never
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+        let files = [file_path];
+
+        let mock = MockHttpExecutor::new(vec![
+            create_success_response(None),
+            HttpResult {
+                request_name: None,
+                status_code: 404,
+                success: false, // assertion failed
+                error_message: None,
+                duration_ms: 2,
+                response_headers: None,
+                response_body: None,
+                assertion_results: vec![crate::types::AssertionResult {
+                    assertion: crate::types::Assertion {
+                        assertion_type: crate::types::AssertionType::Status,
+                        expected_value: "200".to_string(),
+                    },
+                    passed: false,
+                    actual_value: Some("404".to_string()),
+                    error_message: Some("Expected status 200, got 404".to_string()),
+                }],
+            },
+            create_success_response(None),
+        ]);
+
+        let config = ProcessorConfig::new(&files).with_fail_fast(true);
+        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        // First succeeded, second failed assertion and halted, third never ran.
+        assert_eq!(mock.get_call_count(), 2);
+        assert_eq!(res.files[0].success_count, 1);
+        assert_eq!(res.files[0].failed_count, 1);
+    }
+
+    #[test]
+    fn test_fail_fast_halts_on_network_error() {
+        let file_content = r#"
+GET https://api.example.com/1
+###
+GET https://api.example.com/2
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+        let files = [file_path];
+
+        let call_count = std::sync::Arc::new(std::sync::Mutex::new(0usize));
+        let call_count_clone = call_count.clone();
+
+        let config = ProcessorConfig::new(&files).with_fail_fast(true);
+        let result = process_http_files_with_config(&config, &|_req, _v, _i| {
+            *call_count_clone.lock().unwrap() += 1;
+            Err(anyhow::anyhow!("Network error"))
+        });
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        // First request errored and halted; second never executed.
+        assert_eq!(*call_count.lock().unwrap(), 1);
+        assert_eq!(res.files[0].failed_count, 1);
+    }
+
+    #[test]
+    fn test_fail_fast_does_not_halt_on_skipped_request() {
+        let file_content = r#"
+# @name setup
+GET https://api.example.com/setup
+###
+# @if setup.response.status 404
+GET https://api.example.com/skipped
+###
+GET https://api.example.com/final
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+        let files = [file_path];
+
+        let mock = MockHttpExecutor::new(vec![
+            create_success_response(Some("setup".to_string())),
+            create_success_response(None),
+        ]);
+
+        let config = ProcessorConfig::new(&files).with_fail_fast(true);
+        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        // Setup + final executed; middle request skipped without halting.
+        assert!(res.success);
+        assert_eq!(mock.get_call_count(), 2);
+        assert_eq!(res.files[0].skipped_count, 1);
+        assert_eq!(res.files[0].success_count, 2);
+        assert_eq!(res.files[0].failed_count, 0);
+    }
+
+    #[test]
+    fn test_fail_fast_stops_remaining_files() {
+        let file_one = create_temp_http_file("GET https://api.example.com/file1\n");
+        let file_two = create_temp_http_file("GET https://api.example.com/file2\n");
+        let files = [
+            file_one.path().to_str().unwrap().to_string(),
+            file_two.path().to_str().unwrap().to_string(),
+        ];
+
+        let mock = MockHttpExecutor::new(vec![
+            HttpResult {
+                request_name: None,
+                status_code: 500,
+                success: false,
+                error_message: Some("boom".to_string()),
+                duration_ms: 1,
+                response_headers: None,
+                response_body: Some("body".to_string()),
+                assertion_results: Vec::new(),
+            },
+            create_success_response(None),
+        ]);
+
+        let config = ProcessorConfig::new(&files).with_fail_fast(true);
+        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        // Only the first file's first request ran; second file skipped entirely.
+        assert_eq!(mock.get_call_count(), 1);
+        assert_eq!(res.files.len(), 1);
+        assert_eq!(res.files[0].failed_count, 1);
+    }
+
+    #[test]
+    fn test_fail_fast_disabled_runs_all_requests() {
+        let file_content = r#"
+GET https://api.example.com/1
+###
+GET https://api.example.com/2
+###
+GET https://api.example.com/3
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+        let files = [file_path];
+
+        let mock = MockHttpExecutor::new(vec![
+            HttpResult {
+                request_name: None,
+                status_code: 500,
+                success: false,
+                error_message: Some("boom".to_string()),
+                duration_ms: 1,
+                response_headers: None,
+                response_body: None,
+                assertion_results: Vec::new(),
+            },
+            create_success_response(None),
+            create_success_response(None),
+        ]);
+
+        // fail_fast defaults to false
+        let config = ProcessorConfig::new(&files);
+        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(!res.success);
+        // All three requests executed despite the first failing.
+        assert_eq!(mock.get_call_count(), 3);
+        assert_eq!(res.files[0].failed_count, 1);
+        assert_eq!(res.files[0].success_count, 2);
+    }
 }

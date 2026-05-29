@@ -4,6 +4,7 @@ use super::response_processor::{
 };
 use crate::assertions;
 use crate::types::{HttpRequest, HttpResult};
+use anyhow::Result;
 use reqwest::Client;
 use std::collections::HashMap;
 use std::sync::OnceLock;

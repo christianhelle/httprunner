@@ -33,6 +33,9 @@ pub struct App {
     pub file_tree_visible: bool,
     pub telemetry_enabled: bool,
     pub delay_ms: u64,
+    /// When enabled, a run stops at the first failed request and the results
+    /// view auto-switches to verbose. In-memory only (never persisted).
+    pub fail_fast: bool,
 }
 
 impl App {
@@ -67,6 +70,7 @@ impl App {
             file_tree_visible,
             telemetry_enabled,
             delay_ms,
+            fail_fast: false,
         };
 
         if let Some(saved_file) = state.selected_file
@@ -139,6 +143,12 @@ impl App {
                 if self.focused_pane != FocusedPane::EnvironmentEditor =>
             {
                 self.decrease_delay();
+                return Ok(());
+            }
+            (KeyCode::Char('f'), KeyModifiers::NONE)
+                if self.focused_pane != FocusedPane::EnvironmentEditor =>
+            {
+                self.toggle_fail_fast();
                 return Ok(());
             }
             (KeyCode::F(5), _)
@@ -298,7 +308,9 @@ impl App {
             let env = self.selected_environment.clone();
             let incremental_results = self.results_view.incremental_results();
             let is_running = self.results_view.is_running_arc();
+            let switch_to_verbose = self.results_view.switch_to_verbose_flag();
             let delay_ms = self.delay_ms; // Copy the delay value
+            let fail_fast = self.fail_fast; // Copy the fail-fast flag
 
             // Clear for async run
             if !self.results_view.try_clear_for_async_run() {
@@ -319,80 +331,102 @@ impl App {
                     let mut skipped_count = 0usize;
                     let mut total_count = 0usize;
 
-                    // Use the incremental processor which handles all features
-                    let result = httprunner_core::processor::process_http_file_incremental(
-                        &path_str,
-                        env.as_deref(),
-                        false, // insecure
-                        delay_ms,
-                        |_idx, total, process_result| {
-                            total_count = total;
+                    // Use the incremental processor which handles all features.
+                    // Forward verbose = fail_fast to the executor so the failing
+                    // request captures full detail when fail-fast is enabled.
+                    let result =
+                        httprunner_core::processor::process_http_file_incremental_with_executor(
+                            &path_str,
+                            env.as_deref(),
+                            false, // insecure
+                            delay_ms,
+                            |_idx, total, process_result| {
+                                total_count = total;
 
-                            use httprunner_core::processor::RequestProcessingResult;
-                            match process_result {
-                                RequestProcessingResult::Skipped { request, reason } => {
-                                    skipped_count += 1;
-                                    if let Ok(mut results) = incremental_results.lock() {
-                                        results.push(
-                                            crate::results_view::ExecutionResult::Failure {
-                                                method: format!("⏭️ {}", request.method),
-                                                url: request.url,
-                                                error: format!("Skipped: {}", reason),
-                                            },
-                                        );
-                                    }
-                                }
-                                RequestProcessingResult::Executed { request, result } => {
-                                    let request_body = request.body.clone();
-                                    if result.success {
-                                        success_count += 1;
+                                let should_continue =
+                                    crate::results_view::should_continue_after(
+                                        &process_result,
+                                        fail_fast,
+                                    );
+
+                                use httprunner_core::processor::RequestProcessingResult;
+                                match process_result {
+                                    RequestProcessingResult::Skipped { request, reason } => {
+                                        skipped_count += 1;
                                         if let Ok(mut results) = incremental_results.lock() {
                                             results.push(
-                                                crate::results_view::ExecutionResult::Success {
-                                                    method: request.method,
+                                                crate::results_view::ExecutionResult::Failure {
+                                                    method: format!("⏭️ {}", request.method),
                                                     url: request.url,
-                                                    status: result.status_code,
-                                                    duration_ms: result.duration_ms,
-                                                    request_body,
-                                                    response_body: result
-                                                        .response_body
-                                                        .unwrap_or_default(),
-                                                    assertion_results: result.assertion_results,
+                                                    error: format!("Skipped: {}", reason),
                                                 },
                                             );
                                         }
-                                    } else {
+                                    }
+                                    RequestProcessingResult::Executed { request, result } => {
+                                        let request_body = request.body.clone();
+                                        if result.success {
+                                            success_count += 1;
+                                            if let Ok(mut results) = incremental_results.lock() {
+                                                results.push(
+                                                    crate::results_view::ExecutionResult::Success {
+                                                        method: request.method,
+                                                        url: request.url,
+                                                        status: result.status_code,
+                                                        duration_ms: result.duration_ms,
+                                                        request_body,
+                                                        response_body: result
+                                                            .response_body
+                                                            .unwrap_or_default(),
+                                                        assertion_results: result.assertion_results,
+                                                    },
+                                                );
+                                            }
+                                        } else {
+                                            failed_count += 1;
+                                            if let Ok(mut results) = incremental_results.lock() {
+                                                results.push(
+                                                    crate::results_view::ExecutionResult::Failure {
+                                                        method: request.method,
+                                                        url: request.url,
+                                                        error: result.error_message.unwrap_or_else(
+                                                            || "Unknown error".to_string(),
+                                                        ),
+                                                    },
+                                                );
+                                            }
+                                        }
+                                    }
+                                    RequestProcessingResult::Failed { request, error } => {
                                         failed_count += 1;
                                         if let Ok(mut results) = incremental_results.lock() {
                                             results.push(
                                                 crate::results_view::ExecutionResult::Failure {
                                                     method: request.method,
                                                     url: request.url,
-                                                    error: result.error_message.unwrap_or_else(
-                                                        || "Unknown error".to_string(),
-                                                    ),
+                                                    error,
                                                 },
                                             );
                                         }
                                     }
                                 }
-                                RequestProcessingResult::Failed { request, error } => {
-                                    failed_count += 1;
-                                    if let Ok(mut results) = incremental_results.lock() {
-                                        results.push(
-                                            crate::results_view::ExecutionResult::Failure {
-                                                method: request.method,
-                                                url: request.url,
-                                                error,
-                                            },
-                                        );
-                                    }
+
+                                // Fail-fast: halt on the first failing result and
+                                // request the view to switch to verbose.
+                                if !should_continue {
+                                    switch_to_verbose.store(
+                                        true,
+                                        std::sync::atomic::Ordering::SeqCst,
+                                    );
                                 }
-                            }
-                            // Continue processing all requests
-                            true
-                        },
-                    );
+                                should_continue
+                            },
+                            &|req, _verbose, insecure| {
+                                httprunner_core::runner::execute_http_request(
+                                    req, fail_fast, insecure,
+                                )
+                            },
+                        );
 
                     if let Err(e) = result {
                         // Track parse error
@@ -482,6 +516,15 @@ impl App {
         self.delay_ms = self.delay_ms.saturating_sub(100);
         self.status_message = format!("Delay: {}ms", self.delay_ms);
         self.save_state();
+    }
+
+    fn toggle_fail_fast(&mut self) {
+        self.fail_fast = !self.fail_fast;
+        self.status_message = if self.fail_fast {
+            "Fail-fast enabled".to_string()
+        } else {
+            "Fail-fast disabled".to_string()
+        };
     }
 
     fn save_state(&self) {

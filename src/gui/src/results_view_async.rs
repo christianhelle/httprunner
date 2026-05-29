@@ -1,5 +1,5 @@
 // WASM-specific async execution for results view
-use crate::results_view::{ExecutionResult, ResultsView};
+use crate::results_view::{ExecutionResult, ResultsView, should_continue_after_async};
 use futures_util::FutureExt;
 use httprunner_core::parser;
 use httprunner_core::runner::{
@@ -8,6 +8,7 @@ use httprunner_core::runner::{
 use httprunner_core::types::{HttpRequest, HttpResult};
 use std::any::Any;
 use std::panic::AssertUnwindSafe;
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 
 impl ResultsView {
@@ -25,6 +26,8 @@ impl ResultsView {
         let is_running: Arc<Mutex<bool>> = Arc::clone(&self.is_running);
         let ctx = ctx.clone();
         let env = environment.map(|s| s.to_string());
+        let fail_fast = self.is_fail_fast();
+        let switch_to_verbose = self.switch_to_verbose_flag();
 
         wasm_bindgen_futures::spawn_local(async move {
             let run_result = AssertUnwindSafe(async {
@@ -40,11 +43,16 @@ impl ResultsView {
                             return;
                         }
 
+                        // Forward verbose = fail_fast so the failing request
+                        // captures full detail when fail-fast is enabled.
+                        let executor = make_async_executor(fail_fast);
                         if let Err(error) = process_http_requests_incremental_async(
                             requests,
                             false,
                             0,
                             |_, _, process_result| {
+                                let should_continue =
+                                    should_continue_after_async(&process_result, fail_fast);
                                 if let Ok(mut r) = results.lock() {
                                     if let Some(last) = r.last()
                                         && matches!(last, ExecutionResult::Running { .. })
@@ -53,10 +61,13 @@ impl ResultsView {
                                     }
                                     r.push(map_process_result(process_result));
                                 }
+                                if !should_continue {
+                                    switch_to_verbose.store(true, Ordering::SeqCst);
+                                }
                                 ctx.request_repaint();
-                                true
+                                should_continue
                             },
-                            &boxed_async_executor,
+                            &executor,
                         )
                         .await
                         {
@@ -124,6 +135,8 @@ impl ResultsView {
         let results: Arc<Mutex<Vec<ExecutionResult>>> = Arc::clone(&self.results);
         let is_running: Arc<Mutex<bool>> = Arc::clone(&self.is_running);
         let ctx = ctx.clone();
+        let fail_fast = self.is_fail_fast();
+        let switch_to_verbose = self.switch_to_verbose_flag();
 
         wasm_bindgen_futures::spawn_local(async move {
             let run_result = AssertUnwindSafe(async {
@@ -131,19 +144,25 @@ impl ResultsView {
                     Ok(requests) => {
                         let mut target_result: Option<ExecutionResult> = None;
 
+                        let executor = make_async_executor(fail_fast);
                         let process_result = process_http_requests_incremental_async(
                             requests,
                             false,
                             0,
                             |idx, _, process_result| {
                                 if idx == index {
+                                    let is_failure =
+                                        !should_continue_after_async(&process_result, true);
                                     target_result = Some(map_process_result(process_result));
+                                    if fail_fast && is_failure {
+                                        switch_to_verbose.store(true, Ordering::SeqCst);
+                                    }
                                     return false;
                                 }
 
                                 true
                             },
-                            &boxed_async_executor,
+                            &executor,
                         )
                         .await;
 
@@ -215,14 +234,16 @@ fn panic_to_string(panic: &Box<dyn Any + Send>) -> String {
     "unknown panic".to_string()
 }
 
-fn boxed_async_executor(
-    request: &HttpRequest,
-    verbose: bool,
-    insecure: bool,
-) -> AsyncRequestFuture<'_> {
-    Box::pin(httprunner_core::execute_http_request_async(
-        request, verbose, insecure,
-    ))
+/// Build an async executor that forwards `verbose = fail_fast`, guaranteeing the
+/// failing request captures full response detail when fail-fast is enabled.
+fn make_async_executor(
+    fail_fast: bool,
+) -> impl for<'a> Fn(&'a HttpRequest, bool, bool) -> AsyncRequestFuture<'a> {
+    move |request: &HttpRequest, _verbose: bool, insecure: bool| {
+        Box::pin(httprunner_core::execute_http_request_async(
+            request, fail_fast, insecure,
+        ))
+    }
 }
 
 fn map_process_result(process_result: AsyncRequestProcessingResult) -> ExecutionResult {

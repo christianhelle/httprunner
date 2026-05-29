@@ -37,6 +37,14 @@ When opening a PR:
 - If this is a 🟡 needs-review task, add to the PR description: `⚠️ This task was flagged as "needs review" — please have a squad member review before merging.`
 - Follow any project conventions in `.squad/decisions.md`
 
+## Commit hygiene
+
+Before finishing work, create commits automatically without waiting for the user to ask.
+
+- Split changes into the smallest logical commit groups that stand on their own in review.
+- Keep each commit scoped to one concern with a clean message.
+- Never add co-author trailers or any other co-author metadata unless the user explicitly asks for it.
+
 ## Decisions
 
 If you make a decision that affects other team members, write it to:

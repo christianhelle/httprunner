@@ -77,6 +77,9 @@ where
     B::Error: std::error::Error + Send + Sync + 'static,
 {
     loop {
+        // Apply any pending fail-fast verbose switch requested by a run thread.
+        app.results_view.apply_pending_verbose_switch();
+
         terminal.draw(|f| ui::render(f, app))?;
 
         if event::poll(std::time::Duration::from_millis(100))?

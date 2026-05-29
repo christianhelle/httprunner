@@ -379,6 +379,7 @@ pub struct CliArgPatterns {
     pub export_json: bool,
     pub file_count: usize,
     pub delay: u64,
+    pub fail_fast: bool,
 }
 
 pub fn track_cli_args(args: &CliArgPatterns) {
@@ -400,6 +401,7 @@ pub fn track_cli_args(args: &CliArgPatterns) {
     properties.insert("export_json".to_string(), args.export_json.to_string());
     properties.insert("file_count".to_string(), args.file_count.to_string());
     properties.insert("delay".to_string(), args.delay.to_string());
+    properties.insert("fail_fast".to_string(), args.fail_fast.to_string());
 
     if let Some(ref format) = args.report_format {
         properties.insert("report_format".to_string(), format.clone());
@@ -591,6 +593,7 @@ mod tests {
             export_json: false,
             file_count: 5,
             delay: 0,
+            fail_fast: false,
         };
 
         // Should not panic even if telemetry is not initialized
@@ -743,6 +746,7 @@ mod tests {
             export_json: false,
             file_count: 100,
             delay: 0,
+            fail_fast: false,
         };
 
         track_cli_args(&args);
@@ -766,6 +770,7 @@ mod tests {
             export_json: false,
             file_count: 0,
             delay: 0,
+            fail_fast: false,
         };
 
         track_cli_args(&args);
@@ -892,6 +897,7 @@ mod tests {
             export_json: false,
             file_count: 42,
             delay: 0,
+            fail_fast: false,
         };
 
         let args2 = args1.clone();

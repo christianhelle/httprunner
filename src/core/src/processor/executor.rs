@@ -23,6 +23,7 @@ pub struct ProcessorConfig<'a> {
     pub silent: bool,
     pub delay_ms: u64,
     pub include_secrets: bool,
+    pub fail_fast: bool,
 }
 
 impl<'a> ProcessorConfig<'a> {
@@ -37,6 +38,7 @@ impl<'a> ProcessorConfig<'a> {
             silent: false,
             delay_ms: 0,
             include_secrets: false,
+            fail_fast: false,
         }
     }
 
@@ -77,6 +79,11 @@ impl<'a> ProcessorConfig<'a> {
 
     pub fn with_include_secrets(mut self, include_secrets: bool) -> Self {
         self.include_secrets = include_secrets;
+        self
+    }
+
+    pub fn with_fail_fast(mut self, fail_fast: bool) -> Self {
+        self.fail_fast = fail_fast;
         self
     }
 }
@@ -565,8 +572,15 @@ where
         log_request_details(&sanitized_request, log, config.pretty_json);
     }
 
-    // Execute the request
-    let result = match executor(&processed_request, config.verbose, config.insecure) {
+    // Execute the request. When fail_fast is enabled we force full response
+    // capture for every request (config.verbose || config.fail_fast) so the
+    // failed request always has body/headers available, even though we only
+    // print verbose detail for the failing request.
+    let result = match executor(
+        &processed_request,
+        config.verbose || config.fail_fast,
+        config.insecure,
+    ) {
         Ok(result) => Ok((RequestProcessResult::Completed(result), processed_request)),
         Err(e) => {
             log_execution_error(&processed_request, &e, log, config.include_secrets);
@@ -587,7 +601,7 @@ fn process_single_file<F>(
     config: &ProcessorConfig,
     executor: &F,
     log: &mut Log,
-) -> Result<HttpFileResults>
+) -> Result<(HttpFileResults, bool)>
 where
     F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
 {
@@ -613,6 +627,7 @@ where
 
     let mut counters = RequestCounters::new();
     let mut request_contexts: Vec<RequestContext> = Vec::new();
+    let mut halted = false;
 
     for request in requests {
         counters.increment_total();
@@ -628,6 +643,10 @@ where
                 Err(e) => {
                     log.writeln(&format!("{} Internal error: {}", colors::red("❌"), e));
                     counters.record_failure();
+                    if config.fail_fast {
+                        halted = true;
+                        break;
+                    }
                     continue;
                 }
             };
@@ -642,13 +661,29 @@ where
                 counters.record_skip();
             }
             RequestProcessResult::ExecutionError => {
+                counters.record_failure();
+
+                // Fail-fast verbose-on-failure: surface the failing request's
+                // full details. The error line was already logged by
+                // process_single_request. Skip when verbose already printed
+                // request details before execution.
+                if config.fail_fast && !config.verbose {
+                    let sanitized_request =
+                        sanitize_request_for_output(&processed_request, config.include_secrets);
+                    log_request_details(&sanitized_request, log, config.pretty_json);
+                }
+
                 add_request_context_with_result(
                     &mut request_contexts,
                     processed_request,
                     None,
                     counters.total,
                 );
-                counters.record_failure();
+
+                if config.fail_fast {
+                    halted = true;
+                    break;
+                }
             }
             RequestProcessResult::Completed(http_result) => {
                 if http_result.success {
@@ -675,25 +710,51 @@ where
                     log_assertion_results(&sanitized_result, log);
                 }
 
+                let failed = !http_result.success;
+
+                // Fail-fast verbose-on-failure: emit the full verbose block for
+                // the failing request only. Request and response details are
+                // only printed by the normal flow when verbose, so emit them
+                // here when not already verbose. Assertion results are already
+                // printed above whenever assertions are present.
+                if failed && config.fail_fast && !config.verbose {
+                    log_request_details(&sanitized_request, log, config.pretty_json);
+                    let sanitized_result =
+                        sanitize_result_for_output(&http_result, config.include_secrets);
+                    log_response_details(&sanitized_result, log, config.pretty_json);
+                }
+
                 add_request_context_with_result(
                     &mut request_contexts,
                     processed_request,
                     Some(http_result),
                     counters.total,
                 );
+
+                if failed && config.fail_fast {
+                    halted = true;
+                    break;
+                }
             }
         }
     }
 
-    log_file_summary(&counters, log);
+    // Suppress the per-file summary when halting due to fail-fast so the output
+    // ends on the failed request's detail.
+    if !halted {
+        log_file_summary(&counters, log);
+    }
 
-    Ok(HttpFileResults {
-        filename: http_file.to_string(),
-        success_count: counters.success,
-        failed_count: counters.failed,
-        skipped_count: counters.skipped,
-        result_contexts: request_contexts,
-    })
+    Ok((
+        HttpFileResults {
+            filename: http_file.to_string(),
+            success_count: counters.success,
+            failed_count: counters.failed,
+            skipped_count: counters.skipped,
+            result_contexts: request_contexts,
+        },
+        halted,
+    ))
 }
 
 pub fn process_http_files(
@@ -728,6 +789,7 @@ pub fn process_http_files_with_options(
     pretty_json: bool,
     delay_ms: u64,
     include_secrets: bool,
+    fail_fast: bool,
 ) -> Result<ProcessorResults> {
     let config = ProcessorConfig::new(files)
         .with_verbose(verbose)
@@ -736,7 +798,8 @@ pub fn process_http_files_with_options(
         .with_insecure(insecure)
         .with_pretty_json(pretty_json)
         .with_delay(delay_ms)
-        .with_include_secrets(include_secrets);
+        .with_include_secrets(include_secrets)
+        .with_fail_fast(fail_fast);
 
     process_http_files_with_config(&config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
@@ -781,6 +844,7 @@ where
     let mut log = Log::new_with_silent(config.log_filename, config.silent)?;
     let mut http_file_results = Vec::<HttpFileResults>::new();
     let mut totals = TotalCounters::new();
+    let mut halted = false;
 
     if config.insecure {
         log.writeln(&format!(
@@ -791,7 +855,7 @@ where
 
     for http_file in config.files {
         match process_single_file(http_file, config, executor, &mut log) {
-            Ok(file_results) => {
+            Ok((file_results, file_halted)) => {
                 totals.add_file_results(&RequestCounters {
                     success: file_results.success_count,
                     failed: file_results.failed_count,
@@ -799,15 +863,28 @@ where
                     total: 0, // Not used in add_file_results
                 });
                 http_file_results.push(file_results);
+                if file_halted {
+                    // Fail-fast halt: skip all remaining files.
+                    halted = true;
+                    break;
+                }
             }
             Err(_) => {
                 // Parse error - count the entire file as failed
                 totals.increment_files_failed();
+                if config.fail_fast {
+                    // Parse/processing errors also trigger a fail-fast halt.
+                    halted = true;
+                    break;
+                }
             }
         }
     }
 
-    log_overall_summary(&totals, &mut log);
+    // Suppress the overall summary when halting due to fail-fast.
+    if !halted {
+        log_overall_summary(&totals, &mut log);
+    }
 
     Ok(ProcessorResults {
         success: totals.failed == 0,

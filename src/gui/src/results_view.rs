@@ -1,7 +1,11 @@
 #[cfg(not(target_arch = "wasm32"))]
 use httprunner_core::telemetry;
+use httprunner_core::runner::AsyncRequestProcessingResult;
+#[cfg(not(target_arch = "wasm32"))]
+use httprunner_core::processor::RequestProcessingResult;
 use httprunner_core::types::AssertionResult;
 use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -51,6 +55,12 @@ pub struct ResultsView {
     pub(crate) results: Arc<Mutex<Vec<ExecutionResult>>>,
     pub(crate) is_running: Arc<Mutex<bool>>,
     compact_mode: bool,
+    /// When enabled, a run stops at the first failing request and the view
+    /// auto-switches to verbose. In-memory only (never persisted).
+    fail_fast: bool,
+    /// Set by a run thread when it halts on a failure so the next render can
+    /// force the results display into verbose mode.
+    switch_to_verbose: Arc<AtomicBool>,
 }
 
 impl ResultsView {
@@ -59,6 +69,8 @@ impl ResultsView {
             results: Arc::new(Mutex::new(Vec::new())),
             is_running: Arc::new(Mutex::new(false)),
             compact_mode: true, // Default to compact mode
+            fail_fast: false,
+            switch_to_verbose: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -68,6 +80,20 @@ impl ResultsView {
 
     pub fn is_compact_mode(&self) -> bool {
         self.compact_mode
+    }
+
+    pub fn is_fail_fast(&self) -> bool {
+        self.fail_fast
+    }
+
+    pub fn set_fail_fast(&mut self, fail_fast: bool) {
+        self.fail_fast = fail_fast;
+    }
+
+    /// Shared flag used by async (WASM) run paths to request a verbose switch
+    /// when a run halts on a failure under fail-fast.
+    pub(crate) fn switch_to_verbose_flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.switch_to_verbose)
     }
 
     pub fn is_running(&self) -> bool {
@@ -102,6 +128,8 @@ impl ResultsView {
 
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
+        let fail_fast = self.fail_fast;
+        let switch_to_verbose = Arc::clone(&self.switch_to_verbose);
 
         // Track feature usage
         telemetry::track_feature_usage("run_file");
@@ -121,72 +149,88 @@ impl ResultsView {
                     let mut skipped_count = 0usize;
                     let mut total_count = 0usize;
 
-                    // Use the incremental processor which handles all features
-                    let result = httprunner_core::processor::process_http_file_incremental(
-                        path_str,
-                        env.as_deref(),
-                        false, // insecure
-                        delay_ms,
-                        |_idx, total, process_result| {
-                            total_count = total;
+                    // Use the incremental processor which handles all features.
+                    // Forward verbose = fail_fast to the executor so that, when
+                    // fail-fast is on, the failing request captures full detail.
+                    let result =
+                        httprunner_core::processor::process_http_file_incremental_with_executor(
+                            path_str,
+                            env.as_deref(),
+                            false, // insecure
+                            delay_ms,
+                            |_idx, total, process_result| {
+                                total_count = total;
 
-                            use httprunner_core::processor::RequestProcessingResult;
-                            match process_result {
-                                RequestProcessingResult::Skipped { request, reason } => {
-                                    skipped_count += 1;
-                                    if let Ok(mut r) = results.lock() {
-                                        r.push(ExecutionResult::Failure {
-                                            method: format!("⏭️ {}", request.method),
-                                            url: request.url,
-                                            error: format!("Skipped: {}", reason),
-                                        });
-                                    }
-                                }
-                                RequestProcessingResult::Executed { request, result } => {
-                                    let request_body = request.body.clone();
-                                    if result.success {
-                                        success_count += 1;
+                                let should_continue =
+                                    should_continue_after(&process_result, fail_fast);
+
+                                use httprunner_core::processor::RequestProcessingResult;
+                                match process_result {
+                                    RequestProcessingResult::Skipped { request, reason } => {
+                                        skipped_count += 1;
                                         if let Ok(mut r) = results.lock() {
-                                            r.push(ExecutionResult::Success {
-                                                method: request.method,
+                                            r.push(ExecutionResult::Failure {
+                                                method: format!("⏭️ {}", request.method),
                                                 url: request.url,
-                                                status: result.status_code,
-                                                duration_ms: result.duration_ms,
-                                                request_body,
-                                                response_body: result
-                                                    .response_body
-                                                    .unwrap_or_default(),
-                                                assertion_results: result.assertion_results,
+                                                error: format!("Skipped: {}", reason),
                                             });
                                         }
-                                    } else {
+                                    }
+                                    RequestProcessingResult::Executed { request, result } => {
+                                        let request_body = request.body.clone();
+                                        if result.success {
+                                            success_count += 1;
+                                            if let Ok(mut r) = results.lock() {
+                                                r.push(ExecutionResult::Success {
+                                                    method: request.method,
+                                                    url: request.url,
+                                                    status: result.status_code,
+                                                    duration_ms: result.duration_ms,
+                                                    request_body,
+                                                    response_body: result
+                                                        .response_body
+                                                        .unwrap_or_default(),
+                                                    assertion_results: result.assertion_results,
+                                                });
+                                            }
+                                        } else {
+                                            failed_count += 1;
+                                            if let Ok(mut r) = results.lock() {
+                                                r.push(ExecutionResult::Failure {
+                                                    method: request.method,
+                                                    url: request.url,
+                                                    error: result.error_message.unwrap_or_else(
+                                                        || "Unknown error".to_string(),
+                                                    ),
+                                                });
+                                            }
+                                        }
+                                    }
+                                    RequestProcessingResult::Failed { request, error } => {
                                         failed_count += 1;
                                         if let Ok(mut r) = results.lock() {
                                             r.push(ExecutionResult::Failure {
                                                 method: request.method,
                                                 url: request.url,
-                                                error: result
-                                                    .error_message
-                                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                                                error,
                                             });
                                         }
                                     }
                                 }
-                                RequestProcessingResult::Failed { request, error } => {
-                                    failed_count += 1;
-                                    if let Ok(mut r) = results.lock() {
-                                        r.push(ExecutionResult::Failure {
-                                            method: request.method,
-                                            url: request.url,
-                                            error,
-                                        });
-                                    }
+
+                                // Fail-fast: halt on the first failing result and
+                                // request the view to switch to verbose.
+                                if !should_continue {
+                                    switch_to_verbose.store(true, Ordering::SeqCst);
                                 }
-                            }
-                            // Continue processing all requests for "Run All"
-                            true
-                        },
-                    );
+                                should_continue
+                            },
+                            &|req, _verbose, insecure| {
+                                httprunner_core::runner::execute_http_request(
+                                    req, fail_fast, insecure,
+                                )
+                            },
+                        );
 
                     if let Err(e) = result {
                         // Track parse error
@@ -265,6 +309,8 @@ impl ResultsView {
 
         let results = Arc::clone(&self.results);
         let is_running = Arc::clone(&self.is_running);
+        let fail_fast = self.fail_fast;
+        let switch_to_verbose = Arc::clone(&self.switch_to_verbose);
 
         thread::spawn(move || {
             let run_result = catch_unwind(AssertUnwindSafe(|| {
@@ -274,63 +320,75 @@ impl ResultsView {
                     // but only show the result of the selected request
                     let mut target_result: Option<ExecutionResult> = None;
 
-                    let result = httprunner_core::processor::process_http_file_incremental(
-                        path_str,
-                        env.as_deref(),
-                        false, // insecure
-                        delay_ms,
-                        |idx, _total, process_result| {
-                            // Only capture the result for the target index
-                            if idx == index {
-                                use httprunner_core::processor::RequestProcessingResult;
-                                target_result = Some(match process_result {
-                                    RequestProcessingResult::Skipped { request, reason } => {
-                                        ExecutionResult::Failure {
-                                            method: format!("⏭️ {}", request.method),
-                                            url: request.url,
-                                            error: format!("Skipped: {}", reason),
-                                        }
-                                    }
-                                    RequestProcessingResult::Executed { request, result } => {
-                                        let request_body = request.body.clone();
-                                        if result.success {
-                                            ExecutionResult::Success {
-                                                method: request.method,
+                    let result =
+                        httprunner_core::processor::process_http_file_incremental_with_executor(
+                            path_str,
+                            env.as_deref(),
+                            false, // insecure
+                            delay_ms,
+                            |idx, _total, process_result| {
+                                // Only capture the result for the target index
+                                if idx == index {
+                                    use httprunner_core::processor::RequestProcessingResult;
+                                    let is_failure =
+                                        !should_continue_after(&process_result, true);
+                                    target_result = Some(match process_result {
+                                        RequestProcessingResult::Skipped { request, reason } => {
+                                            ExecutionResult::Failure {
+                                                method: format!("⏭️ {}", request.method),
                                                 url: request.url,
-                                                status: result.status_code,
-                                                duration_ms: result.duration_ms,
-                                                request_body,
-                                                response_body: result
-                                                    .response_body
-                                                    .unwrap_or_default(),
-                                                assertion_results: result.assertion_results,
+                                                error: format!("Skipped: {}", reason),
                                             }
-                                        } else {
+                                        }
+                                        RequestProcessingResult::Executed { request, result } => {
+                                            let request_body = request.body.clone();
+                                            if result.success {
+                                                ExecutionResult::Success {
+                                                    method: request.method,
+                                                    url: request.url,
+                                                    status: result.status_code,
+                                                    duration_ms: result.duration_ms,
+                                                    request_body,
+                                                    response_body: result
+                                                        .response_body
+                                                        .unwrap_or_default(),
+                                                    assertion_results: result.assertion_results,
+                                                }
+                                            } else {
+                                                ExecutionResult::Failure {
+                                                    method: request.method,
+                                                    url: request.url,
+                                                    error: result.error_message.unwrap_or_else(
+                                                        || "Unknown error".to_string(),
+                                                    ),
+                                                }
+                                            }
+                                        }
+                                        RequestProcessingResult::Failed { request, error } => {
                                             ExecutionResult::Failure {
                                                 method: request.method,
                                                 url: request.url,
-                                                error: result
-                                                    .error_message
-                                                    .unwrap_or_else(|| "Unknown error".to_string()),
+                                                error,
                                             }
                                         }
+                                    });
+                                    // Fail-fast: surface the failing request in verbose.
+                                    if fail_fast && is_failure {
+                                        switch_to_verbose.store(true, Ordering::SeqCst);
                                     }
-                                    RequestProcessingResult::Failed { request, error } => {
-                                        ExecutionResult::Failure {
-                                            method: request.method,
-                                            url: request.url,
-                                            error,
-                                        }
-                                    }
-                                });
-                                // Stop processing after capturing the target result
-                                false
-                            } else {
-                                // Continue processing to maintain context
-                                true
-                            }
-                        },
-                    );
+                                    // Stop processing after capturing the target result
+                                    false
+                                } else {
+                                    // Continue processing to maintain context
+                                    true
+                                }
+                            },
+                            &|req, _verbose, insecure| {
+                                httprunner_core::runner::execute_http_request(
+                                    req, fail_fast, insecure,
+                                )
+                            },
+                        );
 
                     if let Err(e) = result {
                         if let Ok(mut r) = results.lock() {
@@ -386,6 +444,12 @@ impl ResultsView {
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) {
+        // If a run halted on a failure with fail-fast enabled, force verbose so
+        // the failed request's full detail is shown.
+        if self.switch_to_verbose.swap(false, Ordering::SeqCst) {
+            self.compact_mode = false;
+        }
+
         ui.horizontal(|ui| {
             if ui
                 .selectable_label(self.compact_mode, "📋 Compact")
@@ -401,6 +465,13 @@ impl ResultsView {
             {
                 self.compact_mode = false;
             }
+
+            ui.separator();
+
+            ui.checkbox(&mut self.fail_fast, "Fail-fast")
+                .on_hover_text(
+                    "Stop the run at the first failed request and show it in verbose",
+                );
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(
@@ -666,9 +737,76 @@ fn panic_to_string(panic: &Box<dyn Any + Send>) -> String {
     "unknown panic".to_string()
 }
 
+/// Decide whether a run should continue after processing `result`.
+///
+/// With fail-fast enabled, the run stops on the first failing request: an
+/// executed request whose result was not successful, or a processing failure.
+/// Skipped requests never trigger fail-fast.
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn should_continue_after(result: &RequestProcessingResult, fail_fast: bool) -> bool {
+    !(fail_fast && request_result_is_failure(result))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn request_result_is_failure(result: &RequestProcessingResult) -> bool {
+    match result {
+        RequestProcessingResult::Executed { result, .. } => !result.success,
+        RequestProcessingResult::Failed { .. } => true,
+        RequestProcessingResult::Skipped { .. } => false,
+    }
+}
+
+/// Async (WASM) counterpart of [`should_continue_after`].
+pub(crate) fn should_continue_after_async(
+    result: &AsyncRequestProcessingResult,
+    fail_fast: bool,
+) -> bool {
+    !(fail_fast && async_result_is_failure(result))
+}
+
+fn async_result_is_failure(result: &AsyncRequestProcessingResult) -> bool {
+    match result {
+        AsyncRequestProcessingResult::Executed { result, .. } => !result.success,
+        AsyncRequestProcessingResult::Failed { .. } => true,
+        AsyncRequestProcessingResult::Skipped { .. } => false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use httprunner_core::types::{HttpRequest, HttpResult};
+
+    fn sample_request() -> HttpRequest {
+        HttpRequest {
+            name: None,
+            method: "GET".to_string(),
+            url: "https://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
+        }
+    }
+
+    fn sample_result(success: bool) -> HttpResult {
+        HttpResult {
+            request_name: None,
+            status_code: if success { 200 } else { 500 },
+            success,
+            error_message: None,
+            duration_ms: 1,
+            response_headers: None,
+            response_body: None,
+            assertion_results: vec![],
+        }
+    }
 
     #[test]
     fn try_start_run_prevents_overlapping_execution() {
@@ -677,5 +815,72 @@ mod tests {
         assert!(results_view.try_start_run("First".to_string()));
         assert!(!results_view.try_start_run("Second".to_string()));
         assert!(results_view.is_running());
+    }
+
+    #[test]
+    fn should_continue_after_stops_on_failed_execution_when_fail_fast() {
+        let result = RequestProcessingResult::Executed {
+            request: sample_request(),
+            result: sample_result(false),
+        };
+        assert!(!should_continue_after(&result, true));
+        assert!(should_continue_after(&result, false));
+    }
+
+    #[test]
+    fn should_continue_after_stops_on_processing_failure_when_fail_fast() {
+        let result = RequestProcessingResult::Failed {
+            request: sample_request(),
+            error: "boom".to_string(),
+        };
+        assert!(!should_continue_after(&result, true));
+        assert!(should_continue_after(&result, false));
+    }
+
+    #[test]
+    fn should_continue_after_continues_on_success() {
+        let result = RequestProcessingResult::Executed {
+            request: sample_request(),
+            result: sample_result(true),
+        };
+        assert!(should_continue_after(&result, true));
+        assert!(should_continue_after(&result, false));
+    }
+
+    #[test]
+    fn should_continue_after_never_stops_on_skip() {
+        let result = RequestProcessingResult::Skipped {
+            request: sample_request(),
+            reason: "dependency".to_string(),
+        };
+        assert!(should_continue_after(&result, true));
+        assert!(should_continue_after(&result, false));
+    }
+
+    #[test]
+    fn should_continue_after_async_matches_sync_semantics() {
+        let failed = AsyncRequestProcessingResult::Executed {
+            request: sample_request(),
+            result: sample_result(false),
+        };
+        let skipped = AsyncRequestProcessingResult::Skipped {
+            request: sample_request(),
+            reason: "dependency".to_string(),
+        };
+        let processing_failed = AsyncRequestProcessingResult::Failed {
+            request: sample_request(),
+            error: "boom".to_string(),
+        };
+        let ok = AsyncRequestProcessingResult::Executed {
+            request: sample_request(),
+            result: sample_result(true),
+        };
+
+        assert!(!should_continue_after_async(&failed, true));
+        assert!(!should_continue_after_async(&processing_failed, true));
+        assert!(should_continue_after_async(&skipped, true));
+        assert!(should_continue_after_async(&ok, true));
+        // fail-fast disabled never stops
+        assert!(should_continue_after_async(&failed, false));
     }
 }

@@ -6,6 +6,7 @@ A simple command-line tool written in Rust that parses `.http` files and execute
 - 📁 Support for multiple `.http` files in a single run
 - 🔍 `--discover` mode to recursively find and run all `.http` files
 - 📝 `--verbose` mode for detailed request and response information
+- ⛔ `--fail-fast` mode to stop on the first failed request and show its full details
 - 🎨 `--pretty-json` flag to format JSON payloads in verbose output for improved readability
 - 📋 `--log` mode to save all output to a file for analysis and reporting
 - 📊 `--report` flag to generate summary reports in markdown or html format for test results
@@ -39,6 +40,9 @@ httprunner <http-file> --verbose --pretty-json
 
 # Run with insecure HTTPS (accept invalid certificates)
 httprunner <http-file> --insecure
+
+# Stop at the first failed request and show its full details
+httprunner <http-file> --fail-fast
 
 # Run and save output to a log file
 httprunner <http-file> --log
