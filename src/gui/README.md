@@ -20,6 +20,7 @@ The GUI is also available as a web application that runs in your browser - no in
 - ▶️ **Run Requests** - Execute individual requests or entire files
 - 🌍 **Environment Support** - Select environments for variable substitution
 - 📊 **Live Results** - See execution results in real-time
+- 🛑 **Fail-fast** - Optionally stop a run at the first failed request and jump to verbose
 - 🚀 **Fast & Responsive** - Desktop: thread-based async execution; Web: browser event-loop async
 
 ---
@@ -149,6 +150,13 @@ Accept: application/json
 - **Ctrl+D** / **Cmd+D**: Toggle results view (Compact/Verbose)
   - **Compact mode**: Shows only request method, URL, status, and duration
   - **Verbose mode**: Includes request body, response body, and assertion results
+- **Fail-fast** (checkbox in the results controls, next to the Compact/Verbose toggle):
+  - When enabled, a run stops at the first failed request and the results view
+    automatically switches to verbose so the failing request's full detail is shown.
+  - A failure is a non-2xx response, a failed assertion, or a request/processing error.
+    Skipped requests (unmet dependencies or conditions) never trigger fail-fast.
+  - Works identically on desktop (native) and the web (WASM) build. In-memory only
+    (not persisted between sessions).
 - **Ctrl+S** / **Cmd+S**: Save file
 - **Ctrl+Plus** / **Cmd+Plus**: Zoom in
 - **Ctrl+Minus** / **Cmd+Minus**: Zoom out

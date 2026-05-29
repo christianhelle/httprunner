@@ -50,6 +50,13 @@ The TUI is divided into three main panes:
 - **Ctrl+D** - Toggle results view mode (compact/verbose)
   - **Compact mode**: Shows only request method, URL, status, and duration
   - **Verbose mode**: Includes request body, response body, and assertion results
+- **F** - Toggle Fail-fast mode (when not editing an environment)
+  - When **ON**, a "Run all" stops at the first failed request and the results view
+    automatically switches to verbose so the failing request's full detail is shown.
+  - A failure is a non-2xx response, a failed assertion, or a request/processing error.
+    Skipped requests (unmet dependencies or conditions) never trigger fail-fast.
+  - The current state is shown as `Fail-fast: ON/OFF` in the status bar. In-memory only
+    (not persisted between sessions).
 - **Ctrl+Q** or **Q** - Quit application
 
 ## Building

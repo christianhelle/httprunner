@@ -1,5 +1,7 @@
 use crossterm::event::{KeyCode, KeyEvent};
+use httprunner_core::processor::RequestProcessingResult;
 use httprunner_core::types::{AssertionResult, ProcessorResults};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
 /// Individual execution result for incremental display
@@ -31,6 +33,9 @@ pub struct ResultsView {
     scroll_offset: usize,
     /// Compact mode (true) or Verbose mode (false)
     compact_mode: bool,
+    /// Set by a run thread when it halts on a failure under fail-fast, so the
+    /// next render can force verbose mode.
+    switch_to_verbose: Arc<AtomicBool>,
 }
 
 impl ResultsView {
@@ -41,6 +46,7 @@ impl ResultsView {
             is_running: Arc::new(Mutex::new(false)),
             scroll_offset: 0,
             compact_mode: true,
+            switch_to_verbose: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -72,6 +78,20 @@ impl ResultsView {
 
     pub fn is_running_arc(&self) -> Arc<Mutex<bool>> {
         Arc::clone(&self.is_running)
+    }
+
+    /// Shared flag used by the run thread to request a verbose switch when a run
+    /// halts on a failure under fail-fast.
+    pub fn switch_to_verbose_flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.switch_to_verbose)
+    }
+
+    /// If a run requested a verbose switch (fail-fast halt), apply it. Should be
+    /// called each frame before rendering.
+    pub fn apply_pending_verbose_switch(&mut self) {
+        if self.switch_to_verbose.swap(false, Ordering::SeqCst) {
+            self.compact_mode = false;
+        }
     }
 
     pub fn is_running(&self) -> bool {
@@ -180,9 +200,58 @@ impl ResultsView {
     }
 }
 
+/// Decide whether a run should continue after processing `result`.
+///
+/// With fail-fast enabled, the run stops on the first failing request: an
+/// executed request whose result was not successful, or a processing failure.
+/// Skipped requests never trigger fail-fast.
+pub fn should_continue_after(result: &RequestProcessingResult, fail_fast: bool) -> bool {
+    !(fail_fast && request_result_is_failure(result))
+}
+
+fn request_result_is_failure(result: &RequestProcessingResult) -> bool {
+    match result {
+        RequestProcessingResult::Executed { result, .. } => !result.success,
+        RequestProcessingResult::Failed { .. } => true,
+        RequestProcessingResult::Skipped { .. } => false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use httprunner_core::types::{HttpRequest, HttpResult};
+
+    fn sample_request() -> HttpRequest {
+        HttpRequest {
+            name: None,
+            method: "GET".to_string(),
+            url: "https://example.com".to_string(),
+            headers: vec![],
+            body: None,
+            assertions: vec![],
+            variables: vec![],
+            timeout: None,
+            connection_timeout: None,
+            depends_on: None,
+            conditions: vec![],
+            pre_delay_ms: None,
+            post_delay_ms: None,
+        }
+    }
+
+    fn sample_result(success: bool) -> HttpResult {
+        HttpResult {
+            request_name: None,
+            status_code: if success { 200 } else { 500 },
+            success,
+            error_message: None,
+            duration_ms: 1,
+            response_headers: None,
+            response_body: None,
+            assertion_results: vec![],
+        }
+    }
 
     #[test]
     fn try_clear_for_async_run_prevents_overlapping_execution() {
@@ -191,5 +260,54 @@ mod tests {
         assert!(results_view.try_clear_for_async_run());
         assert!(!results_view.try_clear_for_async_run());
         assert!(results_view.is_running());
+    }
+
+    #[test]
+    fn should_continue_after_stops_on_failures_only_when_fail_fast() {
+        let failed_exec = RequestProcessingResult::Executed {
+            request: sample_request(),
+            result: sample_result(false),
+        };
+        let processing_failed = RequestProcessingResult::Failed {
+            request: sample_request(),
+            error: "boom".to_string(),
+        };
+        let ok = RequestProcessingResult::Executed {
+            request: sample_request(),
+            result: sample_result(true),
+        };
+        let skipped = RequestProcessingResult::Skipped {
+            request: sample_request(),
+            reason: "dependency".to_string(),
+        };
+
+        // Fail-fast enabled
+        assert!(!should_continue_after(&failed_exec, true));
+        assert!(!should_continue_after(&processing_failed, true));
+        assert!(should_continue_after(&ok, true));
+        assert!(should_continue_after(&skipped, true)); // skips never stop
+
+        // Fail-fast disabled never stops
+        assert!(should_continue_after(&failed_exec, false));
+        assert!(should_continue_after(&processing_failed, false));
+        assert!(should_continue_after(&ok, false));
+        assert!(should_continue_after(&skipped, false));
+    }
+
+    #[test]
+    fn apply_pending_verbose_switch_forces_verbose_once() {
+        let mut results_view = ResultsView::new();
+        results_view.set_compact_mode(true);
+
+        results_view
+            .switch_to_verbose_flag()
+            .store(true, Ordering::SeqCst);
+        results_view.apply_pending_verbose_switch();
+        assert!(!results_view.is_compact_mode());
+
+        // Flag consumed: switching back to compact stays compact.
+        results_view.set_compact_mode(true);
+        results_view.apply_pending_verbose_switch();
+        assert!(results_view.is_compact_mode());
     }
 }
