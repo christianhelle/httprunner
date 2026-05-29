@@ -13,6 +13,7 @@
 - Rust 1.92+ edition 2024 is not widely documented—creates contributor friction.
 - **Baseline (2026-03-21):** Current branch passes all platform validation checks (format, linting, debug build, test suite, release build). 915 unit tests, 2.74 MB release binary on Windows. No platform blockers before parser changes.
 - **2026-05-29T16:27:00.865+02:00:** Commit hygiene automation now lives in `.github/copilot-instructions.md`, mirrored in `.squad/copilot-instructions.md` and `.squad/templates/copilot-instructions.md`; commit groups used here were core/CLI fail-fast, GUI/TUI fail-fast, and instruction/config updates.
+- **2026-05-29T17:25:53.739+02:00:** Created PR #268 (fail-fast branch → main). Summary: fail-fast mode across CLI, GUI (native+WASM), and TUI; WASM GUI build unblocked; automatic commit-hygiene instruction enforcement. Base branch: main. Verification checklist included for all four execution paths.
 
 ## 2026-03-21: Pest.rs Migration Investigation Complete
 

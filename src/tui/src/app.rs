@@ -146,6 +146,7 @@ impl App {
                 return Ok(());
             }
             (KeyCode::Char('f'), KeyModifiers::NONE)
+            | (KeyCode::Char('F'), KeyModifiers::SHIFT)
                 if self.focused_pane != FocusedPane::EnvironmentEditor =>
             {
                 self.toggle_fail_fast();
@@ -355,10 +356,10 @@ impl App {
                                         skipped_count += 1;
                                         if let Ok(mut results) = incremental_results.lock() {
                                             results.push(
-                                                crate::results_view::ExecutionResult::Failure {
-                                                    method: format!("⏭️ {}", request.method),
+                                                crate::results_view::ExecutionResult::Skipped {
+                                                    method: request.method,
                                                     url: request.url,
-                                                    error: format!("Skipped: {}", reason),
+                                                    reason,
                                                 },
                                             );
                                         }
@@ -554,4 +555,43 @@ fn panic_to_string(panic: &Box<dyn Any + Send>) -> String {
     }
 
     "unknown panic".to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+    fn key(code: KeyCode, modifiers: KeyModifiers) -> KeyEvent {
+        KeyEvent::new(code, modifiers)
+    }
+
+    #[test]
+    fn fail_fast_toggle_responds_to_lowercase_and_uppercase_f() {
+        let mut app = App::new().expect("App creation should not fail in tests");
+        assert!(!app.fail_fast, "fail_fast should default to false");
+
+        app.handle_key_event(key(KeyCode::Char('f'), KeyModifiers::NONE))
+            .unwrap();
+        assert!(app.fail_fast, "lowercase 'f' should toggle fail_fast on");
+        assert_eq!(app.status_message, "Fail-fast enabled");
+
+        app.handle_key_event(key(KeyCode::Char('F'), KeyModifiers::SHIFT))
+            .unwrap();
+        assert!(!app.fail_fast, "uppercase 'F' should toggle fail_fast off");
+        assert_eq!(app.status_message, "Fail-fast disabled");
+    }
+
+    #[test]
+    fn fail_fast_not_toggled_when_environment_editor_is_focused() {
+        let mut app = App::new().expect("App creation should not fail in tests");
+        app.focused_pane = FocusedPane::EnvironmentEditor;
+
+        app.handle_key_event(key(KeyCode::Char('f'), KeyModifiers::NONE))
+            .unwrap();
+        assert!(
+            !app.fail_fast,
+            "fail_fast should not toggle when environment editor is focused"
+        );
+    }
 }

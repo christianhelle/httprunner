@@ -1,5 +1,7 @@
 // WASM-specific async execution for results view
-use crate::results_view::{ExecutionResult, ResultsView, should_continue_after_async};
+use crate::results_view::{
+    ExecutionResult, FailureResult, ResultsView, should_continue_after_async,
+};
 use futures_util::FutureExt;
 use httprunner_core::parser;
 use httprunner_core::runner::{
@@ -73,11 +75,11 @@ impl ResultsView {
                         {
                             if let Ok(mut r) = results.lock() {
                                 r.clear();
-                                r.push(ExecutionResult::Failure {
-                                    method: "PROCESS".to_string(),
-                                    url: "content".to_string(),
-                                    error: format!("Async processing failed: {}", error),
-                                });
+                                r.push(ExecutionResult::Failure(FailureResult::simple(
+                                    "PROCESS".to_string(),
+                                    "content".to_string(),
+                                    format!("Async processing failed: {}", error),
+                                )));
                             }
                             ctx.request_repaint();
                         }
@@ -85,11 +87,11 @@ impl ResultsView {
                     Err(error) => {
                         if let Ok(mut r) = results.lock() {
                             r.clear();
-                            r.push(ExecutionResult::Failure {
-                                method: "PARSE".to_string(),
-                                url: "content".to_string(),
-                                error: format!("Failed to parse content: {}", error),
-                            });
+                            r.push(ExecutionResult::Failure(FailureResult::simple(
+                                "PARSE".to_string(),
+                                "content".to_string(),
+                                format!("Failed to parse content: {}", error),
+                            )));
                         }
                         ctx.request_repaint();
                     }
@@ -102,11 +104,11 @@ impl ResultsView {
                 let panic_message = panic_to_string(&panic);
                 if let Ok(mut r) = results.lock() {
                     r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "PANIC".to_string(),
-                        url: "content".to_string(),
-                        error: format!("Async execution panicked: {}", panic_message),
-                    });
+                    r.push(ExecutionResult::Failure(FailureResult::simple(
+                        "PANIC".to_string(),
+                        "content".to_string(),
+                        format!("Async execution panicked: {}", panic_message),
+                    )));
                 }
             }
 
@@ -169,30 +171,30 @@ impl ResultsView {
                         if let Ok(mut r) = results.lock() {
                             r.clear();
                             if let Err(error) = process_result {
-                                r.push(ExecutionResult::Failure {
-                                    method: "PROCESS".to_string(),
-                                    url: "content".to_string(),
-                                    error: format!("Async processing failed: {}", error),
-                                });
+                                r.push(ExecutionResult::Failure(FailureResult::simple(
+                                    "PROCESS".to_string(),
+                                    "content".to_string(),
+                                    format!("Async processing failed: {}", error),
+                                )));
                             } else if let Some(result) = target_result {
                                 r.push(result);
                             } else {
-                                r.push(ExecutionResult::Failure {
-                                    method: "INDEX".to_string(),
-                                    url: "content".to_string(),
-                                    error: format!("Request index {} not found", index + 1),
-                                });
+                                r.push(ExecutionResult::Failure(FailureResult::simple(
+                                    "INDEX".to_string(),
+                                    "content".to_string(),
+                                    format!("Request index {} not found", index + 1),
+                                )));
                             }
                         }
                     }
                     Err(error) => {
                         if let Ok(mut r) = results.lock() {
                             r.clear();
-                            r.push(ExecutionResult::Failure {
-                                method: "PARSE".to_string(),
-                                url: "content".to_string(),
-                                error: format!("Failed to parse HTTP content: {}", error),
-                            });
+                            r.push(ExecutionResult::Failure(FailureResult::simple(
+                                "PARSE".to_string(),
+                                "content".to_string(),
+                                format!("Failed to parse HTTP content: {}", error),
+                            )));
                         }
                     }
                 }
@@ -204,11 +206,11 @@ impl ResultsView {
                 let panic_message = panic_to_string(&panic);
                 if let Ok(mut r) = results.lock() {
                     r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "PANIC".to_string(),
-                        url: "content".to_string(),
-                        error: format!("Async execution panicked: {}", panic_message),
-                    });
+                    r.push(ExecutionResult::Failure(FailureResult::simple(
+                        "PANIC".to_string(),
+                        "content".to_string(),
+                        format!("Async execution panicked: {}", panic_message),
+                    )));
                 }
             }
 
@@ -248,19 +250,19 @@ fn make_async_executor(
 
 fn map_process_result(process_result: AsyncRequestProcessingResult) -> ExecutionResult {
     match process_result {
-        AsyncRequestProcessingResult::Skipped { request, reason } => ExecutionResult::Failure {
-            method: format!("⏭️ {}", request.method),
-            url: request.url,
-            error: format!("Skipped: {}", reason),
-        },
+        AsyncRequestProcessingResult::Skipped { request, reason } => {
+            ExecutionResult::Failure(FailureResult::simple(
+                format!("⏭️ {}", request.method),
+                request.url,
+                format!("Skipped: {}", reason),
+            ))
+        }
         AsyncRequestProcessingResult::Executed { request, result } => {
             map_http_result(request, result)
         }
-        AsyncRequestProcessingResult::Failed { request, error } => ExecutionResult::Failure {
-            method: request.method,
-            url: request.url,
-            error,
-        },
+        AsyncRequestProcessingResult::Failed { request, error } => {
+            ExecutionResult::Failure(FailureResult::simple(request.method, request.url, error))
+        }
     }
 }
 
@@ -276,12 +278,17 @@ fn map_http_result(request: HttpRequest, result: HttpResult) -> ExecutionResult 
             assertion_results: result.assertion_results,
         }
     } else {
-        ExecutionResult::Failure {
+        ExecutionResult::Failure(FailureResult {
             method: request.method,
             url: request.url,
             error: result
                 .error_message
                 .unwrap_or_else(|| "Unknown error".to_string()),
-        }
+            status: Some(result.status_code),
+            duration_ms: Some(result.duration_ms),
+            request_body: request.body,
+            response_body: result.response_body,
+            assertion_results: result.assertion_results,
+        })
     }
 }
