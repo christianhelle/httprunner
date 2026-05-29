@@ -318,7 +318,7 @@ mod tests {
 
     #[test]
     fn skipped_results_are_not_counted_as_passed_or_failed() {
-        let mut results_view = ResultsView::new();
+        let results_view = ResultsView::new();
         let arc = results_view.incremental_results();
         let mut results = arc.lock().unwrap();
         results.push(ExecutionResult::Success {
@@ -348,7 +348,7 @@ mod tests {
 
     #[test]
     fn get_incremental_results_returns_clone() {
-        let mut results_view = ResultsView::new();
+        let results_view = ResultsView::new();
         assert!(results_view.get_incremental_results().is_empty());
 
         results_view
