@@ -146,6 +146,7 @@ impl App {
                 return Ok(());
             }
             (KeyCode::Char('f'), KeyModifiers::NONE)
+            | (KeyCode::Char('F'), KeyModifiers::SHIFT)
                 if self.focused_pane != FocusedPane::EnvironmentEditor =>
             {
                 self.toggle_fail_fast();
@@ -355,10 +356,10 @@ impl App {
                                         skipped_count += 1;
                                         if let Ok(mut results) = incremental_results.lock() {
                                             results.push(
-                                                crate::results_view::ExecutionResult::Failure {
+                                                crate::results_view::ExecutionResult::Skipped {
                                                     method: format!("⏭️ {}", request.method),
                                                     url: request.url,
-                                                    error: format!("Skipped: {}", reason),
+                                                    reason,
                                                 },
                                             );
                                         }

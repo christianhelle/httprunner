@@ -447,6 +447,23 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     ]));
                     lines.push(Line::from(""));
                 }
+                ExecutionResult::Skipped { method, url, reason } => {
+                    let method = sanitize_display_text(method);
+                    let url = sanitize_display_text(url);
+                    let reason = sanitize_display_text(reason);
+                    lines.push(Line::from(vec![
+                        Span::styled("⏭ ", Style::default().fg(Color::Yellow)),
+                        Span::raw(format!("{} {}", method, url)),
+                    ]));
+                    lines.push(Line::from(vec![
+                        Span::raw("  "),
+                        Span::styled(
+                            format!("Skipped: {}", reason),
+                            Style::default().fg(Color::Yellow),
+                        ),
+                    ]));
+                    lines.push(Line::from(""));
+                }
             }
         }
 
@@ -461,12 +478,25 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                 .iter()
                 .filter(|r| matches!(r, ExecutionResult::Failure { .. }))
                 .count();
-            lines.push(Line::from(vec![
+            let skipped = incremental_results
+                .iter()
+                .filter(|r| matches!(r, ExecutionResult::Skipped { .. }))
+                .count();
+            let mut summary_spans = vec![
                 Span::styled("Passed: ", Style::default().fg(Color::Green)),
                 Span::raw(format!("{} | ", passed)),
                 Span::styled("Failed: ", Style::default().fg(Color::Red)),
                 Span::raw(format!("{}", failed)),
-            ]));
+            ];
+            if skipped > 0 {
+                summary_spans.push(Span::raw(" | "));
+                summary_spans.push(Span::styled(
+                    "Skipped: ",
+                    Style::default().fg(Color::Yellow),
+                ));
+                summary_spans.push(Span::raw(format!("{}", skipped)));
+            }
+            lines.push(Line::from(summary_spans));
         }
 
         let title = if is_running {

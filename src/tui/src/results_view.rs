@@ -21,6 +21,11 @@ pub enum ExecutionResult {
         url: String,
         error: String,
     },
+    Skipped {
+        method: String,
+        url: String,
+        reason: String,
+    },
 }
 
 pub struct ResultsView {
