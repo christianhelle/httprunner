@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- Fix verbose failure details and skip rendering ([#269](https://github.com/christianhelle/httprunner/pull/269)) ([@christianhelle](https://github.com/christianhelle/))
 - Update actions/upload-pages-artifact action to v5 ([#260](https://github.com/christianhelle/httprunner/pull/260)) (@renovate[bot])
 - Update softprops/action-gh-release action to v3 ([#259](https://github.com/christianhelle/httprunner/pull/259)) (@renovate[bot])
 - chore(deps): update actions/github-script action to v9 ([#258](https://github.com/christianhelle/httprunner/pull/258)) (@renovate[bot])
