@@ -30,6 +30,36 @@ struct VerboseSuccessParams<'a> {
     assertion_results: &'a [AssertionResult],
 }
 
+/// Detail captured for a failed result. For failures that originate from an
+/// executed request, the optional fields preserve the full HTTP detail so the
+/// verbose view (e.g. after a fail-fast halt) can render status, bodies and
+/// assertion results. Non-execution failures (parse/read/panic/index/skip)
+/// only populate `method`, `url` and `error`.
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
+pub struct FailureResult {
+    pub method: String,
+    pub url: String,
+    pub error: String,
+    pub status: Option<u16>,
+    pub duration_ms: Option<u64>,
+    pub request_body: Option<String>,
+    pub response_body: Option<String>,
+    pub assertion_results: Vec<AssertionResult>,
+}
+
+impl FailureResult {
+    /// Build a failure that only carries an error message, for failures with no
+    /// HTTP response detail to preserve.
+    pub fn simple(method: String, url: String, error: String) -> Self {
+        Self {
+            method,
+            url,
+            error,
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum ExecutionResult {
     Success {
@@ -41,11 +71,7 @@ pub enum ExecutionResult {
         response_body: String,
         assertion_results: Vec<AssertionResult>,
     },
-    Failure {
-        method: String,
-        url: String,
-        error: String,
-    },
+    Failure(FailureResult),
     Running {
         message: String,
     },
@@ -169,11 +195,13 @@ impl ResultsView {
                                     RequestProcessingResult::Skipped { request, reason } => {
                                         skipped_count += 1;
                                         if let Ok(mut r) = results.lock() {
-                                            r.push(ExecutionResult::Failure {
-                                                method: format!("⏭️ {}", request.method),
-                                                url: request.url,
-                                                error: format!("Skipped: {}", reason),
-                                            });
+                                            r.push(ExecutionResult::Failure(
+                                                FailureResult::simple(
+                                                    format!("⏭️ {}", request.method),
+                                                    request.url,
+                                                    format!("Skipped: {}", reason),
+                                                ),
+                                            ));
                                         }
                                     }
                                     RequestProcessingResult::Executed { request, result } => {
@@ -196,24 +224,31 @@ impl ResultsView {
                                         } else {
                                             failed_count += 1;
                                             if let Ok(mut r) = results.lock() {
-                                                r.push(ExecutionResult::Failure {
+                                                r.push(ExecutionResult::Failure(FailureResult {
                                                     method: request.method,
                                                     url: request.url,
                                                     error: result.error_message.unwrap_or_else(
                                                         || "Unknown error".to_string(),
                                                     ),
-                                                });
+                                                    status: Some(result.status_code),
+                                                    duration_ms: Some(result.duration_ms),
+                                                    request_body,
+                                                    response_body: result.response_body,
+                                                    assertion_results: result.assertion_results,
+                                                }));
                                             }
                                         }
                                     }
                                     RequestProcessingResult::Failed { request, error } => {
                                         failed_count += 1;
                                         if let Ok(mut r) = results.lock() {
-                                            r.push(ExecutionResult::Failure {
-                                                method: request.method,
-                                                url: request.url,
-                                                error,
-                                            });
+                                            r.push(ExecutionResult::Failure(
+                                                FailureResult::simple(
+                                                    request.method,
+                                                    request.url,
+                                                    error,
+                                                ),
+                                            ));
                                         }
                                     }
                                 }
@@ -238,11 +273,11 @@ impl ResultsView {
 
                         if let Ok(mut r) = results.lock() {
                             r.clear();
-                            r.push(ExecutionResult::Failure {
-                                method: "PARSE".to_string(),
-                                url: path.display().to_string(),
-                                error: format!("Failed to parse file: {}", e),
-                            });
+                            r.push(ExecutionResult::Failure(FailureResult::simple(
+                                "PARSE".to_string(),
+                                path.display().to_string(),
+                                format!("Failed to parse file: {}", e),
+                            )));
                         }
                     } else {
                         // Track execution completion
@@ -260,11 +295,11 @@ impl ResultsView {
                     }
                 } else if let Ok(mut r) = results.lock() {
                     r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "READ".to_string(),
-                        url: path.display().to_string(),
-                        error: "Failed to convert path to string".to_string(),
-                    });
+                    r.push(ExecutionResult::Failure(FailureResult::simple(
+                        "READ".to_string(),
+                        path.display().to_string(),
+                        "Failed to convert path to string".to_string(),
+                    )));
                 }
             }));
 
@@ -273,11 +308,11 @@ impl ResultsView {
                 telemetry::track_error_message(&format!("Execution panic: {}", panic_message));
                 if let Ok(mut r) = results.lock() {
                     r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "PANIC".to_string(),
-                        url: path.display().to_string(),
-                        error: format!("Background execution panicked: {}", panic_message),
-                    });
+                    r.push(ExecutionResult::Failure(FailureResult::simple(
+                        "PANIC".to_string(),
+                        path.display().to_string(),
+                        format!("Background execution panicked: {}", panic_message),
+                    )));
                 }
             }
 
@@ -334,11 +369,11 @@ impl ResultsView {
                                         !should_continue_after(&process_result, true);
                                     target_result = Some(match process_result {
                                         RequestProcessingResult::Skipped { request, reason } => {
-                                            ExecutionResult::Failure {
-                                                method: format!("⏭️ {}", request.method),
-                                                url: request.url,
-                                                error: format!("Skipped: {}", reason),
-                                            }
+                                            ExecutionResult::Failure(FailureResult::simple(
+                                                format!("⏭️ {}", request.method),
+                                                request.url,
+                                                format!("Skipped: {}", reason),
+                                            ))
                                         }
                                         RequestProcessingResult::Executed { request, result } => {
                                             let request_body = request.body.clone();
@@ -355,21 +390,26 @@ impl ResultsView {
                                                     assertion_results: result.assertion_results,
                                                 }
                                             } else {
-                                                ExecutionResult::Failure {
+                                                ExecutionResult::Failure(FailureResult {
                                                     method: request.method,
                                                     url: request.url,
                                                     error: result.error_message.unwrap_or_else(
                                                         || "Unknown error".to_string(),
                                                     ),
-                                                }
+                                                    status: Some(result.status_code),
+                                                    duration_ms: Some(result.duration_ms),
+                                                    request_body,
+                                                    response_body: result.response_body,
+                                                    assertion_results: result.assertion_results,
+                                                })
                                             }
                                         }
                                         RequestProcessingResult::Failed { request, error } => {
-                                            ExecutionResult::Failure {
-                                                method: request.method,
-                                                url: request.url,
+                                            ExecutionResult::Failure(FailureResult::simple(
+                                                request.method,
+                                                request.url,
                                                 error,
-                                            }
+                                            ))
                                         }
                                     });
                                     // Fail-fast: surface the failing request in verbose.
@@ -393,11 +433,11 @@ impl ResultsView {
                     if let Err(e) = result {
                         if let Ok(mut r) = results.lock() {
                             r.clear();
-                            r.push(ExecutionResult::Failure {
-                                method: "PARSE".to_string(),
-                                url: path.display().to_string(),
-                                error: format!("Failed to parse file: {}", e),
-                            });
+                            r.push(ExecutionResult::Failure(FailureResult::simple(
+                                "PARSE".to_string(),
+                                path.display().to_string(),
+                                format!("Failed to parse file: {}", e),
+                            )));
                         }
                     } else if let Some(result) = target_result {
                         if let Ok(mut r) = results.lock() {
@@ -406,19 +446,19 @@ impl ResultsView {
                         }
                     } else if let Ok(mut r) = results.lock() {
                         r.clear();
-                        r.push(ExecutionResult::Failure {
-                            method: "INDEX".to_string(),
-                            url: path.display().to_string(),
-                            error: format!("Request index {} not found", index),
-                        });
+                        r.push(ExecutionResult::Failure(FailureResult::simple(
+                            "INDEX".to_string(),
+                            path.display().to_string(),
+                            format!("Request index {} not found", index),
+                        )));
                     }
                 } else if let Ok(mut r) = results.lock() {
                     r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "PATH".to_string(),
-                        url: path.display().to_string(),
-                        error: "Failed to convert path to string".to_string(),
-                    });
+                    r.push(ExecutionResult::Failure(FailureResult::simple(
+                        "PATH".to_string(),
+                        path.display().to_string(),
+                        "Failed to convert path to string".to_string(),
+                    )));
                 }
             }));
 
@@ -427,11 +467,11 @@ impl ResultsView {
                 telemetry::track_error_message(&format!("Execution panic: {}", panic_message));
                 if let Ok(mut r) = results.lock() {
                     r.clear();
-                    r.push(ExecutionResult::Failure {
-                        method: "PANIC".to_string(),
-                        url: path.display().to_string(),
-                        error: format!("Background execution panicked: {}", panic_message),
-                    });
+                    r.push(ExecutionResult::Failure(FailureResult::simple(
+                        "PANIC".to_string(),
+                        path.display().to_string(),
+                        format!("Background execution panicked: {}", panic_message),
+                    )));
                 }
             }
 
@@ -530,11 +570,16 @@ impl ResultsView {
                             );
                         }
                     }
-                    ExecutionResult::Failure { method, url, error } => {
+                    ExecutionResult::Failure(failure) => {
                         if self.compact_mode {
-                            self.show_compact_failure(ui, method, url, error);
+                            self.show_compact_failure(
+                                ui,
+                                &failure.method,
+                                &failure.url,
+                                &failure.error,
+                            );
                         } else {
-                            self.show_verbose_failure(ui, method, url, error);
+                            self.show_verbose_failure(ui, result_idx, failure);
                         }
                     }
                     ExecutionResult::Running { message } => {
@@ -716,11 +761,101 @@ impl ResultsView {
         ui.separator();
     }
 
-    fn show_verbose_failure(&self, ui: &mut egui::Ui, method: &str, url: &str, error: &str) {
+    fn show_verbose_failure(&self, ui: &mut egui::Ui, result_idx: usize, failure: &FailureResult) {
         ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "❌ FAILED");
-        ui.monospace(format!("{} {}", method, url));
-        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), error);
+        ui.monospace(format!("{} {}", failure.method, failure.url));
+        if let Some(status) = failure.status {
+            ui.label(format!("Status: {}", status));
+        }
+        if let Some(duration_ms) = failure.duration_ms {
+            ui.label(format!("Duration: {} ms", duration_ms));
+        }
+        ui.colored_label(egui::Color32::from_rgb(200, 0, 0), &failure.error);
+
+        // 1. Display assertion results if any
+        if !failure.assertion_results.is_empty() {
+            ui.separator();
+            ui.label("🔍 Assertion Results:");
+            self.show_verbose_assertions(ui, &failure.assertion_results);
+        }
+
+        // 2. Display request body if present (skip if empty or whitespace only)
+        if let Some(request_body) = &failure.request_body
+            && !request_body.trim().is_empty()
+        {
+            ui.separator();
+            ui.label("Request Body:");
+            egui::ScrollArea::vertical()
+                .id_salt(format!("failure_request_body_{}", result_idx))
+                .max_height(150.0)
+                .show(ui, |ui| {
+                    ui.monospace(request_body);
+                });
+        }
+
+        // 3. Display response body if present (skip if empty or whitespace only)
+        if let Some(response_body) = &failure.response_body
+            && !response_body.trim().is_empty()
+        {
+            ui.separator();
+            ui.label("Response:");
+            egui::ScrollArea::vertical()
+                .id_salt(format!("failure_response_body_{}", result_idx))
+                .max_height(300.0)
+                .show(ui, |ui| {
+                    ui.monospace(response_body);
+                });
+        }
         ui.separator();
+    }
+
+    fn show_verbose_assertions(&self, ui: &mut egui::Ui, assertion_results: &[AssertionResult]) {
+        for assertion_result in assertion_results {
+            let assertion_type_str = match assertion_result.assertion.assertion_type {
+                httprunner_core::types::AssertionType::Status => "Status Code",
+                httprunner_core::types::AssertionType::Body => "Response Body",
+                httprunner_core::types::AssertionType::Headers => "Response Headers",
+            };
+
+            if assertion_result.passed {
+                ui.horizontal(|ui| {
+                    ui.colored_label(egui::Color32::from_rgb(0, 200, 0), "  ✅");
+                    ui.label(format!(
+                        "{}: Expected '{}'",
+                        assertion_type_str, assertion_result.assertion.expected_value
+                    ));
+                });
+            } else {
+                ui.horizontal(|ui| {
+                    ui.colored_label(egui::Color32::from_rgb(200, 0, 0), "  ❌");
+                    ui.label(format!(
+                        "{}: {}",
+                        assertion_type_str,
+                        assertion_result
+                            .error_message
+                            .as_ref()
+                            .unwrap_or(&"Failed".to_string())
+                    ));
+                });
+
+                if let Some(ref actual) = assertion_result.actual_value {
+                    ui.horizontal(|ui| {
+                        ui.label("     ");
+                        ui.colored_label(
+                            egui::Color32::from_rgb(255, 200, 0),
+                            format!("Expected: '{}'", assertion_result.assertion.expected_value),
+                        );
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("     ");
+                        ui.colored_label(
+                            egui::Color32::from_rgb(255, 200, 0),
+                            format!("Actual: '{}'", actual),
+                        );
+                    });
+                }
+            }
+        }
     }
 }
 
