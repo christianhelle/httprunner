@@ -18,6 +18,7 @@
 - Setup agent squad ([#241](https://github.com/christianhelle/httprunner/pull/241)) ([@christianhelle](https://github.com/christianhelle/))
 
 ### Features
+- Introduce Fail-fast mode ([#268](https://github.com/christianhelle/httprunner/pull/268)) ([@christianhelle](https://github.com/christianhelle/))
 - Publish arm64 linux binary ([#267](https://github.com/christianhelle/httprunner/pull/267)) ([@christianhelle](https://github.com/christianhelle/))
 - Use enumerate instead of manual loop counter in split_lines_fast ([#266](https://github.com/christianhelle/httprunner/pull/266)) ([@christianhelle](https://github.com/christianhelle/))
 - Add deterministic CLI smoke tests ([#257](https://github.com/christianhelle/httprunner/pull/257)) ([@christianhelle](https://github.com/christianhelle/))
