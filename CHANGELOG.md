@@ -3,6 +3,12 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- Remove Squad ([#272](https://github.com/christianhelle/httprunner/pull/272)) ([@christianhelle](https://github.com/christianhelle/))
+
+
+## [1.0.53](https://github.com/christianhelle/httprunner/releases/tag/1.0.53) (2026-05-30)
+
+### Merged Pull Requests
 - Update actions/checkout action to v6 ([#264](https://github.com/christianhelle/httprunner/pull/264)) (@renovate[bot])
 - Update actions/github-script action to v9 ([#265](https://github.com/christianhelle/httprunner/pull/265)) (@renovate[bot])
 - Fix verbose failure details and skip rendering ([#269](https://github.com/christianhelle/httprunner/pull/269)) ([@christianhelle](https://github.com/christianhelle/))
