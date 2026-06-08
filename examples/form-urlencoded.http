@@ -1,0 +1,66 @@
+# Example HTTP requests demonstrating application/x-www-form-urlencoded support
+# This file tests the fix for GitHub issue #271: spaces in form body values
+
+###
+# POST request with form-urlencoded body (no spaces)
+# @name form-no-spaces
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser&password=testpass
+
+###
+# POST request with form-urlencoded body containing spaces
+# @name form-with-spaces
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+scope=scopea scopeb&grant_type=client_credentials
+
+###
+# POST request with form-urlencoded body containing special characters
+# @name form-with-special-chars
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+key=hello world!&redirect_uri=http://localhost:8080/callback&state=abc%20def
+
+###
+# POST request with form-urlencoded body containing ampersands in values
+# @name form-with-ampersands
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+query=foo&bar=test&value=a&b
+
+###
+# POST request with form-urlencoded body containing equals signs in values
+# @name form-with-equals
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+equation=a=b=c&normal=value
+
+###
+# POST request with form-urlencoded body and charset suffix
+# @name form-with-charset
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+
+scope=scopea scopeb&client_id=testid
+
+###
+# POST request with form-urlencoded body using uppercase Content-Type
+# @name form-uppercase-content-type
+POST https://httpbin.org/post
+Content-Type: APPLICATION/X-WWW-FORM-URLENCODED
+
+scope=scopea scopeb&grant_type=client_credentials
+
+###
+# POST request with form-urlencoded body containing OAuth-like scope
+# @name oauth-scope-example
+POST https://httpbin.org/post
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&scope=openid profile email&client_id=myapp&client_secret=secret

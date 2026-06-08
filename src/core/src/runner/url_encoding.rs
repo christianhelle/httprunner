@@ -2,10 +2,31 @@ use crate::types::Header;
 
 /// Encodes a body as application/x-www-form-urlencoded content.
 ///
-/// Spaces are encoded as `+`, and special characters are percent-encoded
+/// Splits the body by `&` (form field separator), then for each field splits
+/// by the first `=` (key-value delimiter). Only the value is encoded — the
+/// key and structural characters (`&`, `=`) are preserved.
+///
+/// Spaces are encoded as `+`, and other special characters are percent-encoded
 /// according to RFC 1866 (application/x-www-form-urlencoded).
 pub fn encode_form_body(body: &str) -> String {
-    form_urlencoded::byte_serialize(body.as_bytes()).collect()
+    if body.is_empty() {
+        return String::new();
+    }
+
+    let encoded: Vec<String> = body
+        .split('&')
+        .map(|field| {
+            if let Some((key, value)) = field.split_once('=') {
+                let encoded_value =
+                    form_urlencoded::byte_serialize(value.as_bytes()).collect::<String>();
+                format!("{}={}", key, encoded_value)
+            } else {
+                field.to_string()
+            }
+        })
+        .collect();
+
+    encoded.join("&")
 }
 
 /// Checks if the request headers indicate `application/x-www-form-urlencoded`
@@ -32,28 +53,28 @@ mod tests {
     fn test_encode_form_body_encodes_spaces_as_plus() {
         let input = "scope=scopea scopeb";
         let result = encode_form_body(input);
-        assert_eq!(result, "scope%3Dscopea+scopeb");
+        assert_eq!(result, "scope=scopea+scopeb");
     }
 
     #[test]
-    fn test_encode_form_body_preserves_already_encoded_chars() {
-        let input = "key=value%20encoded";
-        let result = encode_form_body(input);
-        assert_eq!(result, "key%3Dvalue%2520encoded");
-    }
-
-    #[test]
-    fn test_encode_form_body_handles_ampersands() {
+    fn test_encode_form_body_preserves_ampersands() {
         let input = "a=1&b=2";
         let result = encode_form_body(input);
-        assert_eq!(result, "a%3D1%26b%3D2");
+        assert_eq!(result, "a=1&b=2");
     }
 
     #[test]
-    fn test_encode_form_body_handles_equals_signs() {
-        let input = "key=value=pair";
+    fn test_encode_form_body_encodes_spaces_in_values() {
+        let input = "scope=scopea scopeb&grant_type=client_credentials";
         let result = encode_form_body(input);
-        assert_eq!(result, "key%3Dvalue%3Dpair");
+        assert_eq!(result, "scope=scopea+scopeb&grant_type=client_credentials");
+    }
+
+    #[test]
+    fn test_encode_form_body_handles_equals_in_values() {
+        let input = "equation=a=b=c&normal=value";
+        let result = encode_form_body(input);
+        assert_eq!(result, "equation=a%3Db%3Dc&normal=value");
     }
 
     #[test]
@@ -74,7 +95,14 @@ mod tests {
     fn test_encode_form_body_no_special_chars_unchanged() {
         let input = "abc=123&xyz=456";
         let result = encode_form_body(input);
-        assert_eq!(result, "abc%3D123%26xyz%3D456");
+        assert_eq!(result, "abc=123&xyz=456");
+    }
+
+    #[test]
+    fn test_encode_form_body_preserves_keys() {
+        let input = "username=testuser&password=testpass";
+        let result = encode_form_body(input);
+        assert_eq!(result, "username=testuser&password=testpass");
     }
 
     #[test]
@@ -82,6 +110,33 @@ mod tests {
         let input = "name=test%20value";
         let result = encode_form_body(input);
         assert!(!result.contains(' '));
+    }
+
+    #[test]
+    fn test_encode_form_body_field_without_equals() {
+        let input = "flag&key=value";
+        let result = encode_form_body(input);
+        assert_eq!(result, "flag&key=value");
+    }
+
+    #[test]
+    fn test_encode_form_body_oauth_scope() {
+        let input = "grant_type=client_credentials&scope=openid profile email&client_id=myapp";
+        let result = encode_form_body(input);
+        assert_eq!(
+            result,
+            "grant_type=client_credentials&scope=openid+profile+email&client_id=myapp"
+        );
+    }
+
+    #[test]
+    fn test_encode_form_body_redirect_uri() {
+        let input = "redirect_uri=http://localhost:8080/callback";
+        let result = encode_form_body(input);
+        assert_eq!(
+            result,
+            "redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback"
+        );
     }
 
     #[test]
