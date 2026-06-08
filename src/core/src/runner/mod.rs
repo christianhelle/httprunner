@@ -1,6 +1,9 @@
 mod executor;
 mod incremental_async;
 mod response_processor;
+mod url_encoding;
+
+pub use url_encoding::{encode_form_body, needs_form_encoding};
 
 #[cfg(target_arch = "wasm32")]
 mod executor_async;
