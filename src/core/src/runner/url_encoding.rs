@@ -2,12 +2,17 @@ use crate::types::Header;
 
 /// Encodes a body as application/x-www-form-urlencoded content.
 ///
-/// Splits the body by `&` (form field separator), then for each field splits
-/// by the first `=` (key-value delimiter). Only the value is encoded — the
-/// key and structural characters (`&`, `=`) are preserved.
+/// The input must already use `&` exclusively as field separators. Any `&` characters
+/// inside field values must be percent-encoded as `%26` before calling this function.
+/// This function encodes only values (not keys or structural characters).
+/// Malformed fields without `=` are left unchanged.
 ///
 /// Spaces are encoded as `+`, and other special characters are percent-encoded
 /// according to RFC 1866 (application/x-www-form-urlencoded).
+///
+/// Splits the body by `&` (form field separator), then for each field splits
+/// by the first `=` (key-value delimiter). Only the value is encoded — the
+/// key and structural characters (`&`, `=`) are preserved.
 pub fn encode_form_body(body: &str) -> String {
     if body.is_empty() {
         return String::new();
@@ -17,8 +22,26 @@ pub fn encode_form_body(body: &str) -> String {
         .split('&')
         .map(|field| {
             if let Some((key, value)) = field.split_once('=') {
-                let encoded_value =
-                    form_urlencoded::byte_serialize(value.as_bytes()).collect::<String>();
+                let encoded_value = if value.chars().any(|c| c == '%') {
+                    let mut has_encoded = false;
+                    let bytes = value.as_bytes();
+                    for i in 0..bytes.len().saturating_sub(2) {
+                        if bytes[i] == b'%'
+                            && bytes[i + 1].is_ascii_hexdigit()
+                            && bytes[i + 2].is_ascii_hexdigit()
+                        {
+                            has_encoded = true;
+                            break;
+                        }
+                    }
+                    if has_encoded {
+                        value.to_string()
+                    } else {
+                        form_urlencoded::byte_serialize(bytes).collect::<String>()
+                    }
+                } else {
+                    form_urlencoded::byte_serialize(value.as_bytes()).collect::<String>()
+                };
                 format!("{}={}", key, encoded_value)
             } else {
                 field.to_string()
@@ -106,10 +129,14 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_form_body_with_unicode() {
-        let input = "name=test%20value";
+    fn test_encode_form_body_no_double_encoding() {
+        let input = "state=abc%20def";
         let result = encode_form_body(input);
-        assert!(!result.contains(' '));
+        assert_eq!(result, "state=abc%20def");
+
+        let input2 = "key=a b";
+        let result2 = encode_form_body(input2);
+        assert_eq!(result2, "key=a+b");
     }
 
     #[test]

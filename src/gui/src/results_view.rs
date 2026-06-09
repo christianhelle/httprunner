@@ -1,8 +1,8 @@
 #[cfg(not(target_arch = "wasm32"))]
-use httprunner_core::telemetry;
+use httprunner_core::processor::RequestProcessingResult;
 use httprunner_core::runner::AsyncRequestProcessingResult;
 #[cfg(not(target_arch = "wasm32"))]
-use httprunner_core::processor::RequestProcessingResult;
+use httprunner_core::telemetry;
 use httprunner_core::types::AssertionResult;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -365,8 +365,7 @@ impl ResultsView {
                                 // Only capture the result for the target index
                                 if idx == index {
                                     use httprunner_core::processor::RequestProcessingResult;
-                                    let is_failure =
-                                        !should_continue_after(&process_result, true);
+                                    let is_failure = !should_continue_after(&process_result, true);
                                     target_result = Some(match process_result {
                                         RequestProcessingResult::Skipped { request, reason } => {
                                             ExecutionResult::Failure(FailureResult::simple(
@@ -509,9 +508,7 @@ impl ResultsView {
             ui.separator();
 
             ui.checkbox(&mut self.fail_fast, "Fail-fast")
-                .on_hover_text(
-                    "Stop the run at the first failed request and show it in verbose",
-                );
+                .on_hover_text("Stop the run at the first failed request and show it in verbose");
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(
