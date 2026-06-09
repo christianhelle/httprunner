@@ -22,25 +22,26 @@ pub fn encode_form_body(body: &str) -> String {
         .split('&')
         .map(|field| {
             if let Some((key, value)) = field.split_once('=') {
-                let encoded_value = if value.chars().any(|c| c == '%') {
-                    let mut has_encoded = false;
+                let encoded_value = {
                     let bytes = value.as_bytes();
-                    for i in 0..bytes.len().saturating_sub(2) {
-                        if bytes[i] == b'%'
+                    let mut result = String::new();
+                    let mut i = 0;
+                    while i < bytes.len() {
+                        if i + 2 < bytes.len()
+                            && bytes[i] == b'%'
                             && bytes[i + 1].is_ascii_hexdigit()
                             && bytes[i + 2].is_ascii_hexdigit()
                         {
-                            has_encoded = true;
-                            break;
+                            result.push_str(&value[i..i + 3]);
+                            i += 3;
+                        } else {
+                            result.push_str(
+                                &form_urlencoded::byte_serialize(&[bytes[i]]).collect::<String>(),
+                            );
+                            i += 1;
                         }
                     }
-                    if has_encoded {
-                        value.to_string()
-                    } else {
-                        form_urlencoded::byte_serialize(bytes).collect::<String>()
-                    }
-                } else {
-                    form_urlencoded::byte_serialize(value.as_bytes()).collect::<String>()
+                    result
                 };
                 format!("{}={}", key, encoded_value)
             } else {
@@ -137,6 +138,10 @@ mod tests {
         let input2 = "key=a b";
         let result2 = encode_form_body(input2);
         assert_eq!(result2, "key=a+b");
+
+        let input3 = "state=abc%20def ghi";
+        let result3 = encode_form_body(input3);
+        assert_eq!(result3, "state=abc%20def+ghi");
     }
 
     #[test]
