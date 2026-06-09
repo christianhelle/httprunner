@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Merged Pull Requests
+- Add support for URL encoding requests ([#273](https://github.com/christianhelle/httprunner/pull/273)) ([@christianhelle](https://github.com/christianhelle/))
 - Remove Squad ([#272](https://github.com/christianhelle/httprunner/pull/272)) ([@christianhelle](https://github.com/christianhelle/))
 
 
