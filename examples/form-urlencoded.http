@@ -31,7 +31,7 @@ key=hello world!&redirect_uri=http://localhost:8080/callback&state=abc%20def
 POST https://httpbin.org/post
 Content-Type: application/x-www-form-urlencoded
 
-query=foo&bar=test&value=a&b
+query=foo&bar=test&value=a%26b
 
 ###
 # POST request with form-urlencoded body containing equals signs in values
