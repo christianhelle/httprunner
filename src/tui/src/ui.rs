@@ -447,7 +447,11 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                     ]));
                     lines.push(Line::from(""));
                 }
-                ExecutionResult::Skipped { method, url, reason } => {
+                ExecutionResult::Skipped {
+                    method,
+                    url,
+                    reason,
+                } => {
                     let method = sanitize_display_text(method);
                     let url = sanitize_display_text(url);
                     let reason = sanitize_display_text(reason);
@@ -830,9 +834,7 @@ fn render_status_bar(f: &mut Frame, area: Rect, app: &App) {
             if app.fail_fast {
                 Span::styled(
                     "Fail-fast: ON",
-                    Style::default()
-                        .fg(Color::Red)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
                 )
             } else {
                 Span::styled("Fail-fast: OFF", Style::default().fg(Color::DarkGray))

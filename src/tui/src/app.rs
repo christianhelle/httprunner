@@ -344,11 +344,10 @@ impl App {
                             |_idx, total, process_result| {
                                 total_count = total;
 
-                                let should_continue =
-                                    crate::results_view::should_continue_after(
-                                        &process_result,
-                                        fail_fast,
-                                    );
+                                let should_continue = crate::results_view::should_continue_after(
+                                    &process_result,
+                                    fail_fast,
+                                );
 
                                 use httprunner_core::processor::RequestProcessingResult;
                                 match process_result {
@@ -415,10 +414,8 @@ impl App {
                                 // Fail-fast: halt on the first failing result and
                                 // request the view to switch to verbose.
                                 if !should_continue {
-                                    switch_to_verbose.store(
-                                        true,
-                                        std::sync::atomic::Ordering::SeqCst,
-                                    );
+                                    switch_to_verbose
+                                        .store(true, std::sync::atomic::Ordering::SeqCst);
                                 }
                                 should_continue
                             },

@@ -376,7 +376,10 @@ mod tests {
             reason: "condition".to_string(),
         };
         if let ExecutionResult::Skipped { method, .. } = result {
-            assert!(!method.contains('⏭'), "method should not embed the skip icon");
+            assert!(
+                !method.contains('⏭'),
+                "method should not embed the skip icon"
+            );
         }
     }
 }

@@ -2,8 +2,9 @@ use super::response_processor::{
     build_error_result, build_success_result, build_temp_result_for_assertions, extract_headers,
     should_capture_response,
 };
+use super::{encode_form_body, needs_form_encoding};
 use crate::assertions;
-use crate::types::{HttpRequest, HttpResult};
+use crate::types::{Header, HttpRequest, HttpResult};
 use anyhow::Result;
 use reqwest::Client;
 use std::collections::HashMap;
@@ -116,7 +117,12 @@ fn build_request_async(client: &Client, request: &HttpRequest) -> Result<reqwest
     }
 
     if let Some(ref body) = request.body {
-        req_builder = req_builder.body(body.clone());
+        let body = if needs_form_encoding(&request.headers) {
+            encode_form_body(body)
+        } else {
+            body.clone()
+        };
+        req_builder = req_builder.body(body);
     }
 
     Ok(req_builder)
