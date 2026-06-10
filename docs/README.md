@@ -22,10 +22,6 @@ docs/
 ├── DOCKER-SETUP.html       # Docker container setup guide
 ├── styles.css              # Main stylesheet with modern design
 ├── script.js               # JavaScript for interactivity
-├── CI-CD-SETUP.md          # Original Markdown (kept for reference)
-├── DOCKER-SETUP.md         # Original Markdown (kept for reference)
-├── DOCKER-TROUBLESHOOTING.md # Docker networking and troubleshooting guide
-├── SNAPCRAFT.md            # Snapcraft setup documentation
 └── README.md               # This file
 ```
 
