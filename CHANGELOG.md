@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased Changes]
+## [1.1.54](https://github.com/christianhelle/httprunner/releases/tag/1.1.54) (2026-06-09)
 
 ### Merged Pull Requests
 - Add support for URL encoding requests ([#273](https://github.com/christianhelle/httprunner/pull/273)) ([@christianhelle](https://github.com/christianhelle/))
