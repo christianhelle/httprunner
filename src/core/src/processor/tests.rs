@@ -1,5 +1,5 @@
 use super::formatter::*;
-use super::substitution::*;
+use crate::request_substitution::*;
 use crate::types::{Header, HttpRequest, HttpResult, RequestContext};
 use std::collections::HashMap;
 

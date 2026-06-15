@@ -1,4 +1,4 @@
-use crate::functions::substitute_functions;
+use crate::functions;
 use crate::types::{HttpRequest, RequestContext};
 use crate::variables;
 use anyhow::Result;
@@ -14,7 +14,7 @@ where
         header.value = substitutor(&header.value)?;
     }
 
-    if let Some(ref body) = request.body {
+    if let Some(body) = request.body.as_ref() {
         request.body = Some(substitutor(body)?);
     }
 
@@ -25,15 +25,15 @@ where
     Ok(())
 }
 
-pub fn substitute_request_variables_in_request(
+pub(crate) fn substitute_request_variables_in_request(
     request: &mut HttpRequest,
     context: &[RequestContext],
 ) -> Result<()> {
-    apply_substitution(request, |s| {
-        variables::substitute_request_variables(s, context)
+    apply_substitution(request, |value| {
+        variables::substitute_request_variables(value, context)
     })
 }
 
-pub fn substitute_functions_in_request(request: &mut HttpRequest) -> Result<()> {
-    apply_substitution(request, substitute_functions)
+pub(crate) fn substitute_functions_in_request(request: &mut HttpRequest) -> Result<()> {
+    apply_substitution(request, functions::substitute_functions)
 }

@@ -1,4 +1,4 @@
-use super::substitution::{
+use crate::request_substitution::{
     substitute_functions_in_request, substitute_request_variables_in_request,
 };
 use crate::conditions;

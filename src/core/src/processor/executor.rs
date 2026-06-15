@@ -1,5 +1,5 @@
 use super::formatter::{format_json_if_valid, format_request_name};
-use super::substitution::{
+use crate::request_substitution::{
     substitute_functions_in_request, substitute_request_variables_in_request,
 };
 use crate::colors;
