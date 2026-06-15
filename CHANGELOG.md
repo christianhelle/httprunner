@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased Changes]
+
+### Features
+- Unify request-level substitution into one module ([#270](https://github.com/christianhelle/httprunner/pull/270)) ([@christianhelle](https://github.com/christianhelle/))
+
+
 ## [1.1.54](https://github.com/christianhelle/httprunner/releases/tag/1.1.54) (2026-06-09)
 
 ### Merged Pull Requests
