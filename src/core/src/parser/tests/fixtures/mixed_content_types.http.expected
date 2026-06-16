@@ -1,0 +1,62 @@
+[
+  {
+    "name": "first",
+    "method": "POST",
+    "url": "https://api.example.com/data",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "body": "{\"id\": 1}\n\n",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  },
+  {
+    "name": "second",
+    "method": "GET",
+    "url": "https://api.example.com/data/1",
+    "headers": [
+      {
+        "name": "Accept",
+        "value": "application/json"
+      }
+    ],
+    "body": "\n",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  },
+  {
+    "name": null,
+    "method": "GET",
+    "url": "https://api.example.com/raw",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "text/plain"
+      }
+    ],
+    "body": "raw body content",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "name": null,
+    "method": "GET",
+    "url": "https://api.example.com/slow-resource",
+    "headers": [],
+    "body": null,
+    "assertions": [],
+    "variables": [],
+    "timeout": 30000,
+    "connection_timeout": 10000,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  }
+]

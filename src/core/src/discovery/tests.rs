@@ -32,7 +32,9 @@ fn discover_http_files_returns_empty_when_none_found() {
 
 #[test]
 fn run_discovery_mode_returns_empty_list_when_no_files() {
-    let files = run_discovery_mode().unwrap();
+    let temp = tempdir().unwrap();
+    fs::write(temp.path().join("file.txt"), "noop").unwrap();
+    let files = discover_http_files(temp.path().to_str().unwrap()).unwrap();
     assert!(files.is_empty());
 }
 

@@ -1,0 +1,17 @@
+[
+  {
+    "name": null,
+    "method": "GET",
+    "url": "https://api.example.com/delayed",
+    "headers": [],
+    "body": null,
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": 500,
+    "post_delay_ms": 1000
+  }
+]
