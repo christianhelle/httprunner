@@ -1,3 +1,4 @@
+use crate::assertions;
 use crate::conditions;
 use crate::request_substitution::{
     substitute_functions_in_request, substitute_request_variables_in_request,
@@ -159,7 +160,14 @@ where
         let post_delay_ms = request.post_delay_ms;
 
         match executor(&request, false, insecure).await {
-            Ok(result) => {
+            Ok(mut result) => {
+                if !request.assertions.is_empty() {
+                    let assertion_results =
+                        assertions::evaluate_assertions(&request.assertions, &result);
+                    let all_passed = assertion_results.iter().all(|r| r.passed);
+                    result.success = all_passed;
+                    result.assertion_results = assertion_results;
+                }
                 add_request_context(
                     &mut request_contexts,
                     request.clone(),
