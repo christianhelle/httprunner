@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Features
+- Remove legacy handwritten parser ([#275](https://github.com/christianhelle/httprunner/pull/275)) ([@christianhelle](https://github.com/christianhelle/))
 - Unify request-level substitution into one module ([#270](https://github.com/christianhelle/httprunner/pull/270)) ([@christianhelle](https://github.com/christianhelle/))
 
 
