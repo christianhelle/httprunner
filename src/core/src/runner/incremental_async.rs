@@ -1,3 +1,4 @@
+use crate::assertions;
 use crate::conditions;
 use crate::request_substitution::{
     substitute_functions_in_request, substitute_request_variables_in_request,
@@ -159,7 +160,14 @@ where
         let post_delay_ms = request.post_delay_ms;
 
         match executor(&request, false, insecure).await {
-            Ok(result) => {
+            Ok(mut result) => {
+                if !request.assertions.is_empty() {
+                    let assertion_results =
+                        assertions::evaluate_assertions(&request.assertions, &result);
+                    let all_passed = assertion_results.iter().all(|r| r.passed);
+                    result.success = all_passed;
+                    result.assertion_results = assertion_results;
+                }
                 add_request_context(
                     &mut request_contexts,
                     request.clone(),
@@ -308,7 +316,7 @@ impl Future for NativeSleep {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Condition, ConditionType, Header};
+    use crate::types::{Assertion, AssertionType, Condition, ConditionType, Header};
     use std::collections::HashMap;
     use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
 
@@ -502,6 +510,135 @@ mod tests {
         assert_eq!(skipped_reason.as_deref(), Some("Conditions not met"));
     }
 
+    #[test]
+    fn test_async_incremental_empty_requests() {
+        block_on(process_http_requests_incremental_async(
+            vec![],
+            false,
+            0,
+            |_idx, _total, _result| true,
+            &executor_trivial_ok,
+        ))
+        .unwrap();
+    }
+
+    #[test]
+    fn test_async_incremental_executor_error() {
+        let mut captured: Option<String> = None;
+
+        block_on(process_http_requests_incremental_async(
+            vec![HttpRequest {
+                name: Some("fail".to_string()),
+                method: "GET".to_string(),
+                url: "https://example.com/fail".to_string(),
+                headers: vec![],
+                body: None,
+                assertions: vec![],
+                variables: vec![],
+                timeout: None,
+                connection_timeout: None,
+                depends_on: None,
+                conditions: vec![],
+                pre_delay_ms: None,
+                post_delay_ms: None,
+            }],
+            false,
+            0,
+            |_idx, _total, result| {
+                if let AsyncRequestProcessingResult::Failed { error, .. } = result {
+                    captured = Some(error);
+                }
+                false
+            },
+            &executor_always_err,
+        ))
+        .unwrap();
+
+        assert!(captured.is_some());
+    }
+
+    #[test]
+    fn test_async_incremental_assertion_passed() {
+        let mut captured_result: Option<HttpResult> = None;
+
+        block_on(process_http_requests_incremental_async(
+            vec![HttpRequest {
+                name: Some("test".to_string()),
+                method: "GET".to_string(),
+                url: "https://example.com/test".to_string(),
+                headers: vec![],
+                body: None,
+                assertions: vec![Assertion {
+                    assertion_type: AssertionType::Status,
+                    expected_value: "200".to_string(),
+                }],
+                variables: vec![],
+                timeout: None,
+                connection_timeout: None,
+                depends_on: None,
+                conditions: vec![],
+                pre_delay_ms: None,
+                post_delay_ms: None,
+            }],
+            false,
+            0,
+            |_idx, _total, result| {
+                if let AsyncRequestProcessingResult::Executed { result, .. } = result {
+                    captured_result = Some(result);
+                }
+                false
+            },
+            &executor_200_ok,
+        ))
+        .unwrap();
+
+        let result = captured_result.expect("expected executed result");
+        assert!(result.success);
+        assert_eq!(result.assertion_results.len(), 1);
+        assert!(result.assertion_results[0].passed);
+    }
+
+    #[test]
+    fn test_async_incremental_assertion_failed() {
+        let mut captured_result: Option<HttpResult> = None;
+
+        block_on(process_http_requests_incremental_async(
+            vec![HttpRequest {
+                name: Some("test".to_string()),
+                method: "GET".to_string(),
+                url: "https://example.com/test".to_string(),
+                headers: vec![],
+                body: None,
+                assertions: vec![Assertion {
+                    assertion_type: AssertionType::Status,
+                    expected_value: "404".to_string(),
+                }],
+                variables: vec![],
+                timeout: None,
+                connection_timeout: None,
+                depends_on: None,
+                conditions: vec![],
+                pre_delay_ms: None,
+                post_delay_ms: None,
+            }],
+            false,
+            0,
+            |_idx, _total, result| {
+                if let AsyncRequestProcessingResult::Executed { result, .. } = result {
+                    captured_result = Some(result);
+                }
+                false
+            },
+            &executor_200_ok,
+        ))
+        .unwrap();
+
+        let result = captured_result.expect("expected executed result");
+        assert!(!result.success);
+        assert_eq!(result.assertion_results.len(), 1);
+        assert!(!result.assertion_results[0].passed);
+    }
+
     fn success_result(name: Option<String>, body: Option<String>) -> HttpResult {
         HttpResult {
             request_name: name,
@@ -564,6 +701,43 @@ mod tests {
         };
 
         Box::pin(async move { Ok(success_result(request_name, body)) })
+    }
+
+    fn executor_trivial_ok(
+        request: &HttpRequest,
+        _verbose: bool,
+        _insecure: bool,
+    ) -> AsyncRequestFuture<'_> {
+        let request_name = request.name.clone();
+        Box::pin(async move { Ok(success_result(request_name, None)) })
+    }
+
+    fn executor_always_err(
+        _request: &HttpRequest,
+        _verbose: bool,
+        _insecure: bool,
+    ) -> AsyncRequestFuture<'_> {
+        Box::pin(async move { Err(anyhow::anyhow!("executor failed")) })
+    }
+
+    fn executor_200_ok(
+        request: &HttpRequest,
+        _verbose: bool,
+        _insecure: bool,
+    ) -> AsyncRequestFuture<'_> {
+        let request_name = request.name.clone();
+        Box::pin(async move {
+            Ok(HttpResult {
+                request_name,
+                status_code: 200,
+                success: true,
+                error_message: None,
+                duration_ms: 10,
+                response_headers: Some(HashMap::new()),
+                response_body: Some("OK".to_string()),
+                assertion_results: vec![],
+            })
+        })
     }
 
     fn block_on<F: Future>(future: F) -> F::Output {

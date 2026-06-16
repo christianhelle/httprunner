@@ -1,9 +1,8 @@
 use super::response_processor::{
-    build_error_result, build_success_result, build_temp_result_for_assertions, extract_headers,
+    build_error_result, build_success_result, extract_headers,
     should_capture_response,
 };
 use super::{encode_form_body, needs_form_encoding};
-use crate::assertions;
 use crate::types::{HttpRequest, HttpResult};
 use anyhow::Result;
 use reqwest::Client;
@@ -35,30 +34,12 @@ pub async fn execute_http_request_async(
     };
 
     let status_code = response.status().as_u16();
-    let mut success = response.status().is_success();
+    let success = response.status().is_success();
 
     let (response_headers, response_body) =
         capture_response_details_async(request, verbose, response).await?;
 
     let duration_ms = start_time.elapsed().as_millis() as u64;
-
-    let assertion_results = if !request.assertions.is_empty() {
-        let temp_result = build_temp_result_for_assertions(
-            request,
-            status_code,
-            success,
-            duration_ms,
-            response_headers.clone(),
-            response_body.clone(),
-        );
-
-        let results = assertions::evaluate_assertions(&request.assertions, &temp_result);
-        let all_passed = results.iter().all(|r| r.passed);
-        success = all_passed;
-        results
-    } else {
-        Vec::new()
-    };
 
     Ok(build_success_result(
         request,
@@ -67,7 +48,7 @@ pub async fn execute_http_request_async(
         duration_ms,
         response_headers,
         response_body,
-        assertion_results,
+        Vec::new(),
     ))
 }
 
