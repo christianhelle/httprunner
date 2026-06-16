@@ -344,16 +344,10 @@ where
 
 /// Block on a future using a no-op waker.
 pub(crate) fn block_on<F: Future>(future: F) -> F::Output {
-    use std::sync::Arc;
-    use std::task::{Context, Poll, Wake};
+    use std::task::{Context, Poll};
 
-    struct NoopWaker;
-    impl Wake for NoopWaker {
-        fn wake(self: Arc<Self>) {}
-    }
-
-    let waker = Arc::new(NoopWaker).into();
-    let mut context = Context::from_waker(&waker);
+    let waker = std::task::Waker::noop();
+    let mut context = Context::from_waker(waker);
     let mut future = Box::pin(future);
 
     loop {

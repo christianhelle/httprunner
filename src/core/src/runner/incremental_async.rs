@@ -42,7 +42,7 @@ mod tests {
     };
     use std::collections::HashMap;
     use std::future::Future;
-    use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+    use std::task::{Context, Poll};
 
     #[test]
     fn test_async_incremental_preserves_request_variable_context() {
@@ -465,8 +465,8 @@ mod tests {
     }
 
     fn block_on<F: Future>(future: F) -> F::Output {
-        let waker = unsafe { Waker::from_raw(dummy_raw_waker()) };
-        let mut context = Context::from_waker(&waker);
+        let waker = std::task::Waker::noop();
+        let mut context = Context::from_waker(waker);
         let mut future = Box::pin(future);
 
         loop {
@@ -475,18 +475,5 @@ mod tests {
                 Poll::Pending => std::thread::yield_now(),
             }
         }
-    }
-
-    unsafe fn dummy_clone(_: *const ()) -> RawWaker {
-        dummy_raw_waker()
-    }
-
-    unsafe fn dummy_no_op(_: *const ()) {}
-
-    static DUMMY_WAKER_VTABLE: RawWakerVTable =
-        RawWakerVTable::new(dummy_clone, dummy_no_op, dummy_no_op, dummy_no_op);
-
-    fn dummy_raw_waker() -> RawWaker {
-        RawWaker::new(std::ptr::null(), &DUMMY_WAKER_VTABLE)
     }
 }
