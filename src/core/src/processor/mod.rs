@@ -1,6 +1,7 @@
 mod executor;
 mod formatter;
 mod incremental;
+mod output;
 
 pub use executor::{
     ProcessorConfig, process_http_files, process_http_files_with_config,
