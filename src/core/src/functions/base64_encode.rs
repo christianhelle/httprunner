@@ -2,6 +2,8 @@ use super::substitution::{
     get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
     RegexCache,
 };
+#[cfg(test)]
+use super::substitution::HashMapRegexCache;
 
 pub struct Base64EncodeSubstitutor {}
 impl FunctionSubstitutor for Base64EncodeSubstitutor {
@@ -347,5 +349,16 @@ mod tests {
 
         assert!(!result.contains("base64_encode"));
         assert!(!result.contains(&long_text));
+    }
+
+    #[test]
+    fn test_base64_encode_replace_with_cache() {
+        let cache = HashMapRegexCache::new();
+        let sub = Base64EncodeSubstitutor {};
+        let result = sub
+            .replace_with_cache("base64_encode('Hello, World!')", &cache)
+            .unwrap();
+        assert_eq!(result, "SGVsbG8sIFdvcmxkIQ==");
+        assert_eq!(cache.len(), 1);
     }
 }

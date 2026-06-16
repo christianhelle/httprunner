@@ -2,6 +2,8 @@ use super::substitution::{
     get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
     RegexCache,
 };
+#[cfg(test)]
+use super::substitution::HashMapRegexCache;
 
 pub(crate) static LOREM_IPSUM_WORDS: &[&str] = &[
     "lorem",
@@ -391,5 +393,28 @@ mod tests {
         let input = "lorem_ipsum()";
         let result = lorem_ipsum.replace(input).unwrap();
         assert_eq!(result.split_whitespace().count(), 100);
+    }
+
+    #[test]
+    fn test_lorem_ipsum_replace_with_cache() {
+        let cache = HashMapRegexCache::new();
+        let sub = LoremIpsumSubstitutor {};
+        let result = sub
+            .replace_with_cache("lorem_ipsum(5)", &cache)
+            .unwrap();
+        assert!(result.contains("lorem ipsum dolor sit amet"));
+        assert_eq!(result.split_whitespace().count(), 5);
+        assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn test_lorem_ipsum_replace_with_cache_case_insensitive() {
+        let cache = HashMapRegexCache::new();
+        let sub = LoremIpsumSubstitutor {};
+        let result = sub
+            .replace_with_cache("LOREM_IPSUM(3)", &cache)
+            .unwrap();
+        assert!(result.contains("lorem ipsum dolor"));
+        assert_eq!(cache.len(), 1);
     }
 }

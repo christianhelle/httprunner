@@ -2,6 +2,8 @@ use super::substitution::{
     get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
     RegexCache,
 };
+#[cfg(test)]
+use super::substitution::HashMapRegexCache;
 
 pub struct UpperSubstitutor {}
 impl FunctionSubstitutor for UpperSubstitutor {
@@ -193,5 +195,16 @@ mod tests {
             "Upper transformation should be consistent"
         );
         assert_eq!(result1, "CONSISTENT");
+    }
+
+    #[test]
+    fn test_upper_replace_with_cache() {
+        let cache = HashMapRegexCache::new();
+        let sub = UpperSubstitutor {};
+        let result = sub
+            .replace_with_cache("upper('hello, world')", &cache)
+            .unwrap();
+        assert_eq!(result, "HELLO, WORLD");
+        assert_eq!(cache.len(), 1);
     }
 }

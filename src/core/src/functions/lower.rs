@@ -2,6 +2,8 @@ use super::substitution::{
     get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
     RegexCache,
 };
+#[cfg(test)]
+use super::substitution::HashMapRegexCache;
 
 pub struct LowerSubstitutor {}
 impl FunctionSubstitutor for LowerSubstitutor {
@@ -205,5 +207,16 @@ mod tests {
         let result = sub.replace(&input).unwrap();
         assert!(!result.contains("lower"));
         assert_eq!(result, long_lower);
+    }
+
+    #[test]
+    fn test_lower_replace_with_cache() {
+        let cache = HashMapRegexCache::new();
+        let sub = LowerSubstitutor {};
+        let result = sub
+            .replace_with_cache("lower('HELLO, WORLD')", &cache)
+            .unwrap();
+        assert_eq!(result, "hello, world");
+        assert_eq!(cache.len(), 1);
     }
 }

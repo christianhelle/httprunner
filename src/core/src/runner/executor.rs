@@ -527,4 +527,10 @@ mod tests {
         let result = build_request(&client, &request);
         assert!(result.is_ok());
     }
+
+    #[test]
+    fn test_hash_map_client_cache_default() {
+        let cache = HashMapClientCache::default();
+        assert_eq!(cache.len(), 0);
+    }
 }

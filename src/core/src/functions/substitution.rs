@@ -234,4 +234,35 @@ mod tests {
         assert_eq!(cache_a.len(), 1);
         assert_eq!(cache_b.len(), 0);
     }
+
+    #[test]
+    fn hash_map_regex_cache_default() {
+        let cache = HashMapRegexCache::default();
+        assert_eq!(cache.len(), 0);
+    }
+
+    #[test]
+    fn substitute_functions_with_cache_works() {
+        let cache = HashMapRegexCache::new();
+        let result = substitute_functions_with_cache(
+            "hello {{guid()}} world",
+            &cache,
+        )
+        .unwrap();
+        assert!(result.contains("hello "));
+        assert!(result.contains(" world"));
+        assert!(!result.contains("{{guid()}}"));
+        assert!(cache.len() > 0);
+    }
+
+    #[test]
+    fn substitute_functions_with_cache_uses_independent_cache() {
+        let cache_a = HashMapRegexCache::new();
+        let cache_b = HashMapRegexCache::new();
+
+        substitute_functions_with_cache("{{guid()}}", &cache_a).unwrap();
+
+        assert!(cache_a.len() > 0);
+        assert_eq!(cache_b.len(), 0);
+    }
 }
