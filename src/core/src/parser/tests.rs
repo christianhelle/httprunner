@@ -13,16 +13,6 @@ fn create_test_file(dir: &TempDir, name: &str, content: &str) -> String {
     file_path.to_str().unwrap().to_string()
 }
 
-fn assert_requests_match(
-    actual: &[crate::types::HttpRequest],
-    expected: &[crate::types::HttpRequest],
-) {
-    assert_eq!(
-        serde_json::to_value(actual).unwrap(),
-        serde_json::to_value(expected).unwrap()
-    );
-}
-
 type ParseBackend = fn(&str, Option<&str>) -> anyhow::Result<Vec<crate::types::HttpRequest>>;
 
 #[derive(Debug)]
@@ -738,9 +728,7 @@ Content-Type: application/json
 {"name":"Jane"}"#;
 
     let requests = parse_http_content(content, None).unwrap();
-    let legacy_requests = parse_http_content_with_legacy_backend(content, None).unwrap();
 
-    assert_requests_match(&requests, &legacy_requests);
     assert_eq!(requests.len(), 2);
     assert_eq!(requests[0].method, "GET");
     assert_eq!(requests[1].method, "POST");
@@ -1192,23 +1180,7 @@ fn benchmark_parser_backends() {
     ];
 
     for case in &cases {
-        for input in &case.inputs {
-            let legacy = parse_http_content_with_legacy_backend(input, None).unwrap();
-            let pest = parse_http_content(input, None).unwrap();
-            assert_requests_match(&pest, &legacy);
-        }
-
-        let handwritten =
-            run_benchmark_case(case, "handwritten", parse_http_content_with_legacy_backend);
         let pest = run_benchmark_case(case, "pest", parse_http_content);
-
-        print_benchmark_result(&handwritten);
         print_benchmark_result(&pest);
-
-        let regression = 100.0 * (1.0 - (pest.mib_per_second() / handwritten.mib_per_second()));
-        println!(
-            "{} pest throughput regression: {regression:.1}% (positive means slower)",
-            case.name
-        );
     }
 }

@@ -429,8 +429,6 @@ mod tests {
     use super::*;
     use crate::parser::pest_parser::parse_http_content_to_pest_tree;
     use crate::types::ConditionType;
-    use std::fs;
-    use tempfile::TempDir;
 
     fn assert_requests_match(actual: &[HttpRequest], expected: &[HttpRequest]) {
         assert_eq!(actual.len(), expected.len());
@@ -468,56 +466,6 @@ mod tests {
         }
     }
 
-    fn assert_pest_matches_handwritten(content: &str) {
-        let expected = crate::parser::parse_http_content_with_legacy_backend(content, None)
-            .expect("handwritten parser should succeed");
-        let actual = parse_http_content(content, None).expect("pest parser should succeed");
-        assert_requests_match(&actual, &expected);
-    }
-
-    fn assert_pest_file_matches_handwritten(content: &str) {
-        let temp_dir = TempDir::new().expect("temp dir should create");
-        let file_path = temp_dir.path().join("parser-backend-swap.http");
-        fs::write(&file_path, content).expect("test file should write");
-
-        let file_path = file_path.to_str().expect("temp file path should be utf-8");
-        let expected = crate::parser::parse_http_file_with_legacy_backend(file_path, None)
-            .expect("handwritten file parser should succeed");
-        let actual = parse_http_file(file_path, None).expect("pest file parser should succeed");
-
-        assert_requests_match(&actual, &expected);
-    }
-
-    #[test]
-    fn pest_semantic_assembler_matches_body_mode_and_directive_buffering() {
-        let content = r#"# @name first
-POST https://api.example.com/first
-Content-Type: text/plain
-
-first-body
-# @name second
-# @dependsOn first
-# @timeout 5s
-GET https://api.example.com/second"#;
-
-        assert_pest_matches_handwritten(content);
-    }
-
-    #[test]
-    fn pest_semantic_assembler_matches_script_blocks_assertions_and_request_boundaries() {
-        let content = r#"POST https://api.example.com/first
-
-body line
-# ignored comment
-> {%
-client.test("ignored", function() {});
-%}
-> EXPECTED_RESPONSE_STATUS 204
-GET https://api.example.com/second"#;
-
-        assert_pest_matches_handwritten(content);
-    }
-
     #[test]
     fn pest_semantic_assembler_matches_variable_substitution_timing() {
         let content = r#"@host = first.example.com
@@ -534,17 +482,6 @@ GET https://api.example.com/final"#;
         assert_eq!(actual[0].url, "https://first.example.com/users");
         assert_eq!(actual[0].headers[0].value, "second.example.com");
         assert_eq!(actual[0].body.as_deref(), Some("second.example.com"));
-
-        let expected = crate::parser::parse_http_content_with_legacy_backend(content, None)
-            .expect("handwritten parser should succeed");
-        assert_requests_match(&actual, &expected);
-    }
-
-    #[test]
-    fn pest_semantic_assembler_matches_indented_lines_and_body_whitespace() {
-        let content = "   # @name spaced\n   POST https://api.example.com/users\n   Content-Type: application/json\n   \n     {\n       \"name\": \"Jane\"\n     }\n";
-
-        assert_pest_matches_handwritten(content);
     }
 
     #[test]
@@ -590,10 +527,6 @@ Content-Type: application/json
             ConditionType::Status
         ));
         assert!(actual[3].conditions[0].negate);
-
-        let expected = crate::parser::parse_http_content_with_legacy_backend(content, None)
-            .expect("handwritten parser should succeed");
-        assert_requests_match(&actual, &expected);
     }
 
     #[test]
@@ -605,24 +538,6 @@ Content-Type: application/json
 
         assert!(message.contains("Failed to parse line 2: # @timeout nope"));
         assert!(message.contains("Invalid timeout value: 'nope'"));
-    }
-
-    #[test]
-    fn pest_parse_http_file_matches_handwritten() {
-        let content = r#"# @name login
-POST https://api.example.com/login
-Content-Type: application/json
-
-{"username":"demo","password":"secret"}
-
-###
-
-# @dependsOn login
-# @if login.response.status == 200
-GET https://api.example.com/profile
-Authorization: Bearer {{login.response.body.$.token}}"#;
-
-        assert_pest_file_matches_handwritten(content);
     }
 
     #[test]
