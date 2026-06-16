@@ -1,4 +1,7 @@
-use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
+use super::substitution::{
+    get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
+    RegexCache,
+};
 
 pub struct LowerSubstitutor {}
 impl FunctionSubstitutor for LowerSubstitutor {
@@ -12,6 +15,16 @@ impl FunctionSubstitutor for LowerSubstitutor {
 
     fn replace(&self, input: &str) -> Result<String, regex::Error> {
         let re = get_case_insensitive_regex(r"\blower\(\s*'((?:[^'\\]|\\.)*)'\s*\)")?;
+        Ok(re
+            .replace_all(input, |caps: &regex::Captures| caps[1].to_lowercase())
+            .to_string())
+    }
+
+    fn replace_with_cache(&self, input: &str, cache: &impl RegexCache) -> Result<String, regex::Error> {
+        let re = get_case_insensitive_regex_with_cache(
+            r"\blower\(\s*'((?:[^'\\]|\\.)*)'\s*\)",
+            cache,
+        )?;
         Ok(re
             .replace_all(input, |caps: &regex::Captures| caps[1].to_lowercase())
             .to_string())

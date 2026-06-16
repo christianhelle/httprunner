@@ -1,4 +1,7 @@
-use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
+use super::substitution::{
+    get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
+    RegexCache,
+};
 
 pub(crate) static LOREM_IPSUM_WORDS: &[&str] = &[
     "lorem",
@@ -305,6 +308,30 @@ impl FunctionSubstitutor for LoremIpsumSubstitutor {
     fn replace(&self, input: &str) -> Result<String, regex::Error> {
         let pattern = r"\blorem_ipsum\(\s*(\d*)\s*\)";
         let regex = get_case_insensitive_regex(pattern)?;
+        Ok(regex
+            .replace_all(input, |caps: &regex::Captures| {
+                let val = caps[1].parse::<usize>().unwrap_or(100);
+                if val < LOREM_IPSUM_WORDS.len() {
+                    LOREM_IPSUM_WORDS
+                        .iter()
+                        .take(val)
+                        .map(|w| w.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                } else {
+                    let mut words = Vec::new();
+                    for i in 0..val {
+                        words.push(LOREM_IPSUM_WORDS[i % LOREM_IPSUM_WORDS.len()].to_string());
+                    }
+                    words.join(" ")
+                }
+            })
+            .to_string())
+    }
+
+    fn replace_with_cache(&self, input: &str, cache: &impl RegexCache) -> Result<String, regex::Error> {
+        let pattern = r"\blorem_ipsum\(\s*(\d*)\s*\)";
+        let regex = get_case_insensitive_regex_with_cache(pattern, cache)?;
         Ok(regex
             .replace_all(input, |caps: &regex::Captures| {
                 let val = caps[1].parse::<usize>().unwrap_or(100);
