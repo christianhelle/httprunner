@@ -16,5 +16,7 @@ pub use incremental_async::{
     process_http_requests_incremental_async,
 };
 
+pub use crate::processor::RequestProcessingResult;
+
 #[cfg(target_arch = "wasm32")]
 pub use executor_async::execute_http_request_async;

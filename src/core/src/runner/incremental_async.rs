@@ -1,323 +1,47 @@
-use crate::assertions;
-use crate::conditions;
-use crate::request_substitution::{
-    substitute_functions_in_request, substitute_request_variables_in_request,
+use crate::processor::incremental_loop::{
+    AsyncSleep, process_requests_incremental, RequestProcessingResult,
 };
-use crate::types::{HttpRequest, HttpResult, RequestContext};
 use anyhow::Result;
-use std::future::Future;
-use std::pin::Pin;
-#[cfg(not(target_arch = "wasm32"))]
-use std::sync::{
-    Arc, Mutex,
-    atomic::{AtomicBool, Ordering},
+
+/// Re-export types from the unified loop for the async path.
+pub use crate::processor::incremental_loop::{
+    AsyncRequestExecutor, AsyncRequestFuture,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use std::task::Waker;
-use std::time::Duration;
+pub use crate::processor::RequestProcessingResult as AsyncRequestProcessingResult;
 
-pub type AsyncRequestFuture<'a> = Pin<Box<dyn Future<Output = Result<HttpResult>> + 'a>>;
-pub type AsyncRequestExecutor =
-    dyn for<'a> Fn(&'a HttpRequest, bool, bool) -> AsyncRequestFuture<'a>;
-
-/// Result of processing a single request during async incremental execution.
-#[derive(Debug)]
-pub enum AsyncRequestProcessingResult {
-    /// Request was skipped due to conditions or dependencies.
-    Skipped {
-        request: HttpRequest,
-        reason: String,
-    },
-    /// Request was executed successfully or with errors.
-    Executed {
-        request: HttpRequest,
-        result: HttpResult,
-    },
-    /// Request processing failed before execution.
-    Failed { request: HttpRequest, error: String },
-}
-
-/// Process already-parsed HTTP requests incrementally while preserving the same
-/// dependency, condition, and substitution semantics as the native processor.
+/// Process already-parsed HTTP requests incrementally with async sleep.
 pub async fn process_http_requests_incremental_async<F>(
-    requests: Vec<HttpRequest>,
+    requests: Vec<crate::types::HttpRequest>,
     insecure: bool,
     delay_ms: u64,
-    mut callback: F,
+    callback: F,
     executor: &AsyncRequestExecutor,
 ) -> Result<()>
 where
-    F: FnMut(usize, usize, AsyncRequestProcessingResult) -> bool,
+    F: FnMut(usize, usize, RequestProcessingResult) -> bool,
 {
-    let total = requests.len();
-
-    if requests.is_empty() {
-        return Ok(());
-    }
-
-    let mut request_contexts: Vec<RequestContext> = Vec::new();
-
-    for (idx, mut request) in requests.into_iter().enumerate() {
-        let request_count = (idx + 1) as u32;
-
-        if idx > 0 && delay_ms > 0 {
-            sleep_ms(delay_ms).await;
-        }
-
-        if let Some(dep_name) = request.depends_on.as_ref()
-            && !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts)
-        {
-            let should_continue = callback(
-                idx,
-                total,
-                AsyncRequestProcessingResult::Skipped {
-                    request: request.clone(),
-                    reason: format!("Dependency on '{}' not met", dep_name),
-                },
-            );
-            add_request_context(&mut request_contexts, request, None, request_count);
-            if !should_continue {
-                break;
-            }
-            continue;
-        }
-
-        if !request.conditions.is_empty() {
-            match conditions::evaluate_conditions(&request.conditions, &request_contexts) {
-                Ok(true) => {}
-                Ok(false) => {
-                    let should_continue = callback(
-                        idx,
-                        total,
-                        AsyncRequestProcessingResult::Skipped {
-                            request: request.clone(),
-                            reason: "Conditions not met".to_string(),
-                        },
-                    );
-                    add_request_context(&mut request_contexts, request, None, request_count);
-                    if !should_continue {
-                        break;
-                    }
-                    continue;
-                }
-                Err(error) => {
-                    let should_continue = callback(
-                        idx,
-                        total,
-                        AsyncRequestProcessingResult::Failed {
-                            request: request.clone(),
-                            error: format!("Condition evaluation error: {}", error),
-                        },
-                    );
-                    add_request_context(&mut request_contexts, request, None, request_count);
-                    if !should_continue {
-                        break;
-                    }
-                    continue;
-                }
-            }
-        }
-
-        if let Err(error) = substitute_request_variables_in_request(&mut request, &request_contexts)
-        {
-            let should_continue = callback(
-                idx,
-                total,
-                AsyncRequestProcessingResult::Failed {
-                    request: request.clone(),
-                    error: format!("Variable substitution error: {}", error),
-                },
-            );
-            add_request_context(&mut request_contexts, request, None, request_count);
-            if !should_continue {
-                break;
-            }
-            continue;
-        }
-
-        if let Err(error) = substitute_functions_in_request(&mut request) {
-            let should_continue = callback(
-                idx,
-                total,
-                AsyncRequestProcessingResult::Failed {
-                    request: request.clone(),
-                    error: format!("Function substitution error: {}", error),
-                },
-            );
-            add_request_context(&mut request_contexts, request, None, request_count);
-            if !should_continue {
-                break;
-            }
-            continue;
-        }
-
-        if let Some(pre_delay_ms) = request.pre_delay_ms
-            && pre_delay_ms > 0
-        {
-            sleep_ms(pre_delay_ms).await;
-        }
-
-        let post_delay_ms = request.post_delay_ms;
-
-        match executor(&request, false, insecure).await {
-            Ok(mut result) => {
-                if !request.assertions.is_empty() {
-                    let assertion_results =
-                        assertions::evaluate_assertions(&request.assertions, &result);
-                    let all_passed = assertion_results.iter().all(|r| r.passed);
-                    result.success = all_passed;
-                    result.assertion_results = assertion_results;
-                }
-                add_request_context(
-                    &mut request_contexts,
-                    request.clone(),
-                    Some(result.clone()),
-                    request_count,
-                );
-                let should_continue = callback(
-                    idx,
-                    total,
-                    AsyncRequestProcessingResult::Executed { request, result },
-                );
-                if !should_continue {
-                    break;
-                }
-            }
-            Err(error) => {
-                let should_continue = callback(
-                    idx,
-                    total,
-                    AsyncRequestProcessingResult::Failed {
-                        request: request.clone(),
-                        error: error.to_string(),
-                    },
-                );
-                add_request_context(&mut request_contexts, request, None, request_count);
-                if !should_continue {
-                    break;
-                }
-            }
-        }
-
-        if let Some(post_delay_ms) = post_delay_ms
-            && post_delay_ms > 0
-        {
-            sleep_ms(post_delay_ms).await;
-        }
-    }
-
-    Ok(())
-}
-
-fn add_request_context(
-    contexts: &mut Vec<RequestContext>,
-    request: HttpRequest,
-    result: Option<HttpResult>,
-    request_count: u32,
-) {
-    let context_name = request
-        .name
-        .clone()
-        .unwrap_or_else(|| format!("request_{}", request_count));
-
-    contexts.push(RequestContext {
-        name: context_name,
-        request,
-        result,
-    });
-}
-
-#[cfg(target_arch = "wasm32")]
-async fn sleep_ms(delay_ms: u64) {
-    if delay_ms == 0 {
-        return;
-    }
-
-    gloo_timers::future::sleep(Duration::from_millis(delay_ms)).await;
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-async fn sleep_ms(delay_ms: u64) {
-    if delay_ms == 0 {
-        return;
-    }
-
-    NativeSleep::new(Duration::from_millis(delay_ms)).await;
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-struct NativeSleep {
-    duration: Option<Duration>,
-    state: Arc<NativeSleepState>,
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-struct NativeSleepState {
-    completed: AtomicBool,
-    waker: Mutex<Option<Waker>>,
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl NativeSleep {
-    fn new(duration: Duration) -> Self {
-        Self {
-            duration: Some(duration),
-            state: Arc::new(NativeSleepState {
-                completed: AtomicBool::new(false),
-                waker: Mutex::new(None),
-            }),
-        }
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl Future for NativeSleep {
-    type Output = ();
-
-    fn poll(
-        self: Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<Self::Output> {
-        let this = self.get_mut();
-
-        if this.state.completed.load(Ordering::Acquire) {
-            return std::task::Poll::Ready(());
-        }
-
-        {
-            let mut waker = this
-                .state
-                .waker
-                .lock()
-                .expect("native sleep waker mutex poisoned");
-            *waker = Some(cx.waker().clone());
-        }
-
-        if let Some(duration) = this.duration.take() {
-            let state = Arc::clone(&this.state);
-            std::thread::spawn(move || {
-                std::thread::sleep(duration);
-                state.completed.store(true, Ordering::Release);
-                if let Some(waker) = state
-                    .waker
-                    .lock()
-                    .expect("native sleep waker mutex poisoned")
-                    .take()
-                {
-                    waker.wake();
-                }
-            });
-        }
-
-        std::task::Poll::Pending
-    }
+    let wrapped = |request: crate::types::HttpRequest, verbose: bool, insecure: bool| {
+        async move { executor(&request, verbose, insecure).await }
+    };
+    process_requests_incremental(
+        requests,
+        insecure,
+        delay_ms,
+        callback,
+        &wrapped,
+        AsyncSleep,
+    )
+    .await
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Assertion, AssertionType, Condition, ConditionType, Header};
+    use crate::types::{
+        Assertion, AssertionType, Condition, ConditionType, Header, HttpRequest, HttpResult,
+    };
     use std::collections::HashMap;
+    use std::future::Future;
     use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
 
     #[test]
@@ -366,7 +90,7 @@ mod tests {
             0,
             |idx, _total, result| {
                 if idx == 1 {
-                    if let AsyncRequestProcessingResult::Executed { request, .. } = result {
+                    if let RequestProcessingResult::Executed { request, .. } = result {
                         captured_request = Some(request);
                     }
                     return false;
@@ -429,7 +153,7 @@ mod tests {
             0,
             |idx, _total, result| {
                 if idx == 1 {
-                    if let AsyncRequestProcessingResult::Skipped { reason, .. } = result {
+                    if let RequestProcessingResult::Skipped { reason, .. } = result {
                         dependency_reason = Some(reason);
                     }
                     return false;
@@ -495,7 +219,7 @@ mod tests {
             0,
             |idx, _total, result| {
                 if idx == 1 {
-                    if let AsyncRequestProcessingResult::Skipped { reason, .. } = result {
+                    if let RequestProcessingResult::Skipped { reason, .. } = result {
                         skipped_reason = Some(reason);
                     }
                     return false;
@@ -545,7 +269,7 @@ mod tests {
             false,
             0,
             |_idx, _total, result| {
-                if let AsyncRequestProcessingResult::Failed { error, .. } = result {
+                if let RequestProcessingResult::Failed { error, .. } = result {
                     captured = Some(error);
                 }
                 false
@@ -583,7 +307,7 @@ mod tests {
             false,
             0,
             |_idx, _total, result| {
-                if let AsyncRequestProcessingResult::Executed { result, .. } = result {
+                if let RequestProcessingResult::Executed { result, .. } = result {
                     captured_result = Some(result);
                 }
                 false
@@ -624,7 +348,7 @@ mod tests {
             false,
             0,
             |_idx, _total, result| {
-                if let AsyncRequestProcessingResult::Executed { result, .. } = result {
+                if let RequestProcessingResult::Executed { result, .. } = result {
                     captured_result = Some(result);
                 }
                 false
