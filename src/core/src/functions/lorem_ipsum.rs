@@ -1,4 +1,9 @@
-use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
+use super::substitution::{
+    get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
+    RegexCache,
+};
+#[cfg(test)]
+use super::substitution::HashMapRegexCache;
 
 pub(crate) static LOREM_IPSUM_WORDS: &[&str] = &[
     "lorem",
@@ -325,6 +330,30 @@ impl FunctionSubstitutor for LoremIpsumSubstitutor {
             })
             .to_string())
     }
+
+    fn replace_with_cache(&self, input: &str, cache: &dyn RegexCache) -> Result<String, regex::Error> {
+        let pattern = r"\blorem_ipsum\(\s*(\d*)\s*\)";
+        let regex = get_case_insensitive_regex_with_cache(pattern, cache)?;
+        Ok(regex
+            .replace_all(input, |caps: &regex::Captures| {
+                let val = caps[1].parse::<usize>().unwrap_or(100);
+                if val < LOREM_IPSUM_WORDS.len() {
+                    LOREM_IPSUM_WORDS
+                        .iter()
+                        .take(val)
+                        .map(|w| w.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                } else {
+                    let mut words = Vec::new();
+                    for i in 0..val {
+                        words.push(LOREM_IPSUM_WORDS[i % LOREM_IPSUM_WORDS.len()].to_string());
+                    }
+                    words.join(" ")
+                }
+            })
+            .to_string())
+    }
 }
 
 #[cfg(test)]
@@ -364,5 +393,28 @@ mod tests {
         let input = "lorem_ipsum()";
         let result = lorem_ipsum.replace(input).unwrap();
         assert_eq!(result.split_whitespace().count(), 100);
+    }
+
+    #[test]
+    fn test_lorem_ipsum_replace_with_cache() {
+        let cache = HashMapRegexCache::new();
+        let sub = LoremIpsumSubstitutor {};
+        let result = sub
+            .replace_with_cache("lorem_ipsum(5)", &cache)
+            .unwrap();
+        assert!(result.contains("lorem ipsum dolor sit amet"));
+        assert_eq!(result.split_whitespace().count(), 5);
+        assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn test_lorem_ipsum_replace_with_cache_case_insensitive() {
+        let cache = HashMapRegexCache::new();
+        let sub = LoremIpsumSubstitutor {};
+        let result = sub
+            .replace_with_cache("LOREM_IPSUM(3)", &cache)
+            .unwrap();
+        assert!(result.contains("lorem ipsum dolor"));
+        assert_eq!(cache.len(), 1);
     }
 }

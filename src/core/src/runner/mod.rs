@@ -9,7 +9,7 @@ pub use url_encoding::{encode_form_body, needs_form_encoding};
 mod executor_async;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use executor::execute_http_request;
+pub use executor::{build_client_with_cache, execute_http_request, HttpClientCache, HashMapClientCache};
 
 pub use incremental_async::{
     AsyncRequestExecutor, AsyncRequestFuture, AsyncRequestProcessingResult,

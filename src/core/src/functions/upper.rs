@@ -1,4 +1,9 @@
-use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
+use super::substitution::{
+    get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
+    RegexCache,
+};
+#[cfg(test)]
+use super::substitution::HashMapRegexCache;
 
 pub struct UpperSubstitutor {}
 impl FunctionSubstitutor for UpperSubstitutor {
@@ -12,6 +17,16 @@ impl FunctionSubstitutor for UpperSubstitutor {
 
     fn replace(&self, input: &str) -> Result<String, regex::Error> {
         let re = get_case_insensitive_regex(r"\bupper\(\s*'((?:[^'\\]|\\.)*)'\s*\)")?;
+        Ok(re
+            .replace_all(input, |caps: &regex::Captures| caps[1].to_uppercase())
+            .to_string())
+    }
+
+    fn replace_with_cache(&self, input: &str, cache: &dyn RegexCache) -> Result<String, regex::Error> {
+        let re = get_case_insensitive_regex_with_cache(
+            r"\bupper\(\s*'((?:[^'\\]|\\.)*)'\s*\)",
+            cache,
+        )?;
         Ok(re
             .replace_all(input, |caps: &regex::Captures| caps[1].to_uppercase())
             .to_string())
@@ -180,5 +195,16 @@ mod tests {
             "Upper transformation should be consistent"
         );
         assert_eq!(result1, "CONSISTENT");
+    }
+
+    #[test]
+    fn test_upper_replace_with_cache() {
+        let cache = HashMapRegexCache::new();
+        let sub = UpperSubstitutor {};
+        let result = sub
+            .replace_with_cache("upper('hello, world')", &cache)
+            .unwrap();
+        assert_eq!(result, "HELLO, WORLD");
+        assert_eq!(cache.len(), 1);
     }
 }

@@ -1,4 +1,9 @@
-use super::substitution::{FunctionSubstitutor, get_case_insensitive_regex};
+use super::substitution::{
+    get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
+    RegexCache,
+};
+#[cfg(test)]
+use super::substitution::HashMapRegexCache;
 
 pub struct Base64EncodeSubstitutor {}
 impl FunctionSubstitutor for Base64EncodeSubstitutor {
@@ -15,6 +20,22 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
         use base64::engine::general_purpose;
 
         let re = get_case_insensitive_regex(r"\bbase64_encode\(\s*'((?:[^'\\]|\\.)*)'\s*\)")?;
+        Ok(re
+            .replace_all(input, |caps: &regex::Captures| {
+                let to_encode = &caps[1];
+                general_purpose::STANDARD.encode(to_encode)
+            })
+            .to_string())
+    }
+
+    fn replace_with_cache(&self, input: &str, cache: &dyn RegexCache) -> Result<String, regex::Error> {
+        use base64::Engine;
+        use base64::engine::general_purpose;
+
+        let re = get_case_insensitive_regex_with_cache(
+            r"\bbase64_encode\(\s*'((?:[^'\\]|\\.)*)'\s*\)",
+            cache,
+        )?;
         Ok(re
             .replace_all(input, |caps: &regex::Captures| {
                 let to_encode = &caps[1];
@@ -328,5 +349,16 @@ mod tests {
 
         assert!(!result.contains("base64_encode"));
         assert!(!result.contains(&long_text));
+    }
+
+    #[test]
+    fn test_base64_encode_replace_with_cache() {
+        let cache = HashMapRegexCache::new();
+        let sub = Base64EncodeSubstitutor {};
+        let result = sub
+            .replace_with_cache("base64_encode('Hello, World!')", &cache)
+            .unwrap();
+        assert_eq!(result, "SGVsbG8sIFdvcmxkIQ==");
+        assert_eq!(cache.len(), 1);
     }
 }

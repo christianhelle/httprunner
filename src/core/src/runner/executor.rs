@@ -29,7 +29,7 @@ static CLIENT_CACHE: OnceLock<Mutex<HashMap<ClientConfig, Client>>> = OnceLock::
 
 #[cfg(not(target_arch = "wasm32"))]
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-struct ClientConfig {
+pub(crate) struct ClientConfig {
     connect_timeout_ms: u64,
     timeout_ms: u64,
     insecure: bool,
@@ -43,6 +43,60 @@ impl ClientConfig {
             timeout_ms: request.timeout.unwrap_or(60_000),
             insecure,
         }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[allow(private_interfaces)]
+pub trait HttpClientCache: Send + Sync {
+    fn get_or_insert_with(
+        &self,
+        config: ClientConfig,
+        f: impl FnOnce() -> Result<Client>,
+    ) -> Result<Client>;
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub struct HashMapClientCache {
+    inner: Mutex<HashMap<ClientConfig, Client>>,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Default for HashMapClientCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl HashMapClientCache {
+    pub fn new() -> Self {
+        Self {
+            inner: Mutex::new(HashMap::new()),
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn len(&self) -> usize {
+        self.inner.lock().expect("http client cache mutex poisoned").len()
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[allow(private_interfaces)]
+impl HttpClientCache for HashMapClientCache {
+    fn get_or_insert_with(
+        &self,
+        config: ClientConfig,
+        f: impl FnOnce() -> Result<Client>,
+    ) -> Result<Client> {
+        let mut cache = self.inner.lock().expect("http client cache mutex poisoned");
+        if let Some(client) = cache.get(&config) {
+            return Ok(client.clone());
+        }
+        let client = f()?;
+        cache.insert(config, client.clone());
+        Ok(client)
     }
 }
 
@@ -128,6 +182,16 @@ fn build_client(request: &HttpRequest, insecure: bool) -> Result<Client> {
     cache.insert(config, client.clone());
 
     Ok(client)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn build_client_with_cache(
+    request: &HttpRequest,
+    insecure: bool,
+    cache: &impl HttpClientCache,
+) -> Result<Client> {
+    let config = ClientConfig::from_request(request, insecure);
+    cache.get_or_insert_with(config, || build_client_for_config(config))
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -222,28 +286,6 @@ fn capture_response_details(
 mod tests {
     use super::*;
     use crate::types::Header;
-    use serial_test::serial;
-
-    fn clear_client_cache() {
-        if let Some(cache) = CLIENT_CACHE.get() {
-            cache
-                .lock()
-                .expect("http client cache mutex poisoned")
-                .clear();
-        }
-    }
-
-    fn client_cache_size() -> usize {
-        CLIENT_CACHE
-            .get()
-            .map(|cache| {
-                cache
-                    .lock()
-                    .expect("http client cache mutex poisoned")
-                    .len()
-            })
-            .unwrap_or(0)
-    }
 
     fn create_test_request() -> HttpRequest {
         HttpRequest {
@@ -264,73 +306,67 @@ mod tests {
     }
 
     #[test]
-    #[serial]
     fn test_build_client_with_default_timeouts() {
-        clear_client_cache();
+        let cache = HashMapClientCache::new();
         let request = create_test_request();
-        let client = build_client(&request, false);
+        let client = build_client_with_cache(&request, false, &cache);
         assert!(client.is_ok());
     }
 
     #[test]
-    #[serial]
     fn test_build_client_with_custom_timeouts() {
-        clear_client_cache();
+        let cache = HashMapClientCache::new();
         let mut request = create_test_request();
         request.timeout = Some(5000);
         request.connection_timeout = Some(2000);
-        let client = build_client(&request, false);
+        let client = build_client_with_cache(&request, false, &cache);
         assert!(client.is_ok());
     }
 
     #[test]
-    #[serial]
     fn test_build_client_with_insecure_flag() {
-        clear_client_cache();
+        let cache = HashMapClientCache::new();
         let request = create_test_request();
-        let client = build_client(&request, true);
+        let client = build_client_with_cache(&request, true, &cache);
         assert!(client.is_ok());
     }
 
     #[test]
-    #[serial]
     fn test_build_client_with_zero_timeouts() {
-        clear_client_cache();
+        let cache = HashMapClientCache::new();
         let mut request = create_test_request();
         request.timeout = Some(0);
         request.connection_timeout = Some(0);
-        let client = build_client(&request, false);
+        let client = build_client_with_cache(&request, false, &cache);
         assert!(client.is_ok());
     }
 
     #[test]
-    #[serial]
     fn test_build_client_reuses_cached_client_for_matching_config() {
-        clear_client_cache();
+        let cache = HashMapClientCache::new();
         let request = create_test_request();
 
-        let first = build_client(&request, false);
-        let second = build_client(&request, false);
+        let first = build_client_with_cache(&request, false, &cache);
+        let second = build_client_with_cache(&request, false, &cache);
 
         assert!(first.is_ok());
         assert!(second.is_ok());
-        assert_eq!(client_cache_size(), 1);
+        assert_eq!(cache.len(), 1);
     }
 
     #[test]
-    #[serial]
     fn test_build_client_creates_new_cache_entry_for_different_timeouts() {
-        clear_client_cache();
+        let cache = HashMapClientCache::new();
         let request = create_test_request();
         let mut custom_timeout_request = create_test_request();
         custom_timeout_request.timeout = Some(5000);
 
-        let first = build_client(&request, false);
-        let second = build_client(&custom_timeout_request, false);
+        let first = build_client_with_cache(&request, false, &cache);
+        let second = build_client_with_cache(&custom_timeout_request, false, &cache);
 
         assert!(first.is_ok());
         assert!(second.is_ok());
-        assert_eq!(client_cache_size(), 2);
+        assert_eq!(cache.len(), 2);
     }
 
     #[test]
@@ -490,5 +526,11 @@ mod tests {
         let client = Client::new();
         let result = build_request(&client, &request);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_hash_map_client_cache_default() {
+        let cache = HashMapClientCache::default();
+        assert_eq!(cache.len(), 0);
     }
 }

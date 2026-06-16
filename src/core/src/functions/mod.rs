@@ -17,7 +17,9 @@ mod time;
 mod upper;
 mod utc_datetime;
 
-pub use substitution::substitute_functions;
+pub use substitution::{
+    substitute_functions, substitute_functions_with_cache, HashMapRegexCache, RegexCache,
+};
 
 #[cfg(test)]
 mod tests;
