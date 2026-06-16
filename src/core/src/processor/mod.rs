@@ -1,6 +1,7 @@
 mod executor;
 mod formatter;
 mod incremental;
+pub(crate) mod incremental_loop;
 mod output;
 
 pub use executor::{
