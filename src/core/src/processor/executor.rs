@@ -2,6 +2,7 @@ use super::formatter::{format_json_if_valid, format_request_name};
 use crate::request_substitution::{
     substitute_functions_in_request, substitute_request_variables_in_request,
 };
+use crate::assertions;
 use crate::colors;
 use crate::conditions;
 use crate::logging::Log;
@@ -581,7 +582,16 @@ where
         config.verbose || config.fail_fast,
         config.insecure,
     ) {
-        Ok(result) => Ok((RequestProcessResult::Completed(result), processed_request)),
+        Ok(mut result) => {
+            if !processed_request.assertions.is_empty() {
+                let assertion_results =
+                    assertions::evaluate_assertions(&processed_request.assertions, &result);
+                let all_passed = assertion_results.iter().all(|r| r.passed);
+                result.success = all_passed;
+                result.assertion_results = assertion_results;
+            }
+            Ok((RequestProcessResult::Completed(result), processed_request))
+        }
         Err(e) => {
             log_execution_error(&processed_request, &e, log, config.include_secrets);
             Ok((RequestProcessResult::ExecutionError, processed_request))
