@@ -4,8 +4,9 @@ use crate::results_view::{
 };
 use futures_util::FutureExt;
 use httprunner_core::parser;
+use httprunner_core::processor::RequestProcessingResult;
 use httprunner_core::runner::{
-    AsyncRequestFuture, AsyncRequestProcessingResult, process_http_requests_incremental_async,
+    AsyncRequestFuture, process_http_requests_incremental_async,
 };
 use httprunner_core::types::{HttpRequest, HttpResult};
 use std::any::Any;
@@ -248,19 +249,19 @@ fn make_async_executor(
     }
 }
 
-fn map_process_result(process_result: AsyncRequestProcessingResult) -> ExecutionResult {
+fn map_process_result(process_result: RequestProcessingResult) -> ExecutionResult {
     match process_result {
-        AsyncRequestProcessingResult::Skipped { request, reason } => {
+        RequestProcessingResult::Skipped { request, reason } => {
             ExecutionResult::Failure(FailureResult::simple(
                 format!("⏭️ {}", request.method),
                 request.url,
                 format!("Skipped: {}", reason),
             ))
         }
-        AsyncRequestProcessingResult::Executed { request, result } => {
+        RequestProcessingResult::Executed { request, result } => {
             map_http_result(request, result)
         }
-        AsyncRequestProcessingResult::Failed { request, error } => {
+        RequestProcessingResult::Failed { request, error } => {
             ExecutionResult::Failure(FailureResult::simple(request.method, request.url, error))
         }
     }

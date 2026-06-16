@@ -1,6 +1,4 @@
-#[cfg(not(target_arch = "wasm32"))]
 use httprunner_core::processor::RequestProcessingResult;
-use httprunner_core::runner::AsyncRequestProcessingResult;
 #[cfg(not(target_arch = "wasm32"))]
 use httprunner_core::telemetry;
 use httprunner_core::types::AssertionResult;
@@ -890,17 +888,17 @@ fn request_result_is_failure(result: &RequestProcessingResult) -> bool {
 
 /// Async (WASM) counterpart of [`should_continue_after`].
 pub(crate) fn should_continue_after_async(
-    result: &AsyncRequestProcessingResult,
+    result: &RequestProcessingResult,
     fail_fast: bool,
 ) -> bool {
     !(fail_fast && async_result_is_failure(result))
 }
 
-fn async_result_is_failure(result: &AsyncRequestProcessingResult) -> bool {
+fn async_result_is_failure(result: &RequestProcessingResult) -> bool {
     match result {
-        AsyncRequestProcessingResult::Executed { result, .. } => !result.success,
-        AsyncRequestProcessingResult::Failed { .. } => true,
-        AsyncRequestProcessingResult::Skipped { .. } => false,
+        RequestProcessingResult::Executed { result, .. } => !result.success,
+        RequestProcessingResult::Failed { .. } => true,
+        RequestProcessingResult::Skipped { .. } => false,
     }
 }
 
@@ -991,19 +989,19 @@ mod tests {
 
     #[test]
     fn should_continue_after_async_matches_sync_semantics() {
-        let failed = AsyncRequestProcessingResult::Executed {
+        let failed = RequestProcessingResult::Executed {
             request: sample_request(),
             result: sample_result(false),
         };
-        let skipped = AsyncRequestProcessingResult::Skipped {
+        let skipped = RequestProcessingResult::Skipped {
             request: sample_request(),
             reason: "dependency".to_string(),
         };
-        let processing_failed = AsyncRequestProcessingResult::Failed {
+        let processing_failed = RequestProcessingResult::Failed {
             request: sample_request(),
             error: "boom".to_string(),
         };
-        let ok = AsyncRequestProcessingResult::Executed {
+        let ok = RequestProcessingResult::Executed {
             request: sample_request(),
             result: sample_result(true),
         };
