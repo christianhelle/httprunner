@@ -5,7 +5,7 @@ mod url_encoding;
 
 pub use url_encoding::{encode_form_body, needs_form_encoding};
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(any(target_arch = "wasm32", test))]
 mod executor_async;
 
 #[cfg(not(target_arch = "wasm32"))]
