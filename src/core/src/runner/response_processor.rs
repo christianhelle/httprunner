@@ -53,26 +53,6 @@ pub fn build_success_result(
     }
 }
 
-pub fn build_temp_result_for_assertions(
-    request: &HttpRequest,
-    status_code: u16,
-    success: bool,
-    duration_ms: u64,
-    response_headers: Option<HashMap<String, String>>,
-    response_body: Option<String>,
-) -> HttpResult {
-    HttpResult {
-        request_name: request.name.clone(),
-        status_code,
-        success,
-        error_message: None,
-        duration_ms,
-        response_headers,
-        response_body,
-        assertion_results: Vec::new(),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -175,16 +155,6 @@ mod tests {
         assert_eq!(result.duration_ms, 150);
         assert_eq!(result.response_headers, Some(headers));
         assert_eq!(result.response_body, Some("{\"ok\": true}".to_string()));
-    }
-
-    #[test]
-    fn test_build_temp_result_for_assertions() {
-        let request = create_test_request();
-        let result = build_temp_result_for_assertions(&request, 201, true, 75, None, None);
-
-        assert_eq!(result.status_code, 201);
-        assert!(result.success);
-        assert!(result.assertion_results.is_empty());
     }
 
     #[test]
@@ -304,29 +274,6 @@ mod tests {
     }
 
     #[test]
-    fn test_build_temp_result_with_all_fields() {
-        let request = create_test_request();
-        let mut headers = HashMap::new();
-        headers.insert("test".to_string(), "value".to_string());
-
-        let result = build_temp_result_for_assertions(
-            &request,
-            200,
-            true,
-            100,
-            Some(headers.clone()),
-            Some("body".to_string()),
-        );
-
-        assert_eq!(result.status_code, 200);
-        assert!(result.success);
-        assert_eq!(result.duration_ms, 100);
-        assert_eq!(result.response_headers, Some(headers));
-        assert_eq!(result.response_body, Some("body".to_string()));
-        assert!(result.error_message.is_none());
-    }
-
-    #[test]
     fn test_should_capture_response_all_conditions_false() {
         let mut request = create_test_request();
         request.name = None;
@@ -417,23 +364,4 @@ mod tests {
         assert!(result.contains_key("set-cookie"));
     }
 
-    #[test]
-    fn test_build_temp_result_preserves_request_name() {
-        let mut request = create_test_request();
-        request.name = Some("my_custom_request".to_string());
-
-        let result = build_temp_result_for_assertions(&request, 200, true, 100, None, None);
-
-        assert_eq!(result.request_name, Some("my_custom_request".to_string()));
-    }
-
-    #[test]
-    fn test_build_temp_result_without_request_name() {
-        let mut request = create_test_request();
-        request.name = None;
-
-        let result = build_temp_result_for_assertions(&request, 200, true, 100, None, None);
-
-        assert!(result.request_name.is_none());
-    }
 }
