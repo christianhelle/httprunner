@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Features
+- Extract logging from processor orchestrator into output module ([#277](https://github.com/christianhelle/httprunner/pull/277)) ([@christianhelle](https://github.com/christianhelle/))
 - Add WASM async executor test coverage ([#274](https://github.com/christianhelle/httprunner/pull/274)) ([@christianhelle](https://github.com/christianhelle/))
 - Replace static mutable caches with injectable adapters ([#276](https://github.com/christianhelle/httprunner/pull/276)) ([@christianhelle](https://github.com/christianhelle/))
 - Remove legacy handwritten parser ([#275](https://github.com/christianhelle/httprunner/pull/275)) ([@christianhelle](https://github.com/christianhelle/))
