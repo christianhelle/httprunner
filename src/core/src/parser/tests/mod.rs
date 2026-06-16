@@ -1221,7 +1221,9 @@ mod golden_tests {
             let content = fs::read_to_string(&path).unwrap();
             let requests = parse_http_content(&content, None).unwrap();
             let actual_json = serde_json::to_string_pretty(&requests).unwrap();
-            let expected_json = fs::read_to_string(&expected_path).unwrap();
+            let expected_json = fs::read_to_string(&expected_path)
+                .unwrap()
+                .replace("\r\n", "\n");
 
             assert_eq!(
                 actual_json, expected_json,
