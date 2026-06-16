@@ -1184,3 +1184,54 @@ fn benchmark_parser_backends() {
         print_benchmark_result(&pest);
     }
 }
+
+#[cfg(test)]
+mod golden_tests {
+    use crate::parser::parse_http_content;
+    use std::fs;
+    use std::path::Path;
+
+    fn fixture_dir() -> std::path::PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("parser")
+            .join("tests")
+            .join("fixtures")
+    }
+
+    #[test]
+    fn golden_tests_match_expected() {
+        let fixtures = fixture_dir();
+        let mut tested = 0;
+
+        for entry in fs::read_dir(&fixtures).unwrap() {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("http") {
+                continue;
+            }
+
+            let expected_path = path.with_extension("http.expected");
+            assert!(
+                expected_path.exists(),
+                "Missing expected file for fixture: {}",
+                path.display()
+            );
+
+            let content = fs::read_to_string(&path).unwrap();
+            let requests = parse_http_content(&content, None).unwrap();
+            let actual_json = serde_json::to_string_pretty(&requests).unwrap();
+            let expected_json = fs::read_to_string(&expected_path).unwrap();
+
+            assert_eq!(
+                actual_json, expected_json,
+                "Golden file mismatch for fixture: {}\nRegenerate by running: cargo test -p httprunner-core generate_expected_files -- --ignored --nocapture",
+                path.file_name().unwrap().to_string_lossy()
+            );
+
+            tested += 1;
+        }
+
+        assert!(tested > 0, "No fixture files found in {:?}", fixtures);
+    }
+}

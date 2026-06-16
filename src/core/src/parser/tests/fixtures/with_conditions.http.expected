@@ -1,0 +1,32 @@
+[
+  {
+    "name": null,
+    "method": "GET",
+    "url": "https://api.example.com/protected",
+    "headers": [],
+    "body": null,
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [
+      {
+        "request_name": "auth",
+        "condition_type": "Status",
+        "expected_value": "200",
+        "negate": false
+      },
+      {
+        "request_name": "auth",
+        "condition_type": {
+          "BodyJsonPath": "$.blocked"
+        },
+        "expected_value": "true",
+        "negate": true
+      }
+    ],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  }
+]

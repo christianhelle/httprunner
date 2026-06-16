@@ -1,0 +1,22 @@
+[
+  {
+    "name": null,
+    "method": "POST",
+    "url": "https://api.example.com/users",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "body": "{\"name\": \"Jane\", \"role\": \"admin\"}",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  }
+]

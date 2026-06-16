@@ -1,0 +1,37 @@
+[
+  {
+    "name": "request1",
+    "method": "GET",
+    "url": "https://httpbin.org/uuid",
+    "headers": [],
+    "body": "\n",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  },
+  {
+    "name": "request2",
+    "method": "POST",
+    "url": "https://httpbin.org/post",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "body": "{\n  \"guid\": \"{{request1.response.body.$.json.uuid}}\",\n  \"guid_base64\": \"base64_encode('{{request1.response.body.$.json.uuid}}')\"\n}",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "name": "first",
+    "method": "GET",
+    "url": "https://api.example.com/first",
+    "headers": [],
+    "body": "\n",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  },
+  {
+    "name": "second",
+    "method": "POST",
+    "url": "https://api.example.com/second",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "text/plain"
+      }
+    ],
+    "body": "second-body\n\n",
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  },
+  {
+    "name": "third",
+    "method": "DELETE",
+    "url": "https://api.example.com/third",
+    "headers": [],
+    "body": null,
+    "assertions": [],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  }
+]

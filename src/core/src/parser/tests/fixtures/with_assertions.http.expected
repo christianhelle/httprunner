@@ -1,0 +1,30 @@
+[
+  {
+    "name": null,
+    "method": "GET",
+    "url": "https://api.example.com/health",
+    "headers": [],
+    "body": null,
+    "assertions": [
+      {
+        "assertion_type": "Status",
+        "expected_value": "200"
+      },
+      {
+        "assertion_type": "Body",
+        "expected_value": "healthy"
+      },
+      {
+        "assertion_type": "Headers",
+        "expected_value": "Content-Type: application/json"
+      }
+    ],
+    "variables": [],
+    "timeout": null,
+    "connection_timeout": null,
+    "depends_on": null,
+    "conditions": [],
+    "pre_delay_ms": null,
+    "post_delay_ms": null
+  }
+]
