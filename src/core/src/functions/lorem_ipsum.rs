@@ -329,7 +329,7 @@ impl FunctionSubstitutor for LoremIpsumSubstitutor {
             .to_string())
     }
 
-    fn replace_with_cache(&self, input: &str, cache: &impl RegexCache) -> Result<String, regex::Error> {
+    fn replace_with_cache(&self, input: &str, cache: &dyn RegexCache) -> Result<String, regex::Error> {
         let pattern = r"\blorem_ipsum\(\s*(\d*)\s*\)";
         let regex = get_case_insensitive_regex_with_cache(pattern, cache)?;
         Ok(regex

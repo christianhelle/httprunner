@@ -26,7 +26,7 @@ pub trait RegexCache: Send + Sync {
     fn get_or_insert_with(
         &self,
         pattern: &str,
-        f: impl FnOnce() -> std::result::Result<Regex, regex::Error>,
+        f: Box<dyn FnOnce() -> std::result::Result<Regex, regex::Error> + Send>,
     ) -> std::result::Result<Regex, regex::Error>;
 }
 
@@ -59,7 +59,7 @@ impl RegexCache for HashMapRegexCache {
     fn get_or_insert_with(
         &self,
         pattern: &str,
-        f: impl FnOnce() -> std::result::Result<Regex, regex::Error>,
+        f: Box<dyn FnOnce() -> std::result::Result<Regex, regex::Error> + Send>,
     ) -> std::result::Result<Regex, regex::Error> {
         let mut cache = self.inner.lock().expect("regex cache mutex poisoned");
         if let Some(regex) = cache.get(pattern) {
@@ -89,11 +89,12 @@ pub(crate) fn get_case_insensitive_regex(
 
 pub(crate) fn get_case_insensitive_regex_with_cache(
     pattern: &str,
-    cache: &impl RegexCache,
+    cache: &dyn RegexCache,
 ) -> std::result::Result<Regex, regex::Error> {
-    cache.get_or_insert_with(pattern, || {
-        RegexBuilder::new(pattern).case_insensitive(true).build()
-    })
+    let owned = pattern.to_string();
+    cache.get_or_insert_with(pattern, Box::new(move || {
+        RegexBuilder::new(&owned).case_insensitive(true).build()
+    }))
 }
 
 pub trait FunctionSubstitutor: Sync {
@@ -108,7 +109,7 @@ pub trait FunctionSubstitutor: Sync {
     fn replace_with_cache(
         &self,
         input: &str,
-        cache: &impl RegexCache,
+        cache: &dyn RegexCache,
     ) -> std::result::Result<String, regex::Error> {
         let re = get_case_insensitive_regex_with_cache(self.get_regex(), cache)?;
         Ok(re
@@ -118,24 +119,24 @@ pub trait FunctionSubstitutor: Sync {
 }
 
 pub fn substitute_functions(input: &str) -> Result<String> {
-    static SUBSTITUTORS: &[&dyn FunctionSubstitutor] = &[
-        &GuidSubstitutor {},
-        &StringSubstitutor {},
-        &NumberSubstitutor {},
-        &Base64EncodeSubstitutor {},
-        &UpperSubstitutor {},
-        &LowerSubstitutor {},
-        &NameSubstitutor {},
-        &FirstNameSubstitutor {},
-        &LastNameSubstitutor {},
-        &AddressSubstitutor {},
-        &JobTitleSubstitutor {},
-        &EmailSubstitutor {},
-        &GetDateSubstitutor {},
-        &GetTimeSubstitutor {},
-        &GetDateTimeSubstitutor {},
-        &GetUtcDateTimeSubstitutor {},
-        &LoremIpsumSubstitutor {},
+    const SUBSTITUTORS: &[&dyn FunctionSubstitutor] = &[
+        &GuidSubstitutor {} as &dyn FunctionSubstitutor,
+        &StringSubstitutor {} as &dyn FunctionSubstitutor,
+        &NumberSubstitutor {} as &dyn FunctionSubstitutor,
+        &Base64EncodeSubstitutor {} as &dyn FunctionSubstitutor,
+        &UpperSubstitutor {} as &dyn FunctionSubstitutor,
+        &LowerSubstitutor {} as &dyn FunctionSubstitutor,
+        &NameSubstitutor {} as &dyn FunctionSubstitutor,
+        &FirstNameSubstitutor {} as &dyn FunctionSubstitutor,
+        &LastNameSubstitutor {} as &dyn FunctionSubstitutor,
+        &AddressSubstitutor {} as &dyn FunctionSubstitutor,
+        &JobTitleSubstitutor {} as &dyn FunctionSubstitutor,
+        &EmailSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetDateSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetTimeSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetUtcDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
+        &LoremIpsumSubstitutor {} as &dyn FunctionSubstitutor,
     ];
 
     let mut result = input.to_string();
@@ -148,26 +149,26 @@ pub fn substitute_functions(input: &str) -> Result<String> {
 
 pub fn substitute_functions_with_cache(
     input: &str,
-    cache: &impl RegexCache,
+    cache: &dyn RegexCache,
 ) -> Result<String> {
-    static SUBSTITUTORS: &[&dyn FunctionSubstitutor] = &[
-        &GuidSubstitutor {},
-        &StringSubstitutor {},
-        &NumberSubstitutor {},
-        &Base64EncodeSubstitutor {},
-        &UpperSubstitutor {},
-        &LowerSubstitutor {},
-        &NameSubstitutor {},
-        &FirstNameSubstitutor {},
-        &LastNameSubstitutor {},
-        &AddressSubstitutor {},
-        &JobTitleSubstitutor {},
-        &EmailSubstitutor {},
-        &GetDateSubstitutor {},
-        &GetTimeSubstitutor {},
-        &GetDateTimeSubstitutor {},
-        &GetUtcDateTimeSubstitutor {},
-        &LoremIpsumSubstitutor {},
+    const SUBSTITUTORS: &[&dyn FunctionSubstitutor] = &[
+        &GuidSubstitutor {} as &dyn FunctionSubstitutor,
+        &StringSubstitutor {} as &dyn FunctionSubstitutor,
+        &NumberSubstitutor {} as &dyn FunctionSubstitutor,
+        &Base64EncodeSubstitutor {} as &dyn FunctionSubstitutor,
+        &UpperSubstitutor {} as &dyn FunctionSubstitutor,
+        &LowerSubstitutor {} as &dyn FunctionSubstitutor,
+        &NameSubstitutor {} as &dyn FunctionSubstitutor,
+        &FirstNameSubstitutor {} as &dyn FunctionSubstitutor,
+        &LastNameSubstitutor {} as &dyn FunctionSubstitutor,
+        &AddressSubstitutor {} as &dyn FunctionSubstitutor,
+        &JobTitleSubstitutor {} as &dyn FunctionSubstitutor,
+        &EmailSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetDateSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetTimeSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
+        &GetUtcDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
+        &LoremIpsumSubstitutor {} as &dyn FunctionSubstitutor,
     ];
 
     let mut result = input.to_string();

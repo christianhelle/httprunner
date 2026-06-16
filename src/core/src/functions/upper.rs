@@ -20,7 +20,7 @@ impl FunctionSubstitutor for UpperSubstitutor {
             .to_string())
     }
 
-    fn replace_with_cache(&self, input: &str, cache: &impl RegexCache) -> Result<String, regex::Error> {
+    fn replace_with_cache(&self, input: &str, cache: &dyn RegexCache) -> Result<String, regex::Error> {
         let re = get_case_insensitive_regex_with_cache(
             r"\bupper\(\s*'((?:[^'\\]|\\.)*)'\s*\)",
             cache,

@@ -47,6 +47,7 @@ impl ClientConfig {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+#[allow(private_interfaces)]
 pub trait HttpClientCache: Send + Sync {
     fn get_or_insert_with(
         &self,
@@ -75,6 +76,7 @@ impl HashMapClientCache {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+#[allow(private_interfaces)]
 impl HttpClientCache for HashMapClientCache {
     fn get_or_insert_with(
         &self,
