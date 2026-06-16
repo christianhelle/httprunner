@@ -34,6 +34,12 @@ pub struct HashMapRegexCache {
     inner: Mutex<HashMap<String, Regex>>,
 }
 
+impl Default for HashMapRegexCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HashMapRegexCache {
     pub fn new() -> Self {
         Self {

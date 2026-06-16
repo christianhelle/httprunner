@@ -62,6 +62,13 @@ pub struct HashMapClientCache {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+impl Default for HashMapClientCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 impl HashMapClientCache {
     pub fn new() -> Self {
         Self {
