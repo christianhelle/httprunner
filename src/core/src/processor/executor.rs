@@ -1,4 +1,5 @@
-use super::formatter::{format_json_if_valid, format_request_name};
+use super::formatter::format_request_name;
+use super::output;
 use crate::request_substitution::{
     substitute_functions_in_request, substitute_request_variables_in_request,
 };
@@ -9,7 +10,7 @@ use crate::parser;
 use crate::redaction::{sanitize_request_for_output, sanitize_result_for_output};
 use crate::runner;
 use crate::types::{
-    AssertionType, HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
+    HttpFileResults, HttpRequest, HttpResult, ProcessorResults, RequestContext,
 };
 use anyhow::Result;
 
@@ -88,70 +89,6 @@ impl<'a> ProcessorConfig<'a> {
     }
 }
 
-struct RequestCounters {
-    success: u32,
-    failed: u32,
-    skipped: u32,
-    total: u32,
-}
-
-impl RequestCounters {
-    fn new() -> Self {
-        Self {
-            success: 0,
-            failed: 0,
-            skipped: 0,
-            total: 0,
-        }
-    }
-
-    fn increment_total(&mut self) {
-        self.total += 1;
-    }
-
-    fn record_success(&mut self) {
-        self.success += 1;
-    }
-
-    fn record_failure(&mut self) {
-        self.failed += 1;
-    }
-
-    fn record_skip(&mut self) {
-        self.skipped += 1;
-    }
-}
-
-struct TotalCounters {
-    success: u32,
-    failed: u32,
-    skipped: u32,
-    files_processed: u32,
-}
-
-impl TotalCounters {
-    fn new() -> Self {
-        Self {
-            success: 0,
-            failed: 0,
-            skipped: 0,
-            files_processed: 0,
-        }
-    }
-
-    fn add_file_results(&mut self, counters: &RequestCounters) {
-        self.success += counters.success;
-        self.failed += counters.failed;
-        self.skipped += counters.skipped;
-        self.files_processed += 1;
-    }
-
-    fn increment_files_failed(&mut self) {
-        self.failed += 1;
-        self.files_processed += 1;
-    }
-}
-
 fn get_context_name(request: &HttpRequest, request_count: u32) -> String {
     request
         .name
@@ -210,90 +147,6 @@ fn should_skip_due_to_dependency(
     false
 }
 
-fn log_condition_evaluation_verbose(
-    processed_request: &HttpRequest,
-    request_contexts: &[RequestContext],
-    log: &mut Log,
-) -> Result<bool> {
-    let (conditions_met, evaluation_results) =
-        conditions::evaluate_conditions_verbose(&processed_request.conditions, request_contexts)?;
-
-    log.writeln(&format!("\n{} Condition Evaluation:", colors::blue("🔍")));
-
-    for (condition, eval_result) in processed_request
-        .conditions
-        .iter()
-        .zip(evaluation_results.iter())
-    {
-        log_single_condition_result(condition, eval_result, log);
-    }
-
-    if !conditions_met {
-        let name_str = format_request_name(&processed_request.name);
-        log.writeln(&format!(
-            "\n{} {} {} {} - Skipped: conditions not met\n",
-            colors::yellow("⏭️"),
-            name_str,
-            processed_request.method,
-            processed_request.url
-        ));
-    } else {
-        log.writeln(""); // Empty line for readability
-    }
-
-    Ok(conditions_met)
-}
-
-fn log_single_condition_result(
-    condition: &crate::types::Condition,
-    eval_result: &conditions::ConditionEvaluationResult,
-    log: &mut Log,
-) {
-    let directive = if eval_result.negated {
-        "@if-not"
-    } else {
-        "@if"
-    };
-    let request_ref = if condition.request_name.is_empty() {
-        "<unnamed>"
-    } else {
-        condition.request_name.as_str()
-    };
-
-    let (color_fn, status_icon): (fn(&str) -> String, &str) = if eval_result.condition_met {
-        (colors::green, "✅")
-    } else {
-        (colors::red, "❌")
-    };
-
-    log.writeln(&format!(
-        "{}   {} {}: {}.response.{}",
-        color_fn(""),
-        status_icon,
-        directive,
-        request_ref,
-        eval_result.condition_type
-    ));
-
-    let value_color = if eval_result.condition_met {
-        colors::green
-    } else {
-        colors::yellow
-    };
-
-    log.writeln(&format!(
-        "{}      Expected: {} \"{}\"",
-        value_color(""),
-        if eval_result.negated { "!=" } else { "==" },
-        eval_result.expected_value
-    ));
-    log.writeln(&format!(
-        "{}      Actual: \"{}\"",
-        value_color(""),
-        eval_result.actual_value.as_deref().unwrap_or("<unknown>")
-    ));
-}
-
 fn should_skip_due_to_conditions(
     processed_request: &HttpRequest,
     request_contexts: &[RequestContext],
@@ -305,10 +158,10 @@ fn should_skip_due_to_conditions(
     }
 
     if verbose {
-        match log_condition_evaluation_verbose(processed_request, request_contexts, log) {
+        match output::log_condition_evaluation_verbose(processed_request, request_contexts, log) {
             Ok(conditions_met) => !conditions_met,
             Err(e) => {
-                log_condition_error(processed_request, &e, log);
+                output::log_condition_error(processed_request, &e, log);
                 true
             }
         }
@@ -316,216 +169,16 @@ fn should_skip_due_to_conditions(
         match conditions::evaluate_conditions(&processed_request.conditions, request_contexts) {
             Ok(conditions_met) => {
                 if !conditions_met {
-                    log_conditions_not_met(processed_request, log);
+                    output::log_conditions_not_met(processed_request, log);
                 }
                 !conditions_met
             }
             Err(e) => {
-                log_condition_error(processed_request, &e, log);
+                output::log_condition_error(processed_request, &e, log);
                 true
             }
         }
     }
-}
-
-fn log_conditions_not_met(processed_request: &HttpRequest, log: &mut Log) {
-    let name_str = format_request_name(&processed_request.name);
-    log.writeln(&format!(
-        "{} {} {} {} - Skipped: conditions not met",
-        colors::yellow("⏭️"),
-        name_str,
-        processed_request.method,
-        processed_request.url
-    ));
-}
-
-fn log_condition_error(processed_request: &HttpRequest, error: &anyhow::Error, log: &mut Log) {
-    let name_str = format_request_name(&processed_request.name);
-    log.writeln(&format!(
-        "{} {} {} {} - Error evaluating conditions: {}",
-        colors::red("❌"),
-        name_str,
-        processed_request.method,
-        processed_request.url,
-        error
-    ));
-}
-
-fn log_request_details(request: &HttpRequest, log: &mut Log, pretty_json: bool) {
-    log.writeln(&format!("\n{} Request Details:", colors::blue("📤")));
-    if let Some(ref name) = request.name {
-        log.writeln(&format!("Name: {}", name));
-    }
-    log.writeln(&format!("Method: {}", request.method));
-    log.writeln(&format!("URL: {}", request.url));
-
-    if !request.headers.is_empty() {
-        log.writeln("Headers:");
-        for header in &request.headers {
-            log.writeln(&format!("  {}: {}", header.name, header.value));
-        }
-    }
-
-    if let Some(ref body) = request.body {
-        let formatted_body = if pretty_json {
-            format_json_if_valid(body)
-        } else {
-            body.clone()
-        };
-        log.writeln(&format!("Body:\n{}", formatted_body));
-    }
-    log.writeln(&"-".repeat(30));
-}
-
-fn log_execution_result(result: &HttpResult, processed_request: &HttpRequest, log: &mut Log) {
-    let name_prefix = result
-        .request_name
-        .as_ref()
-        .map(|n| format!("{}: ", n))
-        .unwrap_or_default();
-
-    if result.success {
-        log.writeln(&format!(
-            "{} {} {} {} - Status: {} - {}ms",
-            colors::green("✅"),
-            name_prefix,
-            processed_request.method,
-            processed_request.url,
-            result.status_code,
-            result.duration_ms
-        ));
-    } else {
-        let error_suffix = result
-            .error_message
-            .as_ref()
-            .map(|msg| format!(" - Error: {}", msg))
-            .unwrap_or_default();
-
-        log.writeln(&format!(
-            "{} {} {} {} - Status: {} - {}ms{}",
-            colors::red("❌"),
-            name_prefix,
-            processed_request.method,
-            processed_request.url,
-            result.status_code,
-            result.duration_ms,
-            error_suffix
-        ));
-    }
-}
-
-fn log_response_details(result: &HttpResult, log: &mut Log, pretty_json: bool) {
-    log.writeln(&format!("\n{} Response Details:", colors::blue("📥")));
-    log.writeln(&format!("Status: {}", result.status_code));
-    log.writeln(&format!("Duration: {}ms", result.duration_ms));
-
-    if let Some(ref headers) = result.response_headers {
-        log.writeln("Headers:");
-        for (name, value) in headers {
-            log.writeln(&format!("  {}: {}", name, value));
-        }
-    }
-
-    if let Some(ref body) = result.response_body {
-        let formatted_body = if pretty_json {
-            format_json_if_valid(body)
-        } else {
-            body.clone()
-        };
-        log.writeln(&format!("Body:\n{}", formatted_body));
-    }
-    log.writeln(&"-".repeat(30));
-}
-
-fn log_assertion_results(result: &HttpResult, log: &mut Log) {
-    log.writeln(&format!("\n{} Assertion Results:", colors::blue("🔍")));
-    for assertion_result in &result.assertion_results {
-        log_single_assertion_result(assertion_result, log);
-    }
-    log.writeln(&"-".repeat(30));
-}
-
-fn log_single_assertion_result(assertion_result: &crate::types::AssertionResult, log: &mut Log) {
-    let assertion_type_str = match assertion_result.assertion.assertion_type {
-        AssertionType::Status => "Status Code",
-        AssertionType::Body => "Response Body",
-        AssertionType::Headers => "Response Headers",
-    };
-
-    if assertion_result.passed {
-        log.writeln(&format!(
-            "{}   ✅ {}: Expected '{}'",
-            colors::green(""),
-            assertion_type_str,
-            assertion_result.assertion.expected_value
-        ));
-    } else {
-        log.writeln(&format!(
-            "{}   ❌ {}: {}",
-            colors::red(""),
-            assertion_type_str,
-            assertion_result
-                .error_message
-                .as_deref()
-                .unwrap_or("Failed")
-        ));
-        if let Some(ref actual) = assertion_result.actual_value {
-            log.writeln(&format!(
-                "{}      Expected: '{}'",
-                colors::yellow(""),
-                assertion_result.assertion.expected_value
-            ));
-            log.writeln(&format!("{}      Actual: '{}'", colors::yellow(""), actual));
-        }
-    }
-}
-
-fn log_file_header(http_file: &str, log: &mut Log) {
-    log.writeln(&format!(
-        "{} HTTP File Runner - Processing file: {}",
-        colors::blue("🚀"),
-        http_file
-    ));
-    log.writeln(&"=".repeat(50));
-}
-
-fn log_file_summary(counters: &RequestCounters, log: &mut Log) {
-    log.writeln(&format!("\n{}", "=".repeat(50)));
-    log.writeln(&format!(
-        "File Summary: {}, {}, {}\n",
-        colors::green(&format!("{} Passed", counters.success)),
-        colors::red(&format!("{} Failed", counters.failed)),
-        colors::yellow(&format!("{} Skipped", counters.skipped))
-    ));
-}
-
-fn log_overall_summary(totals: &TotalCounters, log: &mut Log) {
-    if totals.files_processed > 1 {
-        log.writeln(&format!("{} Overall Summary:", colors::blue("🎯")));
-        log.writeln(&format!("Files processed: {}", totals.files_processed));
-        log.writeln(&format!(
-            "Total requests: {}, {}, {}\n",
-            colors::green(&format!("{} Passed", totals.success)),
-            colors::red(&format!("{} Failed", totals.failed)),
-            colors::yellow(&format!("{} Skipped", totals.skipped))
-        ));
-    }
-}
-
-fn log_execution_error(
-    processed_request: &HttpRequest,
-    error: &anyhow::Error,
-    log: &mut Log,
-    include_secrets: bool,
-) {
-    let sanitized_request = sanitize_request_for_output(processed_request, include_secrets);
-    log.writeln(&format!(
-        "{} {} {} - Error: {}",
-        colors::red("❌"),
-        sanitized_request.method,
-        sanitized_request.url,
-        error
-    ));
 }
 
 enum RequestProcessResult {
@@ -569,7 +222,7 @@ where
     if config.verbose {
         let sanitized_request =
             sanitize_request_for_output(&processed_request, config.include_secrets);
-        log_request_details(&sanitized_request, log, config.pretty_json);
+        output::log_request_details(&sanitized_request, log, config.pretty_json);
     }
 
     // Execute the request. When fail_fast is enabled we force full response
@@ -583,7 +236,7 @@ where
     ) {
         Ok(result) => Ok((RequestProcessResult::Completed(result), processed_request)),
         Err(e) => {
-            log_execution_error(&processed_request, &e, log, config.include_secrets);
+            output::log_execution_error(&processed_request, &e, log, config.include_secrets);
             Ok((RequestProcessResult::ExecutionError, processed_request))
         }
     };
@@ -605,7 +258,7 @@ fn process_single_file<F>(
 where
     F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
 {
-    log_file_header(http_file, log);
+    output::log_file_header(http_file, log);
 
     let requests = match parser::parse_http_file(http_file, config.environment) {
         Ok(reqs) => reqs,
@@ -625,7 +278,7 @@ where
 
     log.writeln(&format!("Found {} HTTP request(s)\n", requests.len()));
 
-    let mut counters = RequestCounters::new();
+    let mut counters = output::RequestCounters::new();
     let mut request_contexts: Vec<RequestContext> = Vec::new();
     let mut halted = false;
 
@@ -663,15 +316,15 @@ where
             RequestProcessResult::ExecutionError => {
                 counters.record_failure();
 
-                // Fail-fast verbose-on-failure: surface the failing request's
-                // full details. The error line was already logged by
-                // process_single_request. Skip when verbose already printed
-                // request details before execution.
-                if config.fail_fast && !config.verbose {
-                    let sanitized_request =
-                        sanitize_request_for_output(&processed_request, config.include_secrets);
-                    log_request_details(&sanitized_request, log, config.pretty_json);
-                }
+                output::log_fail_fast_verbose(
+                    &processed_request,
+                    None,
+                    config.include_secrets,
+                    config.pretty_json,
+                    config.fail_fast,
+                    config.verbose,
+                    log,
+                );
 
                 add_request_context_with_result(
                     &mut request_contexts,
@@ -694,35 +347,33 @@ where
 
                 let sanitized_request =
                     sanitize_request_for_output(&processed_request, config.include_secrets);
-                log_execution_result(&http_result, &sanitized_request, log);
+                output::log_execution_result(&http_result, &sanitized_request, log);
 
                 // Log verbose details
                 if config.verbose {
                     let sanitized_result =
                         sanitize_result_for_output(&http_result, config.include_secrets);
-                    log_response_details(&sanitized_result, log, config.pretty_json);
+                    output::log_response_details(&sanitized_result, log, config.pretty_json);
                 }
 
                 // Log assertion results
                 if !processed_request.assertions.is_empty() {
                     let sanitized_result =
                         sanitize_result_for_output(&http_result, config.include_secrets);
-                    log_assertion_results(&sanitized_result, log);
+                    output::log_assertion_results(&sanitized_result, log);
                 }
 
                 let failed = !http_result.success;
 
-                // Fail-fast verbose-on-failure: emit the full verbose block for
-                // the failing request only. Request and response details are
-                // only printed by the normal flow when verbose, so emit them
-                // here when not already verbose. Assertion results are already
-                // printed above whenever assertions are present.
-                if failed && config.fail_fast && !config.verbose {
-                    log_request_details(&sanitized_request, log, config.pretty_json);
-                    let sanitized_result =
-                        sanitize_result_for_output(&http_result, config.include_secrets);
-                    log_response_details(&sanitized_result, log, config.pretty_json);
-                }
+                output::log_fail_fast_verbose(
+                    &sanitized_request,
+                    Some(&http_result),
+                    config.include_secrets,
+                    config.pretty_json,
+                    config.fail_fast,
+                    config.verbose,
+                    log,
+                );
 
                 add_request_context_with_result(
                     &mut request_contexts,
@@ -742,7 +393,7 @@ where
     // Suppress the per-file summary when halting due to fail-fast so the output
     // ends on the failed request's detail.
     if !halted {
-        log_file_summary(&counters, log);
+        output::log_file_summary(&counters, log);
     }
 
     Ok((
@@ -843,7 +494,7 @@ where
 {
     let mut log = Log::new_with_silent(config.log_filename, config.silent)?;
     let mut http_file_results = Vec::<HttpFileResults>::new();
-    let mut totals = TotalCounters::new();
+    let mut totals = output::TotalCounters::new();
     let mut halted = false;
 
     if config.insecure {
@@ -856,7 +507,7 @@ where
     for http_file in config.files {
         match process_single_file(http_file, config, executor, &mut log) {
             Ok((file_results, file_halted)) => {
-                totals.add_file_results(&RequestCounters {
+                totals.add_file_results(&output::RequestCounters {
                     success: file_results.success_count,
                     failed: file_results.failed_count,
                     skipped: file_results.skipped_count,
@@ -883,7 +534,7 @@ where
 
     // Suppress the overall summary when halting due to fail-fast.
     if !halted {
-        log_overall_summary(&totals, &mut log);
+        output::log_overall_summary(&totals, &mut log);
     }
 
     Ok(ProcessorResults {
