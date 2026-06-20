@@ -442,6 +442,118 @@ GET https://api.example.com/json
 }
 
 #[test]
+fn test_incremental_evaluates_assertions_on_raw_executor_result() {
+    use crate::types::AssertionType;
+
+    // Use EXPECTED_RESPONSE_STATUS which IS parsed by the parser.
+    let file_content = r#"
+GET https://api.example.com/test
+> EXPECTED_RESPONSE_STATUS 200
+"#;
+    let temp_file = create_temp_http_file(file_content);
+    let file_path = temp_file.path().to_str().unwrap();
+
+    let captured = Arc::new(Mutex::new(None::<HttpResult>));
+    let captured_clone = Arc::clone(&captured);
+
+    // Mock returns raw result (empty assertion_results). The processor
+    // must evaluate the request's assertions and merge them.
+    let raw_result = HttpResult {
+        request_name: None,
+        status_code: 200,
+        success: true,
+        error_message: None,
+        duration_ms: 1,
+        response_headers: None,
+        response_body: Some(r#"{"status":"ok"}"#.to_string()),
+        assertion_results: Vec::new(),
+    };
+    let mock = MockHttpExecutor::new(vec![raw_result]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
+            if let RequestProcessingResult::Executed { result, .. } = result {
+                *captured_clone.lock().unwrap() = Some(result);
+            }
+            false
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
+
+    let http_result = captured.lock().unwrap().take()
+        .expect("expected Executed result");
+
+    assert!(
+        !http_result.assertion_results.is_empty(),
+        "processor should have evaluated assertions in incremental path"
+    );
+    assert_eq!(http_result.assertion_results.len(), 1);
+    assert!(
+        http_result.assertion_results[0].passed,
+        "status assertion for 200 should pass"
+    );
+    assert_eq!(
+        http_result.assertion_results[0].assertion.assertion_type,
+        AssertionType::Status
+    );
+    assert_eq!(
+        http_result.assertion_results[0].assertion.expected_value,
+        "200"
+    );
+}
+
+#[test]
+fn test_incremental_evaluates_assertions_and_marks_failure() {
+    // Request expects status 200 but executor returns 404
+    let file_content = r#"
+GET https://api.example.com/not-found
+> EXPECTED_RESPONSE_STATUS 200
+"#;
+    let temp_file = create_temp_http_file(file_content);
+    let file_path = temp_file.path().to_str().unwrap();
+
+    let captured = Arc::new(Mutex::new(None::<HttpResult>));
+    let captured_clone = Arc::clone(&captured);
+
+    let raw_result = HttpResult {
+        request_name: None,
+        status_code: 404,
+        success: false,
+        error_message: None,
+        duration_ms: 1,
+        response_headers: None,
+        response_body: None,
+        assertion_results: Vec::new(),
+    };
+    let mock = MockHttpExecutor::new(vec![raw_result]);
+
+    let _ = process_http_file_incremental_with_executor(
+        file_path,
+        None,
+        false,
+        0,
+        move |_idx, _total, result| {
+            if let RequestProcessingResult::Executed { result, .. } = result {
+                *captured_clone.lock().unwrap() = Some(result);
+            }
+            false
+        },
+        &|req, v, i| mock.execute(req, v, i),
+    );
+
+    let http_result = captured.lock().unwrap().take()
+        .expect("expected Executed result");
+
+    assert_eq!(http_result.assertion_results.len(), 1);
+    assert!(!http_result.assertion_results[0].passed);
+    assert!(!http_result.success);
+}
+
+#[test]
 fn test_multiple_requests_with_mixed_results() {
     let file_content = r#"
 ### Success request
