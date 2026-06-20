@@ -2156,8 +2156,6 @@ GET https://api.example.com/test
 
     #[test]
     fn test_processor_evaluates_assertions_and_marks_failure() {
-        use crate::types::AssertionType;
-
         // Request expects status 200 but executor returns 404
         let file_content = r#"
 GET https://api.example.com/not-found
