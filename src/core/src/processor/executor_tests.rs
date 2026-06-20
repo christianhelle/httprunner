@@ -2091,6 +2091,144 @@ GET https://api.example.com/final
     }
 
     #[test]
+    fn test_processor_evaluates_assertions_on_raw_executor_result() {
+        use crate::types::AssertionType;
+
+        // The file has EXPECTED_RESPONSE_STATUS 200 which the parser converts
+        // into Assertion objects on the request.
+        let file_content = r#"
+GET https://api.example.com/test
+> EXPECTED_RESPONSE_STATUS 200
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        // The mock executor returns a raw result with EMPTY assertion_results.
+        // The processor must evaluate the request's assertions and merge them.
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 200,
+            success: true,
+            error_message: None,
+            duration_ms: 1,
+            response_headers: None,
+            response_body: Some(r#"{"status":"ok"}"#.to_string()),
+            assertion_results: Vec::new(), // raw — no pre-evaluated assertions
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        assert!(res.success);
+        assert_eq!(res.files[0].success_count, 1);
+
+        // The processed result contexts should have assertion_results populated
+        // by the processor (not by the mock).
+        let ctx = &res.files[0].result_contexts[0];
+        let http_result = ctx.result.as_ref().expect("expected result");
+        assert!(
+            !http_result.assertion_results.is_empty(),
+            "processor should have evaluated assertions, but assertion_results is empty"
+        );
+        assert!(
+            http_result.assertion_results[0].passed,
+            "status assertion for 200 should pass"
+        );
+        assert_eq!(http_result.assertion_results.len(), 1);
+        assert_eq!(
+            http_result.assertion_results[0].assertion.assertion_type,
+            AssertionType::Status
+        );
+        assert_eq!(
+            http_result.assertion_results[0].assertion.expected_value,
+            "200"
+        );
+    }
+
+    #[test]
+    fn test_processor_evaluates_assertions_and_marks_failure() {
+        use crate::types::AssertionType;
+
+        // Request expects status 200 but executor returns 404
+        let file_content = r#"
+GET https://api.example.com/not-found
+> EXPECTED_RESPONSE_STATUS 200
+"#;
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![HttpResult {
+            request_name: None,
+            status_code: 404,
+            success: false,
+            error_message: None,
+            duration_ms: 1,
+            response_headers: None,
+            response_body: None,
+            assertion_results: Vec::new(), // raw — no assertions pre-evaluated
+        }]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let res = result.unwrap();
+        // The request failed assertions, so overall result is failure
+        assert!(!res.success);
+        assert_eq!(res.files[0].failed_count, 1);
+
+        let ctx = &res.files[0].result_contexts[0];
+        let http_result = ctx.result.as_ref().expect("expected result");
+        assert_eq!(http_result.assertion_results.len(), 1);
+        assert!(!http_result.assertion_results[0].passed);
+        assert!(!http_result.success);
+    }
+
+    #[test]
+    fn test_processor_without_assertions_does_not_evaluate() {
+        let file_content = "GET https://api.example.com/test\n";
+        let temp_file = create_temp_http_file(file_content);
+        let file_path = temp_file.path().to_str().unwrap().to_string();
+
+        let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
+
+        let result = process_http_files_with_executor(
+            &[file_path],
+            false,
+            None,
+            None,
+            false,
+            false,
+            &|req, v, i| mock.execute(req, v, i),
+        );
+
+        assert!(result.is_ok());
+        let ctx = &result.unwrap().files[0].result_contexts[0];
+        let http_result = ctx.result.as_ref().expect("expected result");
+        assert!(
+            http_result.assertion_results.is_empty(),
+            "no assertions on request should leave assertion_results empty"
+        );
+        assert!(http_result.success);
+    }
+
+    #[test]
     fn test_fail_fast_disabled_runs_all_requests() {
         let file_content = r#"
 GET https://api.example.com/1
