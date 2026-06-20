@@ -1,4 +1,3 @@
-use crate::assertions;
 use crate::conditions;
 use crate::request_substitution::{
     substitute_functions_in_request, substitute_request_variables_in_request,
@@ -293,14 +292,7 @@ where
         // Clone the request for the executor so the original remains available
         // for the callback and context tracking.
         match executor(request.clone(), false, insecure).await {
-            Ok(mut result) => {
-                if !request.assertions.is_empty() {
-                    let assertion_results =
-                        assertions::evaluate_assertions(&request.assertions, &result);
-                    let all_passed = assertion_results.iter().all(|r| r.passed);
-                    result.success = all_passed;
-                    result.assertion_results = assertion_results;
-                }
+            Ok(result) => {
                 add_request_context(
                     &mut request_contexts,
                     request.clone(),
