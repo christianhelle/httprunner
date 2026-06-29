@@ -418,61 +418,6 @@ where
     ))
 }
 
-#[allow(clippy::too_many_arguments)]
-pub fn process_http_files_with_options(
-    files: &[String],
-    verbose: bool,
-    log_filename: Option<&str>,
-    environment: Option<&str>,
-    insecure: bool,
-    pretty_json: bool,
-    delay_ms: u64,
-    include_secrets: bool,
-    fail_fast: bool,
-) -> Result<ProcessorResults> {
-    let config = ProcessorConfig::new(files)
-        .with_verbose(verbose)
-        .with_log_filename(log_filename)
-        .with_environment(environment)
-        .with_insecure(insecure)
-        .with_pretty_json(pretty_json)
-        .with_delay(delay_ms)
-        .with_include_secrets(include_secrets)
-        .with_fail_fast(fail_fast);
-
-    process_http_files(&config, &|request, verbose, insecure| {
-        runner::execute_http_request(request, verbose, insecure)
-    })
-}
-
-pub fn process_http_files_with_silent(config: &ProcessorConfig) -> Result<ProcessorResults> {
-    process_http_files(config, &|request, verbose, insecure| {
-        runner::execute_http_request(request, verbose, insecure)
-    })
-}
-
-pub fn process_http_files_with_executor<F>(
-    files: &[String],
-    verbose: bool,
-    log_filename: Option<&str>,
-    environment: Option<&str>,
-    insecure: bool,
-    pretty_json: bool,
-    executor: &F,
-) -> Result<ProcessorResults>
-where
-    F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
-{
-    let config = ProcessorConfig::new(files)
-        .with_verbose(verbose)
-        .with_log_filename(log_filename)
-        .with_environment(environment)
-        .with_insecure(insecure)
-        .with_pretty_json(pretty_json);
-
-    process_http_files(&config, executor)
-}
-
 /// The default executor: performs real blocking HTTP requests.
 pub fn default_executor(
     request: &HttpRequest,

@@ -4,10 +4,7 @@ mod incremental;
 pub(crate) mod incremental_loop;
 mod output;
 
-pub use executor::{
-    ProcessorConfig, default_executor, process_http_files, process_http_files_with_executor,
-    process_http_files_with_options, process_http_files_with_silent,
-};
+pub use executor::{ProcessorConfig, default_executor, process_http_files};
 
 pub use formatter::format_json_if_valid;
 
