@@ -4,7 +4,7 @@ use tempfile::NamedTempFile;
 #[cfg(test)]
 mod tests {
     use super::super::executor::{
-        ProcessorConfig, process_http_files_with_config, process_http_files_with_executor,
+        ProcessorConfig, process_http_files, process_http_files_with_executor,
     };
     use super::super::mock_executor::MockHttpExecutor;
     use super::*;
@@ -675,7 +675,7 @@ Content-Type: application/json
             .with_silent(true);
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
-        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
 
         assert!(result.is_ok());
 
@@ -720,7 +720,7 @@ Content-Type: application/json
             .with_silent(true);
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
-        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
 
         assert!(result.is_ok());
 
@@ -1904,7 +1904,7 @@ GET https://api.example.com/3
         ]);
 
         let config = ProcessorConfig::new(&files).with_fail_fast(true);
-        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
 
         assert!(result.is_ok());
         let res = result.unwrap();
@@ -1928,7 +1928,7 @@ GET https://api.example.com/3
         let captured_clone = captured_verbose.clone();
 
         let config = ProcessorConfig::new(&files).with_fail_fast(true);
-        let result = process_http_files_with_config(&config, &|_req, v, _i| {
+        let result = process_http_files(&config, &|_req, v, _i| {
             *captured_clone.lock().unwrap() = Some(v);
             Ok(HttpResult {
                 request_name: None,
@@ -1983,7 +1983,7 @@ GET https://api.example.com/never
         ]);
 
         let config = ProcessorConfig::new(&files).with_fail_fast(true);
-        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
 
         assert!(result.is_ok());
         let res = result.unwrap();
@@ -2009,7 +2009,7 @@ GET https://api.example.com/2
         let call_count_clone = call_count.clone();
 
         let config = ProcessorConfig::new(&files).with_fail_fast(true);
-        let result = process_http_files_with_config(&config, &|_req, _v, _i| {
+        let result = process_http_files(&config, &|_req, _v, _i| {
             *call_count_clone.lock().unwrap() += 1;
             Err(anyhow::anyhow!("Network error"))
         });
@@ -2043,7 +2043,7 @@ GET https://api.example.com/final
         ]);
 
         let config = ProcessorConfig::new(&files).with_fail_fast(true);
-        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
 
         assert!(result.is_ok());
         let res = result.unwrap();
@@ -2079,7 +2079,7 @@ GET https://api.example.com/final
         ]);
 
         let config = ProcessorConfig::new(&files).with_fail_fast(true);
-        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
 
         assert!(result.is_ok());
         let res = result.unwrap();
@@ -2120,7 +2120,7 @@ GET https://api.example.com/3
 
         // fail_fast defaults to false
         let config = ProcessorConfig::new(&files);
-        let result = process_http_files_with_config(&config, &|req, v, i| mock.execute(req, v, i));
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
 
         assert!(result.is_ok());
         let res = result.unwrap();

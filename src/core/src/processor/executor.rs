@@ -440,13 +440,13 @@ pub fn process_http_files_with_options(
         .with_include_secrets(include_secrets)
         .with_fail_fast(fail_fast);
 
-    process_http_files_with_config(&config, &|request, verbose, insecure| {
+    process_http_files(&config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
     })
 }
 
 pub fn process_http_files_with_silent(config: &ProcessorConfig) -> Result<ProcessorResults> {
-    process_http_files_with_config(config, &|request, verbose, insecure| {
+    process_http_files(config, &|request, verbose, insecure| {
         runner::execute_http_request(request, verbose, insecure)
     })
 }
@@ -470,10 +470,10 @@ where
         .with_insecure(insecure)
         .with_pretty_json(pretty_json);
 
-    process_http_files_with_config(&config, executor)
+    process_http_files(&config, executor)
 }
 
-pub fn process_http_files_with_config<F>(
+pub fn process_http_files<F>(
     config: &ProcessorConfig,
     executor: &F,
 ) -> Result<ProcessorResults>

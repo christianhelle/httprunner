@@ -5,7 +5,7 @@ pub(crate) mod incremental_loop;
 mod output;
 
 pub use executor::{
-    ProcessorConfig, process_http_files_with_config, process_http_files_with_executor,
+    ProcessorConfig, process_http_files, process_http_files_with_executor,
     process_http_files_with_options, process_http_files_with_silent,
 };
 
