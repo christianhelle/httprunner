@@ -473,6 +473,15 @@ where
     process_http_files(&config, executor)
 }
 
+/// The default executor: performs real blocking HTTP requests.
+pub fn default_executor(
+    request: &HttpRequest,
+    verbose: bool,
+    insecure: bool,
+) -> Result<HttpResult> {
+    runner::execute_http_request(request, verbose, insecure)
+}
+
 pub fn process_http_files<F>(
     config: &ProcessorConfig,
     executor: &F,
