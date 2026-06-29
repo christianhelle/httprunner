@@ -3,9 +3,7 @@ use tempfile::NamedTempFile;
 
 #[cfg(test)]
 mod tests {
-    use super::super::executor::{
-        ProcessorConfig, process_http_files, process_http_files_with_executor,
-    };
+    use super::super::executor::{ProcessorConfig, process_http_files};
     use super::super::mock_executor::MockHttpExecutor;
     use super::*;
     use crate::types::{HttpRequest, HttpResult};
@@ -38,13 +36,13 @@ mod tests {
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -73,13 +71,13 @@ DELETE https://api.example.com/3
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -107,13 +105,13 @@ DELETE https://api.example.com/3
             assertion_results: Vec::new(),
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -135,13 +133,13 @@ GET https://api.example.com/named
         let mock =
             MockHttpExecutor::new(vec![create_success_response(Some("testReq".to_string()))]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -157,13 +155,13 @@ GET https://api.example.com/named
 
         let mock = MockHttpExecutor::new(vec![]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -179,13 +177,13 @@ GET https://api.example.com/named
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -200,13 +198,13 @@ GET https://api.example.com/named
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            true,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(true)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -226,13 +224,13 @@ GET https://api.example.com/named
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[path1, path2],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[path1, path2])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -254,13 +252,13 @@ Content-Type: application/json
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -282,13 +280,13 @@ Content-Type: application/json
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -321,13 +319,13 @@ OPTIONS https://api.example.com/test
         let responses: Vec<_> = (0..7).map(|_| create_success_response(None)).collect();
         let mock = MockHttpExecutor::new(responses);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -352,13 +350,13 @@ GET https://api.example.com/data
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -389,13 +387,13 @@ GET https://api.example.com/data
             assertion_results: Vec::new(),
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -416,13 +414,13 @@ GET https://api.example.com/slow
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -442,13 +440,13 @@ GET https://api.example.com/test
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -493,13 +491,13 @@ GET https://api.example.com/test
 
         let mock = MockHttpExecutor::new(vec![result_with_assertions]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -521,13 +519,13 @@ GET https://api.example.com/user
         let mock =
             MockHttpExecutor::new(vec![create_success_response(Some("getUser".to_string()))]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -563,13 +561,13 @@ GET https://api.example.com/success2
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -594,13 +592,13 @@ Content-Type: application/json
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            true,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(true),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -619,13 +617,13 @@ Content-Type: application/json
 
         let log_base = "test_log_executor";
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            Some(log_base),
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(Some(log_base))
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -752,13 +750,13 @@ GET https://api.example.com/test
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            Some("production"),
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(Some("production"))
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -787,13 +785,13 @@ GET https://api.example.com/third
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -833,13 +831,13 @@ GET https://api.example.com/third
             },
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -857,13 +855,13 @@ GET https://api.example.com/third
 
         let mock = MockHttpExecutor::new(vec![]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -897,13 +895,13 @@ GET https://api.example.com/third
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -935,13 +933,13 @@ Content-Type: application/json
             "verboseTest".to_string(),
         ))]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -973,13 +971,13 @@ Content-Type: application/json
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1010,13 +1008,13 @@ Content-Type: application/json
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            true,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(true),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1047,13 +1045,13 @@ GET https://api.example.com/test
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1092,13 +1090,13 @@ GET https://api.example.com/test
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1124,13 +1122,13 @@ GET https://api.example.com/data
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1152,13 +1150,13 @@ GET https://api.example.com/data
 
         let mock = MockHttpExecutor::new(vec![create_success_response(Some("setup".to_string()))]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1185,13 +1183,13 @@ GET https://api.example.com/data
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1209,13 +1207,13 @@ GET https://api.example.com/data
         let failing_executor =
             |_req: &HttpRequest, _v: bool, _i: bool| Err(anyhow::anyhow!("Network error"));
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &failing_executor,
         );
 
@@ -1244,13 +1242,13 @@ GET https://api.example.com/data
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1279,13 +1277,13 @@ GET https://api.example.com/data
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1310,13 +1308,13 @@ GET https://api.example.com/data
             create_success_response(None),
         ]);
 
-        let result = process_http_files_with_executor(
-            &[path1, path2, path3],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[path1, path2, path3])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1334,13 +1332,13 @@ GET https://api.example.com/data
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1360,16 +1358,16 @@ GET https://api.example.com/data
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[
+        let result = process_http_files(
+            &ProcessorConfig::new(&[
                 invalid_file.to_str().unwrap().to_string(),
                 valid_file.to_str().unwrap().to_string(),
-            ],
-            false,
-            None,
-            None,
-            false,
-            false,
+            ])
+            .with_verbose(false)
+            .with_log_filename(None)
+            .with_environment(None)
+            .with_insecure(false)
+            .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1389,13 +1387,13 @@ Authorization: Bearer token123
 
         let mock = MockHttpExecutor::new(vec![create_success_response(None)]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1421,13 +1419,13 @@ Authorization: Bearer token123
 
         let mock = MockHttpExecutor::new(vec![response]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1449,13 +1447,13 @@ Content-Type: application/json
         let mock =
             MockHttpExecutor::new(vec![create_success_response(Some("myRequest".to_string()))]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            true,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(true)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1493,13 +1491,13 @@ Content-Type: application/json
             }],
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1535,13 +1533,13 @@ Content-Type: application/json
             }],
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1577,13 +1575,13 @@ Content-Type: application/json
             }],
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1619,13 +1617,13 @@ Content-Type: application/json
             }],
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1672,13 +1670,13 @@ Content-Type: application/json
             ],
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1726,13 +1724,13 @@ Content-Type: application/json
             ],
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1769,13 +1767,13 @@ Content-Type: application/json
             }],
         }]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
@@ -1858,13 +1856,13 @@ GET https://api.example.com/not-found
             },
         ]);
 
-        let result = process_http_files_with_executor(
-            &[file_path],
-            false,
-            None,
-            None,
-            false,
-            false,
+        let result = process_http_files(
+            &ProcessorConfig::new(&[file_path])
+                .with_verbose(false)
+                .with_log_filename(None)
+                .with_environment(None)
+                .with_insecure(false)
+                .with_pretty_json(false),
             &|req, v, i| mock.execute(req, v, i),
         );
 
