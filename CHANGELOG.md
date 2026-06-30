@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Features
+- Share .http file discovery between GUI and TUI via Core library ([#285](https://github.com/christianhelle/httprunner/pull/285)) ([@christianhelle](https://github.com/christianhelle/))
 - refactor(core): extract shared HTTP builders for sync & async executors ([#283](https://github.com/christianhelle/httprunner/pull/283)) ([@christianhelle](https://github.com/christianhelle/))
 - refactor(core): unify the batch and incremental request pipelines ([#282](https://github.com/christianhelle/httprunner/pull/282)) ([@christianhelle](https://github.com/christianhelle/))
 - refactor(core): collapse process_http_files into one interface ([#281](https://github.com/christianhelle/httprunner/pull/281)) ([@christianhelle](https://github.com/christianhelle/))
