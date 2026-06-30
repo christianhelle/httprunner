@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Features
+- refactor(core): collapse process_http_files into one interface ([#281](https://github.com/christianhelle/httprunner/pull/281)) ([@christianhelle](https://github.com/christianhelle/))
 - Unify the Incremental Execution Loop ([#279](https://github.com/christianhelle/httprunner/pull/279)) ([@christianhelle](https://github.com/christianhelle/))
 - Decouple assertion evaluation from runner ([#278](https://github.com/christianhelle/httprunner/pull/278)) ([@christianhelle](https://github.com/christianhelle/))
 - Extract logging from processor orchestrator into output module ([#277](https://github.com/christianhelle/httprunner/pull/277)) ([@christianhelle](https://github.com/christianhelle/))
