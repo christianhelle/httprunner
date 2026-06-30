@@ -107,17 +107,18 @@ fn load_files(cli_args: &cli::Cli) -> Result<Vec<String>> {
 }
 
 fn process_http_files(cli_args: &cli::Cli, files: Vec<String>) -> Result<ProcessorResults> {
-    let results = processor::process_http_files_with_options(
-        &files,
-        cli_args.verbose,
-        cli_args.get_log_filename().as_deref(),
-        cli_args.env.as_deref(),
-        cli_args.insecure,
-        cli_args.pretty_json,
-        cli_args.delay,
-        cli_args.include_secrets,
-        cli_args.fail_fast,
-    )?;
+    let log_filename = cli_args.get_log_filename();
+    let config = processor::ProcessorConfig::new(&files)
+        .with_verbose(cli_args.verbose)
+        .with_log_filename(log_filename.as_deref())
+        .with_environment(cli_args.env.as_deref())
+        .with_insecure(cli_args.insecure)
+        .with_pretty_json(cli_args.pretty_json)
+        .with_delay(cli_args.delay)
+        .with_include_secrets(cli_args.include_secrets)
+        .with_fail_fast(cli_args.fail_fast);
+
+    let results = processor::process_http_files(&config, &processor::default_executor)?;
 
     if results.success {
         println!(
