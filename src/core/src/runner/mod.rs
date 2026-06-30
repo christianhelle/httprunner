@@ -1,4 +1,5 @@
 mod executor;
+mod http_builders;
 mod incremental_async;
 mod response_processor;
 mod url_encoding;
