@@ -2,8 +2,6 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 #[cfg(not(target_arch = "wasm32"))]
 use std::thread;
-#[cfg(not(target_arch = "wasm32"))]
-use walkdir::WalkDir;
 
 pub struct FileTree {
     root_path: PathBuf,
@@ -29,25 +27,13 @@ impl FileTree {
 
             // Start async discovery in background thread
             thread::spawn(move || {
-                let mut temp_files = Vec::new();
-
-                for entry in WalkDir::new(&path_clone)
-                    .follow_links(true)
-                    .into_iter()
-                    .filter_map(|e| e.ok())
-                {
-                    if entry.file_type().is_file()
-                        && let Some(ext) = entry.path().extension()
-                        && ext == "http"
-                    {
-                        temp_files.push(entry.path().to_path_buf());
-                        if let Ok(mut count) = count_clone.lock() {
-                            *count = temp_files.len();
+                let temp_files =
+                    httprunner_core::discovery::discover_http_file_paths(&path_clone, |count| {
+                        if let Ok(mut c) = count_clone.lock() {
+                            *c = count;
                         }
-                    }
-                }
+                    });
 
-                temp_files.sort();
                 if let Ok(mut files) = files_clone.lock() {
                     *files = temp_files;
                 }
