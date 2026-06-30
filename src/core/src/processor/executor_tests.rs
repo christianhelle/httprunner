@@ -697,6 +697,62 @@ Content-Type: application/json
     }
 
     #[test]
+    fn test_skipped_request_log_redacts_url_secrets_by_default() {
+        use std::fs;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        // `first` fails (HTTP 500) so `second` is skipped for an unmet dependency.
+        // The skipped request's URL carries a secret query param that must be redacted.
+        let file_content = "# @name first\nGET https://api.example.com/first\n\n###\n\n# @name second\n# @dependsOn first\nGET https://api.example.com/second?token=topsecret\n";
+        let temp_file = create_temp_http_file(file_content);
+        let files = vec![temp_file.path().to_str().unwrap().to_string()];
+        let log_base = format!(
+            "test_log_skip_redaction_{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        );
+
+        let config = ProcessorConfig::new(&files)
+            .with_log_filename(Some(&log_base))
+            .with_silent(true);
+
+        let failed_first = HttpResult {
+            request_name: Some("first".to_string()),
+            status_code: 500,
+            success: false,
+            error_message: None,
+            duration_ms: 1,
+            response_headers: None,
+            response_body: None,
+            assertion_results: Vec::new(),
+        };
+        let mock = MockHttpExecutor::new(vec![failed_first]);
+        let result = process_http_files(&config, &|req, v, i| mock.execute(req, v, i));
+        assert!(result.is_ok());
+
+        let entries = fs::read_dir(".").unwrap();
+        let log_files: Vec<_> = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.file_name().to_string_lossy().starts_with(&log_base)
+                    && e.file_name().to_string_lossy().ends_with(".log")
+            })
+            .collect();
+
+        assert_eq!(log_files.len(), 1, "Expected exactly one log file");
+
+        let log_path = log_files[0].path();
+        let log_content = fs::read_to_string(&log_path).unwrap();
+        assert!(log_content.contains("Skipped: dependency 'first' not met"));
+        assert!(log_content.contains("token=***REDACTED***"));
+        assert!(!log_content.contains("topsecret"));
+
+        let _ = fs::remove_file(&log_path);
+    }
+
+    #[test]
     fn test_insecure_flag_writes_warning_to_log() {
         use std::fs;
         use std::time::{SystemTime, UNIX_EPOCH};
