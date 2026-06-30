@@ -23,6 +23,32 @@ fn discover_http_files_finds_nested_files() {
 }
 
 #[test]
+fn discover_http_file_paths_returns_sorted_with_progress() {
+    let temp = tempdir().unwrap();
+    let nested = temp.path().join("nested");
+    fs::create_dir(&nested).unwrap();
+
+    fs::write(temp.path().join("b.http"), "GET http://example.com").unwrap();
+    fs::write(nested.join("a.http"), "GET http://example.com").unwrap();
+    fs::write(temp.path().join("ignore.txt"), "noop").unwrap();
+
+    let mut progress = Vec::new();
+    let files = discover_http_file_paths(temp.path(), |count| progress.push(count));
+
+    assert_eq!(files.len(), 2);
+    let mut sorted = files.clone();
+    sorted.sort();
+    assert_eq!(files, sorted, "paths should be returned sorted");
+    assert!(
+        files
+            .iter()
+            .all(|p| p.extension().is_some_and(|ext| ext == "http")),
+        "only .http files should be returned"
+    );
+    assert_eq!(progress, vec![1, 2], "progress should report each file found");
+}
+
+#[test]
 fn discover_http_files_returns_empty_when_none_found() {
     let temp = tempdir().unwrap();
     fs::write(temp.path().join("file.txt"), "noop").unwrap();
