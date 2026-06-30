@@ -122,13 +122,14 @@ impl RequestReporter for BatchReporter<'_, '_> {
         dep_name: &str,
     ) -> bool {
         self.counters.record_skip();
-        let name_str = format_request_name(&request.name);
+        let sanitized_request = sanitize_request_for_output(request, self.config.include_secrets);
+        let name_str = format_request_name(&sanitized_request.name);
         self.log.writeln(&format!(
             "{} {} {} {} - Skipped: dependency '{}' not met (must succeed with HTTP 2xx)",
             colors::yellow("⏭️"),
             name_str,
-            request.method,
-            request.url,
+            sanitized_request.method,
+            sanitized_request.url,
             dep_name
         ));
         true
@@ -136,7 +137,8 @@ impl RequestReporter for BatchReporter<'_, '_> {
 
     fn conditions_skipped(&mut self, _idx: usize, _total: usize, request: &HttpRequest) -> bool {
         self.counters.record_skip();
-        output::log_conditions_not_met(request, self.log);
+        let sanitized_request = sanitize_request_for_output(request, self.config.include_secrets);
+        output::log_conditions_not_met(&sanitized_request, self.log);
         true
     }
 
@@ -147,8 +149,15 @@ impl RequestReporter for BatchReporter<'_, '_> {
         request: &HttpRequest,
         error: &anyhow::Error,
     ) -> bool {
-        self.counters.record_skip();
-        output::log_condition_error(request, error, self.log);
+        // A condition that errors (rather than evaluating false) is a failure, not
+        // a benign skip — this mirrors the `Failed` event the UI path emits.
+        self.counters.record_failure();
+        let sanitized_request = sanitize_request_for_output(request, self.config.include_secrets);
+        output::log_condition_error(&sanitized_request, error, self.log);
+        if self.config.fail_fast {
+            self.halted = true;
+            return false;
+        }
         true
     }
 
@@ -156,12 +165,20 @@ impl RequestReporter for BatchReporter<'_, '_> {
         &mut self,
         _idx: usize,
         _total: usize,
-        _request: &HttpRequest,
+        request: &HttpRequest,
         error: &anyhow::Error,
     ) -> bool {
         self.counters.record_failure();
-        self.log
-            .writeln(&format!("{} Internal error: {}", colors::red("❌"), error));
+        let sanitized_request = sanitize_request_for_output(request, self.config.include_secrets);
+        let name_str = format_request_name(&sanitized_request.name);
+        self.log.writeln(&format!(
+            "{} {} {} {} - Internal error: {}",
+            colors::red("❌"),
+            name_str,
+            sanitized_request.method,
+            sanitized_request.url,
+            error
+        ));
         if self.config.fail_fast {
             self.halted = true;
             return false;
