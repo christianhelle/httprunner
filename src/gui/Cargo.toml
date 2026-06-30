@@ -44,7 +44,6 @@ egui_code_editor = "0.2.23"
 # Platform-specific dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rfd = { workspace = true }
-walkdir = { workspace = true }
 
 # Web-specific dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
