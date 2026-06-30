@@ -34,6 +34,170 @@ pub enum RequestProcessingResult {
     Failed { request: HttpRequest, error: String },
 }
 
+/// Observes each step of request processing and decides whether to continue.
+///
+/// `run_requests` calls these methods at each decision point in the single
+/// orchestration loop. Each method returns `true` to continue or `false` to
+/// halt (fail-fast). Two adapters implement it: [`CallbackReporter`] (UI/event
+/// streaming) and the CLI's batch reporter (logging + aggregation).
+pub(crate) trait RequestReporter {
+    /// Called immediately before a request is executed (after substitution).
+    fn request_started(&mut self, _idx: usize, _total: usize, _request: &HttpRequest) {}
+    fn dependency_skipped(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        dep_name: &str,
+    ) -> bool;
+    fn conditions_skipped(&mut self, idx: usize, total: usize, request: &HttpRequest) -> bool;
+    fn condition_error(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        error: &anyhow::Error,
+    ) -> bool;
+    fn substitution_error(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        error: &anyhow::Error,
+    ) -> bool;
+    fn executed(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        result: &HttpResult,
+    ) -> bool;
+    fn execution_error(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        error: &anyhow::Error,
+    ) -> bool;
+}
+
+/// Adapter that turns the `FnMut(idx, total, RequestProcessingResult) -> bool`
+/// callback into a [`RequestReporter`]. Reproduces the events the loop has
+/// historically emitted, so UI streaming and incremental tests are unaffected.
+pub(crate) struct CallbackReporter<F> {
+    callback: F,
+}
+
+impl<F> CallbackReporter<F>
+where
+    F: FnMut(usize, usize, RequestProcessingResult) -> bool,
+{
+    pub(crate) fn new(callback: F) -> Self {
+        Self { callback }
+    }
+}
+
+impl<F> RequestReporter for CallbackReporter<F>
+where
+    F: FnMut(usize, usize, RequestProcessingResult) -> bool,
+{
+    fn dependency_skipped(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        dep_name: &str,
+    ) -> bool {
+        (self.callback)(
+            idx,
+            total,
+            RequestProcessingResult::Skipped {
+                request: request.clone(),
+                reason: format!("Dependency on '{}' not met", dep_name),
+            },
+        )
+    }
+
+    fn conditions_skipped(&mut self, idx: usize, total: usize, request: &HttpRequest) -> bool {
+        (self.callback)(
+            idx,
+            total,
+            RequestProcessingResult::Skipped {
+                request: request.clone(),
+                reason: "Conditions not met".to_string(),
+            },
+        )
+    }
+
+    fn condition_error(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        error: &anyhow::Error,
+    ) -> bool {
+        (self.callback)(
+            idx,
+            total,
+            RequestProcessingResult::Failed {
+                request: request.clone(),
+                error: format!("Condition evaluation error: {}", error),
+            },
+        )
+    }
+
+    fn substitution_error(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        error: &anyhow::Error,
+    ) -> bool {
+        (self.callback)(
+            idx,
+            total,
+            RequestProcessingResult::Failed {
+                request: request.clone(),
+                error: format!("Substitution error: {}", error),
+            },
+        )
+    }
+
+    fn executed(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        result: &HttpResult,
+    ) -> bool {
+        (self.callback)(
+            idx,
+            total,
+            RequestProcessingResult::Executed {
+                request: request.clone(),
+                result: result.clone(),
+            },
+        )
+    }
+
+    fn execution_error(
+        &mut self,
+        idx: usize,
+        total: usize,
+        request: &HttpRequest,
+        error: &anyhow::Error,
+    ) -> bool {
+        (self.callback)(
+            idx,
+            total,
+            RequestProcessingResult::Failed {
+                request: request.clone(),
+                error: error.to_string(),
+            },
+        )
+    }
+}
+
 /// Abstraction over sleep mechanisms for sync and async paths.
 pub trait Sleep {
     async fn sleep(&self, duration: Duration);
@@ -171,7 +335,7 @@ pub async fn process_requests_incremental<F, Fut, S>(
     requests: Vec<HttpRequest>,
     insecure: bool,
     delay_ms: u64,
-    mut callback: F,
+    callback: F,
     executor: &impl Fn(HttpRequest, bool, bool) -> Fut,
     sleep: S,
 ) -> Result<()>
@@ -180,13 +344,38 @@ where
     Fut: Future<Output = Result<HttpResult>>,
     S: Sleep,
 {
+    let mut reporter = CallbackReporter::new(callback);
+    run_requests(&mut reporter, requests, insecure, delay_ms, executor, sleep).await?;
+    Ok(())
+}
+
+/// The single request-processing orchestration: dependency checking, condition
+/// evaluation, variable/function substitution, pre/post delays, execution and
+/// assertions. Outcomes are reported through `reporter`, which also controls
+/// fail-fast (returning `false` halts the loop). Returns the accumulated request
+/// contexts so callers can aggregate per-file results.
+///
+/// The executor is called with an owned `HttpRequest` (the loop clones it before
+/// dispatching), so the original remains available for reporting and context tracking.
+pub(crate) async fn run_requests<R, Fut, S>(
+    reporter: &mut R,
+    requests: Vec<HttpRequest>,
+    insecure: bool,
+    delay_ms: u64,
+    executor: &impl Fn(HttpRequest, bool, bool) -> Fut,
+    sleep: S,
+) -> Result<Vec<RequestContext>>
+where
+    R: RequestReporter,
+    Fut: Future<Output = Result<HttpResult>>,
+    S: Sleep,
+{
     let total = requests.len();
+    let mut request_contexts: Vec<RequestContext> = Vec::new();
 
     if requests.is_empty() {
-        return Ok(());
+        return Ok(request_contexts);
     }
-
-    let mut request_contexts: Vec<RequestContext> = Vec::new();
 
     for (idx, mut request) in requests.into_iter().enumerate() {
         let request_count = (idx + 1) as u32;
@@ -195,17 +384,10 @@ where
             sleep.sleep(Duration::from_millis(delay_ms)).await;
         }
 
-        if let Some(dep_name) = request.depends_on.as_ref()
+        if let Some(dep_name) = request.depends_on.clone()
             && !conditions::check_dependency(&Some(dep_name.clone()), &request_contexts)
         {
-            let should_continue = callback(
-                idx,
-                total,
-                RequestProcessingResult::Skipped {
-                    request: request.clone(),
-                    reason: format!("Dependency on '{}' not met", dep_name),
-                },
-            );
+            let should_continue = reporter.dependency_skipped(idx, total, &request, &dep_name);
             add_request_context(&mut request_contexts, request, None, request_count);
             if !should_continue {
                 break;
@@ -217,14 +399,7 @@ where
             match conditions::evaluate_conditions(&request.conditions, &request_contexts) {
                 Ok(true) => {}
                 Ok(false) => {
-                    let should_continue = callback(
-                        idx,
-                        total,
-                        RequestProcessingResult::Skipped {
-                            request: request.clone(),
-                            reason: "Conditions not met".to_string(),
-                        },
-                    );
+                    let should_continue = reporter.conditions_skipped(idx, total, &request);
                     add_request_context(&mut request_contexts, request, None, request_count);
                     if !should_continue {
                         break;
@@ -232,14 +407,7 @@ where
                     continue;
                 }
                 Err(error) => {
-                    let should_continue = callback(
-                        idx,
-                        total,
-                        RequestProcessingResult::Failed {
-                            request: request.clone(),
-                            error: format!("Condition evaluation error: {}", error),
-                        },
-                    );
+                    let should_continue = reporter.condition_error(idx, total, &request, &error);
                     add_request_context(&mut request_contexts, request, None, request_count);
                     if !should_continue {
                         break;
@@ -251,14 +419,7 @@ where
 
         if let Err(error) = substitute_request_variables_in_request(&mut request, &request_contexts)
         {
-            let should_continue = callback(
-                idx,
-                total,
-                RequestProcessingResult::Failed {
-                    request: request.clone(),
-                    error: format!("Variable substitution error: {}", error),
-                },
-            );
+            let should_continue = reporter.substitution_error(idx, total, &request, &error);
             add_request_context(&mut request_contexts, request, None, request_count);
             if !should_continue {
                 break;
@@ -267,14 +428,7 @@ where
         }
 
         if let Err(error) = substitute_functions_in_request(&mut request) {
-            let should_continue = callback(
-                idx,
-                total,
-                RequestProcessingResult::Failed {
-                    request: request.clone(),
-                    error: format!("Function substitution error: {}", error),
-                },
-            );
+            let should_continue = reporter.substitution_error(idx, total, &request, &error);
             add_request_context(&mut request_contexts, request, None, request_count);
             if !should_continue {
                 break;
@@ -290,8 +444,10 @@ where
 
         let post_delay_ms = request.post_delay_ms;
 
+        reporter.request_started(idx, total, &request);
+
         // Clone the request for the executor so the original remains available
-        // for the callback and context tracking.
+        // for reporting and context tracking.
         match executor(request.clone(), false, insecure).await {
             Ok(mut result) => {
                 if !request.assertions.is_empty() {
@@ -301,30 +457,14 @@ where
                     result.success = all_passed;
                     result.assertion_results = assertion_results;
                 }
-                add_request_context(
-                    &mut request_contexts,
-                    request.clone(),
-                    Some(result.clone()),
-                    request_count,
-                );
-                let should_continue = callback(
-                    idx,
-                    total,
-                    RequestProcessingResult::Executed { request, result },
-                );
+                let should_continue = reporter.executed(idx, total, &request, &result);
+                add_request_context(&mut request_contexts, request, Some(result), request_count);
                 if !should_continue {
                     break;
                 }
             }
             Err(error) => {
-                let should_continue = callback(
-                    idx,
-                    total,
-                    RequestProcessingResult::Failed {
-                        request: request.clone(),
-                        error: error.to_string(),
-                    },
-                );
+                let should_continue = reporter.execution_error(idx, total, &request, &error);
                 add_request_context(&mut request_contexts, request, None, request_count);
                 if !should_continue {
                     break;
@@ -339,7 +479,7 @@ where
         }
     }
 
-    Ok(())
+    Ok(request_contexts)
 }
 
 /// Block on a future using a no-op waker.

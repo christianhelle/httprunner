@@ -1,17 +1,13 @@
 use super::formatter::{format_json_if_valid, format_request_name};
 use crate::colors;
-use crate::conditions;
-use crate::conditions::ConditionEvaluationResult;
 use crate::logging::Log;
 use crate::redaction::{sanitize_request_for_output, sanitize_result_for_output};
-use crate::types::{AssertionType, Condition, HttpRequest, HttpResult};
-use anyhow::Result;
+use crate::types::{AssertionType, HttpRequest, HttpResult};
 
 pub(super) struct RequestCounters {
     pub success: u32,
     pub failed: u32,
     pub skipped: u32,
-    pub total: u32,
 }
 
 impl RequestCounters {
@@ -20,12 +16,7 @@ impl RequestCounters {
             success: 0,
             failed: 0,
             skipped: 0,
-            total: 0,
         }
-    }
-
-    pub fn increment_total(&mut self) {
-        self.total += 1;
     }
 
     pub fn record_success(&mut self) {
@@ -245,90 +236,6 @@ pub fn log_execution_error(
         sanitized_request.method,
         sanitized_request.url,
         error
-    ));
-}
-
-pub fn log_condition_evaluation_verbose(
-    processed_request: &HttpRequest,
-    request_contexts: &[crate::types::RequestContext],
-    log: &mut Log,
-) -> Result<bool> {
-    let (conditions_met, evaluation_results) =
-        conditions::evaluate_conditions_verbose(&processed_request.conditions, request_contexts)?;
-
-    log.writeln(&format!("\n{} Condition Evaluation:", colors::blue("🔍")));
-
-    for (condition, eval_result) in processed_request
-        .conditions
-        .iter()
-        .zip(evaluation_results.iter())
-    {
-        log_single_condition_result(condition, eval_result, log);
-    }
-
-    if !conditions_met {
-        let name_str = format_request_name(&processed_request.name);
-        log.writeln(&format!(
-            "\n{} {} {} {} - Skipped: conditions not met\n",
-            colors::yellow("⏭️"),
-            name_str,
-            processed_request.method,
-            processed_request.url
-        ));
-    } else {
-        log.writeln("");
-    }
-
-    Ok(conditions_met)
-}
-
-fn log_single_condition_result(
-    condition: &Condition,
-    eval_result: &ConditionEvaluationResult,
-    log: &mut Log,
-) {
-    let directive = if eval_result.negated {
-        "@if-not"
-    } else {
-        "@if"
-    };
-    let request_ref = if condition.request_name.is_empty() {
-        "<unnamed>"
-    } else {
-        condition.request_name.as_str()
-    };
-
-    let (color_fn, status_icon): (fn(&str) -> String, &str) = if eval_result.condition_met {
-        (colors::green, "✅")
-    } else {
-        (colors::red, "❌")
-    };
-
-    log.writeln(&format!(
-        "{}   {} {}: {}.response.{}",
-        color_fn(""),
-        status_icon,
-        directive,
-        request_ref,
-        eval_result.condition_type
-    ));
-
-    let value_color = if eval_result.condition_met {
-        colors::green
-    } else {
-        colors::yellow
-    };
-
-    log.writeln(&format!(
-        "{}      Expected: {} \"{}\"",
-        value_color(""),
-        if eval_result.negated { "!=" } else { "==" },
-        eval_result.expected_value
-    ));
-    log.writeln(&format!(
-        "{}      Actual: \"{}\"",
-        value_color(""),
-        eval_result.actual_value.as_deref().unwrap_or("<unknown>")
     ));
 }
 
