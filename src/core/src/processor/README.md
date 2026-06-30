@@ -13,16 +13,17 @@ This module handles the execution of HTTP requests from parsed HTTP files, inclu
 ## Usage
 
 ```rust
-use crate::processor::process_http_files;
+use crate::processor::{ProcessorConfig, default_executor, process_http_files};
 
-let results = process_http_files(
-    &["requests.http"],
-    true,  // verbose
-    Some("output.log"),
-    Some("dev"),  // environment
-    false,  // insecure
-    true    // pretty_json
-)?;
+let files = vec!["requests.http".to_string()];
+let config = ProcessorConfig::new(&files)
+    .with_verbose(true)
+    .with_log_filename(Some("output.log"))
+    .with_environment(Some("dev"))
+    .with_insecure(false)
+    .with_pretty_json(true);
+
+let results = process_http_files(&config, &default_executor)?;
 ```
 
 ## Features

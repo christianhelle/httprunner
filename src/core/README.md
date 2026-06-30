@@ -60,19 +60,19 @@ fn main() -> anyhow::Result<()> {
 ### High-level API (Process Multiple Files)
 
 ```rust
-use httprunner_core::processor::process_http_files;
+use httprunner_core::processor::{ProcessorConfig, default_executor, process_http_files};
 
 fn main() -> anyhow::Result<()> {
     // Process one or more .http files
     let files = vec!["example.http".to_string()];
-    let results = process_http_files(
-        &files,
-        false,  // verbose
-        None,   // log_filename
-        None,   // environment
-        false,  // insecure
-        false,  // pretty_json
-    )?;
+
+    // Configure options via the builder (all default to the values shown)
+    let config = ProcessorConfig::new(&files)
+        .with_verbose(false)
+        .with_pretty_json(false);
+
+    // `default_executor` performs real blocking HTTP requests
+    let results = process_http_files(&config, &default_executor)?;
     
     // Calculate totals from file results
     let total_success: u32 = results.files.iter().map(|f| f.success_count).sum();
