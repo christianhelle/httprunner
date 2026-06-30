@@ -1,9 +1,10 @@
 #[cfg(not(target_arch = "wasm32"))]
+use super::http_builders::{ClientConfig, parse_method, resolve_body};
+#[cfg(not(target_arch = "wasm32"))]
 use super::response_processor::{
     build_error_result, build_success_result, extract_headers,
     should_capture_response,
 };
-use super::{encode_form_body, needs_form_encoding};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::telemetry::{ConnectionErrorCategory, track_connection_error};
 #[cfg(not(target_arch = "wasm32"))]
@@ -24,25 +25,6 @@ type ResponseDetails = (Option<HashMap<String, String>>, Option<String>);
 
 #[cfg(not(target_arch = "wasm32"))]
 static CLIENT_CACHE: OnceLock<Mutex<HashMap<ClientConfig, Client>>> = OnceLock::new();
-
-#[cfg(not(target_arch = "wasm32"))]
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub(crate) struct ClientConfig {
-    connect_timeout_ms: u64,
-    timeout_ms: u64,
-    insecure: bool,
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-impl ClientConfig {
-    fn from_request(request: &HttpRequest, insecure: bool) -> Self {
-        Self {
-            connect_timeout_ms: request.connection_timeout.unwrap_or(30_000),
-            timeout_ms: request.timeout.unwrap_or(60_000),
-            insecure,
-        }
-    }
-}
 
 #[cfg(not(target_arch = "wasm32"))]
 #[allow(private_interfaces)]
@@ -194,21 +176,13 @@ fn build_request(
     client: &Client,
     request: &HttpRequest,
 ) -> Result<reqwest::blocking::RequestBuilder> {
-    let method = request.method.to_uppercase();
-    let method = reqwest::Method::from_bytes(method.as_bytes())?;
-
-    let mut req_builder = client.request(method, &request.url);
+    let mut req_builder = client.request(parse_method(request)?, &request.url);
 
     for header in &request.headers {
         req_builder = req_builder.header(&header.name, &header.value);
     }
 
-    if let Some(ref body) = request.body {
-        let body = if needs_form_encoding(&request.headers) {
-            encode_form_body(body)
-        } else {
-            body.clone()
-        };
+    if let Some(body) = resolve_body(request) {
         req_builder = req_builder.body(body);
     }
 
