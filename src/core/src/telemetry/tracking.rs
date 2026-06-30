@@ -8,6 +8,7 @@ use appinsights::telemetry::{SeverityLevel, Telemetry};
 
 use super::app_type::AppType;
 use super::config::TelemetryConfig;
+use super::events;
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use super::config::is_disabled_by_env;
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
@@ -383,40 +384,13 @@ pub struct CliArgPatterns {
 }
 
 pub fn track_cli_args(args: &CliArgPatterns) {
-    let mut properties = HashMap::new();
-
-    properties.insert("verbose".to_string(), args.verbose.to_string());
-    properties.insert("log".to_string(), args.log.to_string());
-    properties.insert("env".to_string(), args.env.to_string());
-    properties.insert("insecure".to_string(), args.insecure.to_string());
-    properties.insert(
-        "include_secrets".to_string(),
-        args.include_secrets.to_string(),
-    );
-    properties.insert("discover".to_string(), args.discover.to_string());
-    properties.insert("no_banner".to_string(), args.no_banner.to_string());
-    properties.insert("pretty_json".to_string(), args.pretty_json.to_string());
-    properties.insert("report".to_string(), args.report.to_string());
-    properties.insert("export".to_string(), args.export.to_string());
-    properties.insert("export_json".to_string(), args.export_json.to_string());
-    properties.insert("file_count".to_string(), args.file_count.to_string());
-    properties.insert("delay".to_string(), args.delay.to_string());
-    properties.insert("fail_fast".to_string(), args.fail_fast.to_string());
-
-    if let Some(ref format) = args.report_format {
-        properties.insert("report_format".to_string(), format.clone());
-    }
-
-    track_event("cli-args", properties);
+    let (name, properties) = events::cli_args_event(args);
+    track_event(name, properties);
 }
 
 pub fn track_request_result(success: bool, request_count: usize, duration_ms: u64) {
-    let mut properties = HashMap::new();
-    properties.insert("success".to_string(), success.to_string());
-    properties.insert("request_count".to_string(), request_count.to_string());
-    properties.insert("duration_ms".to_string(), duration_ms.to_string());
-
-    track_event("request-executed", properties);
+    let (name, properties) = events::request_result_event(success, request_count, duration_ms);
+    track_event(name, properties);
 }
 
 /// Track performance metrics (parsing, execution timing)
@@ -425,15 +399,8 @@ pub fn track_metric(
     duration_ms: u64,
     additional_props: HashMap<String, String>,
 ) {
-    let mut properties = HashMap::new();
-    properties.insert("metric_name".to_string(), metric_name.to_string());
-    properties.insert("duration_ms".to_string(), duration_ms.to_string());
-
-    for (key, value) in additional_props {
-        properties.insert(key, value);
-    }
-
-    track_event("metric", properties);
+    let (name, properties) = events::metric_event(metric_name, duration_ms, additional_props);
+    track_event(name, properties);
 }
 
 /// Categories of connection errors for telemetry
@@ -465,28 +432,20 @@ impl ConnectionErrorCategory {
 
 /// Track connection errors with categorization (no sensitive data)
 pub fn track_connection_error(category: ConnectionErrorCategory, is_insecure_mode: bool) {
-    let mut properties = HashMap::new();
-    properties.insert("error_category".to_string(), category.as_str().to_string());
-    properties.insert("insecure_mode".to_string(), is_insecure_mode.to_string());
-
-    track_event("connection-error", properties);
+    let (name, properties) = events::connection_error_event(category, is_insecure_mode);
+    track_event(name, properties);
 }
 
 /// Track feature usage in TUI/GUI apps
 pub fn track_feature_usage(feature_name: &str) {
-    let mut properties = HashMap::new();
-    properties.insert("feature_name".to_string(), feature_name.to_string());
-
-    track_event("feature-used", properties);
+    let (name, properties) = events::feature_usage_event(feature_name);
+    track_event(name, properties);
 }
 
 /// Track file parsing metrics
 pub fn track_parse_complete(request_count: usize, duration_ms: u64) {
-    let mut properties = HashMap::new();
-    properties.insert("request_count".to_string(), request_count.to_string());
-    properties.insert("duration_ms".to_string(), duration_ms.to_string());
-
-    track_event("parse-complete", properties);
+    let (name, properties) = events::parse_complete_event(request_count, duration_ms);
+    track_event(name, properties);
 }
 
 /// Track execution completion metrics
@@ -496,16 +455,13 @@ pub fn track_execution_complete(
     skipped_count: usize,
     total_duration_ms: u64,
 ) {
-    let mut properties = HashMap::new();
-    properties.insert("success_count".to_string(), success_count.to_string());
-    properties.insert("failed_count".to_string(), failed_count.to_string());
-    properties.insert("skipped_count".to_string(), skipped_count.to_string());
-    properties.insert(
-        "total_duration_ms".to_string(),
-        total_duration_ms.to_string(),
+    let (name, properties) = events::execution_complete_event(
+        success_count,
+        failed_count,
+        skipped_count,
+        total_duration_ms,
     );
-
-    track_event("execution-complete", properties);
+    track_event(name, properties);
 }
 
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
