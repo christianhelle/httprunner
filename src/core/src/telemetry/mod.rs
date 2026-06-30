@@ -11,6 +11,7 @@
 
 mod app_type;
 mod config;
+mod events;
 mod sanitize;
 mod tracking;
 
