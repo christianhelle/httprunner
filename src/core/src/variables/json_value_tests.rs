@@ -1,4 +1,4 @@
-use super::json_extractor::*;
+use crate::variables::extract_json_value;
 
 #[test]
 fn test_extract_json_value_simple_path() {
