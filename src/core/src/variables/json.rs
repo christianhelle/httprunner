@@ -21,6 +21,18 @@ pub fn extract_json_property(json_body: &str, property: &str) -> Result<Option<S
     Ok(Some(format_json_value(value)))
 }
 
+/// Extract a value from JSON using a JSONPath-style `$.`-prefixed path
+/// (e.g. `$.user.email`). Returns `None` when the path is not `$.`-prefixed.
+///
+/// Keeps all JSON-path extraction in one module; used by condition evaluation
+/// (`@if`/`@if-not` body JSONPath checks).
+pub fn extract_json_value(json_body: &str, json_path: &str) -> Result<Option<String>> {
+    match json_path.strip_prefix("$.") {
+        Some(property) => extract_json_property(json_body, property),
+        None => Ok(None),
+    }
+}
+
 fn parse_json_path(property: &str) -> Result<Vec<JsonPathSegment>> {
     let mut segments = Vec::new();
 

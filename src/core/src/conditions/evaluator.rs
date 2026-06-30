@@ -1,6 +1,6 @@
 use super::formatter::format_condition_type;
-use super::json_extractor::extract_json_value;
 use crate::types::{Condition, ConditionType, RequestContext};
+use crate::variables::extract_json_value;
 use anyhow::Result;
 
 #[derive(Debug)]
