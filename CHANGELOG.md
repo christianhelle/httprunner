@@ -3,6 +3,7 @@
 ## [Unreleased Changes]
 
 ### Features
+- Consolidate JSON-path extraction into the variables module ([#286](https://github.com/christianhelle/httprunner/pull/286)) ([@christianhelle](https://github.com/christianhelle/))
 - Share .http file discovery between GUI and TUI via Core library ([#285](https://github.com/christianhelle/httprunner/pull/285)) ([@christianhelle](https://github.com/christianhelle/))
 - refactor(core): extract shared HTTP builders for sync & async executors ([#283](https://github.com/christianhelle/httprunner/pull/283)) ([@christianhelle](https://github.com/christianhelle/))
 - refactor(core): unify the batch and incremental request pipelines ([#282](https://github.com/christianhelle/httprunner/pull/282)) ([@christianhelle](https://github.com/christianhelle/))
