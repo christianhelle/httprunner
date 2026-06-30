@@ -1,8 +1,8 @@
+use super::http_builders::{parse_method, resolve_body};
 use super::response_processor::{
     build_error_result, build_success_result, extract_headers,
     should_capture_response,
 };
-use super::{encode_form_body, needs_form_encoding};
 use crate::types::{HttpRequest, HttpResult};
 use anyhow::Result;
 use reqwest::Client;
@@ -64,14 +64,13 @@ fn build_client_async(request: &HttpRequest, insecure: bool) -> Result<Client> {
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let connection_timeout = request.connection_timeout.unwrap_or(30_000);
-        let read_timeout = request.timeout.unwrap_or(60_000);
+        let config = super::http_builders::ClientConfig::from_request(request, insecure);
 
         client_builder = client_builder
-            .connect_timeout(std::time::Duration::from_millis(connection_timeout))
-            .timeout(std::time::Duration::from_millis(read_timeout));
+            .connect_timeout(std::time::Duration::from_millis(config.connect_timeout_ms))
+            .timeout(std::time::Duration::from_millis(config.timeout_ms));
 
-        if insecure {
+        if config.insecure {
             client_builder = client_builder
                 .danger_accept_invalid_hostnames(true)
                 .danger_accept_invalid_certs(true);
@@ -91,21 +90,13 @@ fn build_client_async(request: &HttpRequest, insecure: bool) -> Result<Client> {
 }
 
 fn build_request_async(client: &Client, request: &HttpRequest) -> Result<reqwest::RequestBuilder> {
-    let method = request.method.to_uppercase();
-    let method = reqwest::Method::from_bytes(method.as_bytes())?;
-
-    let mut req_builder = client.request(method, &request.url);
+    let mut req_builder = client.request(parse_method(request)?, &request.url);
 
     for header in &request.headers {
         req_builder = req_builder.header(&header.name, &header.value);
     }
 
-    if let Some(ref body) = request.body {
-        let body = if needs_form_encoding(&request.headers) {
-            encode_form_body(body)
-        } else {
-            body.clone()
-        };
+    if let Some(body) = resolve_body(request) {
         req_builder = req_builder.body(body);
     }
 
