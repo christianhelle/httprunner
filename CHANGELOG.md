@@ -2,6 +2,9 @@
 
 ## [Unreleased Changes]
 
+### Merged Pull Requests
+- Update ubuntu Docker tag to v26 ([#261](https://github.com/christianhelle/httprunner/pull/261)) (@renovate[bot])
+
 ### Features
 - Extract telemetry event builders into a pure, tested module ([#287](https://github.com/christianhelle/httprunner/pull/287)) ([@christianhelle](https://github.com/christianhelle/))
 - Unify the batch and incremental request pipelines ([#282](https://github.com/christianhelle/httprunner/pull/282)) ([@christianhelle](https://github.com/christianhelle/))
@@ -23,6 +26,9 @@
 ### Merged Pull Requests
 - Add support for URL encoding requests ([#273](https://github.com/christianhelle/httprunner/pull/273)) ([@christianhelle](https://github.com/christianhelle/))
 - Remove Squad ([#272](https://github.com/christianhelle/httprunner/pull/272)) ([@christianhelle](https://github.com/christianhelle/))
+
+### Closed Issues
+- [Bug]: Http request to get OAuth Token fails ([#271](https://github.com/christianhelle/httprunner/issues/271)) ([@srirajkondapuli](https://github.com/srirajkondapuli/))
 
 
 ## [1.0.53](https://github.com/christianhelle/httprunner/releases/tag/1.0.53) (2026-05-30)
@@ -53,10 +59,33 @@
 - Refactor .http file parsing to be PEG grammar based using pest ([#256](https://github.com/christianhelle/httprunner/pull/256)) ([@christianhelle](https://github.com/christianhelle/))
 - Refresh Rust crates and adapt workspace code to current APIs ([#252](https://github.com/christianhelle/httprunner/pull/252)) (@Copilot)
 - Harden installs and release publishing ([#249](https://github.com/christianhelle/httprunner/pull/249)) ([@christianhelle](https://github.com/christianhelle/))
-- Harden runtime caching and output redaction ([#245](https://github.com/christianhelle/httprunner/pull/245)) ([@christianhelle](https://github.com/christianhelle/))
 - Fix UI run lifecycle and request round-tripping ([#246](https://github.com/christianhelle/httprunner/pull/246)) ([@christianhelle](https://github.com/christianhelle/))
+- Harden runtime caching and output redaction ([#245](https://github.com/christianhelle/httprunner/pull/245)) ([@christianhelle](https://github.com/christianhelle/))
 - Fix core parser and request failures ([#244](https://github.com/christianhelle/httprunner/pull/244)) ([@christianhelle](https://github.com/christianhelle/))
 - Match WASM execution and trim GUI persistence overhead ([#248](https://github.com/christianhelle/httprunner/pull/248)) ([@christianhelle](https://github.com/christianhelle/))
+
+### Closed Issues
+- P2: Release workflow pushes version updates directly to main ([#228](https://github.com/christianhelle/httprunner/issues/228)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: Install scripts lack download integrity verification (no checksum check) ([#220](https://github.com/christianhelle/httprunner/issues/220)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: Stop persisting full request and response payloads during routine GUI state saves ([#227](https://github.com/christianhelle/httprunner/issues/227)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: Flatten GUI and TUI file discovery cost for large .http trees ([#226](https://github.com/christianhelle/httprunner/issues/226)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: Make WASM single-request execution match native and CLI semantics ([#224](https://github.com/christianhelle/httprunner/issues/224)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: Remove desktop-only selected_file gating from WASM editor state and request actions ([#225](https://github.com/christianhelle/httprunner/issues/225)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: Prevent overlapping Run actions from interleaving results across GUI and TUI ([#223](https://github.com/christianhelle/httprunner/issues/223)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: Preserve request semantics across GUI save and round-trip flows ([#222](https://github.com/christianhelle/httprunner/issues/222)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: GUI and TUI spawn unmanaged threads with no panic handling or cancellation ([#219](https://github.com/christianhelle/httprunner/issues/219)) ([@christianhelle](https://github.com/christianhelle/))
+- P3: Response bodies displayed in TUI without ANSI escape sanitization ([#221](https://github.com/christianhelle/httprunner/issues/221)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: No user-visible warning when --insecure disables TLS validation ([#218](https://github.com/christianhelle/httprunner/issues/218)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: Verbose/log mode leaks auth headers and request secrets in cleartext ([#217](https://github.com/christianhelle/httprunner/issues/217)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: Resolved variable values (tokens, passwords) appear in all output surfaces ([#216](https://github.com/christianhelle/httprunner/issues/216)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: Regex compiled on every call — 17+ compilations per request in function substitution ([#215](https://github.com/christianhelle/httprunner/issues/215)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: Exports and logs write sensitive headers (Authorization, Cookie) to disk without redaction ([#214](https://github.com/christianhelle/httprunner/issues/214)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: HTTP client rebuilt per-request — kills connection pooling and wastes TLS handshakes ([#213](https://github.com/christianhelle/httprunner/issues/213)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: Unresolved or malformed request variables are sent literally instead of failing fast ([#235](https://github.com/christianhelle/httprunner/issues/235)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: Parser only warns on invalid directives and still runs requests ([#234](https://github.com/christianhelle/httprunner/issues/234)) ([@christianhelle](https://github.com/christianhelle/))
+- P2: `@if` and `@if-not` conditions treat `==` as literal text instead of an operator ([#233](https://github.com/christianhelle/httprunner/issues/233)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: JSON extraction can return wrong or truncated values for conditions and request variables ([#232](https://github.com/christianhelle/httprunner/issues/232)) ([@christianhelle](https://github.com/christianhelle/))
+- P1: CLI exits with code 0 even when requests fail ([#231](https://github.com/christianhelle/httprunner/issues/231)) ([@christianhelle](https://github.com/christianhelle/))
 
 
 ## [0.9.51](https://github.com/christianhelle/httprunner/releases/tag/0.9.51) (2026-03-24)
@@ -88,6 +117,10 @@
 - Fix --upgrade fails on Linux and MacOS due to captured stdio ([#193](https://github.com/christianhelle/httprunner/pull/193)) ([@christianhelle](https://github.com/christianhelle/))
 - Add support to shutdown CLI app using CTRL+C ([#190](https://github.com/christianhelle/httprunner/pull/190)) ([@christianhelle](https://github.com/christianhelle/))
 - Fix request duration calculation to only show the actual HTTP request duration ([#188](https://github.com/christianhelle/httprunner/pull/188)) ([@christianhelle](https://github.com/christianhelle/))
+
+### Closed Issues
+- P1: CLI exits with code 0 even when requests fail [probe] ([#230](https://github.com/christianhelle/httprunner/issues/230)) ([@christianhelle](https://github.com/christianhelle/))
+- TEMP test issue from copilot - please close ([#229](https://github.com/christianhelle/httprunner/issues/229)) ([@christianhelle](https://github.com/christianhelle/))
 
 
 ## [0.8.48](https://github.com/christianhelle/httprunner/releases/tag/0.8.48) (2026-02-07)
@@ -181,6 +214,9 @@
 
 ### Features
 - Add HTML report format support with comprehensive tests ([#92](https://github.com/christianhelle/httprunner/pull/92)) ([@christianhelle](https://github.com/christianhelle/))
+
+### Closed Issues
+- Cannot connect to Docker container from localhost ([#90](https://github.com/christianhelle/httprunner/issues/90)) ([@christianhelle](https://github.com/christianhelle/))
 
 
 ## [0.5.35](https://github.com/christianhelle/httprunner/releases/tag/0.5.35) (2026-01-09)
@@ -319,6 +355,11 @@
 - Add support for request/response chaining and request variables ([#27](https://github.com/christianhelle/httprunner/pull/27)) ([@christianhelle](https://github.com/christianhelle/))
 - Custom HTTP Headers ([#24](https://github.com/christianhelle/httprunner/pull/24)) ([@christianhelle](https://github.com/christianhelle/))
 
+### Closed Issues
+- Setup Dev Containers ([#30](https://github.com/christianhelle/httprunner/issues/30)) ([@christianhelle](https://github.com/christianhelle/))
+- Setup CoPilot Instructions  ([#34](https://github.com/christianhelle/httprunner/issues/34)) ([@christianhelle](https://github.com/christianhelle/))
+- Snapcraft Description ([#25](https://github.com/christianhelle/httprunner/issues/25)) ([@christianhelle](https://github.com/christianhelle/))
+
 
 ## [v0.1.8](https://github.com/christianhelle/httprunner/releases/tag/v0.1.8) (2025-06-20)
 
@@ -328,6 +369,9 @@
 ### Features
 - Show donation banner after running .http files ([#23](https://github.com/christianhelle/httprunner/pull/23)) ([@christianhelle](https://github.com/christianhelle/))
 - Introduce --upgrade argument ([#22](https://github.com/christianhelle/httprunner/pull/22)) ([@christianhelle](https://github.com/christianhelle/))
+
+### Closed Issues
+- Dark Mode support in documentation static website ([#20](https://github.com/christianhelle/httprunner/issues/20)) ([@christianhelle](https://github.com/christianhelle/))
 
 
 ## [v0.1.7](https://github.com/christianhelle/httprunner/releases/tag/v0.1.7) (2025-06-19)
@@ -355,6 +399,9 @@
 ### Features
 - Introduce Assertions ([#13](https://github.com/christianhelle/httprunner/pull/13)) ([@christianhelle](https://github.com/christianhelle/))
 
+### Closed Issues
+- Re-write everything in Rust ([#11](https://github.com/christianhelle/httprunner/issues/11)) ([@christianhelle](https://github.com/christianhelle/))
+
 
 ## [v0.1.4](https://github.com/christianhelle/httprunner/releases/tag/v0.1.4) (2025-06-14)
 
@@ -364,6 +411,11 @@
 ### Merged Pull Requests
 - Fix memory leak in discovery mode when ArrayList.append() fails ([#6](https://github.com/christianhelle/httprunner/pull/6)) (@Copilot)
 - Add verbose mode details to README ([#4](https://github.com/christianhelle/httprunner/pull/4)) (@Copilot)
+
+### Closed Issues
+- Crashes when using --discover ([#5](https://github.com/christianhelle/httprunner/issues/5)) ([@christianhelle](https://github.com/christianhelle/))
+- Add verbose mode details to README ([#3](https://github.com/christianhelle/httprunner/issues/3)) ([@christianhelle](https://github.com/christianhelle/))
+- Fix snapcraft build ([#1](https://github.com/christianhelle/httprunner/issues/1)) ([@christianhelle](https://github.com/christianhelle/))
 
 
 ## [v0.1.2](https://github.com/christianhelle/httprunner/releases/tag/v0.1.2) (2025-06-14)
@@ -375,3 +427,5 @@
 ## [v0.1.0](https://github.com/christianhelle/httprunner/releases/tag/v0.1.0) (2025-06-13)
 
 
+---
+***This changelog was generated with [chlogr](https://github.com/christianhelle/chlogr). Any changes to this file will be overwritten.***
