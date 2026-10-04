@@ -414,6 +414,30 @@ Content-Type: application/json
 }</code>
                     </div>
 
+                    <h4>country() - Generate Country Name</h4>
+                    <p>Generates a random country name from a list of all 195 UN member and observer states.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "country": "country()",
+  "homeCountry": "COUNTRY()"
+}</code>
+                    </div>
+
+                    <h4>countrycode2() / countrycode3() - Generate ISO 3166-1 Country Codes</h4>
+                    <p>Generates a random two-letter (alpha-2, e.g. DK) or three-letter (alpha-3, e.g. DNK) country code.</p>
+                    <div class="code-block">
+                        <code>POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "countryCode": "countrycode2()",
+  "countryCode3": "COUNTRYCODE3()"
+}</code>
+                    </div>
+
                     <h4>lorem_ipsum(N) - Generate Lorem Ipsum Text</h4>
                     <p>Generates Lorem Ipsum placeholder text with N words. The function is case-insensitive.</p>
                     <div class="code-block">

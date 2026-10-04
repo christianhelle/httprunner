@@ -15,7 +15,7 @@ A powerful Rust library for parsing and executing HTTP requests from `.http` fil
 - 🌐 Support for GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, and CONNECT requests
 - 📝 Custom headers and request bodies
 - 🔧 **Variables** with substitution in URLs, headers, and bodies
-- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
+- 🎲 **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `country()`, `countrycode2()`, `countrycode3()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - 🔗 **Request variables** for chaining requests and passing data between calls
 - 🔍 **Response assertions** for status codes, body content, and headers
 - 🔀 **Conditional execution** with `@dependsOn`, `@if`, and `@if-not` directives

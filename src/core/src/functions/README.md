@@ -10,6 +10,7 @@ This module handles the substitution of dynamic function calls in HTTP request f
   - `guid.rs`, `string_gen.rs`, `number.rs` - Basic generators
   - `first_name.rs`, `last_name.rs`, `name.rs` - Name generators (with name data)
   - `address.rs`, `job_title.rs`, `email.rs` - Other data generators (with data)
+  - `country.rs` - Country name, ISO 3166-1 alpha-2 and alpha-3 generators (one shared `COUNTRY_CODES` table)
   - `lorem_ipsum.rs` - Lorem ipsum generator (with word data)
   - `date.rs`, `time.rs`, `datetime.rs`, `utc_datetime.rs` - Date/time functions
   - `base64_encode.rs`, `upper.rs`, `lower.rs` - Transform functions
@@ -147,6 +148,27 @@ job_title()
 ```
 
 Example output: `Senior Software Engineer`
+
+### Country Generation
+
+Generates a random country name:
+
+```
+country()
+```
+
+Example output: `Denmark`
+
+### Country Code Generation
+
+Generates a random ISO 3166-1 country code:
+
+```
+countrycode2()
+countrycode3()
+```
+
+Example output: `DK`, `DNK`
 
 ### Lorem Ipsum Text Generation
 

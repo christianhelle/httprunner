@@ -1561,3 +1561,39 @@ Content-Type: application/json
     assert!(result.contains("POST"));
     assert!(result.contains("Content-Type:"));
 }
+
+#[test]
+fn test_substitute_functions_country() {
+    use crate::functions::country::COUNTRY_CODES;
+    use crate::functions::substitute_functions;
+
+    let result = substitute_functions(r#"{"country": "country()"}"#).unwrap();
+    assert!(!result.contains("country()"));
+    assert!(
+        COUNTRY_CODES
+            .iter()
+            .any(|c| result.contains(&format!("\"{}\"", c.0)))
+    );
+}
+
+#[test]
+fn test_substitute_functions_country_case_insensitivity() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"a": "country()", "b": "COUNTRY()", "c": "Country()"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.to_lowercase().contains("country()"));
+}
+
+#[test]
+fn test_substitute_functions_country_codes() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"a2": "countrycode2()", "a3": "COUNTRYCODE3()"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.to_lowercase().contains("countrycode"));
+    let pattern = Regex::new(r#"\{"a2": "[A-Z]{2}", "a3": "[A-Z]{3}"\}"#).unwrap();
+    assert!(pattern.is_match(&result), "unexpected output: {}", result);
+}
