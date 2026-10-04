@@ -142,6 +142,7 @@ NoArgFunction = {
     | "address()"
     | "email()"
     | "job_title()"
+    | "country()"
     | "getdate()"
     | "gettime()"
     | "getdatetime()"
