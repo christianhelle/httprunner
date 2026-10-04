@@ -587,7 +587,7 @@ fn render_results_view(f: &mut Frame, area: Rect, app: &App) {
                             Style::default().fg(result_color),
                         ),
                         Span::raw(" "),
-                        Span::raw(format!("{} {}", method, &context.name)),
+                        Span::raw(format!("{} {}", method, context.name)),
                     ]));
 
                     if let Some(error) = &result.error_message {

@@ -66,7 +66,7 @@ fn export_response(
     test_results: &crate::types::RequestContext,
     pretty_json: bool,
 ) -> Result<String, std::io::Error> {
-    let base_filename = format!("{}_response", &test_results.name);
+    let base_filename = format!("{}_response", test_results.name);
     let file = ExportFile::new(base_filename, timestamp)?;
     write_http_request_response(&test_results, ExportType::Response, file.file, pretty_json)?;
     Ok(file.file_name)
@@ -77,7 +77,7 @@ fn export_request(
     test_results: &crate::types::RequestContext,
     pretty_json: bool,
 ) -> Result<String, std::io::Error> {
-    let base_filename = format!("{}_request", &test_results.name);
+    let base_filename = format!("{}_request", test_results.name);
     let file = ExportFile::new(base_filename, timestamp)?;
     write_http_request_response(&test_results, ExportType::Request, file.file, pretty_json)?;
     Ok(file.file_name)

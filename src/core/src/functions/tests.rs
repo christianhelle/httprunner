@@ -1115,7 +1115,7 @@ fn test_substitute_functions_utcdatetime_case_insensitivity() {
     assert!(!result.contains("GETUTCDATETIME()"));
     assert!(!result.contains("GetUtcDateTime()"));
 
-    let datetime_pattern = Regex::new(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}").unwrap();
+    let datetime_pattern = Regex::new(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z").unwrap();
     let matches: Vec<_> = datetime_pattern.find_iter(&result).collect();
     assert_eq!(matches.len(), 3, "Should have 3 UTC datetime values");
 }

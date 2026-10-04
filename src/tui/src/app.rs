@@ -44,7 +44,7 @@ impl App {
 
         let root_directory = state
             .root_directory
-            .and_then(|p| if p.exists() { Some(p) } else { None })
+            .filter(|p| p.exists())
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
         let file_tree_visible = state.file_tree_visible.unwrap_or(true);

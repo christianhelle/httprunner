@@ -64,7 +64,7 @@ impl HttpRunnerApp {
 
         let root_directory = state
             .root_directory
-            .and_then(|p| if p.exists() { Some(p) } else { None })
+            .filter(|p| p.exists())
             .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
         let font_size = state.font_size.unwrap_or(Self::DEFAULT_FONT_SIZE);
