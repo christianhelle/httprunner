@@ -1,6 +1,8 @@
 use crate::functions::address::AddressSubstitutor;
 use crate::functions::base64_encode::Base64EncodeSubstitutor;
-use crate::functions::country::CountrySubstitutor;
+use crate::functions::country::{
+    CountryAlpha2Substitutor, CountryAlpha3Substitutor, CountrySubstitutor,
+};
 use crate::functions::date::GetDateSubstitutor;
 use crate::functions::datetime::GetDateTimeSubstitutor;
 use crate::functions::email::EmailSubstitutor;
@@ -146,6 +148,8 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &GetUtcDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
         &LoremIpsumSubstitutor {} as &dyn FunctionSubstitutor,
         &CountrySubstitutor {} as &dyn FunctionSubstitutor,
+        &CountryAlpha2Substitutor {} as &dyn FunctionSubstitutor,
+        &CountryAlpha3Substitutor {} as &dyn FunctionSubstitutor,
     ];
 
     let mut result = input.to_string();
@@ -176,6 +180,8 @@ pub fn substitute_functions_with_cache(input: &str, cache: &dyn RegexCache) -> R
         &GetUtcDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
         &LoremIpsumSubstitutor {} as &dyn FunctionSubstitutor,
         &CountrySubstitutor {} as &dyn FunctionSubstitutor,
+        &CountryAlpha2Substitutor {} as &dyn FunctionSubstitutor,
+        &CountryAlpha3Substitutor {} as &dyn FunctionSubstitutor,
     ];
 
     let mut result = input.to_string();
