@@ -33,7 +33,7 @@ A powerful command-line tool, Terminal UI (TUI), and GUI application (Native as 
 - **Response assertions** for status codes, body content, and headers
 - **Variables support** with substitution in URLs, headers, and request bodies
 - **Request Variables** for chaining requests and passing data between HTTP calls
-- **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `country()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
+- **Built-in functions** for dynamic value generation (`guid()`, `string()`, `number()`, `base64_encode()`, `upper()`, `lower()`, `name()`, `first_name()`, `last_name()`, `address()`, `email()`, `job_title()`, `country()`, `countrycode2()`, `countrycode3()`, `lorem_ipsum()`, `getdate()`, `gettime()`, `getdatetime()`, `getutcdatetime()`)
 - **Conditional Execution** with `@dependsOn`, `@if`, and `@if-not` directives for request dependencies
 - **Customizable timeouts** for connection and read operations with flexible time units
 - **Semantic versioning** with git tag and commit information
@@ -1060,6 +1060,8 @@ NoArgFunction             <- 'guid()'
                           / 'email()'
                           / 'job_title()'
                           / 'country()'
+                          / 'countrycode2()'
+                          / 'countrycode3()'
                           / 'getdate()'
                           / 'gettime()'
                           / 'getdatetime()'
@@ -1287,6 +1289,24 @@ Content-Type: application/json
 {
   "country": "country()",
   "homeCountry": "COUNTRY()"
+}
+```
+
+#### `countrycode2()` - Generate ISO 3166-1 alpha-2 Country Code
+
+Generates a random two-letter country code (e.g. `DK`, `US`, `GB`).
+
+#### `countrycode3()` - Generate ISO 3166-1 alpha-3 Country Code
+
+Generates a random three-letter country code (e.g. `DNK`, `USA`, `GBR`).
+
+```http
+POST https://api.example.com/users
+Content-Type: application/json
+
+{
+  "countryCode": "countrycode2()",
+  "countryCode3": "COUNTRYCODE3()"
 }
 ```
 

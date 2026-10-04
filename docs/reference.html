@@ -451,6 +451,8 @@ NoArgFunction             &lt;- 'guid()'
                           / 'email()'
                           / 'job_title()'
                           / 'country()'
+                          / 'countrycode2()'
+                          / 'countrycode3()'
                           / 'getdate()'
                           / 'gettime()'
                           / 'getdatetime()'
@@ -612,6 +614,16 @@ GET {{baseUrl}}/users</code>
                                 <td><code>country()</code></td>
                                 <td>Generate random country name</td>
                                 <td>Denmark</td>
+                            </tr>
+                            <tr>
+                                <td><code>countrycode2()</code></td>
+                                <td>Generate random ISO 3166-1 alpha-2 country code</td>
+                                <td>DK</td>
+                            </tr>
+                            <tr>
+                                <td><code>countrycode3()</code></td>
+                                <td>Generate random ISO 3166-1 alpha-3 country code</td>
+                                <td>DNK</td>
                             </tr>
                             <tr>
                                 <td><code>lorem_ipsum([N])</code></td>
