@@ -6,6 +6,7 @@
 - Update ubuntu Docker tag to v26 ([#261](https://github.com/christianhelle/httprunner/pull/261)) (@renovate[bot])
 
 ### Features
+- Add country(), countrycode2() and countrycode3() functions ([#289](https://github.com/christianhelle/httprunner/pull/289)) ([@christianhelle](https://github.com/christianhelle/))
 - Format getutcdatetime() as ISO 8601 ([#288](https://github.com/christianhelle/httprunner/pull/288)) ([@christianhelle](https://github.com/christianhelle/))
 - Extract telemetry event builders into a pure, tested module ([#287](https://github.com/christianhelle/httprunner/pull/287)) ([@christianhelle](https://github.com/christianhelle/))
 - Unify the batch and incremental request pipelines ([#282](https://github.com/christianhelle/httprunner/pull/282)) ([@christianhelle](https://github.com/christianhelle/))
