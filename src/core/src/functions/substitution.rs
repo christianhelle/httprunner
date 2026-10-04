@@ -1,5 +1,6 @@
 use crate::functions::address::AddressSubstitutor;
 use crate::functions::base64_encode::Base64EncodeSubstitutor;
+use crate::functions::country::CountrySubstitutor;
 use crate::functions::date::GetDateSubstitutor;
 use crate::functions::datetime::GetDateTimeSubstitutor;
 use crate::functions::email::EmailSubstitutor;
@@ -98,9 +99,10 @@ pub(crate) fn get_case_insensitive_regex_with_cache(
     cache: &dyn RegexCache,
 ) -> std::result::Result<Regex, regex::Error> {
     let owned = pattern.to_string();
-    cache.get_or_insert_with(pattern, Box::new(move || {
-        RegexBuilder::new(&owned).case_insensitive(true).build()
-    }))
+    cache.get_or_insert_with(
+        pattern,
+        Box::new(move || RegexBuilder::new(&owned).case_insensitive(true).build()),
+    )
 }
 
 pub trait FunctionSubstitutor: Sync {
@@ -143,6 +145,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
         &GetDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
         &GetUtcDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
         &LoremIpsumSubstitutor {} as &dyn FunctionSubstitutor,
+        &CountrySubstitutor {} as &dyn FunctionSubstitutor,
     ];
 
     let mut result = input.to_string();
@@ -153,10 +156,7 @@ pub fn substitute_functions(input: &str) -> Result<String> {
     Ok(result)
 }
 
-pub fn substitute_functions_with_cache(
-    input: &str,
-    cache: &dyn RegexCache,
-) -> Result<String> {
+pub fn substitute_functions_with_cache(input: &str, cache: &dyn RegexCache) -> Result<String> {
     const SUBSTITUTORS: &[&dyn FunctionSubstitutor] = &[
         &GuidSubstitutor {} as &dyn FunctionSubstitutor,
         &StringSubstitutor {} as &dyn FunctionSubstitutor,
@@ -175,6 +175,7 @@ pub fn substitute_functions_with_cache(
         &GetDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
         &GetUtcDateTimeSubstitutor {} as &dyn FunctionSubstitutor,
         &LoremIpsumSubstitutor {} as &dyn FunctionSubstitutor,
+        &CountrySubstitutor {} as &dyn FunctionSubstitutor,
     ];
 
     let mut result = input.to_string();
@@ -244,11 +245,7 @@ mod tests {
     #[test]
     fn substitute_functions_with_cache_works() {
         let cache = HashMapRegexCache::new();
-        let result = substitute_functions_with_cache(
-            "hello {{guid()}} world",
-            &cache,
-        )
-        .unwrap();
+        let result = substitute_functions_with_cache("hello {{guid()}} world", &cache).unwrap();
         assert!(result.contains("hello "));
         assert!(result.contains(" world"));
         assert!(!result.contains("{{guid()}}"));

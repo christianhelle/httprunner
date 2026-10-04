@@ -1,5 +1,6 @@
 mod address;
 mod base64_encode;
+mod country;
 mod date;
 mod datetime;
 mod email;
@@ -18,7 +19,7 @@ mod upper;
 mod utc_datetime;
 
 pub use substitution::{
-    substitute_functions, substitute_functions_with_cache, HashMapRegexCache, RegexCache,
+    HashMapRegexCache, RegexCache, substitute_functions, substitute_functions_with_cache,
 };
 
 #[cfg(test)]
