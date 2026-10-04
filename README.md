@@ -1334,7 +1334,7 @@ Content-Type: application/json
 
 #### `getutcdatetime()` - Get Current UTC Date and Time
 
-Returns the current UTC date and time in `YYYY-MM-DD HH:MM:SS` format.
+Returns the current UTC date and time in ISO 8601 format (`YYYY-MM-DDTHH:MM:SSZ`, e.g. `2026-10-04T22:22:33Z`).
 
 ```http
 POST https://api.example.com/records

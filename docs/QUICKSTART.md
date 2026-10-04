@@ -176,7 +176,7 @@ Available functions:
 - `getdate()` - Get current local date in YYYY-MM-DD format
 - `gettime()` - Get current local time in HH:MM:SS format
 - `getdatetime()` - Get current local datetime in YYYY-MM-DD HH:MM:SS format
-- `getutcdatetime()` - Get current UTC datetime in YYYY-MM-DD HH:MM:SS format
+- `getutcdatetime()` - Get current UTC datetime in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)
 
 All functions are case-insensitive and can be used in URLs, headers, and request bodies.
 
