@@ -1561,3 +1561,27 @@ Content-Type: application/json
     assert!(result.contains("POST"));
     assert!(result.contains("Content-Type:"));
 }
+
+#[test]
+fn test_substitute_functions_country() {
+    use crate::functions::country::COUNTRIES;
+    use crate::functions::substitute_functions;
+
+    let result = substitute_functions(r#"{"country": "country()"}"#).unwrap();
+    assert!(!result.contains("country()"));
+    assert!(
+        COUNTRIES
+            .iter()
+            .any(|c| result.contains(&format!("\"{}\"", c)))
+    );
+}
+
+#[test]
+fn test_substitute_functions_country_case_insensitivity() {
+    use crate::functions::substitute_functions;
+
+    let input = r#"{"a": "country()", "b": "COUNTRY()", "c": "Country()"}"#;
+    let result = substitute_functions(input).unwrap();
+
+    assert!(!result.to_lowercase().contains("country()"));
+}
