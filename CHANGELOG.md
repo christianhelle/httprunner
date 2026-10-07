@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased Changes]
+## [1.2.55](https://github.com/christianhelle/httprunner/releases/tag/1.2.55) (2026-10-04)
 
 ### Merged Pull Requests
 - Update ubuntu Docker tag to v26 ([#261](https://github.com/christianhelle/httprunner/pull/261)) (@renovate[bot])
@@ -21,6 +21,10 @@
 - Replace static mutable caches with injectable adapters ([#276](https://github.com/christianhelle/httprunner/pull/276)) ([@christianhelle](https://github.com/christianhelle/))
 - Remove legacy handwritten parser ([#275](https://github.com/christianhelle/httprunner/pull/275)) ([@christianhelle](https://github.com/christianhelle/))
 - Unify request-level substitution into one module ([#270](https://github.com/christianhelle/httprunner/pull/270)) ([@christianhelle](https://github.com/christianhelle/))
+
+### Closed Issues
+- 加油 ([#284](https://github.com/christianhelle/httprunner/issues/284)) ([@ma5d](https://github.com/ma5d/))
+- [Feature]: Create Linux arm64 binary release ([#263](https://github.com/christianhelle/httprunner/issues/263)) ([@grumpydumpty](https://github.com/grumpydumpty/))
 
 
 ## [1.1.54](https://github.com/christianhelle/httprunner/releases/tag/1.1.54) (2026-06-09)
