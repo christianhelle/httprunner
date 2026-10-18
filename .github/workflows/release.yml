@@ -172,6 +172,33 @@ jobs:
           draft: false
           prerelease: ${{ contains(env.VERSION, '-') }}
 
+  publish-aur:
+    name: Publish to AUR
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: aur.archlinux.org
+      url: https://aur.archlinux.org/packages/httprunner-bin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Update PKGBUILD version
+        run: |
+          sed -i "s/^pkgver=.*/pkgver=${{ env.VERSION }}/" packaging/aur/httprunner-bin/PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" packaging/aur/httprunner-bin/PKGBUILD
+
+      - name: Publish httprunner-bin to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v4
+        with:
+          pkgname: httprunner-bin
+          pkgbuild: packaging/aur/httprunner-bin/PKGBUILD
+          updpkgsums: true
+          commit_username: Christian Helle
+          commit_email: christian.helle@outlook.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: Update to version ${{ env.VERSION }}
+
   publish-container:
     name: Publish Container
     needs: build
