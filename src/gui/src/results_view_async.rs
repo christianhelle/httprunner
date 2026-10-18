@@ -5,9 +5,7 @@ use crate::results_view::{
 use futures_util::FutureExt;
 use httprunner_core::parser;
 use httprunner_core::processor::RequestProcessingResult;
-use httprunner_core::runner::{
-    AsyncRequestFuture, process_http_requests_incremental_async,
-};
+use httprunner_core::runner::{AsyncRequestFuture, process_http_requests_incremental_async};
 use httprunner_core::types::{HttpRequest, HttpResult};
 use std::any::Any;
 use std::panic::AssertUnwindSafe;
@@ -258,9 +256,7 @@ fn map_process_result(process_result: RequestProcessingResult) -> ExecutionResul
                 format!("Skipped: {}", reason),
             ))
         }
-        RequestProcessingResult::Executed { request, result } => {
-            map_http_result(request, result)
-        }
+        RequestProcessingResult::Executed { request, result } => map_http_result(request, result),
         RequestProcessingResult::Failed { request, error } => {
             ExecutionResult::Failure(FailureResult::simple(request.method, request.url, error))
         }
