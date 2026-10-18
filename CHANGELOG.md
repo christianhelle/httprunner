@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased Changes]
+
+### Merged Pull Requests
+- Fix "Application not responding" for the GUI on Wayland when the window is hidden ([#290](https://github.com/christianhelle/httprunner/pull/290)) ([@christianhelle](https://github.com/christianhelle/))
+
+
 ## [1.2.55](https://github.com/christianhelle/httprunner/releases/tag/1.2.55) (2026-10-04)
 
 ### Merged Pull Requests
