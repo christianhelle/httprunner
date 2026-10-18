@@ -129,6 +129,12 @@ yay -S httprunner-bin
 
 This installs `httprunner`, `httprunner-tui` and `httprunner-gui`.
 
+To build from source instead, install the `httprunner` package:
+
+```bash
+yay -S httprunner
+```
+
 ### Option 6: Build from Source
 
 Make sure you have Rust installed (version 1.94 or later).
