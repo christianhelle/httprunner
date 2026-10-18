@@ -193,6 +193,7 @@ jobs:
         with:
           pkgname: httprunner-bin
           pkgbuild: packaging/aur/httprunner-bin/PKGBUILD
+          assets: packaging/aur/httprunner-gui.desktop
           updpkgsums: true
           commit_username: Christian Helle
           commit_email: christian.helle@outlook.com
