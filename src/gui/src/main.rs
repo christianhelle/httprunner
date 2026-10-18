@@ -51,6 +51,7 @@ fn main() -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size(window_size)
+            .with_app_id("httprunner-gui")
             .with_min_inner_size([800.0, 600.0])
             .with_icon(load_icon()),
         ..Default::default()
