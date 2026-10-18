@@ -54,6 +54,11 @@ fn main() -> eframe::Result<()> {
             .with_app_id("httprunner-gui")
             .with_min_inner_size([800.0, 600.0])
             .with_icon(load_icon()),
+        // On Wayland a vsynced buffer swap blocks until the compositor sends a
+        // frame callback, which never arrives while the window is hidden (e.g. on
+        // another workspace). The blocked main thread then can't answer compositor
+        // pings and Hyprland reports the app as not responding.
+        vsync: !is_wayland_session(),
         ..Default::default()
     };
 
@@ -67,6 +72,11 @@ fn main() -> eframe::Result<()> {
     telemetry::flush();
 
     result
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn is_wayland_session() -> bool {
+    cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some()
 }
 
 #[cfg(not(target_arch = "wasm32"))]

@@ -31,7 +31,10 @@ pub enum RequestProcessingResult {
         request: HttpRequest,
         result: HttpResult,
     },
-    Failed { request: HttpRequest, error: String },
+    Failed {
+        request: HttpRequest,
+        error: String,
+    },
 }
 
 /// Observes each step of request processing and decides whether to continue.
@@ -558,7 +561,8 @@ mod tests {
         }
     }
 
-    fn ok_executor() -> impl Fn(HttpRequest, bool, bool) -> Pin<Box<dyn Future<Output = Result<HttpResult>>>> {
+    fn ok_executor()
+    -> impl Fn(HttpRequest, bool, bool) -> Pin<Box<dyn Future<Output = Result<HttpResult>>>> {
         |request: HttpRequest, _verbose: bool, _insecure: bool| {
             let name = request.name.clone();
             Box::pin(async move { Ok(make_result(name)) })
@@ -651,7 +655,10 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].0, 0);
         assert_eq!(results[0].1, 1);
-        assert!(matches!(results[0].2, RequestProcessingResult::Executed { .. }));
+        assert!(matches!(
+            results[0].2,
+            RequestProcessingResult::Executed { .. }
+        ));
     }
 
     #[test]
@@ -710,7 +717,9 @@ mod tests {
         let requests = vec![make_request("a"), make_request("b")];
         let executor = ok_executor();
         let calls = Arc::new(Mutex::new(Vec::new()));
-        let mock_sleep = MockSleep { calls: Arc::clone(&calls) };
+        let mock_sleep = MockSleep {
+            calls: Arc::clone(&calls),
+        };
 
         block_on(process_requests_incremental(
             requests,
@@ -750,8 +759,10 @@ mod tests {
 
         let results = results.lock().unwrap();
         assert_eq!(results.len(), 1);
-        assert!(matches!(&results[0], RequestProcessingResult::Skipped { reason, .. }
-            if reason.contains("Dependency")));
+        assert!(
+            matches!(&results[0], RequestProcessingResult::Skipped { reason, .. }
+            if reason.contains("Dependency"))
+        );
     }
 
     #[test]
@@ -784,8 +795,10 @@ mod tests {
 
         let results = results.lock().unwrap();
         assert_eq!(results.len(), 1);
-        assert!(matches!(&results[0], RequestProcessingResult::Skipped { reason, .. }
-            if reason == "Conditions not met"));
+        assert!(
+            matches!(&results[0], RequestProcessingResult::Skipped { reason, .. }
+            if reason == "Conditions not met")
+        );
     }
 
     #[test]
@@ -814,8 +827,10 @@ mod tests {
 
         let results = results.lock().unwrap();
         assert_eq!(results.len(), 1);
-        assert!(matches!(&results[0], RequestProcessingResult::Failed { error, .. }
-            if error == "executor failure"));
+        assert!(
+            matches!(&results[0], RequestProcessingResult::Failed { error, .. }
+            if error == "executor failure")
+        );
     }
 
     #[test]
@@ -861,7 +876,9 @@ mod tests {
         let requests = vec![make_request("a")];
         let executor = ok_executor();
         let calls = Arc::new(Mutex::new(Vec::new()));
-        let mock_sleep = MockSleep { calls: Arc::clone(&calls) };
+        let mock_sleep = MockSleep {
+            calls: Arc::clone(&calls),
+        };
 
         block_on(process_requests_incremental(
             requests,
@@ -883,7 +900,9 @@ mod tests {
             ..make_request("req1")
         }];
         let calls = Arc::new(Mutex::new(Vec::new()));
-        let mock_sleep = MockSleep { calls: Arc::clone(&calls) };
+        let mock_sleep = MockSleep {
+            calls: Arc::clone(&calls),
+        };
         let executed = Arc::new(AtomicBool::new(false));
         let exec_flag = Arc::clone(&executed);
 
@@ -915,7 +934,9 @@ mod tests {
             ..make_request("req1")
         }];
         let calls = Arc::new(Mutex::new(Vec::new()));
-        let mock_sleep = MockSleep { calls: Arc::clone(&calls) };
+        let mock_sleep = MockSleep {
+            calls: Arc::clone(&calls),
+        };
         let executor = ok_executor();
 
         block_on(process_requests_incremental(
@@ -966,7 +987,13 @@ mod tests {
         assert_eq!(results[1].0, 1);
         assert_eq!(results[2].0, 2);
         assert_eq!(results[0].1, 3);
-        assert!(matches!(&results[1].2, RequestProcessingResult::Skipped { .. }));
-        assert!(matches!(&results[2].2, RequestProcessingResult::Executed { .. }));
+        assert!(matches!(
+            &results[1].2,
+            RequestProcessingResult::Skipped { .. }
+        ));
+        assert!(matches!(
+            &results[2].2,
+            RequestProcessingResult::Executed { .. }
+        ));
     }
 }

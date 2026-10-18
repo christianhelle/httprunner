@@ -363,5 +363,4 @@ mod tests {
         // Should have the set-cookie header
         assert!(result.contains_key("set-cookie"));
     }
-
 }

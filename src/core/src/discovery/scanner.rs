@@ -22,8 +22,7 @@ where
         .into_iter()
         .filter_map(|e| e.ok())
     {
-        if entry.file_type().is_file()
-            && entry.path().extension().is_some_and(|ext| ext == "http")
+        if entry.file_type().is_file() && entry.path().extension().is_some_and(|ext| ext == "http")
         {
             files.push(entry.path().to_path_buf());
             on_progress(files.len());

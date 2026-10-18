@@ -23,8 +23,7 @@ mod tests {
         let sub = GetUtcDateTimeSubstitutor {};
         let utc_datetime = sub.generate();
 
-        let datetime_pattern =
-            Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$").unwrap();
+        let datetime_pattern = Regex::new(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$").unwrap();
         assert!(
             datetime_pattern.is_match(&utc_datetime),
             "UTC DateTime '{}' does not match pattern YYYY-MM-DDTHH:MM:SSZ",

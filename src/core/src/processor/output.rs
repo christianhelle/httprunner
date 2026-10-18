@@ -272,8 +272,7 @@ pub fn log_fail_fast_verbose(
     log: &mut Log,
 ) {
     if fail_fast && !verbose {
-        let sanitized_request =
-            sanitize_request_for_output(processed_request, include_secrets);
+        let sanitized_request = sanitize_request_for_output(processed_request, include_secrets);
         log_request_details(&sanitized_request, log, pretty_json);
 
         if let Some(result) = http_result {

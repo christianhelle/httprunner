@@ -1,13 +1,11 @@
 use crate::processor::incremental_loop::{
-    AsyncSleep, process_requests_incremental, RequestProcessingResult,
+    AsyncSleep, RequestProcessingResult, process_requests_incremental,
 };
 use anyhow::Result;
 
-/// Re-export types from the unified loop for the async path.
-pub use crate::processor::incremental_loop::{
-    AsyncRequestExecutor, AsyncRequestFuture,
-};
 pub use crate::processor::RequestProcessingResult as AsyncRequestProcessingResult;
+/// Re-export types from the unified loop for the async path.
+pub use crate::processor::incremental_loop::{AsyncRequestExecutor, AsyncRequestFuture};
 
 /// Process already-parsed HTTP requests incrementally with async sleep.
 pub async fn process_http_requests_incremental_async<F>(
@@ -20,18 +18,10 @@ pub async fn process_http_requests_incremental_async<F>(
 where
     F: FnMut(usize, usize, RequestProcessingResult) -> bool,
 {
-    let wrapped = |request: crate::types::HttpRequest, verbose: bool, insecure: bool| {
-        async move { executor(&request, verbose, insecure).await }
+    let wrapped = |request: crate::types::HttpRequest, verbose: bool, insecure: bool| async move {
+        executor(&request, verbose, insecure).await
     };
-    process_requests_incremental(
-        requests,
-        insecure,
-        delay_ms,
-        callback,
-        &wrapped,
-        AsyncSleep,
-    )
-    .await
+    process_requests_incremental(requests, insecure, delay_ms, callback, &wrapped, AsyncSleep).await
 }
 
 #[cfg(test)]

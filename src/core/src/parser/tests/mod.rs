@@ -1226,7 +1226,8 @@ mod golden_tests {
                 .replace("\r\n", "\n");
 
             assert_eq!(
-                actual_json, expected_json,
+                actual_json,
+                expected_json,
                 "Golden file mismatch for fixture: {}\nRegenerate by running: cargo test -p httprunner-core generate_expected_files -- --ignored --nocapture",
                 path.file_name().unwrap().to_string_lossy()
             );

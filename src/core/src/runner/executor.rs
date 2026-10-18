@@ -2,8 +2,7 @@
 use super::http_builders::{ClientConfig, parse_method, resolve_body};
 #[cfg(not(target_arch = "wasm32"))]
 use super::response_processor::{
-    build_error_result, build_success_result, extract_headers,
-    should_capture_response,
+    build_error_result, build_success_result, extract_headers, should_capture_response,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use crate::telemetry::{ConnectionErrorCategory, track_connection_error};
@@ -58,7 +57,10 @@ impl HashMapClientCache {
 
     #[cfg(test)]
     pub(crate) fn len(&self) -> usize {
-        self.inner.lock().expect("http client cache mutex poisoned").len()
+        self.inner
+            .lock()
+            .expect("http client cache mutex poisoned")
+            .len()
     }
 }
 
