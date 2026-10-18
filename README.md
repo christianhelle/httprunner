@@ -119,7 +119,17 @@ This will download, compile, and install the latest version of httprunner. The b
 sudo snap install httprunner
 ```
 
-### Option 5: Build from Source
+### Option 5: Install from the AUR (Arch Linux, Omarchy)
+
+On Arch-based distributions such as [Omarchy](https://omarchy.org), install the prebuilt binaries from the [AUR](https://aur.archlinux.org/packages/httprunner-bin) with an AUR helper:
+
+```bash
+yay -S httprunner-bin
+```
+
+This installs `httprunner`, `httprunner-tui` and `httprunner-gui`.
+
+### Option 6: Build from Source
 
 Make sure you have Rust installed (version 1.94 or later).
 
@@ -164,7 +174,7 @@ cargo build --release
 
 This builds both binaries at once.
 
-### Option 6: Use Docker
+### Option 7: Use Docker
 
 The httprunner is available as a Docker image on Docker Hub at `christianhelle/httprunner`.
 
