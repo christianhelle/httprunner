@@ -185,14 +185,28 @@ jobs:
 
       - name: Update PKGBUILD version
         run: |
-          sed -i "s/^pkgver=.*/pkgver=${{ env.VERSION }}/" packaging/aur/httprunner-bin/PKGBUILD
-          sed -i "s/^pkgrel=.*/pkgrel=1/" packaging/aur/httprunner-bin/PKGBUILD
+          for pkg in httprunner-bin httprunner; do
+            sed -i "s/^pkgver=.*/pkgver=${{ env.VERSION }}/" packaging/aur/$pkg/PKGBUILD
+            sed -i "s/^pkgrel=.*/pkgrel=1/" packaging/aur/$pkg/PKGBUILD
+          done
 
       - name: Publish httprunner-bin to AUR
         uses: KSXGitHub/github-actions-deploy-aur@v4
         with:
           pkgname: httprunner-bin
           pkgbuild: packaging/aur/httprunner-bin/PKGBUILD
+          assets: packaging/aur/httprunner-gui.desktop
+          updpkgsums: true
+          commit_username: Christian Helle
+          commit_email: christian.helle@outlook.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: Update to version ${{ env.VERSION }}
+
+      - name: Publish httprunner to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v4
+        with:
+          pkgname: httprunner
+          pkgbuild: packaging/aur/httprunner/PKGBUILD
           assets: packaging/aur/httprunner-gui.desktop
           updpkgsums: true
           commit_username: Christian Helle
