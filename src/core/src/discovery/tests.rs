@@ -45,7 +45,11 @@ fn discover_http_file_paths_returns_sorted_with_progress() {
             .all(|p| p.extension().is_some_and(|ext| ext == "http")),
         "only .http files should be returned"
     );
-    assert_eq!(progress, vec![1, 2], "progress should report each file found");
+    assert_eq!(
+        progress,
+        vec![1, 2],
+        "progress should report each file found"
+    );
 }
 
 #[test]

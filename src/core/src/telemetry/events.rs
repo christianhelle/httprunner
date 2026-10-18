@@ -76,9 +76,7 @@ pub(super) fn connection_error_event(
     ("connection-error", properties)
 }
 
-pub(super) fn feature_usage_event(
-    feature_name: &str,
-) -> (&'static str, HashMap<String, String>) {
+pub(super) fn feature_usage_event(feature_name: &str) -> (&'static str, HashMap<String, String>) {
     let mut properties = HashMap::new();
     properties.insert("feature_name".to_string(), feature_name.to_string());
 
@@ -133,7 +131,10 @@ mod tests {
         extra.insert("phase".to_string(), "parse".to_string());
         let (name, props) = metric_event("startup", 42, extra);
         assert_eq!(name, "metric");
-        assert_eq!(props.get("metric_name").map(String::as_str), Some("startup"));
+        assert_eq!(
+            props.get("metric_name").map(String::as_str),
+            Some("startup")
+        );
         assert_eq!(props.get("duration_ms").map(String::as_str), Some("42"));
         assert_eq!(props.get("phase").map(String::as_str), Some("parse"));
     }

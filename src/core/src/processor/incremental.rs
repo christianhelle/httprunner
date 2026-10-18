@@ -42,16 +42,11 @@ where
 {
     let requests = parser::parse_http_file(file_path, environment)?;
 
-    let wrapped = move |request: HttpRequest, verbose: bool, insecure: bool| {
-        async move { executor(&request, verbose, insecure) }
+    let wrapped = move |request: HttpRequest, verbose: bool, insecure: bool| async move {
+        executor(&request, verbose, insecure)
     };
 
     block_on(process_requests_incremental(
-        requests,
-        insecure,
-        delay_ms,
-        callback,
-        &wrapped,
-        SyncSleep,
+        requests, insecure, delay_ms, callback, &wrapped, SyncSleep,
     ))
 }

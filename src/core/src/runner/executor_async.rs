@@ -1,7 +1,6 @@
 use super::http_builders::{parse_method, resolve_body};
 use super::response_processor::{
-    build_error_result, build_success_result, extract_headers,
-    should_capture_response,
+    build_error_result, build_success_result, extract_headers, should_capture_response,
 };
 use crate::types::{HttpRequest, HttpResult};
 use anyhow::Result;
@@ -252,11 +251,15 @@ mod tests {
         assert_eq!(result.status_code, 200);
         assert!(result.success);
 
-        let headers = result.response_headers.expect("should have headers in verbose mode");
+        let headers = result
+            .response_headers
+            .expect("should have headers in verbose mode");
         assert!(headers.contains_key("content-type"));
         assert!(headers.contains_key("x-custom"));
 
-        let body = result.response_body.expect("should have body in verbose mode");
+        let body = result
+            .response_body
+            .expect("should have body in verbose mode");
         assert_eq!(body, "{\"key\":\"value\"}");
     }
 

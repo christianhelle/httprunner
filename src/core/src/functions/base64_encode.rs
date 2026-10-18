@@ -1,9 +1,9 @@
-use super::substitution::{
-    get_case_insensitive_regex, get_case_insensitive_regex_with_cache, FunctionSubstitutor,
-    RegexCache,
-};
 #[cfg(test)]
 use super::substitution::HashMapRegexCache;
+use super::substitution::{
+    FunctionSubstitutor, RegexCache, get_case_insensitive_regex,
+    get_case_insensitive_regex_with_cache,
+};
 
 pub struct Base64EncodeSubstitutor {}
 impl FunctionSubstitutor for Base64EncodeSubstitutor {
@@ -28,7 +28,11 @@ impl FunctionSubstitutor for Base64EncodeSubstitutor {
             .to_string())
     }
 
-    fn replace_with_cache(&self, input: &str, cache: &dyn RegexCache) -> Result<String, regex::Error> {
+    fn replace_with_cache(
+        &self,
+        input: &str,
+        cache: &dyn RegexCache,
+    ) -> Result<String, regex::Error> {
         use base64::Engine;
         use base64::engine::general_purpose;
 

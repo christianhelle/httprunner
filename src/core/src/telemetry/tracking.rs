@@ -8,9 +8,9 @@ use appinsights::telemetry::{SeverityLevel, Telemetry};
 
 use super::app_type::AppType;
 use super::config::TelemetryConfig;
-use super::events;
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use super::config::is_disabled_by_env;
+use super::events;
 #[cfg(all(not(target_arch = "wasm32"), feature = "telemetry"))]
 use super::sanitize::{get_error_type_name, sanitize_error_message};
 

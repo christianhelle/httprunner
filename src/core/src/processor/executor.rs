@@ -290,8 +290,8 @@ where
     // (verbose || fail_fast) so the failed request always has body/headers
     // available, even though we only print verbose detail for the failing request.
     let capture = config.verbose || config.fail_fast;
-    let wrapped = move |request: HttpRequest, _verbose: bool, insecure: bool| {
-        async move { executor(&request, capture, insecure) }
+    let wrapped = move |request: HttpRequest, _verbose: bool, insecure: bool| async move {
+        executor(&request, capture, insecure)
     };
 
     let mut reporter = BatchReporter::new(config, log);
@@ -335,10 +335,7 @@ pub fn default_executor(
     runner::execute_http_request(request, verbose, insecure)
 }
 
-pub fn process_http_files<F>(
-    config: &ProcessorConfig,
-    executor: &F,
-) -> Result<ProcessorResults>
+pub fn process_http_files<F>(config: &ProcessorConfig, executor: &F) -> Result<ProcessorResults>
 where
     F: Fn(&HttpRequest, bool, bool) -> Result<HttpResult>,
 {
