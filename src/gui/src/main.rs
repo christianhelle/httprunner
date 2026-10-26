@@ -1,4 +1,4 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![windows_subsystem = "windows"]
 // Allow dead_code because some modules are only used in specific build configurations (binary vs lib, native vs WASM)
 #![allow(dead_code)]
 
