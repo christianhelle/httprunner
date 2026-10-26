@@ -144,11 +144,9 @@ mod tests {
         let uuid = generate_uuid();
         // UUID variant bits at position 16 should be 8, 9, a, or b
         let variant_char = uuid.chars().nth(16).unwrap();
+        // A single match keeps line coverage independent of the random value
         assert!(
-            variant_char == '8'
-                || variant_char == '9'
-                || variant_char == 'a'
-                || variant_char == 'b',
+            matches!(variant_char, '8' | '9' | 'a' | 'b'),
             "Expected variant char to be 8, 9, a, or b, got: {}",
             variant_char
         );
