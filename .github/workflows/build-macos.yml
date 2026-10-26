@@ -8,6 +8,9 @@ on:
       - '.github/workflows/build-macos.yml'
       - 'packaging/macos/**'
 
+permissions:
+  contents: read
+
 jobs:
   build-macos:
     name: Build macOS
