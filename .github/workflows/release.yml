@@ -115,9 +115,6 @@ jobs:
           cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release/
           cp target/${{ matrix.target }}/release/httprunner-gui release/
           cp target/${{ matrix.target }}/release/httprunner-tui release/
-          if [ "${{ runner.os }}" = "macOS" ]; then
-            packaging/macos/make-app-bundle.sh target/${{ matrix.target }}/release/httprunner-gui "${{ env.VERSION }}" release
-          fi
           cp README.md release/
           cp LICENSE release/
           cd release
