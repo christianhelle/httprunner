@@ -29,6 +29,11 @@ if MACOS_CERTIFICATE="abc" "$script_dir/sign-and-notarize.sh" "$app" > /dev/null
     fail "should fail when signing credentials are incomplete"
 fi
 
+# Other credentials without the certificate: refuse
+if APPLE_ID="someone@example.com" "$script_dir/sign-and-notarize.sh" "$app" > /dev/null 2>&1; then
+    fail "should fail when the certificate is missing but other credentials are set"
+fi
+
 # Missing bundle: refuse
 if "$script_dir/sign-and-notarize.sh" "$work/missing.app" > /dev/null 2>&1; then
     fail "should fail when the app bundle does not exist"
