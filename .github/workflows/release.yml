@@ -3,6 +3,9 @@ name: Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   VERSION: 1.2.${{ github.run_number }}
 
