@@ -105,6 +105,20 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
+      - name: Create signed app bundle (macOS)
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          mkdir -p release
+          packaging/macos/make-app-bundle.sh target/${{ matrix.target }}/release/httprunner-gui "${{ env.VERSION }}" release
+          packaging/macos/sign-and-notarize.sh "release/HTTP File Runner.app"
+
       - name: Create release archive (Linux/macOS)
         if: matrix.os != 'windows-latest'
         run: |
@@ -112,9 +126,6 @@ jobs:
           cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release/
           cp target/${{ matrix.target }}/release/httprunner-gui release/
           cp target/${{ matrix.target }}/release/httprunner-tui release/
-          if [ "${{ runner.os }}" = "macOS" ]; then
-            packaging/macos/make-app-bundle.sh target/${{ matrix.target }}/release/httprunner-gui "${{ env.VERSION }}" release
-          fi
           cp README.md release/
           cp LICENSE release/
           cd release
