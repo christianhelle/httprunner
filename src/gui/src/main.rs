@@ -26,9 +26,25 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 #[cfg(not(target_arch = "wasm32"))]
 const INSTRUMENTATION_KEY: &str = "a7a07a35-4869-4fa2-b852-03f44b35f418";
 
+// The GUI subsystem gives the process no console, so launching from Explorer
+// shows only the window. When started from a terminal, reattach to it so
+// log output (e.g. `RUST_LOG=debug`) is still visible there.
+#[cfg(windows)]
+fn attach_parent_console() {
+    use windows_sys::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole};
+    // Fails harmlessly when there is no parent console (e.g. Explorer).
+    unsafe {
+        AttachConsole(ATTACH_PARENT_PROCESS);
+    }
+}
+
+#[cfg(all(not(windows), not(target_arch = "wasm32")))]
+fn attach_parent_console() {}
+
 // Native binary entry point
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
+    attach_parent_console();
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
     // Load saved state to restore window size and check telemetry preference
