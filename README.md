@@ -103,6 +103,8 @@ Download the latest release for your platform from the [GitHub Releases page](ht
 
 Extract the archive and add the binary to your PATH.
 
+On macOS the archive also contains `HTTP File Runner.app`; move it to `/Applications` to launch the GUI from Finder without a Terminal window.
+
 ### Option 3: Install from Crates.io
 
 If you have Rust tooling installed, you can install httprunner directly from Crates.io:
