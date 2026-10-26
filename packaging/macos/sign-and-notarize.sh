@@ -4,8 +4,8 @@
 #
 # Usage: sign-and-notarize.sh <path to .app>
 #
-# Credentials come from the environment. When MACOS_CERTIFICATE is unset the
-# bundle is left unsigned, so releases still build without Apple credentials.
+# Credentials come from the environment. When none of them are set the bundle
+# is left unsigned, so releases still build without Apple credentials.
 #   MACOS_CERTIFICATE           base64-encoded Developer ID Application .p12
 #   MACOS_CERTIFICATE_PASSWORD  password of the .p12
 #   MACOS_SIGNING_IDENTITY      e.g. "Developer ID Application: Name (TEAMID)"
@@ -26,19 +26,25 @@ if [ ! -d "$app" ]; then
     exit 1
 fi
 
-if [ -z "${MACOS_CERTIFICATE:-}" ]; then
-    echo "MACOS_CERTIFICATE is not set, skipping signing and notarization"
+credentials=(MACOS_CERTIFICATE MACOS_CERTIFICATE_PASSWORD MACOS_SIGNING_IDENTITY
+    APPLE_ID APPLE_TEAM_ID APPLE_APP_PASSWORD)
+
+missing=()
+for var in "${credentials[@]}"; do
+    [ -n "${!var:-}" ] || missing+=("$var")
+done
+
+if [ "${#missing[@]}" -eq "${#credentials[@]}" ]; then
+    echo "No signing credentials are set, skipping signing and notarization"
     exit 0
 fi
 
-missing=0
-for var in MACOS_CERTIFICATE_PASSWORD MACOS_SIGNING_IDENTITY APPLE_ID APPLE_TEAM_ID APPLE_APP_PASSWORD; do
-    if [ -z "${!var:-}" ]; then
+if [ "${#missing[@]}" -gt 0 ]; then
+    for var in "${missing[@]}"; do
         echo "$var must be set to sign and notarize" >&2
-        missing=1
-    fi
-done
-[ "$missing" -eq 0 ] || exit 1
+    done
+    exit 1
+fi
 
 work="$(mktemp -d)"
 keychain="$work/signing.keychain-db"
