@@ -9,7 +9,6 @@ edition = "2024"
 authors = ["Christian Helle"]
 license = "MIT"
 repository = "https://github.com/christianhelle/httprunner"
-homepage = "https://github.com/christianhelle/httprunner"
 documentation = "https://github.com/christianhelle/httprunner"
 
 [workspace.dependencies]
