@@ -1,0 +1,6 @@
+coverage:
+  status:
+    project:
+      default:
+        # tolerate small shifts caused by Rust toolchain instrumentation changes
+        threshold: 0.5%
