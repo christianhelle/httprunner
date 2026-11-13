@@ -6,6 +6,7 @@
 - Fix "Application not responding" for the GUI on Wayland when the window is hidden ([#290](https://github.com/christianhelle/httprunner/pull/290)) ([@christianhelle](https://github.com/christianhelle/))
 
 ### Features
+- Fix Rust 1.100 warnings ([#292](https://github.com/christianhelle/httprunner/pull/292)) ([@christianhelle](https://github.com/christianhelle/))
 - Launch the GUI without a terminal window on Windows ([#291](https://github.com/christianhelle/httprunner/pull/291)) ([@christianhelle](https://github.com/christianhelle/))
 
 
